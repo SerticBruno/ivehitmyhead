@@ -15,7 +15,9 @@ interface MemeDetailProps {
     shares: number;
     createdAt: string;
     tags?: string[];
-  };
+  } | null;
+  isLoading?: boolean;
+  transitionDirection?: 'left' | 'right' | null;
   onNavigate: (direction: 'prev' | 'next') => void;
   onLike: (id: string) => void;
   onShare: (id: string) => void;
@@ -24,6 +26,8 @@ interface MemeDetailProps {
 
 const MemeDetail: React.FC<MemeDetailProps> = ({
   meme,
+  isLoading = false,
+  transitionDirection = null,
   onNavigate,
   onLike,
   onShare,
@@ -34,6 +38,8 @@ const MemeDetail: React.FC<MemeDetailProps> = ({
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      if (isLoading) return; // Prevent navigation during loading
+      
       switch (event.key) {
         case 'ArrowLeft':
           onNavigate('prev');
@@ -49,19 +55,36 @@ const MemeDetail: React.FC<MemeDetailProps> = ({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onNavigate, router]);
+  }, [onNavigate, router, isLoading]);
 
   const handleLike = () => {
-    onLike(meme.id);
+    if (meme && !isLoading) onLike(meme.id);
   };
 
   const handleShare = () => {
-    onShare(meme.id);
+    if (meme && !isLoading) onShare(meme.id);
   };
 
   const handleComment = () => {
-    onComment(meme.id);
+    if (meme && !isLoading) onComment(meme.id);
   };
+
+  const handleNavigate = (direction: 'prev' | 'next') => {
+    if (!isLoading) {
+      onNavigate(direction);
+    }
+  };
+
+  // Show loading state if no meme
+  if (!meme) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -78,14 +101,22 @@ const MemeDetail: React.FC<MemeDetailProps> = ({
       </div>
 
       {/* Main meme display */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden h-[calc(100vh-200px)] flex flex-col">
         {/* Header */}
-        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+        <div className="p-6 border-b border-gray-200 dark:border-gray-700 h-32 flex-shrink-0">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                {meme.title}
-              </h1>
+              <div className="relative">
+                <h1 className={cn(
+                  "text-2xl font-bold text-gray-900 dark:text-white transition-all duration-300 absolute inset-0",
+                  isLoading && "opacity-0"
+                )}>
+                  {meme.title}
+                </h1>
+                {isLoading && (
+                  <div className="w-64 h-8 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                )}
+              </div>
               <p className="text-gray-600 dark:text-gray-400">
                 by <span className="font-medium">{meme.author}</span>
               </p>
@@ -110,10 +141,10 @@ const MemeDetail: React.FC<MemeDetailProps> = ({
         </div>
 
         {/* Image container with navigation */}
-        <div className="relative">
+        <div className="relative flex-1 flex items-center justify-center">
           {/* Navigation arrows */}
           <button
-            onClick={() => onNavigate('prev')}
+            onClick={() => handleNavigate('prev')}
             className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10 bg-black bg-opacity-50 hover:bg-opacity-75 text-white p-3 rounded-full transition-all duration-200 hover:scale-110"
             aria-label="Previous meme"
           >
@@ -121,34 +152,43 @@ const MemeDetail: React.FC<MemeDetailProps> = ({
           </button>
           
           <button
-            onClick={() => onNavigate('next')}
+            onClick={() => handleNavigate('next')}
             className="absolute right-4 top-1/2 transform -translate-y-1/2 z-10 bg-black bg-opacity-50 hover:bg-opacity-75 text-white p-3 rounded-full transition-all duration-200 hover:scale-110"
             aria-label="Next meme"
           >
             <span className="text-xl">→</span>
           </button>
 
-          {/* Image */}
-          <div className="relative w-full h-96 sm:h-[500px] lg:h-[600px]">
+          {/* Image with smooth transitions */}
+          <div className="w-full max-w-2xl h-96 relative">
             <Image
               src={meme.imageUrl}
               alt={meme.title}
               fill
-              className="object-contain"
+              className={cn(
+                "object-contain transition-all duration-300",
+                isLoading && "opacity-0",
+                transitionDirection === 'left' && "transform -translate-x-4",
+                transitionDirection === 'right' && "transform translate-x-4"
+              )}
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
               priority
             />
+            {isLoading && (
+              <div className="absolute inset-0 w-full h-full bg-gray-200 dark:bg-gray-700 animate-pulse rounded-lg"></div>
+            )}
           </div>
         </div>
 
         {/* Footer with actions */}
-        <div className="p-6 border-t border-gray-200 dark:border-gray-700">
+        <div className="p-6 border-t border-gray-200 dark:border-gray-700 h-20 flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-6">
               <Button
                 variant="ghost"
                 onClick={handleLike}
                 className="flex items-center space-x-2 hover:bg-red-50 dark:hover:bg-red-900/20"
+                disabled={isLoading}
               >
                 <span className="text-xl">👍</span>
                 <span className="font-medium">{meme.likes}</span>
@@ -158,6 +198,7 @@ const MemeDetail: React.FC<MemeDetailProps> = ({
                 variant="ghost"
                 onClick={handleComment}
                 className="flex items-center space-x-2 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                disabled={isLoading}
               >
                 <span className="text-xl">💬</span>
                 <span className="font-medium">{meme.comments}</span>
@@ -167,6 +208,7 @@ const MemeDetail: React.FC<MemeDetailProps> = ({
                 variant="ghost"
                 onClick={handleShare}
                 className="flex items-center space-x-2 hover:bg-green-50 dark:hover:bg-green-900/20"
+                disabled={isLoading}
               >
                 <span className="text-xl">📤</span>
                 <span className="font-medium">{meme.shares}</span>

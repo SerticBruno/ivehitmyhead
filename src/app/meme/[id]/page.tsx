@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { Header, Footer } from '@/components/layout';
 import { MemeDetail } from '@/components/meme';
@@ -75,50 +75,91 @@ const mockMemes = [
   }
 ];
 
+// Simulate API call to fetch meme data
+const fetchMemeData = async (memeId: string) => {
+  // Simulate network delay
+  await new Promise(resolve => setTimeout(resolve, 300));
+  
+  const meme = mockMemes.find(m => m.id === memeId);
+  if (!meme) {
+    throw new Error('Meme not found');
+  }
+  
+  return meme;
+};
+
 export default function MemePage() {
   const router = useRouter();
   const params = useParams();
   const memeId = params.id as string;
   
   const [currentMeme, setCurrentMeme] = useState<typeof mockMemes[0] | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [transitionDirection, setTransitionDirection] = useState<'left' | 'right' | null>(null);
 
+  // Initialize meme on first load
   useEffect(() => {
-    // Simulate API call
-    const fetchMeme = () => {
-      setLoading(true);
-      setTimeout(() => {
-        const meme = mockMemes.find(m => m.id === memeId);
-        if (meme) {
-          setCurrentMeme(meme);
-        } else {
-          // Redirect to 404 or home if meme not found
-          router.push('/');
-        }
-        setLoading(false);
-      }, 500);
-    };
-
-    if (memeId) {
-      fetchMeme();
+    if (memeId && !currentMeme) {
+      const index = mockMemes.findIndex(m => m.id === memeId);
+      if (index !== -1) {
+        setCurrentMeme(mockMemes[index]);
+        setCurrentIndex(index);
+      }
     }
-  }, [memeId, router]);
+  }, [memeId, currentMeme]);
 
-  const handleNavigate = (direction: 'prev' | 'next') => {
-    const currentIndex = mockMemes.findIndex(m => m.id === memeId);
+  // Handle URL changes for direct navigation (only on initial load or direct URL access)
+  useEffect(() => {
+    if (memeId && !currentMeme) {
+      const index = mockMemes.findIndex(m => m.id === memeId);
+      if (index !== -1) {
+        setCurrentMeme(mockMemes[index]);
+        setCurrentIndex(index);
+      }
+    }
+  }, [memeId, currentMeme]);
+
+  const handleMemeTransition = useCallback(async (newIndex: number, direction: 'left' | 'right') => {
+    setIsLoading(true);
+    setTransitionDirection(direction);
+    
+    try {
+      // Fetch new meme data from API
+      const newMeme = await fetchMemeData(mockMemes[newIndex].id);
+      
+      setCurrentMeme(newMeme);
+      setCurrentIndex(newIndex);
+      setIsLoading(false);
+      setTransitionDirection(null);
+      
+      // Don't update URL - keep everything client-side
+    } catch (error) {
+      console.error('Failed to fetch meme:', error);
+      setIsLoading(false);
+      setTransitionDirection(null);
+    }
+  }, []);
+
+  const handleNavigate = useCallback((direction: 'prev' | 'next') => {
     let newIndex: number;
+    let transitionDir: 'left' | 'right';
 
     if (direction === 'prev') {
       newIndex = currentIndex > 0 ? currentIndex - 1 : mockMemes.length - 1;
+      transitionDir = 'left';
     } else {
       newIndex = currentIndex < mockMemes.length - 1 ? currentIndex + 1 : 0;
+      transitionDir = 'right';
     }
 
-    router.push(`/meme/${mockMemes[newIndex].id}`);
-  };
+    handleMemeTransition(newIndex, transitionDir);
+  }, [currentIndex, handleMemeTransition]);
 
   const handleLike = (id: string) => {
-    setCurrentMeme(prev => prev ? { ...prev, likes: prev.likes + 1 } : null);
+    if (currentMeme) {
+      setCurrentMeme(prev => prev ? { ...prev, likes: prev.likes + 1 } : null);
+    }
   };
 
   const handleShare = (id: string) => {
@@ -131,7 +172,8 @@ export default function MemePage() {
     // Implement comment functionality here
   };
 
-  if (loading) {
+  // Show loading state if no meme is loaded
+  if (!currentMeme) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <Header />
@@ -145,37 +187,14 @@ export default function MemePage() {
     );
   }
 
-  if (!currentMeme) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <Header />
-        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex items-center justify-center min-h-[60vh]">
-            <div className="text-center">
-              <h1 className="text-2xl font-bold mb-4">Meme not found</h1>
-              <p className="text-gray-600 dark:text-gray-400 mb-4">
-                The meme you're looking for doesn't exist.
-              </p>
-              <button 
-                onClick={() => router.push('/')}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-              >
-                Go Home
-              </button>
-            </div>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Header />
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <MemeDetail
           meme={currentMeme}
+          isLoading={isLoading}
+          transitionDirection={transitionDirection}
           onNavigate={handleNavigate}
           onLike={handleLike}
           onShare={handleShare}
