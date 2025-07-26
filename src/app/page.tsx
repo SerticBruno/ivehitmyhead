@@ -274,11 +274,11 @@ export default function Home() {
         {/* Newsletter Section */}
         <section className="mb-12">
           <Newsletter 
-            title="Stay in the Loop!"
-            description="Get notified about the latest memes, trending creators, and platform updates."
-            showSocial={true}
+            title="Get the latest memes"
+            description="Subscribe to our newsletter for the best memes delivered to your inbox."
           />
         </section>
+
       </main>
 
       <Footer />

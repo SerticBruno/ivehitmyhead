@@ -87,51 +87,53 @@ const MemeDetail: React.FC<MemeDetailProps> = ({
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-5xl mx-auto">
       {/* Back button */}
-      <div className="mb-6">
+      <div className="mb-8">
         <Button
           variant="ghost"
           onClick={() => router.push('/')}
-          className="flex items-center space-x-2"
+          className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors"
         >
-          <span>←</span>
-          <span>Back to Home</span>
+          <span className="text-lg">←</span>
+          <span className="font-medium">Back to Home</span>
         </Button>
       </div>
 
       {/* Main meme display */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden h-[calc(100vh-200px)] flex flex-col">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl overflow-hidden border border-gray-100 dark:border-gray-700 h-[calc(100vh-240px)] flex flex-col">
         {/* Header */}
-        <div className="p-6 border-b border-gray-200 dark:border-gray-700 h-32 flex-shrink-0">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <div className="relative">
+        <div className="p-8 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+          <div className="flex items-start justify-between mb-6">
+            <div className="flex-1">
+              <div className="relative mb-3">
                 <h1 className={cn(
-                  "text-2xl font-bold text-gray-900 dark:text-white transition-all duration-300 absolute inset-0",
+                  "text-3xl font-bold text-gray-900 dark:text-white transition-all duration-300 leading-tight",
                   isLoading && "opacity-0"
                 )}>
                   {meme.title}
                 </h1>
                 {isLoading && (
-                  <div className="w-64 h-8 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                  <div className="absolute inset-0 w-80 h-9 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
                 )}
               </div>
-              <p className="text-gray-600 dark:text-gray-400">
-                by <span className="font-medium">{meme.author}</span>
+              <p className="text-gray-600 dark:text-gray-400 text-lg">
+                by <span className="font-semibold text-gray-800 dark:text-gray-200">{meme.author}</span>
               </p>
             </div>
-            <span className="text-sm text-gray-500 dark:text-gray-400">
-              {meme.createdAt}
-            </span>
+            <div className="text-right ml-6">
+              <span className="text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 px-3 py-1 rounded-full">
+                {meme.createdAt}
+              </span>
+            </div>
           </div>
           
           {meme.tags && meme.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-3">
               {meme.tags.map((tag, index) => (
                 <span
                   key={index}
-                  className="px-3 py-1 text-sm bg-blue-100 text-blue-800 rounded-full dark:bg-blue-900 dark:text-blue-200"
+                  className="px-4 py-2 text-sm font-medium bg-blue-50 text-blue-700 rounded-full dark:bg-blue-900/30 dark:text-blue-300 border border-blue-100 dark:border-blue-800"
                 >
                   #{tag}
                 </span>
@@ -141,26 +143,9 @@ const MemeDetail: React.FC<MemeDetailProps> = ({
         </div>
 
         {/* Image container with navigation */}
-        <div className="relative flex-1 flex items-center justify-center">
-          {/* Navigation arrows */}
-          <button
-            onClick={() => handleNavigate('prev')}
-            className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10 bg-black bg-opacity-50 hover:bg-opacity-75 text-white p-3 rounded-full transition-all duration-200 hover:scale-110"
-            aria-label="Previous meme"
-          >
-            <span className="text-xl">←</span>
-          </button>
-          
-          <button
-            onClick={() => handleNavigate('next')}
-            className="absolute right-4 top-1/2 transform -translate-y-1/2 z-10 bg-black bg-opacity-50 hover:bg-opacity-75 text-white p-3 rounded-full transition-all duration-200 hover:scale-110"
-            aria-label="Next meme"
-          >
-            <span className="text-xl">→</span>
-          </button>
-
+        <div className="relative flex-1 flex items-center justify-center p-8">
           {/* Image with smooth transitions */}
-          <div className="w-full max-w-2xl h-96 relative">
+          <div className="w-full max-w-3xl h-[500px] relative bg-gray-50 dark:bg-gray-900 rounded-xl overflow-hidden">
             <Image
               src={meme.imageUrl}
               alt={meme.title}
@@ -175,61 +160,80 @@ const MemeDetail: React.FC<MemeDetailProps> = ({
               priority
             />
             {isLoading && (
-              <div className="absolute inset-0 w-full h-full bg-gray-200 dark:bg-gray-700 animate-pulse rounded-lg"></div>
+              <div className="absolute inset-0 w-full h-full bg-gray-200 dark:bg-gray-700 animate-pulse"></div>
             )}
           </div>
+
+          {/* Navigation arrows - positioned relative to the container */}
+          <button
+            onClick={() => handleNavigate('prev')}
+            className="absolute left-8 top-1/2 transform -translate-y-1/2 z-20 bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl text-gray-700 dark:text-gray-300 p-4 rounded-full transition-all duration-200 hover:scale-110 border border-gray-200 dark:border-gray-600"
+            aria-label="Previous meme"
+          >
+            <span className="text-2xl">←</span>
+          </button>
+          
+          <button
+            onClick={() => handleNavigate('next')}
+            className="absolute right-8 top-1/2 transform -translate-y-1/2 z-20 bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl text-gray-700 dark:text-gray-300 p-4 rounded-full transition-all duration-200 hover:scale-110 border border-gray-200 dark:border-gray-600"
+            aria-label="Next meme"
+          >
+            <span className="text-2xl">→</span>
+          </button>
         </div>
 
         {/* Footer with actions */}
-        <div className="p-6 border-t border-gray-200 dark:border-gray-700 h-20 flex-shrink-0">
+        <div className="p-8 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-6">
+            <div className="flex items-center space-x-8">
               <Button
                 variant="ghost"
                 onClick={handleLike}
-                className="flex items-center space-x-2 hover:bg-red-50 dark:hover:bg-red-900/20"
+                className="flex items-center space-x-3 hover:bg-red-50 dark:hover:bg-red-900/20 px-4 py-2 rounded-lg transition-colors"
                 disabled={isLoading}
               >
-                <span className="text-xl">👍</span>
-                <span className="font-medium">{meme.likes}</span>
+                <span className="text-2xl">👍</span>
+                <span className="font-semibold text-lg">{meme.likes.toLocaleString()}</span>
               </Button>
               
               <Button
                 variant="ghost"
                 onClick={handleComment}
-                className="flex items-center space-x-2 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                className="flex items-center space-x-3 hover:bg-blue-50 dark:hover:bg-blue-900/20 px-4 py-2 rounded-lg transition-colors"
                 disabled={isLoading}
               >
-                <span className="text-xl">💬</span>
-                <span className="font-medium">{meme.comments}</span>
+                <span className="text-2xl">💬</span>
+                <span className="font-semibold text-lg">{meme.comments.toLocaleString()}</span>
               </Button>
               
               <Button
                 variant="ghost"
                 onClick={handleShare}
-                className="flex items-center space-x-2 hover:bg-green-50 dark:hover:bg-green-900/20"
+                className="flex items-center space-x-3 hover:bg-green-50 dark:hover:bg-green-900/20 px-4 py-2 rounded-lg transition-colors"
                 disabled={isLoading}
               >
-                <span className="text-xl">📤</span>
-                <span className="font-medium">{meme.shares}</span>
+                <span className="text-2xl">📤</span>
+                <span className="font-semibold text-lg">{meme.shares.toLocaleString()}</span>
               </Button>
             </div>
 
             {/* Keyboard shortcuts hint */}
-            <div className="hidden sm:flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
-              <span>Use ← → to navigate</span>
+            <div className="hidden sm:flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 px-4 py-2 rounded-full">
+              <span className="font-medium">Use ← → to navigate</span>
               <span>•</span>
-              <span>ESC to go back</span>
+              <span className="font-medium">ESC to go back</span>
             </div>
           </div>
         </div>
       </div>
 
       {/* Mobile navigation hint */}
-      <div className="mt-6 text-center sm:hidden">
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          Tap the arrows to navigate between memes
-        </p>
+      <div className="mt-8 text-center sm:hidden">
+        <div className="bg-gray-50 dark:bg-gray-700 px-6 py-3 rounded-full inline-block">
+          <p className="text-sm text-gray-600 dark:text-gray-300 font-medium">
+            Tap the arrows to navigate between memes
+          </p>
+        </div>
       </div>
     </div>
   );
