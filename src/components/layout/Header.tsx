@@ -52,22 +52,22 @@ const Header: React.FC<HeaderProps> = ({ onSearch, showSearch = true }) => {
           <nav className="flex items-center space-x-4">
             <Link href="/categories" className="cursor-pointer">
               <Button variant="ghost" size="sm">
-                🎭 All Memes
+                Categories
               </Button>
             </Link>
             <Link href="/trending" className="cursor-pointer">
               <Button variant="ghost" size="sm">
-                🔥 Trending
+                Trending
               </Button>
             </Link>
             <Link href="/upload" className="cursor-pointer">
-              <Button variant="primary" size="sm">
-                📤 Upload
+              <Button variant="ghost" size="sm">
+                Upload
               </Button>
             </Link>
             <Link href="/profile" className="cursor-pointer">
               <Button variant="ghost" size="sm">
-                👤 Profile
+                  Profile
               </Button>
             </Link>
           </nav>

@@ -5,4 +5,5 @@ export { Stats } from './Stats';
 export { Newsletter } from './Newsletter';
 export { FeaturedCreator } from './FeaturedCreator';
 export { TrendingTags } from './TrendingTags';
-export { CategoryCard } from './CategoryCard'; 
+export { CategoryCard } from './CategoryCard';
+export { CategoriesSidebar } from './CategoriesSidebar'; 

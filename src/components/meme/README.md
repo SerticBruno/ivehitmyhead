@@ -1,75 +1,60 @@
 # Meme Components
 
-This directory contains all meme-related components that follow a unified design system and support infinite scroll functionality.
+This directory contains all the components related to meme display and interaction.
 
 ## Components
 
 ### MemeCard
-- Displays individual meme information in a card format
-- Shows meme image, title, author, stats, and tags
-- Includes category badge when available
-- Handles click events to navigate to meme detail page
-- Supports like, comment, and share actions
+A single meme card component that displays meme information with like, share, and comment functionality.
+
+### FeaturedMemeCard
+A simplified meme card component specifically for featured memes. Shows only essential information:
+- Title (with line clamping for long titles)
+- Author
+- Image (fixed height for consistency)
+- No tags, categories, or interaction buttons
+- Clean, minimal design
 
 ### MemeDetail
-- Full-screen meme viewer with navigation controls
-- Supports keyboard navigation (arrow keys, escape, Z for zoom)
-- Image zoom functionality
-- Integrated stats and action buttons
-- Consistent design with other meme components
+A detailed view component for individual memes with navigation between memes.
 
 ### MemeGrid
-- Grid layout for displaying multiple memes
-- Supports infinite scroll with intersection observer
-- Loading states and empty states
-- Responsive grid (1-4 columns based on screen size)
-- Unified with infinite scroll hook
+A grid layout component for displaying multiple memes with infinite scroll support.
 
-## Design System
-
-All components follow a consistent design pattern:
-- **Colors**: Consistent color scheme with dark mode support
-- **Typography**: Unified font sizes and weights
-- **Spacing**: Consistent padding and margins
-- **Interactions**: Hover effects and transitions
-- **Layout**: Responsive grid system
-
-## Infinite Scroll
-
-The infinite scroll functionality is implemented using:
-- `useInfiniteScroll` hook for intersection observer logic
-- Pagination support in data fetching
-- Loading states for better UX
-- Automatic detection of scroll position
-
-## Types
-
-All components use shared types from `@/lib/types/meme`:
-- `Meme`: Core meme data structure
-- `Category`: Category information
-- `MemeCardProps`: Props for MemeCard component
-- `MemeDetailProps`: Props for MemeDetail component
-- `MemeGridProps`: Props for MemeGrid component
+### FeaturedMemes
+A specialized component for displaying featured memes on the home page. Shows only the first 3 memes with:
+- Clean, simplified design
+- 3-column grid layout (1 column on mobile, 3 on tablet+)
+- Uses FeaturedMemeCard for consistent styling
+- No hover effects or extra decorations
 
 ## Usage
 
 ```tsx
-import { MemeGrid, MemeCard, MemeDetail } from '@/components/meme';
+import { MemeCard, FeaturedMemeCard, MemeDetail, MemeGrid, FeaturedMemes } from '@/components/meme';
 
-// Basic usage
-<MemeGrid 
+// For featured memes (home page) - simplified display
+<FeaturedMemes
   memes={memes}
   onLike={handleLike}
   onShare={handleShare}
   onComment={handleComment}
-  showLoadMore={true}
-  onLoadMore={handleLoadMore}
-  hasMore={hasMore}
 />
 
-// With infinite scroll
-<MemeGrid 
+// For individual featured meme cards
+<FeaturedMemeCard
+  {...meme}
+  onLike={handleLike}
+  onShare={handleShare}
+  onComment={handleComment}
+/>
+
+// For full meme grids (memes page, categories) - full functionality
+<MemeGrid
   memes={memes}
+  onLike={handleLike}
+  onShare={handleShare}
+  onComment={handleComment}
   loading={loading}
   showLoadMore={true}
   onLoadMore={handleLoadMore}
@@ -77,17 +62,9 @@ import { MemeGrid, MemeCard, MemeDetail } from '@/components/meme';
 />
 ```
 
-## Data Flow
+## Props
 
-1. Components receive data through props
-2. Actions (like, share, comment) are handled by parent components
-3. Infinite scroll triggers data loading through callbacks
-4. Loading states are managed at the component level
-5. Error handling is implemented for failed requests
-
-## Responsiveness
-
-- Mobile-first design approach
-- Grid adapts from 1 to 4 columns based on screen size
-- Touch-friendly interactions on mobile devices
-- Optimized image loading with Next.js Image component
+All components accept standard meme interaction handlers:
+- `onLike`: Function called when meme is liked
+- `onShare`: Function called when meme is shared  
+- `onComment`: Function called when meme is commented on

@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Header, Footer } from '@/components/layout';
-import { MemeGrid } from '@/components/meme';
+import { FeaturedMemes } from '@/components/meme';
 import { Button, Stats, Newsletter, FeaturedCreator, TrendingTags } from '@/components/ui';
 import { Meme, Category } from '@/lib/types/meme';
 import { mockMemes, mockCategories } from '@/lib/data/mockData';
@@ -131,17 +131,16 @@ export default function Home() {
         <section className="mb-12">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold">Featured Memes</h2>
-            <Button variant="ghost">
+            <Button variant="ghost" onClick={() => window.location.href = '/memes'}>
               View All →
             </Button>
           </div>
           
-          <MemeGrid
+          <FeaturedMemes
             memes={memes}
             onLike={handleLike}
             onShare={handleShare}
             onComment={handleComment}
-            loading={loading}
           />
         </section>
 
