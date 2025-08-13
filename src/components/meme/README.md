@@ -1,122 +1,93 @@
-# Meme Display Components
+# Meme Components
 
-## Overview
-
-This directory contains components for displaying memes with intelligent handling of different image dimensions and responsive design.
+This directory contains all meme-related components that follow a unified design system and support infinite scroll functionality.
 
 ## Components
 
+### MemeCard
+- Displays individual meme information in a card format
+- Shows meme image, title, author, stats, and tags
+- Includes category badge when available
+- Handles click events to navigate to meme detail page
+- Supports like, comment, and share actions
+
 ### MemeDetail
-The main component for displaying individual memes with full-screen viewing capabilities.
+- Full-screen meme viewer with navigation controls
+- Supports keyboard navigation (arrow keys, escape, Z for zoom)
+- Image zoom functionality
+- Integrated stats and action buttons
+- Consistent design with other meme components
 
-**Features:**
-- **Responsive Image Container**: Automatically adjusts to image dimensions
-- **Smart Scaling**: Calculates optimal container size based on aspect ratio
-- **Zoom Functionality**: Click to zoom in/out for detailed viewing
-- **Keyboard Navigation**: Arrow keys for navigation, Z for zoom, ESC to go back
-- **Touch-Friendly**: Mobile-optimized with touch gestures
+### MemeGrid
+- Grid layout for displaying multiple memes
+- Supports infinite scroll with intersection observer
+- Loading states and empty states
+- Responsive grid (1-4 columns based on screen size)
+- Unified with infinite scroll hook
 
-### ResponsiveImage
-A utility component for handling images with different dimensions intelligently.
+## Design System
 
-**Features:**
-- **Automatic Dimension Detection**: Detects natural image dimensions on load
-- **Aspect Ratio Preservation**: Maintains image proportions across screen sizes
-- **Responsive Container**: Adjusts container size based on image and viewport
-- **Loading States**: Smooth loading animations and skeleton placeholders
-- **Accessibility**: Proper alt text and keyboard navigation support
+All components follow a consistent design pattern:
+- **Colors**: Consistent color scheme with dark mode support
+- **Typography**: Unified font sizes and weights
+- **Spacing**: Consistent padding and margins
+- **Interactions**: Hover effects and transitions
+- **Layout**: Responsive grid system
 
-## Image Handling Strategy
+## Infinite Scroll
 
-### Problem
-Memes come in various dimensions:
-- Landscape (16:9, 4:3, etc.)
-- Portrait (3:4, 2:3, etc.)
-- Square (1:1)
-- Ultra-wide or tall formats
+The infinite scroll functionality is implemented using:
+- `useInfiniteScroll` hook for intersection observer logic
+- Pagination support in data fetching
+- Loading states for better UX
+- Automatic detection of scroll position
 
-### Solution
-1. **Dynamic Container Sizing**: Container dimensions calculated based on image aspect ratio
-2. **Viewport-Aware Scaling**: Maximum dimensions respect screen size and user preferences
-3. **Object-Fit Contain**: Images scale to fit container while preserving aspect ratio
-4. **Responsive Breakpoints**: Different behavior on mobile vs desktop
+## Types
 
-### Implementation Details
+All components use shared types from `@/lib/types/meme`:
+- `Meme`: Core meme data structure
+- `Category`: Category information
+- `MemeCardProps`: Props for MemeCard component
+- `MemeDetailProps`: Props for MemeDetail component
+- `MemeGridProps`: Props for MemeGrid component
 
-```typescript
-// Calculate optimal container dimensions
-const getContainerDimensions = () => {
-  const aspectRatio = imageDimensions.width / imageDimensions.height;
-  const maxHeight = Math.min(window.innerHeight * 0.7, 800);
-  const maxWidth = Math.min(window.innerWidth * 0.9, 1200);
+## Usage
 
-  if (aspectRatio > 1) {
-    // Landscape: constrain by height
-    const height = Math.min(maxHeight, maxWidth / aspectRatio);
-    return { width: `${height * aspectRatio}px`, height: `${height}px` };
-  } else {
-    // Portrait: constrain by width
-    const width = Math.min(maxWidth, maxHeight * aspectRatio);
-    return { width: `${width}px`, height: `${width / aspectRatio}px` };
-  }
-};
-```
-
-## Usage Examples
-
-### Basic Meme Display
 ```tsx
-<MemeDetail
-  meme={memeData}
-  onNavigate={handleNavigate}
+import { MemeGrid, MemeCard, MemeDetail } from '@/components/meme';
+
+// Basic usage
+<MemeGrid 
+  memes={memes}
   onLike={handleLike}
   onShare={handleShare}
   onComment={handleComment}
+  showLoadMore={true}
+  onLoadMore={handleLoadMore}
+  hasMore={hasMore}
+/>
+
+// With infinite scroll
+<MemeGrid 
+  memes={memes}
+  loading={loading}
+  showLoadMore={true}
+  onLoadMore={handleLoadMore}
+  hasMore={hasMore}
 />
 ```
 
-### Custom Responsive Image
-```tsx
-<ResponsiveImage
-  src="/path/to/meme.jpg"
-  alt="Meme description"
-  showZoomHint={true}
-  onClick={handleZoom}
-  onLoad={(dimensions) => console.log('Image loaded:', dimensions)}
-/>
-```
+## Data Flow
 
-## Keyboard Shortcuts
+1. Components receive data through props
+2. Actions (like, share, comment) are handled by parent components
+3. Infinite scroll triggers data loading through callbacks
+4. Loading states are managed at the component level
+5. Error handling is implemented for failed requests
 
-- **← →**: Navigate between memes
-- **Z**: Toggle zoom mode
-- **ESC**: Exit zoom or go back to home
+## Responsiveness
 
-## Mobile Optimizations
-
-- Touch-friendly navigation buttons
-- Swipe gestures for navigation (future enhancement)
-- Responsive button sizing
 - Mobile-first design approach
-
-## Performance Considerations
-
-- **Lazy Loading**: Images load only when needed
-- **Priority Loading**: Current meme loads with high priority
-- **Optimized Transitions**: Smooth animations with reduced motion support
-- **Memory Management**: Cleanup on component unmount
-
-## Accessibility Features
-
-- **Screen Reader Support**: Proper alt text and ARIA labels
-- **Keyboard Navigation**: Full keyboard accessibility
-- **High Contrast Support**: Enhanced visibility options
-- **Reduced Motion**: Respects user motion preferences
-
-## Future Enhancements
-
-- **Image Preloading**: Preload next/previous memes
-- **Virtual Scrolling**: For large meme collections
-- **Advanced Zoom**: Pinch-to-zoom, pan, and rotate
-- **Image Filters**: Basic image adjustments
-- **Social Sharing**: Direct sharing to social platforms
+- Grid adapts from 1 to 4 columns based on screen size
+- Touch-friendly interactions on mobile devices
+- Optimized image loading with Next.js Image component

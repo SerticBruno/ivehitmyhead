@@ -4,22 +4,7 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
-
-interface MemeCardProps {
-  id: string;
-  title: string;
-  imageUrl: string;
-  author: string;
-  likes: number;
-  comments: number;
-  shares: number;
-  createdAt: string;
-  tags?: string[];
-  onLike?: (id: string) => void;
-  onShare?: (id: string) => void;
-  onComment?: (id: string) => void;
-  className?: string;
-}
+import { MemeCardProps } from '@/lib/types/meme';
 
 const MemeCard: React.FC<MemeCardProps> = ({
   id,
@@ -31,6 +16,7 @@ const MemeCard: React.FC<MemeCardProps> = ({
   shares,
   createdAt,
   tags = [],
+  category,
   onLike,
   onShare,
   onComment,
@@ -70,27 +56,37 @@ const MemeCard: React.FC<MemeCardProps> = ({
           </div>
           <span className="text-xs text-gray-400">{createdAt}</span>
         </div>
-        {tags.length > 0 && (
-          <div className="flex flex-wrap gap-1 mt-2">
-            {tags.map((tag, index) => (
-              <span
-                key={index}
-                className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full dark:bg-blue-900 dark:text-blue-200"
-              >
-                #{tag}
-              </span>
-            ))}
-          </div>
-        )}
+        <div className="flex flex-wrap gap-1 mt-2">
+          {category && (
+            <span className="px-2 py-1 text-xs bg-purple-100 text-purple-800 rounded-full dark:bg-purple-900 dark:text-purple-200">
+              {category}
+            </span>
+          )}
+          {tags.length > 0 && tags.map((tag, index) => (
+            <span
+              key={index}
+              className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full dark:bg-blue-900 dark:text-blue-200"
+            >
+              #{tag}
+            </span>
+          ))}
+        </div>
       </CardHeader>
       
       <CardContent className="p-0">
-        <div className="relative w-full h-64 sm:h-80">
+        <div 
+          className="relative w-full" 
+          style={{ 
+            height: 'calc(100vh - 300px)',
+            minHeight: '400px',
+            maxHeight: '800px'
+          }}
+        >
           <Image
             src={imageUrl}
             alt={title}
             fill
-            className="object-cover"
+            className="object-contain"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
         </div>

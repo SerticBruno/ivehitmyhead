@@ -3,26 +3,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
-
-interface MemeDetailProps {
-  meme: {
-    id: string;
-    title: string;
-    imageUrl: string;
-    author: string;
-    likes: number;
-    comments: number;
-    shares: number;
-    createdAt: string;
-    tags?: string[];
-  } | null;
-  isLoading?: boolean;
-  transitionDirection?: 'left' | 'right' | null;
-  onNavigate: (direction: 'prev' | 'next') => void;
-  onLike: (id: string) => void;
-  onShare: (id: string) => void;
-  onComment: (id: string) => void;
-}
+import { MemeDetailProps } from '@/lib/types/meme';
 
 const MemeDetail: React.FC<MemeDetailProps> = ({
   meme,

@@ -1,3 +1,6 @@
-export { MemeCard, type MemeCardProps } from './MemeCard';
-export { MemeGrid, type MemeGridProps } from './MemeGrid';
-export { MemeDetail, type MemeDetailProps } from './MemeDetail'; 
+export { MemeCard } from './MemeCard';
+export { MemeDetail } from './MemeDetail';
+export { MemeGrid } from './MemeGrid';
+export type { MemeCardProps } from '@/lib/types/meme';
+export type { MemeDetailProps } from '@/lib/types/meme';
+export type { MemeGridProps } from '@/lib/types/meme'; 

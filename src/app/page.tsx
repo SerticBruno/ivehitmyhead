@@ -4,76 +4,8 @@ import React, { useState } from 'react';
 import { Header, Footer } from '@/components/layout';
 import { MemeGrid } from '@/components/meme';
 import { Button, Stats, Newsletter, FeaturedCreator, TrendingTags } from '@/components/ui';
-
-// Mock data for demonstration
-const mockMemes = [
-  {
-    id: '1',
-    title: 'When you finally fix that bug',
-    imageUrl: '/images/memes/480957114_1169193674883095_8090972759647921580_n.jpg',
-    author: 'CodeMaster',
-    likes: 1234,
-    comments: 56,
-    shares: 23,
-    createdAt: '2 hours ago',
-    tags: ['programming', 'bugs', 'relief']
-  },
-  {
-    id: '2',
-    title: 'Monday morning mood',
-    imageUrl: '/images/memes/480787581_566108259796338_1662378605168267162_n.jpg',
-    author: 'WeekendWarrior',
-    likes: 856,
-    comments: 34,
-    shares: 12,
-    createdAt: '4 hours ago',
-    tags: ['monday', 'work', 'mood']
-  },
-  {
-    id: '3',
-    title: 'Coffee is life',
-    imageUrl: '/images/memes/481693613_1167037158219367_4340552378064970754_n.jpg',
-    author: 'CaffeineAddict',
-    likes: 2341,
-    comments: 89,
-    shares: 45,
-    createdAt: '6 hours ago',
-    tags: ['coffee', 'life', 'addiction']
-  },
-  {
-    id: '4',
-    title: 'Debugging in production',
-    imageUrl: '/images/memes/481081560_947604320823149_8918738186035253363_n.jpg',
-    author: 'DevOpsGuru',
-    likes: 567,
-    comments: 23,
-    shares: 8,
-    createdAt: '8 hours ago',
-    tags: ['debugging', 'production', 'panic']
-  },
-  {
-    id: '5',
-    title: 'The perfect debugging meme',
-    imageUrl: '/images/memes/475860537_939831201626003_5967668030448102085_n.jpg',
-    author: 'MemeMaster Pro',
-    likes: 1892,
-    comments: 67,
-    shares: 34,
-    createdAt: '1 day ago',
-    tags: ['programming', 'debugging', 'funny']
-  },
-  {
-    id: '6',
-    title: 'Gaming life in a nutshell',
-    imageUrl: '/images/memes/476970358_1149823343610296_9211814444182508066_n.jpg',
-    author: 'FunnyGamer',
-    likes: 1456,
-    comments: 43,
-    shares: 21,
-    createdAt: '1 day ago',
-    tags: ['gaming', 'life', 'relatable']
-  }
-];
+import { Meme, Category } from '@/lib/types/meme';
+import { mockMemes, mockCategories } from '@/lib/data/mockData';
 
 // Mock data for new components
 const mockStats = [
@@ -130,7 +62,7 @@ const mockCreators = [
 ];
 
 export default function Home() {
-  const [memes, setMemes] = useState(mockMemes);
+  const [memes, setMemes] = useState<Meme[]>(mockMemes);
   const [loading, setLoading] = useState(false);
 
   const handleSearch = (query: string) => {
@@ -215,21 +147,22 @@ export default function Home() {
 
         {/* Categories Section */}
         <section className="mb-12">
-          <h2 className="text-2xl font-bold mb-6">Popular Categories</h2>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold">Popular Categories</h2>
+            <Button variant="ghost" onClick={() => window.location.href = '/categories'}>
+              View All Memes →
+            </Button>
+          </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[
-              { name: 'Programming', emoji: '💻', count: '1.2k' },
-              { name: 'Gaming', emoji: '🎮', count: '856' },
-              { name: 'Animals', emoji: '🐕', count: '2.1k' },
-              { name: 'Work', emoji: '💼', count: '743' }
-            ].map((category) => (
+            {mockCategories.slice(0, 4).map((category) => (
               <div
-                key={category.name}
+                key={category.id}
                 className="bg-white dark:bg-gray-800 rounded-lg p-6 text-center hover:shadow-md transition-shadow cursor-pointer"
+                onClick={() => window.location.href = `/categories/${category.id}`}
               >
                 <div className="text-3xl mb-2">{category.emoji}</div>
                 <h3 className="font-semibold mb-1">{category.name}</h3>
-                <p className="text-sm text-gray-500">{category.count} memes</p>
+                <p className="text-sm text-gray-500">{category.count.toLocaleString()} memes</p>
               </div>
             ))}
           </div>
