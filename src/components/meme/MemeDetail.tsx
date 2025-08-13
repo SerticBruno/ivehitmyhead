@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
@@ -34,11 +34,12 @@ const MemeDetail: React.FC<MemeDetailProps> = ({
   onComment
 }) => {
   const router = useRouter();
+  const [isZoomed, setIsZoomed] = useState(false);
 
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (isLoading) return; // Prevent navigation during loading
+      if (isLoading) return;
       
       switch (event.key) {
         case 'ArrowLeft':
@@ -48,14 +49,27 @@ const MemeDetail: React.FC<MemeDetailProps> = ({
           onNavigate('next');
           break;
         case 'Escape':
-          router.push('/');
+          if (isZoomed) {
+            setIsZoomed(false);
+          } else {
+            router.push('/');
+          }
+          break;
+        case 'z':
+        case 'Z':
+          setIsZoomed(!isZoomed);
           break;
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onNavigate, router, isLoading]);
+  }, [onNavigate, router, isLoading, isZoomed]);
+
+  // Reset zoom when meme changes
+  useEffect(() => {
+    setIsZoomed(false);
+  }, [meme?.id]);
 
   const handleLike = () => {
     if (meme && !isLoading) onLike(meme.id);
@@ -75,6 +89,10 @@ const MemeDetail: React.FC<MemeDetailProps> = ({
     }
   };
 
+  const toggleZoom = () => {
+    setIsZoomed(!isZoomed);
+  };
+
   // Show loading state if no meme
   if (!meme) {
     return (
@@ -87,151 +105,150 @@ const MemeDetail: React.FC<MemeDetailProps> = ({
   }
 
   return (
-    <div className="max-w-5xl mx-auto">
-      {/* Back button */}
-      <div className="mb-8">
-        <Button
-          variant="ghost"
-          onClick={() => router.push('/')}
-          className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors"
-        >
-          <span className="text-lg">←</span>
-          <span className="font-medium">Back to Home</span>
-        </Button>
-      </div>
-
-      {/* Main meme display */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl overflow-hidden border border-gray-100 dark:border-gray-700 h-[calc(100vh-240px)] flex flex-col">
-        {/* Header */}
-        <div className="p-8 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-          <div className="flex items-start justify-between mb-6">
-            <div className="flex-1">
-              <div className="relative mb-3">
-                <h1 className={cn(
-                  "text-3xl font-bold text-gray-900 dark:text-white transition-all duration-300 leading-tight",
-                  isLoading && "opacity-0"
-                )}>
-                  {meme.title}
-                </h1>
+    <div className="max-w-7xl mx-auto px-4">
+      {/* Main content - Image and stats side by side */}
+      <div className="grid lg:grid-cols-1 gap-6">
+        {/* Meme image (full width) */}
+        <div className="lg:col-span-1">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden">
+            {/* Image container - constrained to screen height */}
+            <div className="relative bg-gray-50 dark:bg-gray-900 p-4" style={{ maxHeight: 'calc(100vh - 200px)' }}>
+              <div 
+                className={cn(
+                  "relative mx-auto transition-all duration-300 cursor-pointer flex items-center justify-center",
+                  isZoomed ? "max-w-none" : "max-w-4xl"
+                )}
+                onClick={toggleZoom}
+                style={{ height: 'calc(100vh - 250px)' }}
+              >
+                <Image
+                  src={meme.imageUrl}
+                  alt={meme.title}
+                  fill
+                  className={cn(
+                    "object-contain transition-all duration-300 rounded-lg",
+                    isLoading && "opacity-0",
+                    transitionDirection === 'left' && "transform -translate-x-4",
+                    transitionDirection === 'right' && "transform translate-x-4"
+                  )}
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
+                  priority
+                />
                 {isLoading && (
-                  <div className="absolute inset-0 w-80 h-9 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                  <div className="absolute inset-0 w-full h-full bg-gray-200 dark:bg-gray-700 animate-pulse rounded-lg"></div>
+                )}
+                
+                {/* Zoom indicator */}
+                {!isZoomed && (
+                  <div className="absolute top-4 right-4 bg-black/50 text-white px-3 py-1 rounded-full text-sm font-medium">
+                    Click to zoom • Z
+                  </div>
                 )}
               </div>
-              <p className="text-gray-600 dark:text-gray-400 text-lg">
-                by <span className="font-semibold text-gray-800 dark:text-gray-200">{meme.author}</span>
-              </p>
             </div>
-            <div className="text-right ml-6">
-              <span className="text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 px-3 py-1 rounded-full">
-                {meme.createdAt}
-              </span>
-            </div>
-          </div>
-          
-          {meme.tags && meme.tags.length > 0 && (
-            <div className="flex flex-wrap gap-3">
-              {meme.tags.map((tag, index) => (
-                <span
-                  key={index}
-                  className="px-4 py-2 text-sm font-medium bg-blue-50 text-blue-700 rounded-full dark:bg-blue-900/30 dark:text-blue-300 border border-blue-100 dark:border-blue-800"
+
+            {/* Navigation controls */}
+            <div className="p-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+              <div className="flex items-center justify-between">
+                <Button
+                  onClick={() => handleNavigate('prev')}
+                  className="flex items-center space-x-2 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600"
+                  disabled={isLoading}
                 >
-                  #{tag}
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Image container with navigation */}
-        <div className="relative flex-1 flex items-center justify-center p-8">
-          {/* Image with smooth transitions */}
-          <div className="w-full max-w-3xl h-[500px] relative bg-gray-50 dark:bg-gray-900 rounded-xl overflow-hidden">
-            <Image
-              src={meme.imageUrl}
-              alt={meme.title}
-              fill
-              className={cn(
-                "object-contain transition-all duration-300",
-                isLoading && "opacity-0",
-                transitionDirection === 'left' && "transform -translate-x-4",
-                transitionDirection === 'right' && "transform translate-x-4"
-              )}
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
-              priority
-            />
-            {isLoading && (
-              <div className="absolute inset-0 w-full h-full bg-gray-200 dark:bg-gray-700 animate-pulse"></div>
-            )}
-          </div>
-
-          {/* Navigation arrows - positioned relative to the container */}
-          <button
-            onClick={() => handleNavigate('prev')}
-            className="absolute left-8 top-1/2 transform -translate-y-1/2 z-20 bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl text-gray-700 dark:text-gray-300 p-4 rounded-full transition-all duration-200 hover:scale-110 border border-gray-200 dark:border-gray-600"
-            aria-label="Previous meme"
-          >
-            <span className="text-2xl">←</span>
-          </button>
-          
-          <button
-            onClick={() => handleNavigate('next')}
-            className="absolute right-8 top-1/2 transform -translate-y-1/2 z-20 bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl text-gray-700 dark:text-gray-300 p-4 rounded-full transition-all duration-200 hover:scale-110 border border-gray-200 dark:border-gray-600"
-            aria-label="Next meme"
-          >
-            <span className="text-2xl">→</span>
-          </button>
-        </div>
-
-        {/* Footer with actions */}
-        <div className="p-8 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-8">
-              <Button
-                variant="ghost"
-                onClick={handleLike}
-                className="flex items-center space-x-3 hover:bg-red-50 dark:hover:bg-red-900/20 px-4 py-2 rounded-lg transition-colors"
-                disabled={isLoading}
-              >
-                <span className="text-2xl">👍</span>
-                <span className="font-semibold text-lg">{meme.likes.toLocaleString()}</span>
-              </Button>
-              
-              <Button
-                variant="ghost"
-                onClick={handleComment}
-                className="flex items-center space-x-3 hover:bg-blue-50 dark:hover:bg-blue-900/20 px-4 py-2 rounded-lg transition-colors"
-                disabled={isLoading}
-              >
-                <span className="text-2xl">💬</span>
-                <span className="font-semibold text-lg">{meme.comments.toLocaleString()}</span>
-              </Button>
-              
-              <Button
-                variant="ghost"
-                onClick={handleShare}
-                className="flex items-center space-x-3 hover:bg-green-50 dark:hover:bg-green-900/20 px-4 py-2 rounded-lg transition-colors"
-                disabled={isLoading}
-              >
-                <span className="text-2xl">📤</span>
-                <span className="font-semibold text-lg">{meme.shares.toLocaleString()}</span>
-              </Button>
-            </div>
-
-            {/* Keyboard shortcuts hint */}
-            <div className="hidden sm:flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 px-4 py-2 rounded-full">
-              <span className="font-medium">Use ← → to navigate</span>
-              <span>•</span>
-              <span className="font-medium">ESC to go back</span>
+                  <span>←</span>
+                  <span>Prev</span>
+                </Button>
+                
+                {/* Meme info and actions integrated in navigation area */}
+                <div className="flex-1 mx-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-7 h-7 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white text-xs font-semibold">
+                        {meme.author.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">
+                          {meme.author}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {meme.createdAt}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    {/* Stats, Actions, and Tags */}
+                    <div className="flex items-center space-x-3">
+                      {/* Tags positioned to the left of action buttons */}
+                      {meme.tags && meme.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {meme.tags.map((tag, index) => (
+                            <span
+                              key={index}
+                              className="px-2 py-1 text-xs font-medium bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 rounded-md dark:from-blue-900/30 dark:to-indigo-900/30 dark:text-blue-300 border border-blue-200 dark:border-blue-800 hover:from-blue-100 hover:to-indigo-100 dark:hover:from-blue-900/40 dark:hover:to-indigo-900/40 transition-all duration-200 cursor-pointer hover:scale-105"
+                            >
+                              #{tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      
+                      {/* Action buttons */}
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={handleLike}
+                          disabled={isLoading}
+                          className="flex flex-col items-center justify-center w-14 h-14 bg-gradient-to-br from-red-50 to-pink-50 hover:from-red-100 hover:to-pink-100 dark:from-red-900/20 dark:to-pink-900/20 dark:hover:from-red-900/30 dark:hover:to-pink-900/30 rounded-lg border border-red-200 hover:border-red-300 dark:border-red-800 transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed group p-2 shadow-md"
+                        >
+                          <div className="font-bold text-base text-red-700 dark:text-red-300 mb-1">{meme.likes.toLocaleString()}</div>
+                          <div className="text-xs font-medium text-red-600 dark:text-red-400">Like</div>
+                        </button>
+                        <button
+                          onClick={handleComment}
+                          disabled={isLoading}
+                          className="flex flex-col items-center justify-center w-14 h-14 bg-gradient-to-br from-blue-50 to-cyan-50 hover:from-blue-100 hover:to-cyan-100 dark:from-blue-900/20 dark:to-cyan-900/20 dark:hover:from-blue-900/30 dark:hover:to-cyan-900/30 rounded-lg border border-blue-200 hover:border-blue-300 dark:border-blue-800 transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed group p-2 shadow-md"
+                        >
+                          <div className="font-bold text-base text-blue-700 dark:text-blue-300 mb-1">{meme.comments.toLocaleString()}</div>
+                          <div className="text-xs font-medium text-blue-600 dark:text-blue-400">Comment</div>
+                        </button>
+                        <button
+                          onClick={handleShare}
+                          disabled={isLoading}
+                          className="flex flex-col items-center justify-center w-14 h-14 bg-gradient-to-br from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 dark:from-green-900/20 dark:to-emerald-900/20 dark:hover:from-green-900/30 dark:hover:to-emerald-900/30 rounded-lg border border-green-200 hover:border-green-300 dark:border-green-800 transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed group p-2 shadow-md"
+                        >
+                          <div className="font-bold text-base text-green-700 dark:text-green-300 mb-1">{meme.shares.toLocaleString()}</div>
+                          <div className="text-xs font-medium text-green-600 dark:text-green-400">Share</div>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Title only */}
+                  <div>
+                    <h1 className="text-base font-bold text-gray-900 dark:text-white leading-tight">
+                      {meme.title}
+                    </h1>
+                  </div>
+                </div>
+                
+                <Button
+                  onClick={() => handleNavigate('next')}
+                  className="flex items-center space-x-2 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600"
+                  disabled={isLoading}
+                >
+                  <span>Next</span>
+                  <span>→</span>
+                </Button>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Mobile navigation hint */}
-      <div className="mt-8 text-center sm:hidden">
-        <div className="bg-gray-50 dark:bg-gray-700 px-6 py-3 rounded-full inline-block">
-          <p className="text-sm text-gray-600 dark:text-gray-300 font-medium">
-            Tap the arrows to navigate between memes
+      <div className="mt-6 text-center lg:hidden">
+        <div className="bg-gray-50 dark:bg-gray-700 px-4 py-2 rounded-full inline-block">
+          <p className="text-xs text-gray-600 dark:text-gray-300 font-medium">
+            Tap image to zoom • Use arrows to navigate
           </p>
         </div>
       </div>
