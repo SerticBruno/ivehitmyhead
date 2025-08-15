@@ -3,23 +3,23 @@
 import React, { useState } from 'react';
 import { Header, Footer } from '@/components/layout';
 import { MemeGrid } from '@/components/meme';
-import { CategoriesSidebar, Button } from '@/components/ui';
+import { CategorySorting, Button } from '@/components/ui';
 import { useMemes } from '@/lib/hooks/useMemes';
-import { useCategories } from '@/lib/hooks/useCategories';
 import { useMemeInteractions } from '@/lib/hooks/useMemeInteractions';
-import { cn } from '@/lib/utils';
 
 export default function CategoriesPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('');
-  const [showMobileCategories, setShowMobileCategories] = useState(false);
   const [likedMemes, setLikedMemes] = useState<Set<string>>(new Set());
   const [localMemes, setLocalMemes] = useState<any[]>([]);
+  const [sortBy, setSortBy] = useState<'created_at' | 'views' | 'likes' | 'comments'>('created_at');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
   // Fetch real data
-  const { categories, loading: categoriesLoading, error: categoriesError } = useCategories();
   const { memes, loading: memesLoading, error: memesError, hasMore, loadMore, refresh } = useMemes({
     category_id: selectedCategory || undefined,
-    limit: 12
+    limit: 12,
+    sort_by: sortBy,
+    sort_order: sortOrder
   });
   const { likeMeme } = useMemeInteractions();
 
@@ -33,7 +33,6 @@ export default function CategoriesPage() {
 
   const handleCategorySelect = (categoryId: string) => {
     setSelectedCategory(categoryId);
-    setShowMobileCategories(false); // Hide mobile menu after selection
     setLocalMemes([]); // Reset local memes when changing categories
   };
 
@@ -83,40 +82,6 @@ export default function CategoriesPage() {
     // Implement comment functionality here
   };
 
-  // Show loading state while fetching categories
-  if (categoriesLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <Header onSearch={() => {}} />
-        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="text-center py-20">
-            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600 dark:text-gray-400">Loading categories...</p>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
-
-  // Show error state if there's an issue with categories
-  if (categoriesError) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <Header onSearch={() => {}} />
-        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="text-center py-20">
-            <div className="text-4xl mb-4">😢</div>
-            <h2 className="text-2xl font-bold mb-2">Failed to load categories</h2>
-            <p className="text-gray-600 dark:text-gray-400 mb-4">{categoriesError}</p>
-            <Button onClick={() => window.location.reload()}>Try Again</Button>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Header onSearch={() => {}} />
@@ -125,11 +90,11 @@ export default function CategoriesPage() {
         {/* Hero Section */}
         <section className="text-center mb-12">
           <h1 className="text-4xl md:text-6xl font-bold mb-4">
-            {selectedCategory ? categories.find(cat => cat.id === selectedCategory)?.name : 'All Categories'}
+            {selectedCategory ? 'Category Memes' : 'All Categories'}
           </h1>
           <p className="text-xl text-gray-600 dark:text-gray-400 mb-8 max-w-2xl mx-auto">
             {selectedCategory 
-              ? `Discover memes from the ${categories.find(cat => cat.id === selectedCategory)?.name} category`
+              ? 'Discover memes from this category'
               : 'Discover memes from all categories. Scroll through our entire collection and find something that makes you laugh!'
             }
           </p>
@@ -143,66 +108,11 @@ export default function CategoriesPage() {
           )}
         </section>
 
-        {/* Mobile Category Selector */}
-        <div className="lg:hidden mb-6">
-          <Button
-            onClick={() => setShowMobileCategories(!showMobileCategories)}
-            variant="outline"
-            className="w-full justify-between"
-          >
-            <span>
-              {selectedCategory 
-                ? categories.find(cat => cat.id === selectedCategory)?.name 
-                : 'All Categories'
-              }
-            </span>
-            <span>{showMobileCategories ? '▼' : '▶'}</span>
-          </Button>
-          
-          {showMobileCategories && (
-            <div className="mt-2 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-lg">
-              <div className="p-2 space-y-1">
-                <button
-                  onClick={() => handleCategorySelect('')}
-                  className={cn(
-                    "w-full flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors duration-150",
-                    "hover:bg-gray-50 dark:hover:bg-gray-700",
-                    !selectedCategory 
-                      ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300"
-                      : "text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-                  )}
-                >
-                  <span className="text-lg mr-3">🌟</span>
-                  <span>All Categories</span>
-                </button>
-                
-                {categories.map((category) => (
-                  <button
-                    key={category.id}
-                    onClick={() => handleCategorySelect(category.id)}
-                    className={cn(
-                      "w-full flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors duration-150",
-                      "hover:bg-gray-50 dark:hover:bg-gray-700",
-                      selectedCategory === category.id
-                        ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300"
-                        : "text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-                    )}
-                  >
-                    <span className="text-lg mr-3">{category.emoji}</span>
-                    <span>{category.name}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-
         {/* Main Content with Sidebar */}
         <div className="flex flex-col lg:flex-row gap-8 max-w-7xl mx-auto">
           {/* Categories Sidebar */}
           <aside className="hidden lg:block lg:w-80 flex-shrink-0">
-            <CategoriesSidebar
-              categories={categories}
+            <CategorySorting
               selectedCategory={selectedCategory}
               onCategorySelect={handleCategorySelect}
             />
@@ -210,6 +120,53 @@ export default function CategoriesPage() {
 
           {/* Memes Grid */}
           <section className="flex-1">
+            {/* Meme Sorting Controls */}
+            <div className="mb-6 bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  {selectedCategory ? 'Category Memes' : 'All Memes'}
+                </h3>
+                
+                <div className="flex items-center gap-3">
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Sort by:
+                  </label>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => {
+                      const newSortBy = e.target.value as 'created_at' | 'views' | 'likes' | 'comments';
+                      setSortBy(newSortBy);
+                      setLocalMemes([]); // Reset local memes when changing sorting
+                    }}
+                    className="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="created_at">Date Created</option>
+                    <option value="views">Most Viewed</option>
+                    <option value="likes">Most Liked</option>
+                    <option value="comments">Most Commented</option>
+                  </select>
+                  
+                  <button
+                    onClick={() => {
+                      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                      setLocalMemes([]); // Reset local memes when changing sort order
+                    }}
+                    title={`Sort ${sortOrder === 'asc' ? 'Ascending' : 'Descending'}`}
+                    className="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                  >
+                    {sortOrder === 'asc' ? '↑' : '↓'}
+                  </button>
+                  
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    {sortBy === 'created_at' && (sortOrder === 'desc' ? 'Newest first' : 'Oldest first')}
+                    {sortBy === 'views' && (sortOrder === 'desc' ? 'Most viewed first' : 'Least viewed first')}
+                    {sortBy === 'likes' && (sortOrder === 'desc' ? 'Most liked first' : 'Least liked first')}
+                    {sortBy === 'comments' && (sortOrder === 'desc' ? 'Most commented first' : 'Least commented first')}
+                  </span>
+                </div>
+              </div>
+            </div>
+
             {memesError ? (
               <div className="text-center py-12">
                 <div className="text-4xl mb-4">😢</div>
@@ -241,7 +198,7 @@ export default function CategoriesPage() {
             <h3 className="text-xl font-semibold mb-2">No memes found</h3>
             <p className="text-gray-500 dark:text-gray-400 text-center max-w-md">
               {selectedCategory 
-                ? `No memes found in the ${categories.find(cat => cat.id === selectedCategory)?.name} category yet.`
+                ? 'No memes found in this category yet.'
                 : 'Looks like there are no memes yet. Be the first to upload something hilarious!'
               }
             </p>

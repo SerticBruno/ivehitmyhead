@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
-import { cn } from '@/lib/utils';
+import { cn, formatRelativeTime, formatTime } from '@/lib/utils';
 import { MemeDetailProps } from '@/lib/types/meme';
 import { useMemeInteractions } from '@/lib/hooks/useMemeInteractions';
 
@@ -155,9 +155,17 @@ const MemeDetail: React.FC<MemeDetailProps> = ({
                         <p className="text-sm font-medium text-gray-900 dark:text-white">
                           {meme.author?.display_name || meme.author?.username || 'Unknown'}
                         </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {new Date(meme.created_at).toLocaleDateString()}
-                        </p>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          <div className="font-medium">
+                            {formatRelativeTime(meme.created_at)}
+                          </div>
+                          <div>
+                            {formatTime(meme.created_at)}
+                          </div>
+                          <div>
+                            {new Date(meme.created_at).toLocaleDateString()}
+                          </div>
+                        </div>
                       </div>
                     </div>
                     

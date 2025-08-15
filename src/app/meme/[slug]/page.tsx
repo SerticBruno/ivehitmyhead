@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Header, Footer } from '@/components/layout';
-import { Button } from '@/components/ui';
-import { Meme } from '@/lib/types/meme';
 import Image from 'next/image';
+import { Header, Footer } from '@/components/layout';
+import { Button } from '@/components/ui/Button';
+import { formatRelativeTime, formatTime } from '@/lib/utils';
+import { Meme } from '@/lib/types/meme';
 import { useMemeInteractions } from '@/lib/hooks/useMemeInteractions';
 
 export default function MemeDetailPage() {
@@ -142,7 +143,7 @@ export default function MemeDetailPage() {
                   <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
                     <span>by {meme.author?.display_name || meme.author?.username || 'Unknown'}</span>
                     <span>•</span>
-                    <span>{new Date(meme.created_at).toLocaleDateString()}</span>
+                    <span>{formatRelativeTime(meme.created_at)} ({formatTime(meme.created_at)})</span>
                     <span>•</span>
                     <span>{meme.views.toLocaleString()} views</span>
                   </div>

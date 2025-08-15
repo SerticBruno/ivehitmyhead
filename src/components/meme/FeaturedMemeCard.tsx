@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader } from '@/components/ui/Card';
-import { cn } from '@/lib/utils';
+import { cn, formatRelativeTime, formatTime } from '@/lib/utils';
 import { Meme } from '@/lib/types/meme';
 import { useMemeInteractions } from '@/lib/hooks/useMemeInteractions';
 
@@ -108,7 +108,7 @@ const FeaturedMemeCard: React.FC<FeaturedMemeCardProps> = ({
             </button>
           </div>
           <span className="text-xs">
-            {new Date(meme.created_at).toLocaleDateString()}
+            {formatRelativeTime(meme.created_at)} ({formatTime(meme.created_at)})
           </span>
         </div>
       </div>

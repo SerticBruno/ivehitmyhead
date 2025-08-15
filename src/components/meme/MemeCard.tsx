@@ -3,7 +3,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { cn } from '@/lib/utils';
+import { cn, formatRelativeTime, formatTime } from '@/lib/utils';
 import { MemeCardProps } from '@/lib/types/meme';
 import { useMemeInteractions } from '@/lib/hooks/useMemeInteractions';
 
@@ -62,9 +62,17 @@ const MemeCard: React.FC<MemeCardProps> = ({
               by {meme.author?.display_name || meme.author?.username || 'Unknown'}
             </p>
           </div>
-          <span className="text-xs text-gray-400">
-            {new Date(meme.created_at).toLocaleDateString()}
-          </span>
+          <div className="text-right">
+            <div className="text-sm text-gray-600 font-medium">
+              {formatRelativeTime(meme.created_at)}
+            </div>
+            <div className="text-xs text-gray-500">
+              {formatTime(meme.created_at)}
+            </div>
+            <div className="text-xs text-gray-400">
+              {new Date(meme.created_at).toLocaleDateString()}
+            </div>
+          </div>
         </div>
         <div className="flex flex-wrap gap-1 mt-2">
           {meme.category && (
