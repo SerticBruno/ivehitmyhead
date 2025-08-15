@@ -5,9 +5,11 @@ import { Header, Footer } from '@/components/layout';
 import { FeaturedMemes } from '@/components/meme';
 import { Button, Stats, Newsletter, FeaturedCreator, TrendingTags } from '@/components/ui';
 import { Meme, Category } from '@/lib/types/meme';
-import { mockMemes, mockCategories } from '@/lib/data/mockData';
+import { useMemes } from '@/lib/hooks/useMemes';
+import { useCategories } from '@/lib/hooks/useCategories';
+import { useMemeInteractions } from '@/lib/hooks/useMemeInteractions';
 
-// Mock data for new components
+// Mock data for components that don't have APIs yet
 const mockStats = [
   { label: 'Total Memes', value: 12543, suffix: '+', icon: '🎭', color: 'text-blue-600' },
   { label: 'Active Users', value: 8921, suffix: '', icon: '👥', color: 'text-green-600' },
@@ -62,20 +64,56 @@ const mockCreators = [
 ];
 
 export default function Home() {
-  const [memes, setMemes] = useState<Meme[]>(mockMemes);
-  const [loading, setLoading] = useState(false);
+  // Fetch real memes and categories
+  const { memes, loading: memesLoading, error: memesError, refresh: refreshMemes } = useMemes({ limit: 6 });
+  const { categories, loading: categoriesLoading, error: categoriesError } = useCategories();
+  const { likeMeme } = useMemeInteractions();
+  const [likedMemes, setLikedMemes] = useState<Set<string>>(new Set());
+  const [localMemes, setLocalMemes] = useState<any[]>([]);
+
+  // Initialize local memes when memes change from the hook
+  React.useEffect(() => {
+    setLocalMemes(memes);
+  }, [memes]);
+
+  // Use local memes if available, otherwise use memes from the hook
+  const displayMemes = localMemes.length > 0 ? localMemes : memes;
 
   const handleSearch = (query: string) => {
     console.log('Searching for:', query);
     // Implement search functionality here
   };
 
-  const handleLike = (id: string) => {
-    setMemes(prev => prev.map(meme => 
-      meme.id === id 
-        ? { ...meme, likes: meme.likes + 1 }
-        : meme
-    ));
+  const handleLike = async (slug: string) => {
+    try {
+      const isLiked = await likeMeme(slug);
+      
+      // Update local state to reflect the like change
+      setLikedMemes(prev => {
+        const newSet = new Set(prev);
+        if (isLiked) {
+          newSet.add(slug);
+        } else {
+          newSet.delete(slug);
+        }
+        return newSet;
+      });
+
+      // Update the meme's likes count locally without refreshing the page
+      const updatedMemes = localMemes.map(meme => {
+        if (meme.slug === slug) {
+          return {
+            ...meme,
+            likes_count: isLiked ? meme.likes_count + 1 : Math.max(0, meme.likes_count - 1)
+          };
+        }
+        return meme;
+      });
+      
+      setLocalMemes(updatedMemes);
+    } catch (error) {
+      console.error('Failed to like meme:', error);
+    }
   };
 
   const handleShare = (id: string) => {
@@ -103,6 +141,45 @@ export default function Home() {
     // Implement profile navigation here
   };
 
+  // Show loading state while fetching data
+  if (memesLoading || categoriesLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <Header onSearch={handleSearch} />
+        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="text-center py-20">
+            <div className="text-4xl mb-4">⏳</div>
+            <h2 className="text-2xl font-bold mb-2">Loading...</h2>
+            <p className="text-gray-600 dark:text-gray-400">Fetching the latest memes</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Show error state if there's an issue
+  if (memesError || categoriesError) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <Header onSearch={handleSearch} />
+        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="text-center py-20">
+            <div className="text-4xl mb-4">😢</div>
+            <h2 className="text-2xl font-bold mb-2">Something went wrong</h2>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">
+              {memesError || categoriesError}
+            </p>
+            <Button onClick={() => window.location.reload()}>
+              Try Again
+            </Button>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Header onSearch={handleSearch} />
@@ -118,10 +195,10 @@ export default function Home() {
             Join our community of meme enthusiasts!
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="text-lg px-8">
+            <Button size="lg" className="text-lg px-8" onClick={() => window.location.href = '/memes'}>
               🎭 Browse Memes
             </Button>
-            <Button variant="outline" size="lg" className="text-lg px-8">
+            <Button variant="outline" size="lg" className="text-lg px-8" onClick={() => window.location.href = '/upload'}>
               📤 Upload Your Own
             </Button>
           </div>
@@ -136,12 +213,26 @@ export default function Home() {
             </Button>
           </div>
           
-          <FeaturedMemes
-            memes={memes}
-            onLike={handleLike}
-            onShare={handleShare}
-            onComment={handleComment}
-          />
+          {displayMemes.length > 0 ? (
+            <FeaturedMemes
+              memes={displayMemes}
+              onLike={handleLike}
+              onShare={handleShare}
+              onComment={handleComment}
+              likedMemes={likedMemes}
+            />
+          ) : (
+            <div className="text-center py-12">
+              <div className="text-6xl mb-4">😢</div>
+              <h3 className="text-xl font-semibold mb-2">No memes yet</h3>
+              <p className="text-gray-500 dark:text-gray-400 mb-4">
+                Be the first to upload a meme!
+              </p>
+              <Button onClick={() => window.location.href = '/upload'}>
+                Upload First Meme
+              </Button>
+            </div>
+          )}
         </section>
 
         {/* Categories Section */}
@@ -153,15 +244,15 @@ export default function Home() {
             </Button>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {mockCategories.slice(0, 4).map((category) => (
+            {categories.slice(0, 4).map((category) => (
               <div
                 key={category.id}
                 className="bg-white dark:bg-gray-800 rounded-lg p-6 text-center hover:shadow-md transition-shadow cursor-pointer"
-                onClick={() => window.location.href = `/categories/${category.id}`}
+                onClick={() => window.location.href = `/categories/${category.name.toLowerCase().replace(/\s+/g, '-')}`}
               >
                 <div className="text-3xl mb-2">{category.emoji}</div>
                 <h3 className="font-semibold mb-1">{category.name}</h3>
-                <p className="text-sm text-gray-500">{category.count.toLocaleString()} memes</p>
+                <p className="text-sm text-gray-500">Browse memes</p>
               </div>
             ))}
           </div>

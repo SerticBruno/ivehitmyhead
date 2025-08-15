@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { MemeComment } from '@/lib/types/meme';
 
 interface UseMemeInteractionsReturn {
-  likeMeme: (memeId: string) => Promise<boolean>;
+  likeMeme: (memeSlug: string) => Promise<boolean>;
   commentOnMeme: (memeId: string, content: string, parentId?: string) => Promise<MemeComment | null>;
   recordView: (memeId: string) => Promise<void>;
   loading: boolean;
@@ -13,12 +13,12 @@ export const useMemeInteractions = (): UseMemeInteractionsReturn => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const likeMeme = useCallback(async (memeId: string): Promise<boolean> => {
+  const likeMeme = useCallback(async (memeSlug: string): Promise<boolean> => {
     try {
       setLoading(true);
       setError(null);
 
-      const response = await fetch(`/api/memes/${memeId}/like`, {
+      const response = await fetch(`/api/memes/${memeSlug}/like`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -73,10 +73,10 @@ export const useMemeInteractions = (): UseMemeInteractionsReturn => {
     }
   }, []);
 
-  const recordView = useCallback(async (memeId: string): Promise<void> => {
+  const recordView = useCallback(async (memeSlug: string): Promise<void> => {
     try {
       // Don't set loading for views as it's not user-initiated
-      await fetch(`/api/memes/${memeId}/view`, {
+      await fetch(`/api/memes/${memeSlug}/view`, {
         method: 'POST',
       });
     } catch (err) {

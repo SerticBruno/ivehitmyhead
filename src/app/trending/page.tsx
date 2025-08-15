@@ -4,92 +4,47 @@ import React, { useState } from 'react';
 import { Header, Footer } from '@/components/layout';
 import { MemeGrid } from '@/components/meme';
 import { Button } from '@/components/ui';
-
-// Mock trending memes data
-const trendingMemes = [
-  {
-    id: 'trend1',
-    title: 'Viral Programming Joke',
-    imageUrl: '/images/memes/475221154_1018967710275617_644663250847847580_n.jpg',
-    author: 'ViralCoder',
-    likes: 5432,
-    comments: 234,
-    shares: 156,
-    createdAt: '1 hour ago',
-    tags: ['viral', 'programming', 'trending']
-  },
-  {
-    id: 'trend2',
-    title: 'Epic Gaming Moment',
-    imageUrl: '/images/memes/475519798_499216039865627_6973489596584206514_n.jpg',
-    author: 'GamingPro',
-    likes: 4321,
-    comments: 189,
-    shares: 98,
-    createdAt: '3 hours ago',
-    tags: ['gaming', 'epic', 'moment']
-  },
-  {
-    id: 'trend3',
-    title: 'Work From Home Reality',
-    imageUrl: '/images/memes/475866307_10227739990630851_7466446956354749205_n.jpg',
-    author: 'WFHMaster',
-    likes: 3987,
-    comments: 145,
-    shares: 87,
-    createdAt: '5 hours ago',
-    tags: ['work', 'home', 'reality']
-  },
-  {
-    id: 'trend4',
-    title: 'Coffee Addict Confessions',
-    imageUrl: '/images/memes/450716012_815648060673048_6644857007895838499_n.jpg',
-    author: 'CoffeeLover',
-    likes: 3654,
-    comments: 123,
-    shares: 76,
-    createdAt: '7 hours ago',
-    tags: ['coffee', 'addict', 'confessions']
-  },
-  {
-    id: 'trend5',
-    title: 'Debugging Life Problems',
-    imageUrl: '/images/memes/451184802_330450540132615_4677958239563939281_n.jpg',
-    author: 'LifeDebugger',
-    likes: 3210,
-    comments: 98,
-    shares: 54,
-    createdAt: '9 hours ago',
-    tags: ['debugging', 'life', 'problems']
-  },
-  {
-    id: 'trend6',
-    title: 'Weekend Plans vs Reality',
-    imageUrl: '/images/memes/449386695_490799530140888_4993934697572710128_n.jpg',
-    author: 'WeekendPlanner',
-    likes: 2987,
-    comments: 87,
-    shares: 43,
-    createdAt: '11 hours ago',
-    tags: ['weekend', 'plans', 'reality']
-  }
-];
+import { useMemes } from '@/lib/hooks/useMemes';
+import { useMemeInteractions } from '@/lib/hooks/useMemeInteractions';
 
 export default function TrendingPage() {
-  const [memes, setMemes] = useState(trendingMemes);
   const [timeFilter, setTimeFilter] = useState('today');
+  const [likedMemes, setLikedMemes] = useState<Set<string>>(new Set());
+
+  // Fetch trending memes (sorted by likes)
+  const { memes, loading, error, hasMore, loadMore, refresh } = useMemes({
+    sort_by: 'likes',
+    sort_order: 'desc',
+    limit: 20
+  });
+
+  const { likeMeme } = useMemeInteractions();
 
   const handleSearch = (query: string) => {
     console.log('Searching trending memes for:', query);
     // Implement search functionality here
   };
 
-  const handleLike = (id: string) => {
-    setMemes(prev => prev.map(meme => 
-      meme.id === id 
-        ? { ...meme, likes: meme.likes + 1 }
-        : meme
-    ));
+  const handleLike = async (slug: string) => {
+    try {
+      const isLiked = await likeMeme(slug);
+      
+      // Update local state to reflect the like change
+      setLikedMemes(prev => {
+        const newSet = new Set(prev);
+        if (isLiked) {
+          newSet.add(slug);
+        } else {
+          newSet.delete(slug);
+        }
+        return newSet;
+      });
+
+      // Refresh the memes to get updated counts
+      refresh();
+    } catch (error) {
+      console.error('Failed to like meme:', error);
+    }
   };
 
   const handleShare = (id: string) => {
@@ -101,6 +56,23 @@ export default function TrendingPage() {
     console.log('Commenting on trending meme:', id);
     // Implement comment functionality here
   };
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <Header onSearch={handleSearch} />
+        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="text-center py-20">
+            <div className="text-4xl mb-4">😢</div>
+            <h2 className="text-2xl font-bold mb-2">Failed to load trending memes</h2>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">{error}</p>
+            <Button onClick={refresh}>Try Again</Button>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -142,13 +114,13 @@ export default function TrendingPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-white dark:bg-gray-800 rounded-lg p-6 text-center">
               <div className="text-3xl font-bold text-blue-600 mb-2">
-                {memes.reduce((sum, meme) => sum + meme.likes, 0).toLocaleString()}
+                {memes.reduce((sum, meme) => sum + meme.likes_count, 0).toLocaleString()}
               </div>
               <p className="text-gray-600 dark:text-gray-400">Total Likes</p>
             </div>
             <div className="bg-white dark:bg-gray-800 rounded-lg p-6 text-center">
               <div className="text-3xl font-bold text-green-600 mb-2">
-                {memes.reduce((sum, meme) => sum + meme.shares, 0).toLocaleString()}
+                {memes.reduce((sum, meme) => sum + meme.shares_count, 0).toLocaleString()}
               </div>
               <p className="text-gray-600 dark:text-gray-400">Total Shares</p>
             </div>
@@ -168,6 +140,11 @@ export default function TrendingPage() {
             onLike={handleLike}
             onShare={handleShare}
             onComment={handleComment}
+            loading={loading}
+            showLoadMore={true}
+            onLoadMore={loadMore}
+            hasMore={hasMore}
+            likedMemes={likedMemes}
           />
         </section>
       </main>

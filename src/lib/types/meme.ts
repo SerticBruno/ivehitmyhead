@@ -20,6 +20,7 @@ export interface Category {
 export interface Meme {
   id: string;
   title: string;
+  slug: string; // URL-friendly version of the title
   image_url: string;
   cloudinary_public_id: string;
   author_id: string;
@@ -67,10 +68,11 @@ export interface MemeView {
 // Component Props
 export interface MemeCardProps {
   meme: Meme;
-  onLike?: (id: string) => void;
+  onLike?: (slug: string) => void;
   onShare?: (id: string) => void;
   onComment?: (id: string) => void;
   className?: string;
+  isLiked?: boolean;
 }
 
 export interface MemeDetailProps {
@@ -78,14 +80,14 @@ export interface MemeDetailProps {
   isLoading?: boolean;
   transitionDirection?: 'left' | 'right' | null;
   onNavigate: (direction: 'prev' | 'next') => void;
-  onLike: (id: string) => void;
-  onShare: (id: string) => void;
-  onComment: (id: string) => void;
+  onLike: (slug: string) => void;
+  onShare?: (id: string) => void;
+  onComment?: (id: string) => void;
 }
 
 export interface MemeGridProps {
   memes: Meme[];
-  onLike?: (id: string) => void;
+  onLike?: (slug: string) => void;
   onShare?: (id: string) => void;
   onComment?: (id: string) => void;
   className?: string;
@@ -93,6 +95,8 @@ export interface MemeGridProps {
   showLoadMore?: boolean;
   onLoadMore?: () => void;
   hasMore?: boolean;
+  layout?: 'grid' | 'vertical';
+  likedMemes?: Set<string>;
 }
 
 // API Types

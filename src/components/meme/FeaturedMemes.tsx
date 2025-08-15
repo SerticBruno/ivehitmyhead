@@ -4,10 +4,11 @@ import { Meme } from '@/lib/types/meme';
 
 interface FeaturedMemesProps {
   memes: Meme[];
-  onLike?: (id: string) => void;
+  onLike?: (slug: string) => void;
   onShare?: (id: string) => void;
   onComment?: (id: string) => void;
   className?: string;
+  likedMemes?: Set<string>;
 }
 
 export const FeaturedMemes: React.FC<FeaturedMemesProps> = ({
@@ -15,7 +16,8 @@ export const FeaturedMemes: React.FC<FeaturedMemesProps> = ({
   onLike,
   onShare,
   onComment,
-  className = ''
+  className = '',
+  likedMemes
 }) => {
   // Take only the first 3 memes for featured section
   const featuredMemes = memes.slice(0, 3);
@@ -37,11 +39,12 @@ export const FeaturedMemes: React.FC<FeaturedMemesProps> = ({
       {featuredMemes.map((meme) => (
         <div key={meme.id} className="relative">
           <FeaturedMemeCard
-            {...meme}
+            meme={meme}
             onLike={onLike}
             onShare={onShare}
             onComment={onComment}
             className="h-full"
+            isLiked={likedMemes?.has(meme.slug)}
           />
         </div>
       ))}

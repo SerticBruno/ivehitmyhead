@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
 import { MemeDetailProps } from '@/lib/types/meme';
+import { useMemeInteractions } from '@/lib/hooks/useMemeInteractions';
 
 const MemeDetail: React.FC<MemeDetailProps> = ({
   meme,
@@ -16,6 +17,9 @@ const MemeDetail: React.FC<MemeDetailProps> = ({
 }) => {
   const router = useRouter();
   const [isZoomed, setIsZoomed] = useState(false);
+
+
+
 
   // Keyboard navigation
   useEffect(() => {
@@ -53,15 +57,15 @@ const MemeDetail: React.FC<MemeDetailProps> = ({
   }, [meme?.id]);
 
   const handleLike = () => {
-    if (meme && !isLoading) onLike(meme.id);
+    if (meme && !isLoading) onLike(meme.slug);
   };
 
   const handleShare = () => {
-    if (meme && !isLoading) onShare(meme.id);
+    if (meme && !isLoading && onShare) onShare(meme.id);
   };
 
   const handleComment = () => {
-    if (meme && !isLoading) onComment(meme.id);
+    if (meme && !isLoading && onComment) onComment(meme.id);
   };
 
   const handleNavigate = (direction: 'prev' | 'next') => {
@@ -103,7 +107,7 @@ const MemeDetail: React.FC<MemeDetailProps> = ({
                 style={{ height: 'calc(100vh - 250px)' }}
               >
                 <Image
-                  src={meme.imageUrl}
+                  src={meme.image_url}
                   alt={meme.title}
                   fill
                   className={cn(
@@ -145,14 +149,14 @@ const MemeDetail: React.FC<MemeDetailProps> = ({
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center space-x-3">
                       <div className="w-7 h-7 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white text-xs font-semibold">
-                        {meme.author.charAt(0).toUpperCase()}
+                        {(meme.author?.display_name || meme.author?.username || 'U').charAt(0).toUpperCase()}
                       </div>
                       <div>
                         <p className="text-sm font-medium text-gray-900 dark:text-white">
-                          {meme.author}
+                          {meme.author?.display_name || meme.author?.username || 'Unknown'}
                         </p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {meme.createdAt}
+                          {new Date(meme.created_at).toLocaleDateString()}
                         </p>
                       </div>
                     </div>
@@ -180,7 +184,7 @@ const MemeDetail: React.FC<MemeDetailProps> = ({
                           disabled={isLoading}
                           className="flex flex-col items-center justify-center w-14 h-14 bg-gradient-to-br from-red-50 to-pink-50 hover:from-red-100 hover:to-pink-100 dark:from-red-900/20 dark:to-pink-900/20 dark:hover:from-red-900/30 dark:hover:to-pink-900/30 rounded-lg border border-red-200 hover:border-red-300 dark:border-red-800 transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed group p-2 shadow-md"
                         >
-                          <div className="font-bold text-base text-red-700 dark:text-red-300 mb-1">{meme.likes.toLocaleString()}</div>
+                          <div className="font-bold text-base text-red-700 dark:text-red-300 mb-1">{meme.likes_count.toLocaleString()}</div>
                           <div className="text-xs font-medium text-red-600 dark:text-red-400">Like</div>
                         </button>
                         <button
@@ -188,7 +192,7 @@ const MemeDetail: React.FC<MemeDetailProps> = ({
                           disabled={isLoading}
                           className="flex flex-col items-center justify-center w-14 h-14 bg-gradient-to-br from-blue-50 to-cyan-50 hover:from-blue-100 hover:to-cyan-100 dark:from-blue-900/20 dark:to-cyan-900/20 dark:hover:from-blue-900/30 dark:hover:to-cyan-900/30 rounded-lg border border-blue-200 hover:border-blue-300 dark:border-blue-800 transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed group p-2 shadow-md"
                         >
-                          <div className="font-bold text-base text-blue-700 dark:text-blue-300 mb-1">{meme.comments.toLocaleString()}</div>
+                          <div className="font-bold text-base text-blue-700 dark:text-blue-300 mb-1">{meme.comments_count.toLocaleString()}</div>
                           <div className="text-xs font-medium text-blue-600 dark:text-blue-400">Comment</div>
                         </button>
                         <button
@@ -196,9 +200,14 @@ const MemeDetail: React.FC<MemeDetailProps> = ({
                           disabled={isLoading}
                           className="flex flex-col items-center justify-center w-14 h-14 bg-gradient-to-br from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 dark:from-green-900/20 dark:to-emerald-900/20 dark:hover:from-green-900/30 dark:hover:to-emerald-900/30 rounded-lg border border-green-200 hover:border-green-300 dark:border-green-800 transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed group p-2 shadow-md"
                         >
-                          <div className="font-bold text-base text-green-700 dark:text-green-300 mb-1">{meme.shares.toLocaleString()}</div>
+                          <div className="font-bold text-base text-green-700 dark:text-green-300 mb-1">{meme.shares_count.toLocaleString()}</div>
                           <div className="text-xs font-medium text-green-600 dark:text-green-400">Share</div>
                         </button>
+                        {/* View count display */}
+                        <div className="flex flex-col items-center justify-center w-14 h-14 bg-gradient-to-br from-gray-50 to-slate-50 dark:from-gray-900/20 dark:to-slate-900/20 rounded-lg border border-gray-200 dark:border-gray-800 p-2">
+                          <div className="font-bold text-base text-gray-700 dark:text-gray-300 mb-1">{meme.views.toLocaleString()}</div>
+                          <div className="text-xs font-medium text-gray-600 dark:text-gray-400">Views</div>
+                        </div>
                       </div>
                     </div>
                   </div>

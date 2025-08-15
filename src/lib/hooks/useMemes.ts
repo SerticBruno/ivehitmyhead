@@ -2,10 +2,10 @@ import { useState, useEffect, useCallback } from 'react';
 import { Meme } from '@/lib/types/meme';
 
 interface UseMemesOptions {
-  categoryId?: string;
+  category_id?: string;
   search?: string;
-  sortBy?: 'created_at' | 'likes' | 'views' | 'comments';
-  sortOrder?: 'asc' | 'desc';
+  sort_by?: 'created_at' | 'likes' | 'views' | 'comments';
+  sort_order?: 'asc' | 'desc';
   limit?: number;
 }
 
@@ -16,41 +16,48 @@ interface UseMemesReturn {
   hasMore: boolean;
   loadMore: () => void;
   refresh: () => void;
-  setFilters: (filters: Partial<UseMemesOptions>) => void;
 }
 
 export const useMemes = (options: UseMemesOptions = {}): UseMemesReturn => {
   const [memes, setMemes] = useState<Meme[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
-  const [filters, setFiltersState] = useState(options);
+  const [totalCount, setTotalCount] = useState(0);
 
-  const fetchMemes = useCallback(async (pageNum: number, append = false) => {
+  const {
+    category_id,
+    search,
+    sort_by = 'created_at',
+    sort_order = 'desc',
+    limit = 20
+  } = options;
+
+  const fetchMemes = useCallback(async (pageNum: number, append: boolean = false) => {
     try {
       setLoading(true);
       setError(null);
 
       const params = new URLSearchParams({
         page: pageNum.toString(),
-        limit: (filters.limit || 20).toString(),
-        sort_by: filters.sortBy || 'created_at',
-        sort_order: filters.sortOrder || 'desc'
+        limit: limit.toString(),
+        sort_by,
+        sort_order
       });
 
-      if (filters.categoryId) {
-        params.append('category_id', filters.categoryId);
+      if (category_id) {
+        params.append('category_id', category_id);
       }
 
-      if (filters.search) {
-        params.append('search', filters.search);
+      if (search) {
+        params.append('search', search);
       }
 
       const response = await fetch(`/api/memes?${params}`);
       
       if (!response.ok) {
-        throw new Error('Failed to fetch memes');
+        throw new Error(`Failed to fetch memes: ${response.statusText}`);
       }
 
       const data = await response.json();
@@ -61,38 +68,36 @@ export const useMemes = (options: UseMemesOptions = {}): UseMemesReturn => {
         setMemes(data.memes);
       }
       
+      setTotalCount(data.pagination.total);
       setHasMore(data.pagination.has_more);
+      setPage(pageNum);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch memes');
     } finally {
       setLoading(false);
     }
-  }, [filters]);
+  }, [category_id, search, sort_by, sort_order, limit]);
 
   const loadMore = useCallback(() => {
     if (!loading && hasMore) {
-      const nextPage = page + 1;
-      setPage(nextPage);
-      fetchMemes(nextPage, true);
+      fetchMemes(page + 1, true);
     }
   }, [loading, hasMore, page, fetchMemes]);
 
   const refresh = useCallback(() => {
     setPage(1);
+    setMemes([]);
     setHasMore(true);
     fetchMemes(1, false);
   }, [fetchMemes]);
 
-  const setFilters = useCallback((newFilters: Partial<UseMemesOptions>) => {
-    setFiltersState(prev => ({ ...prev, ...newFilters }));
-    setPage(1);
-    setHasMore(true);
-  }, []);
-
-  // Fetch memes when filters change
+  // Fetch memes when options change
   useEffect(() => {
+    setPage(1);
+    setMemes([]);
+    setHasMore(true);
     fetchMemes(1, false);
-  }, [filters, fetchMemes]);
+  }, [fetchMemes]);
 
   return {
     memes,
@@ -100,7 +105,6 @@ export const useMemes = (options: UseMemesOptions = {}): UseMemesReturn => {
     error,
     hasMore,
     loadMore,
-    refresh,
-    setFilters
+    refresh
   };
 };

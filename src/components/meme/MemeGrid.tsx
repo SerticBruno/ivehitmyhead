@@ -1,13 +1,23 @@
 import React from 'react';
 import { MemeCard } from './MemeCard';
-import { MemeGridProps } from '@/lib/types/meme';
+import { Meme } from '@/lib/types/meme';
 import { useInfiniteScroll } from '@/lib/hooks/useInfiniteScroll';
 
-interface MemeGridPropsExtended extends MemeGridProps {
+interface MemeGridProps {
+  memes: Meme[];
+  onLike?: (slug: string) => void;
+  onShare?: (id: string) => void;
+  onComment?: (id: string) => void;
+  className?: string;
+  loading?: boolean;
+  showLoadMore?: boolean;
+  onLoadMore?: () => void;
+  hasMore?: boolean;
   layout?: 'grid' | 'vertical';
+  likedMemes?: Set<string>;
 }
 
-const MemeGrid: React.FC<MemeGridPropsExtended> = ({
+const MemeGrid: React.FC<MemeGridProps> = ({
   memes,
   onLike,
   onShare,
@@ -17,7 +27,8 @@ const MemeGrid: React.FC<MemeGridPropsExtended> = ({
   showLoadMore = false,
   onLoadMore,
   hasMore = false,
-  layout = 'grid'
+  layout = 'grid',
+  likedMemes
 }) => {
   const { setObserverTarget } = useInfiniteScroll({
     onLoadMore: onLoadMore || (() => {}),
@@ -77,11 +88,12 @@ const MemeGrid: React.FC<MemeGridPropsExtended> = ({
           {memes.map((meme, index) => (
             <div key={meme.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
               <MemeCard
-                {...meme}
+                meme={meme}
                 onLike={onLike}
                 onShare={onShare}
                 onComment={onComment}
                 className="shadow-none border-0"
+                isLiked={likedMemes?.has(meme.slug)}
               />
               
               {/* Intersection Observer Target - positioned near the end of current batch */}
@@ -105,8 +117,6 @@ const MemeGrid: React.FC<MemeGridPropsExtended> = ({
           </div>
         )}
         
-
-        
         {/* End of content indicator */}
         {!hasMore && memes.length > 0 && (
           <div className="text-center py-8">
@@ -125,10 +135,11 @@ const MemeGrid: React.FC<MemeGridPropsExtended> = ({
         {memes.map((meme) => (
           <MemeCard
             key={meme.id}
-            {...meme}
+            meme={meme}
             onLike={onLike}
             onShare={onShare}
             onComment={onComment}
+            isLiked={likedMemes?.has(meme.slug)}
           />
         ))}
       </div>
@@ -147,8 +158,6 @@ const MemeGrid: React.FC<MemeGridPropsExtended> = ({
           )}
         </div>
       )}
-      
-
       
       {/* End of content indicator */}
       {!hasMore && memes.length > 0 && (

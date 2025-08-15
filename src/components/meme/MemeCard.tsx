@@ -1,46 +1,52 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
 import { MemeCardProps } from '@/lib/types/meme';
+import { useMemeInteractions } from '@/lib/hooks/useMemeInteractions';
 
 const MemeCard: React.FC<MemeCardProps> = ({
-  id,
-  title,
-  imageUrl,
-  author,
-  likes,
-  comments,
-  shares,
-  createdAt,
-  tags = [],
-  category,
+  meme,
   onLike,
   onShare,
   onComment,
-  className
+  className,
+  isLiked = false
 }) => {
   const router = useRouter();
+  const { recordView } = useMemeInteractions();
+
+  // Record view when meme is displayed
+  useEffect(() => {
+    recordView(meme.slug);
+  }, [meme.slug, recordView]);
 
   const handleCardClick = () => {
-    router.push(`/meme/${id}`);
+    router.push(`/meme/${meme.slug}`);
   };
 
   const handleLike = (e: React.MouseEvent) => {
     e.stopPropagation();
-    onLike?.(id);
+    console.log('MemeCard: handleLike called with slug:', meme.slug);
+    console.log('MemeCard: onLike function exists?', !!onLike);
+    console.log('MemeCard: onLike function:', onLike);
+    if (onLike) {
+      onLike(meme.slug);
+    } else {
+      console.error('MemeCard: onLike function is undefined!');
+    }
   };
 
   const handleShare = (e: React.MouseEvent) => {
     e.stopPropagation();
-    onShare?.(id);
+    onShare?.(meme.id);
   };
 
   const handleComment = (e: React.MouseEvent) => {
     e.stopPropagation();
-    onComment?.(id);
+    onComment?.(meme.id);
   };
 
   return (
@@ -51,18 +57,22 @@ const MemeCard: React.FC<MemeCardProps> = ({
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="font-semibold text-lg">{title}</h3>
-            <p className="text-sm text-gray-500">by {author}</p>
+            <h3 className="font-semibold text-lg">{meme.title}</h3>
+            <p className="text-sm text-gray-500">
+              by {meme.author?.display_name || meme.author?.username || 'Unknown'}
+            </p>
           </div>
-          <span className="text-xs text-gray-400">{createdAt}</span>
+          <span className="text-xs text-gray-400">
+            {new Date(meme.created_at).toLocaleDateString()}
+          </span>
         </div>
         <div className="flex flex-wrap gap-1 mt-2">
-          {category && (
+          {meme.category && (
             <span className="px-2 py-1 text-xs bg-purple-100 text-purple-800 rounded-full dark:bg-purple-900 dark:text-purple-200">
-              {category}
+              {meme.category.emoji} {meme.category.name}
             </span>
           )}
-          {tags.length > 0 && tags.map((tag, index) => (
+          {meme.tags.length > 0 && meme.tags.map((tag, index) => (
             <span
               key={index}
               className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full dark:bg-blue-900 dark:text-blue-200"
@@ -83,8 +93,8 @@ const MemeCard: React.FC<MemeCardProps> = ({
           }}
         >
           <Image
-            src={imageUrl}
-            alt={title}
+            src={meme.image_url}
+            alt={meme.title}
             fill
             className="object-contain"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -97,11 +107,19 @@ const MemeCard: React.FC<MemeCardProps> = ({
           <Button
             variant="ghost"
             size="sm"
-            onClick={handleLike}
-            className="flex items-center space-x-1"
+            onClick={(e) => {
+              console.log('Button clicked!');
+              handleLike(e);
+            }}
+            className={`flex items-center space-x-1 ${isLiked ? 'text-red-500' : ''} border border-gray-300`}
+            onMouseDown={(e) => console.log('MemeCard: Like button mouse down')}
+            onMouseUp={(e) => console.log('MemeCard: Like button mouse up')}
+            style={{ zIndex: 10, position: 'relative' }}
           >
-            <span>👍</span>
-            <span>{likes}</span>
+            <span onClick={(e) => { e.stopPropagation(); console.log('Direct span click!'); handleLike(e as any); }}>
+              {isLiked ? '❤️' : '👍'}
+            </span>
+            <span>{meme.likes_count}</span>
           </Button>
           
           <Button
@@ -111,7 +129,7 @@ const MemeCard: React.FC<MemeCardProps> = ({
             className="flex items-center space-x-1"
           >
             <span>💬</span>
-            <span>{comments}</span>
+            <span>{meme.comments_count}</span>
           </Button>
           
           <Button
@@ -121,8 +139,13 @@ const MemeCard: React.FC<MemeCardProps> = ({
             className="flex items-center space-x-1"
           >
             <span>📤</span>
-            <span>{shares}</span>
+            <span>{meme.shares_count}</span>
           </Button>
+
+          <div className="flex items-center space-x-1 text-sm text-gray-500">
+            <span>👁️</span>
+            <span>{meme.views}</span>
+          </div>
         </div>
       </CardFooter>
     </Card>

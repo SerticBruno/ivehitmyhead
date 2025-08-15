@@ -4,10 +4,10 @@ import { supabaseAdmin } from '@/lib/supabase/server';
 // Get comments for a meme
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { slug: string } }
 ) {
   try {
-    const memeId = params.id;
+    const memeId = params.slug;
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');

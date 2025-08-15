@@ -1,90 +1,76 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Header, Footer } from '@/components/layout';
 import { MemeGrid } from '@/components/meme';
 import { CategoriesSidebar, Button } from '@/components/ui';
-import { Meme, Category } from '@/lib/types/meme';
-import { fetchMemes, fetchCategories } from '@/lib/data/mockData';
+import { useMemes } from '@/lib/hooks/useMemes';
+import { useCategories } from '@/lib/hooks/useCategories';
+import { useMemeInteractions } from '@/lib/hooks/useMemeInteractions';
 import { cn } from '@/lib/utils';
 
 export default function CategoriesPage() {
-  const [memes, setMemes] = useState<Meme[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [showMobileCategories, setShowMobileCategories] = useState(false);
+  const [likedMemes, setLikedMemes] = useState<Set<string>>(new Set());
+  const [localMemes, setLocalMemes] = useState<any[]>([]);
 
-  // Load initial data
-  useEffect(() => {
-    loadCategories();
-    loadMemes();
-  }, []);
+  // Fetch real data
+  const { categories, loading: categoriesLoading, error: categoriesError } = useCategories();
+  const { memes, loading: memesLoading, error: memesError, hasMore, loadMore, refresh } = useMemes({
+    category_id: selectedCategory || undefined,
+    limit: 12
+  });
+  const { likeMeme } = useMemeInteractions();
 
-  // Load categories
-  const loadCategories = async () => {
-    try {
-      const categoriesData = await fetchCategories();
-      setCategories(categoriesData);
-    } catch (error) {
-      console.error('Failed to load categories:', error);
-    }
-  };
+  // Initialize local memes when memes change from the hook
+  React.useEffect(() => {
+    setLocalMemes(memes);
+  }, [memes]);
 
-  // Load memes with category filtering
-  const loadMemes = async (isLoadMore = false, categoryId?: string) => {
-    try {
-      if (isLoadMore) {
-        setLoadingMore(true);
-      } else {
-        setLoading(true);
-      }
+  // Use local memes if available, otherwise use memes from the hook
+  const displayMemes = localMemes.length > 0 ? localMemes : memes;
 
-      // Reset page when changing categories
-      const currentPage = isLoadMore ? page : 1;
-      const categoryName = categoryId ? categories.find(cat => cat.id === categoryId)?.name : undefined;
-      
-      const result = await fetchMemes(currentPage, 5, categoryName);
-      
-      if (isLoadMore) {
-        setMemes(prev => [...prev, ...result.memes]);
-      } else {
-        setMemes(result.memes);
-      }
-      
-      setHasMore(result.hasMore);
-      setPage(isLoadMore ? prev => prev + 1 : 2);
-    } catch (error) {
-      console.error('Failed to load memes:', error);
-    } finally {
-      setLoading(false);
-      setLoadingMore(false);
-    }
-  };
-
-  const handleCategorySelect = async (categoryId: string) => {
+  const handleCategorySelect = (categoryId: string) => {
     setSelectedCategory(categoryId);
-    setPage(1);
-    setHasMore(true);
     setShowMobileCategories(false); // Hide mobile menu after selection
-    await loadMemes(false, categoryId);
+    setLocalMemes([]); // Reset local memes when changing categories
   };
 
-  const handleLoadMore = () => {
-    if (!loadingMore && hasMore) {
-      loadMemes(true, selectedCategory);
+  const handleLike = async (slug: string) => {
+    try {
+      const isLiked = await likeMeme(slug);
+      
+      // Update local state to reflect the like change
+      setLikedMemes(prev => {
+        const newSet = new Set(prev);
+        if (isLiked) {
+          newSet.add(slug);
+        } else {
+          newSet.delete(slug);
+        }
+        return newSet;
+      });
+
+      // Update the meme's likes count locally without refreshing the page
+      const updatedMemes = memes.map(meme => {
+        if (meme.slug === slug) {
+          return {
+            ...meme,
+            likes_count: isLiked ? meme.likes_count + 1 : Math.max(0, meme.likes_count - 1)
+          };
+        }
+        return meme;
+      });
+      
+      // We need to update the memes in the useMemes hook
+      // Since we can't directly modify the hook's state, we'll need to refresh
+      // But we can optimize this by only updating the specific meme's like count
+      // For now, let's use a local state to override the memes
+      setLocalMemes(updatedMemes);
+    } catch (error) {
+      console.error('Failed to like meme:', error);
     }
-  };
-
-  const handleLike = (id: string) => {
-    setMemes(prev => prev.map(meme => 
-      meme.id === id 
-        ? { ...meme, likes: meme.likes + 1 }
-        : meme
-    ));
   };
 
   const handleShare = (id: string) => {
@@ -97,13 +83,33 @@ export default function CategoriesPage() {
     // Implement comment functionality here
   };
 
-  if (loading && memes.length === 0) {
+  // Show loading state while fetching categories
+  if (categoriesLoading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <Header onSearch={() => {}} />
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="text-center">
+          <div className="text-center py-20">
             <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600 dark:text-gray-400">Loading categories...</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Show error state if there's an issue with categories
+  if (categoriesError) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <Header onSearch={() => {}} />
+        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="text-center py-20">
+            <div className="text-4xl mb-4">😢</div>
+            <h2 className="text-2xl font-bold mb-2">Failed to load categories</h2>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">{categoriesError}</p>
+            <Button onClick={() => window.location.reload()}>Try Again</Button>
           </div>
         </main>
         <Footer />
@@ -204,22 +210,32 @@ export default function CategoriesPage() {
 
           {/* Memes Grid */}
           <section className="flex-1">
-            <MemeGrid
-              memes={memes}
-              onLike={handleLike}
-              onShare={handleShare}
-              onComment={handleComment}
-              loading={loading}
-              showLoadMore={true}
-              onLoadMore={handleLoadMore}
-              hasMore={hasMore}
-              layout="vertical"
-            />
+            {memesError ? (
+              <div className="text-center py-12">
+                <div className="text-4xl mb-4">😢</div>
+                <h3 className="text-xl font-semibold mb-2">Failed to load memes</h3>
+                <p className="text-gray-500 dark:text-gray-400 mb-4">{memesError}</p>
+                <Button onClick={refresh}>Try Again</Button>
+              </div>
+            ) : (
+              <MemeGrid
+                memes={displayMemes}
+                onLike={handleLike}
+                onShare={handleShare}
+                onComment={handleComment}
+                loading={memesLoading}
+                showLoadMore={true}
+                onLoadMore={loadMore}
+                hasMore={hasMore}
+                layout="vertical"
+                likedMemes={likedMemes}
+              />
+            )}
           </section>
         </div>
 
         {/* No memes found */}
-        {!loading && memes.length === 0 && (
+        {!memesLoading && displayMemes.length === 0 && !memesError && (
           <section className="text-center py-12">
             <div className="text-6xl mb-4">😢</div>
             <h3 className="text-xl font-semibold mb-2">No memes found</h3>
@@ -229,6 +245,9 @@ export default function CategoriesPage() {
                 : 'Looks like there are no memes yet. Be the first to upload something hilarious!'
               }
             </p>
+            <Button onClick={() => window.location.href = '/upload'} className="mt-4">
+              Upload First Meme
+            </Button>
           </section>
         )}
       </main>

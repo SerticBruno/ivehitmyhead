@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/server';
 import cloudinary from '@/lib/cloudinary/config';
+import { generateUniqueSlug } from '@/lib/utils';
 
 export async function POST(request: NextRequest) {
   try {
@@ -93,6 +94,25 @@ export async function POST(request: NextRequest) {
     } else {
       console.log('Admin profile already exists');
     }
+
+    // Generate unique slug for the meme
+    console.log('Generating unique slug...');
+    const { data: existingSlugs, error: slugsError } = await supabaseAdmin
+      .from('memes')
+      .select('slug');
+    
+    if (slugsError) {
+      console.error('Failed to fetch existing slugs:', slugsError);
+      return NextResponse.json({
+        success: false,
+        error: 'Failed to generate slug',
+        details: slugsError.message
+      }, { status: 500 });
+    }
+    
+    const existingSlugList = existingSlugs?.map(m => m.slug) || [];
+    const slug = generateUniqueSlug(title, existingSlugList);
+    console.log('Generated slug:', slug);
 
     // Convert image to buffer
     const bytes = await image.arrayBuffer();
@@ -210,6 +230,7 @@ export async function POST(request: NextRequest) {
       .from('memes')
       .insert({
         title,
+        slug,
         image_url: cloudinaryResult.secure_url,
         cloudinary_public_id: cloudinaryResult.public_id,
         author_id: user_id,

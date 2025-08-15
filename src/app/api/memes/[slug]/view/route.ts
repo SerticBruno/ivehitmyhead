@@ -3,14 +3,30 @@ import { supabaseAdmin } from '@/lib/supabase/server';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
-    const memeId = params.id;
+    const { slug } = await params;
+    
+    // First, get the meme ID from the slug
+    const { data: meme, error: memeError } = await supabaseAdmin
+      .from('memes')
+      .select('id, views')
+      .eq('slug', slug)
+      .single();
+    
+    if (memeError || !meme) {
+      return NextResponse.json(
+        { error: 'Meme not found' },
+        { status: 404 }
+      );
+    }
+    
+    const memeId = meme.id;
     
     // Get IP address and user agent
     const forwarded = request.headers.get('x-forwarded-for');
-    const ip = forwarded ? forwarded.split(',')[0] : request.ip || 'unknown';
+    const ip = forwarded ? forwarded.split(',')[0] : 'unknown';
     const userAgent = request.headers.get('user-agent') || 'unknown';
 
     // For now, we'll use a placeholder user ID - implement proper auth later
@@ -31,7 +47,7 @@ export async function POST(
     // Update the meme's view count
     const { error: updateError } = await supabaseAdmin
       .from('memes')
-      .update({ views: supabaseAdmin.rpc('increment') })
+      .update({ views: meme.views + 1 })
       .eq('id', memeId);
 
     if (updateError) throw updateError;

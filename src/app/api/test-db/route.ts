@@ -1,57 +1,62 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/server';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    console.log('Testing database connection...');
-    
-    // Test basic connection
-    const { data: testData, error: testError } = await supabaseAdmin
-      .from('memes')
-      .select('id')
+    // Test if meme_likes table exists
+    const { data: likesTest, error: likesError } = await supabaseAdmin
+      .from('meme_likes')
+      .select('*')
       .limit(1);
     
-    if (testError) {
-      console.error('Database connection test failed:', testError);
+    // Test if memes table has the right structure
+    const { data: memesTest, error: memesError } = await supabaseAdmin
+      .from('memes')
+      .select('id, slug, likes_count')
+      .limit(1);
+
+    // Test inserting a like (this will fail if table doesn't exist or has wrong structure)
+    const testMeme = memesTest?.[0];
+    if (testMeme) {
+      const { data: insertTest, error: insertError } = await supabaseAdmin
+        .from('meme_likes')
+        .insert({
+          meme_id: testMeme.id,
+          user_id: 'test-user-123'
+        })
+        .select();
+
+      // Clean up test data
+      if (insertTest?.[0]) {
+        await supabaseAdmin
+          .from('meme_likes')
+          .delete()
+          .eq('id', insertTest[0].id);
+      }
+
       return NextResponse.json({
-        success: false,
-        error: 'Database connection failed',
-        details: testError.message
-      }, { status: 500 });
+        success: true,
+        meme_likes_exists: !likesError,
+        memes_structure: !memesError ? 'OK' : memesError.message,
+        insert_test: !insertError ? 'OK' : insertError.message,
+        sample_meme: testMeme,
+        sample_likes: likesTest
+      });
     }
-    
-    console.log('Database connection successful');
-    
-    // Check categories
-    const { data: categories, error: categoriesError } = await supabaseAdmin
-      .from('categories')
-      .select('id, name, emoji')
-      .order('name');
-    
-    if (categoriesError) {
-      console.error('Error fetching categories:', categoriesError);
-      return NextResponse.json({
-        success: false,
-        error: 'Failed to fetch categories',
-        details: categoriesError.message
-      }, { status: 500 });
-    }
-    
-    console.log('Categories found:', categories?.length || 0);
-    
-    return NextResponse.json({
-      success: true,
-      message: 'Database connection successful',
-      categoriesCount: categories?.length || 0,
-      categories: categories || []
-    });
-    
-  } catch (error) {
-    console.error('Unexpected error testing database:', error);
+
     return NextResponse.json({
       success: false,
-      error: 'Failed to test database',
-      details: error instanceof Error ? error.message : 'Unknown error'
+      meme_likes_exists: !likesError,
+      memes_structure: !memesError ? 'OK' : memesError.message,
+      error: 'No memes found to test with'
+    });
+
+  } catch (error) {
+    console.error('Database test error:', error);
+    return NextResponse.json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
     }, { status: 500 });
   }
 }
