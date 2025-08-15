@@ -1,11 +1,10 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { cn, formatRelativeTime, formatTime } from '@/lib/utils';
 import { MemeCardProps } from '@/lib/types/meme';
-import { useMemeInteractions } from '@/lib/hooks/useMemeInteractions';
 
 const MemeCard: React.FC<MemeCardProps> = ({
   meme,
@@ -16,15 +15,18 @@ const MemeCard: React.FC<MemeCardProps> = ({
   isLiked = false
 }) => {
   const router = useRouter();
-  const { recordView } = useMemeInteractions();
-
-  // Record view when meme is displayed
-  useEffect(() => {
-    recordView(meme.slug);
-  }, [meme.slug]); // Removed recordView from dependencies
 
   const handleCardClick = () => {
-    router.push(`/meme/${meme.slug}`);
+    console.log('MemeCard: handleCardClick called for meme:', meme.slug);
+    try {
+      console.log('Attempting to navigate to:', `/meme/${meme.slug}`);
+      router.push(`/meme/${meme.slug}`);
+    } catch (error) {
+      console.error('Navigation error:', error);
+      // Fallback to window.location if router fails
+      console.log('Falling back to window.location');
+      window.location.href = `/meme/${meme.slug}`;
+    }
   };
 
   const handleLike = (e: React.MouseEvent) => {

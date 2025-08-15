@@ -17,6 +17,28 @@ export default function CategoriesPage() {
 
   // Ref for scrolling to meme grid
   const memeGridRef = useRef<HTMLElement>(null);
+  
+  // Track which memes have been viewed in this session to prevent double counting
+  // Using sessionStorage to persist across filter changes and component re-renders
+  const viewedMemesRef = useRef<Set<string>>(new Set());
+  
+  const getViewedMemes = () => {
+    if (viewedMemesRef.current.size === 0 && typeof window !== 'undefined') {
+      const stored = sessionStorage.getItem('viewedMemes');
+      if (stored) {
+        viewedMemesRef.current = new Set(JSON.parse(stored));
+      }
+    }
+    return viewedMemesRef.current;
+  };
+
+  const addViewedMeme = (slug: string) => {
+    const viewedMemes = getViewedMemes();
+    viewedMemes.add(slug);
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('viewedMemes', JSON.stringify([...viewedMemes]));
+    }
+  };
 
   // Get categories for mobile selector
   const { categories } = useCategories({ limit: 50 });
@@ -36,6 +58,16 @@ export default function CategoriesPage() {
     setLocalMemes([]);
     // Scroll to top of meme grid when filters change
     scrollToMemeGrid();
+  }, [selectedFilter, selectedCategory, selectedTimePeriod]);
+
+  // Reset viewed memes tracking when major filters change to ensure fresh tracking
+  useEffect(() => {
+    // Clear viewed memes tracking when filters change significantly
+    // This ensures that if a user changes filters, we track views for the new set of memes
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem('viewedMemes');
+      viewedMemesRef.current.clear();
+    }
   }, [selectedFilter, selectedCategory, selectedTimePeriod]);
 
   // Map filter values to API sort parameters
@@ -83,12 +115,29 @@ export default function CategoriesPage() {
     time_period: selectedTimePeriod,
     ...getSortParams()
   });
-  const { likeMeme } = useMemeInteractions();
+  const { likeMeme, recordView } = useMemeInteractions();
 
   // Initialize local memes when memes change from the hook
   React.useEffect(() => {
     setLocalMemes(memes);
   }, [memes]);
+
+  // Track views for memes when they are displayed
+  React.useEffect(() => {
+    if (memes.length > 0) {
+      const viewedMemes = getViewedMemes();
+      const newMemes = memes.filter(meme => !viewedMemes.has(meme.slug));
+      
+      // Only record views for memes we haven't seen before
+      newMemes.forEach(meme => {
+        addViewedMeme(meme.slug);
+        // Record view asynchronously without blocking the UI
+        recordView(meme.slug).catch(err => {
+          console.error('Failed to record view for meme:', meme.slug, err);
+        });
+      });
+    }
+  }, [memes]); // recordView is stable from useCallback, so we don't need it in dependencies
 
   // Use local memes if available, otherwise use memes from the hook
   const displayMemes = localMemes.length > 0 ? localMemes : memes;
