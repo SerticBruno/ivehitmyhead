@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Header, Footer } from '@/components/layout';
 import { FeaturedMemes } from '@/components/meme';
 import { Button, Stats, Newsletter, FeaturedCreator, TrendingTags } from '@/components/ui';
-import { Meme, Category } from '@/lib/types/meme';
+
 import { useMemes } from '@/lib/hooks/useMemes';
 import { useCategories } from '@/lib/hooks/useCategories';
 import { useMemeInteractions } from '@/lib/hooks/useMemeInteractions';
@@ -65,7 +65,7 @@ const mockCreators = [
 
 export default function Home() {
   // Fetch real memes and categories - sorted by views for featured section
-  const { memes, loading: memesLoading, error: memesError, refresh: refreshMemes } = useMemes({ 
+  const { memes, loading: memesLoading, error: memesError } = useMemes({ 
     limit: 6, 
     sort_by: 'views', 
     sort_order: 'desc'
@@ -73,7 +73,7 @@ export default function Home() {
   const { categories, loading: categoriesLoading, error: categoriesError } = useCategories();
   const { likeMeme } = useMemeInteractions();
   const [likedMemes, setLikedMemes] = useState<Set<string>>(new Set());
-  const [localMemes, setLocalMemes] = useState<any[]>([]);
+  const [localMemes, setLocalMemes] = useState<typeof memes>([]);
 
   // Initialize local memes when memes change from the hook
   React.useEffect(() => {
@@ -130,7 +130,7 @@ export default function Home() {
     // Implement comment functionality here
   };
 
-  const handleTagClick = (tag: any) => {
+  const handleTagClick = (tag: { id: string; name: string; count: number; trending?: boolean }) => {
     console.log('Tag clicked:', tag);
     // Implement tag filtering functionality here
   };

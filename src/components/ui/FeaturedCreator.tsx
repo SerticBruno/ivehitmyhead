@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 import { Button } from './Button';
 import { cn } from '@/lib/utils';
 
@@ -45,9 +46,11 @@ const FeaturedCreator: React.FC<FeaturedCreatorProps> = ({
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center space-x-4">
           <div className="relative">
-            <img
+            <Image
               src={creator.avatar}
               alt={creator.name}
+              width={64}
+              height={64}
               className="w-16 h-16 rounded-full object-cover"
             />
             <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-2 border-white dark:border-gray-800"></div>
@@ -73,9 +76,11 @@ const FeaturedCreator: React.FC<FeaturedCreatorProps> = ({
       <div className="mb-4">
         <h4 className="font-semibold mb-2">Best Meme</h4>
         <div className="relative group">
-          <img
+          <Image
             src={creator.bestMeme.imageUrl}
             alt={creator.bestMeme.title}
+            width={400}
+            height={128}
             className="w-full h-32 object-cover rounded-lg"
           />
           <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">

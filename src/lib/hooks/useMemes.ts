@@ -25,7 +25,7 @@ export const useMemes = (options: UseMemesOptions = {}): UseMemesReturn => {
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
-  const [totalCount, setTotalCount] = useState(0);
+
 
   const {
     category_id,
@@ -74,7 +74,7 @@ export const useMemes = (options: UseMemesOptions = {}): UseMemesReturn => {
         setMemes(data.memes);
       }
       
-      setTotalCount(data.pagination.total);
+
       setHasMore(data.pagination.has_more);
       setPage(pageNum);
     } catch (err) {

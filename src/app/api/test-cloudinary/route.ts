@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import cloudinary from '@/lib/cloudinary/config';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     // Check environment variables
     const cloudName = process.env.CLOUDINARY_CLOUD_NAME;

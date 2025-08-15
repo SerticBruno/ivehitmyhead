@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Category } from '@/lib/types/meme';
 
 interface UseCategoriesOptions {
@@ -18,7 +18,7 @@ export const useCategories = (options: UseCategoriesOptions = {}): UseCategories
   const [error, setError] = useState<string | null>(null);
   const [limit] = useState(options.limit || 50);
 
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -48,11 +48,11 @@ export const useCategories = (options: UseCategoriesOptions = {}): UseCategories
     } finally {
       setLoading(false);
     }
-  };
+  }, [limit]);
 
   useEffect(() => {
     fetchCategories();
-  }, [limit]);
+  }, [limit, fetchCategories]);
 
   const refetch = () => {
     fetchCategories();

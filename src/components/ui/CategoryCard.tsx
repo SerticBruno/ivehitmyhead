@@ -18,7 +18,7 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category, className = '' })
           {category.name}
         </h3>
         <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
-          {category.count.toLocaleString()} memes
+          {category.count ? category.count.toLocaleString() : '0'} memes
         </p>
         {category.description && (
           <p className="text-xs text-gray-400 dark:text-gray-500">

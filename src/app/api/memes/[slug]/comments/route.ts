@@ -4,10 +4,11 @@ import { supabaseAdmin } from '@/lib/supabase/server';
 // Get comments for a meme
 export async function GET(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
-    const memeId = params.slug;
+    const { slug } = await params;
+    const memeId = slug;
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');
@@ -65,10 +66,11 @@ export async function GET(
 // Create a new comment
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
-    const memeId = params.id;
+    const { slug } = await params;
+    const memeId = slug;
     const { content, parent_id } = await request.json();
 
     if (!content) {

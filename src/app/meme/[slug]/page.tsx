@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Header, Footer } from '@/components/layout';
@@ -21,6 +21,7 @@ export default function MemeDetailPage() {
   const [likesCount, setLikesCount] = useState(0);
 
   const { likeMeme, recordView } = useMemeInteractions();
+  const hasRecordedView = useRef(false);
 
   useEffect(() => {
     const fetchMeme = async () => {
@@ -44,7 +45,10 @@ export default function MemeDetailPage() {
         setLikesCount(data.meme.likes_count || 0);
         
         // Record view after successful fetch, but only once per meme load
-        recordView(slug);
+        if (!hasRecordedView.current) {
+          recordView(slug);
+          hasRecordedView.current = true;
+        }
       } catch (err) {
         console.error('Error fetching meme:', err);
         setError(err instanceof Error ? err.message : 'Failed to fetch meme');
@@ -56,7 +60,7 @@ export default function MemeDetailPage() {
     if (slug) {
       fetchMeme();
     }
-  }, [slug]); // Removed recordView from dependencies
+  }, [slug, recordView]);
 
   const handleLike = async () => {
     if (!meme) return;

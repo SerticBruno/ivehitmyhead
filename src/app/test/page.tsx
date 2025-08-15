@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 
 export default function TestPage() {
-  const [testResults, setTestResults] = useState<any>({});
+  const [testResults, setTestResults] = useState<Record<string, { success: boolean; data?: unknown; error?: string }>>({});
   const [loading, setLoading] = useState(false);
 
   const testSupabase = async () => {
@@ -13,7 +14,8 @@ export default function TestPage() {
       const data = await response.json();
       setTestResults(prev => ({ ...prev, supabase: { success: true, data } }));
     } catch (error) {
-      setTestResults(prev => ({ ...prev, supabase: { success: false, error: error.message } }));
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      setTestResults(prev => ({ ...prev, supabase: { success: false, error: errorMessage } }));
     } finally {
       setLoading(false);
     }
@@ -41,7 +43,8 @@ export default function TestPage() {
         setTestResults(prev => ({ ...prev, cloudinary: { success: false, error } }));
       }
     } catch (error) {
-      setTestResults(prev => ({ ...prev, cloudinary: { success: false, error: error.message } }));
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      setTestResults(prev => ({ ...prev, cloudinary: { success: false, error: errorMessage } }));
     } finally {
       setLoading(false);
     }
@@ -105,8 +108,8 @@ export default function TestPage() {
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
             <h2 className="text-xl font-semibold mb-4">Quick Links</h2>
             <div className="space-y-2">
-              <a href="/upload" className="text-blue-500 hover:underline block">→ Upload Page</a>
-              <a href="/memes" className="text-blue-500 hover:underline block">→ Memes Page</a>
+              <Link href="/upload" className="text-blue-500 hover:underline block">→ Upload Page</Link>
+              <Link href="/memes" className="text-blue-500 hover:underline block">→ Memes Page</Link>
             </div>
           </div>
         </div>

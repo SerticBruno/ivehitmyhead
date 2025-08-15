@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/server';
 
 export async function GET() {
@@ -8,12 +8,12 @@ export async function GET() {
   });
 }
 
-export async function POST(request: NextRequest) {
+export async function POST() {
   try {
     console.log('Setting up admin account...');
     
     // Check if admin profile already exists
-    const { data: existingAdmin, error: checkError } = await supabaseAdmin
+    const { data: existingAdmin } = await supabaseAdmin
       .from('profiles')
       .select('id, username')
       .eq('username', 'admin')

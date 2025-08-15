@@ -85,7 +85,7 @@ const MemeGrid: React.FC<MemeGridProps> = ({
     return (
       <>
         <div className={`space-y-8 ${className}`}>
-          {memes.map((meme, index) => (
+          {memes.map((meme) => (
             <div key={meme.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
               <MemeCard
                 meme={meme}
@@ -118,7 +118,7 @@ const MemeGrid: React.FC<MemeGridProps> = ({
         {!hasMore && memes.length > 0 && (
           <div className="text-center py-8">
             <div className="text-gray-500 dark:text-gray-400 text-sm">
-              🎉 You've reached the end! No more memes in this category.
+              🎉 You&apos;ve reached the end! No more memes in this category.
             </div>
           </div>
         )}
@@ -159,9 +159,9 @@ const MemeGrid: React.FC<MemeGridProps> = ({
       {/* End of content indicator */}
       {!hasMore && memes.length > 0 && (
         <div className="text-center py-8">
-          <div className="text-gray-500 dark:text-gray-400 text-sm">
-            🎉 You've reached the end! No more memes in this category.
-          </div>
+                      <div className="text-gray-500 dark:text-gray-400 text-sm">
+              🎉 You&apos;ve reached the end! No more memes in this category.
+            </div>
         </div>
       )}
     </>

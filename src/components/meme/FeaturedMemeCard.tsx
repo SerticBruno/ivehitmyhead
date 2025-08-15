@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader } from '@/components/ui/Card';
@@ -25,11 +25,15 @@ const FeaturedMemeCard: React.FC<FeaturedMemeCardProps> = ({
 }) => {
   const router = useRouter();
   const { recordView } = useMemeInteractions();
+  const hasRecordedView = useRef(false);
 
-  // Record view when meme is displayed
+  // Record view when meme is displayed (only once per meme slug)
   useEffect(() => {
-    recordView(meme.slug);
-  }, [meme.slug]); // Removed recordView from dependencies
+    if (!hasRecordedView.current) {
+      recordView(meme.slug);
+      hasRecordedView.current = true;
+    }
+  }, [meme.slug, recordView]);
 
   const handleCardClick = () => {
     router.push(`/meme/${meme.slug}`);

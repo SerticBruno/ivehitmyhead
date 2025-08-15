@@ -22,7 +22,7 @@ export const MemeUpload: React.FC<MemeUploadProps> = ({
   const [tags, setTags] = useState('');
   const [uploadedImage, setUploadedImage] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [dragActive, setDragActive] = useState(false);
+  const [dragActive] = useState(false);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles.length > 0) {

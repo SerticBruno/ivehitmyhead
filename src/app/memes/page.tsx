@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Header, Footer } from '@/components/layout';
 import { MemeGrid } from '@/components/meme';
 import { FiltersAndSorting, Button } from '@/components/ui';
@@ -13,7 +13,7 @@ export default function MemesPage() {
   const [selectedFilter, setSelectedFilter] = useState<'newest' | 'trending' | 'hottest'>('hottest');
   const [selectedTimePeriod, setSelectedTimePeriod] = useState<'all' | 'today' | 'week' | 'month'>('all');
   const [likedMemes, setLikedMemes] = useState<Set<string>>(new Set());
-  const [localMemes, setLocalMemes] = useState<any[]>([]);
+  const [localMemes, setLocalMemes] = useState<typeof memes>([]);
 
   // Ref for scrolling to meme grid
   const memeGridRef = useRef<HTMLElement>(null);
@@ -35,13 +35,13 @@ export default function MemesPage() {
     return viewedMemesRef.current;
   };
 
-  const addViewedMeme = (slug: string) => {
+  const addViewedMeme = useCallback((slug: string) => {
     const viewedMemes = getViewedMemes();
     viewedMemes.add(slug);
     if (typeof window !== 'undefined') {
       sessionStorage.setItem('viewedMemes', JSON.stringify([...viewedMemes]));
     }
-  };
+  }, []);
 
   // Get categories for mobile selector
   const { categories } = useCategories({ limit: 50 });
@@ -140,7 +140,7 @@ export default function MemesPage() {
         });
       });
     }
-  }, [memes]); // recordView is stable from useCallback, so we don't need it in dependencies
+  }, [memes, addViewedMeme, recordView]);
 
   // Use local memes if available, otherwise use memes from the hook
   const displayMemes = localMemes.length > 0 ? localMemes : memes;

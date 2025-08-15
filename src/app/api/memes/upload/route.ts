@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
     
     // Check if admin profile exists, create if not (simplified)
     console.log('Checking for admin profile...');
-    const { data: existingProfile, error: profileError } = await supabaseAdmin
+    const { error: profileError } = await supabaseAdmin
       .from('profiles')
       .select('id')
       .eq('id', user_id)
@@ -165,7 +165,10 @@ export async function POST(request: NextRequest) {
       }, { status: 500 });
     }
 
-    const cloudinaryResult = uploadResult as any;
+    const cloudinaryResult = uploadResult as {
+      public_id: string;
+      secure_url: string;
+    };
     console.log('Cloudinary result:', {
       public_id: cloudinaryResult.public_id,
       secure_url: cloudinaryResult.secure_url
@@ -182,7 +185,7 @@ export async function POST(request: NextRequest) {
       
       // Verify category exists
       console.log('Verifying category exists...');
-      const { data: categoryExists, error: categoryCheckError } = await supabaseAdmin
+      const { error: categoryCheckError } = await supabaseAdmin
         .from('categories')
         .select('id')
         .eq('id', finalCategoryId)
@@ -209,7 +212,7 @@ export async function POST(request: NextRequest) {
 
     // Check Supabase connection
     console.log('Checking Supabase connection...');
-    const { data: testData, error: testError } = await supabaseAdmin
+    const { error: testError } = await supabaseAdmin
       .from('memes')
       .select('id')
       .limit(1);

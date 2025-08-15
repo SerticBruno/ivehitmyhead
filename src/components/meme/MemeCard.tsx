@@ -122,11 +122,11 @@ const MemeCard: React.FC<MemeCardProps> = ({
               handleLike(e);
             }}
             className={`flex items-center space-x-1 ${isLiked ? 'text-red-500' : ''} border border-gray-300`}
-            onMouseDown={(e) => console.log('MemeCard: Like button mouse down')}
-            onMouseUp={(e) => console.log('MemeCard: Like button mouse up')}
+            onMouseDown={() => console.log('MemeCard: Like button mouse down')}
+            onMouseUp={() => console.log('MemeCard: Like button mouse up')}
             style={{ zIndex: 10, position: 'relative' }}
           >
-            <span onClick={(e) => { e.stopPropagation(); console.log('Direct span click!'); handleLike(e as any); }}>
+            <span onClick={(e) => { e.stopPropagation(); console.log('Direct span click!'); handleLike(e); }}>
               {isLiked ? '❤️' : '👍'}
             </span>
             <span>{meme.likes_count}</span>

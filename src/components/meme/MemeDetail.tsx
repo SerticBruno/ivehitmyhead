@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { cn, formatRelativeTime, formatTime } from '@/lib/utils';
 import { MemeDetailProps } from '@/lib/types/meme';
-import { useMemeInteractions } from '@/lib/hooks/useMemeInteractions';
+
 
 const MemeDetail: React.FC<MemeDetailProps> = ({
   meme,

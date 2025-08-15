@@ -15,9 +15,7 @@ export const useInfiniteScroll = ({
   hasMore,
   loading,
   threshold = 0.1,
-  rootMargin = '500px', // Increased from 300px to 500px to trigger much sooner
-  batchSize = 5, // Default: 5 items per batch (changed from 3)
-  itemCount
+  rootMargin = '500px' // Increased from 300px to 500px to trigger much sooner
 }: UseInfiniteScrollOptions) => {
   const [observerTarget, setObserverTarget] = useState<HTMLDivElement | null>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
