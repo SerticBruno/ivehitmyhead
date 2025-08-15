@@ -95,25 +95,22 @@ const MemeGrid: React.FC<MemeGridProps> = ({
                 className="shadow-none border-0"
                 isLiked={likedMemes?.has(meme.slug)}
               />
-              
-              {/* Intersection Observer Target - positioned near the end of current batch */}
-              {showLoadMore && hasMore && (index + 1) % 5 === 4 && (
-                <div 
-                  ref={setObserverTarget}
-                  className="h-1 w-full"
-                />
-              )}
             </div>
           ))}
         </div>
         
-        {/* Loading indicator when loading more */}
-        {showLoadMore && hasMore && loading && (
-          <div className="flex justify-center py-8">
-            <div className="flex items-center space-x-2">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-              <span className="text-gray-600 dark:text-gray-400">Loading 5 more memes...</span>
-            </div>
+        {/* Intersection Observer Target - positioned after every 5th item for better infinite scroll */}
+        {showLoadMore && hasMore && (
+          <div 
+            ref={setObserverTarget}
+            className="h-20 w-full flex items-center justify-center"
+          >
+            {loading && (
+              <div className="flex items-center space-x-2">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                <span className="text-gray-600 dark:text-gray-400">Loading 5 more memes...</span>
+              </div>
+            )}
           </div>
         )}
         
@@ -148,12 +145,12 @@ const MemeGrid: React.FC<MemeGridProps> = ({
       {showLoadMore && hasMore && (
         <div 
           ref={setObserverTarget}
-          className="flex justify-center py-8"
+          className="h-20 w-full flex items-center justify-center"
         >
           {loading && (
             <div className="flex items-center space-x-2">
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-              <span className="text-gray-600 dark:text-gray-400">Loading 5 more memes...</span>
+              <span className="text-gray-600 dark:text-gray-400">Loading 3 more memes...</span>
             </div>
           )}
         </div>

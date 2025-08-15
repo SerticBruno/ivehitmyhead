@@ -15,8 +15,8 @@ export const useInfiniteScroll = ({
   hasMore,
   loading,
   threshold = 0.1,
-  rootMargin = '100px',
-  batchSize = 5, // Default: 5 items per batch
+  rootMargin = '500px', // Increased from 300px to 500px to trigger much sooner
+  batchSize = 5, // Default: 5 items per batch (changed from 3)
   itemCount
 }: UseInfiniteScrollOptions) => {
   const [observerTarget, setObserverTarget] = useState<HTMLDivElement | null>(null);
@@ -26,18 +26,12 @@ export const useInfiniteScroll = ({
     (entries: IntersectionObserverEntry[]) => {
       const target = entries[0];
       if (target.isIntersecting && hasMore && !loading) {
-        // Calculate how many items are in the current batch
-        const currentBatchSize = itemCount % batchSize || batchSize;
-        
-        // Only trigger if we're near the end of the current batch
-        // Trigger when we have at least 2 items in the current batch
-        // and we're near the end (within 1-2 items of the batch end)
-        if (currentBatchSize >= 2 && currentBatchSize >= batchSize - 1) {
-          onLoadMore();
-        }
+        // Simplified logic: trigger load more when the observer target is visible
+        // and we're not currently loading and there are more items
+        onLoadMore();
       }
     },
-    [onLoadMore, hasMore, loading, itemCount, batchSize]
+    [onLoadMore, hasMore, loading]
   );
 
   useEffect(() => {

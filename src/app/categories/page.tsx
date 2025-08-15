@@ -79,7 +79,7 @@ export default function CategoriesPage() {
   // Fetch real data
   const { memes, loading: memesLoading, error: memesError, hasMore, loadMore, refresh } = useMemes({
     category_id: selectedCategory || undefined,
-    limit: 12,
+    limit: 7, // Changed from 2 to 7 for initial load
     time_period: selectedTimePeriod,
     ...getSortParams()
   });
