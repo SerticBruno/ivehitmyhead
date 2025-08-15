@@ -190,11 +190,6 @@ export default function MemesPage() {
     // Implement share functionality here
   };
 
-  const handleComment = (id: string) => {
-    console.log('Commenting on meme:', id);
-    // Implement comment functionality here
-  };
-
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Header onSearch={() => {}} />
@@ -349,7 +344,6 @@ export default function MemesPage() {
                 memes={displayMemes}
                 onLike={handleLike}
                 onShare={handleShare}
-                onComment={handleComment}
                 loading={memesLoading}
                 showLoadMore={true}
                 onLoadMore={loadMore}

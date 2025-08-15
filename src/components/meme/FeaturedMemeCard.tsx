@@ -8,9 +8,8 @@ import { useMemeInteractions } from '@/lib/hooks/useMemeInteractions';
 
 interface FeaturedMemeCardProps {
   meme: Meme;
-  onLike?: (slug: string) => void;
-  onShare?: (id: string) => void;
-  onComment?: (id: string) => void;
+  onLike: (slug: string) => void;
+  onShare: (id: string) => void;
   className?: string;
   isLiked?: boolean;
 }
@@ -19,7 +18,6 @@ const FeaturedMemeCard: React.FC<FeaturedMemeCardProps> = ({
   meme,
   onLike,
   onShare,
-  onComment,
   className,
   isLiked
 }) => {
@@ -46,12 +44,7 @@ const FeaturedMemeCard: React.FC<FeaturedMemeCardProps> = ({
 
   const handleShare = (e: React.MouseEvent) => {
     e.stopPropagation();
-    onShare?.(meme.id);
-  };
-
-  const handleComment = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onComment?.(meme.id);
+    onShare(meme.id);
   };
 
   return (
@@ -95,13 +88,6 @@ const FeaturedMemeCard: React.FC<FeaturedMemeCardProps> = ({
             >
               <span>{isLiked ? '❤️' : '👍'}</span>
               <span>{meme.likes_count}</span>
-            </button>
-            <button
-              onClick={handleComment}
-              className="flex items-center gap-1 hover:text-green-600 transition-colors"
-            >
-              <span>💬</span>
-              <span>{meme.comments_count}</span>
             </button>
             <button
               onClick={handleShare}

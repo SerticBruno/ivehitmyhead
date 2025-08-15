@@ -5,9 +5,8 @@ import { useInfiniteScroll } from '@/lib/hooks/useInfiniteScroll';
 
 interface MemeGridProps {
   memes: Meme[];
-  onLike?: (slug: string) => void;
-  onShare?: (id: string) => void;
-  onComment?: (id: string) => void;
+  onLike: (slug: string) => void;
+  onShare: (id: string) => void;
   className?: string;
   loading?: boolean;
   showLoadMore?: boolean;
@@ -21,7 +20,6 @@ const MemeGrid: React.FC<MemeGridProps> = ({
   memes,
   onLike,
   onShare,
-  onComment,
   className = '',
   loading = false,
   showLoadMore = false,
@@ -91,7 +89,6 @@ const MemeGrid: React.FC<MemeGridProps> = ({
                 meme={meme}
                 onLike={onLike}
                 onShare={onShare}
-                onComment={onComment}
                 className="shadow-none border-0"
                 isLiked={likedMemes?.has(meme.slug)}
               />
@@ -135,7 +132,6 @@ const MemeGrid: React.FC<MemeGridProps> = ({
             meme={meme}
             onLike={onLike}
             onShare={onShare}
-            onComment={onComment}
             isLiked={likedMemes?.has(meme.slug)}
           />
         ))}

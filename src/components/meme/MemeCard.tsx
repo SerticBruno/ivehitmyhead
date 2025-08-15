@@ -10,7 +10,6 @@ const MemeCard: React.FC<MemeCardProps> = ({
   meme,
   onLike,
   onShare,
-  onComment,
   className,
   isLiked = false
 }) => {
@@ -43,12 +42,7 @@ const MemeCard: React.FC<MemeCardProps> = ({
 
   const handleShare = (e: React.MouseEvent) => {
     e.stopPropagation();
-    onShare?.(meme.id);
-  };
-
-  const handleComment = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onComment?.(meme.id);
+    onShare(meme.id);
   };
 
   return (
@@ -130,16 +124,6 @@ const MemeCard: React.FC<MemeCardProps> = ({
               {isLiked ? '❤️' : '👍'}
             </span>
             <span>{meme.likes_count}</span>
-          </Button>
-          
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleComment}
-            className="flex items-center space-x-1"
-          >
-            <span>💬</span>
-            <span>{meme.comments_count}</span>
           </Button>
           
           <Button

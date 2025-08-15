@@ -88,11 +88,6 @@ export default function MemeDetailPage() {
     // Implement share functionality here
   };
 
-  const handleComment = () => {
-    console.log('Commenting on meme:', meme?.id);
-    // Implement comment functionality here
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -203,14 +198,6 @@ export default function MemeDetailPage() {
                   >
                     <span className="text-2xl">{isLiked ? '❤️' : '👍'}</span>
                     <span className="font-medium">{likesCount.toLocaleString()}</span>
-                  </button>
-                  
-                  <button
-                    onClick={handleComment}
-                    className="flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                  >
-                    <span className="text-2xl">💬</span>
-                    <span className="font-medium">{meme.comments_count.toLocaleString()}</span>
                   </button>
                   
                   <button

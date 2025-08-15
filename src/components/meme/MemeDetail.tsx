@@ -12,8 +12,7 @@ const MemeDetail: React.FC<MemeDetailProps> = ({
   transitionDirection = null,
   onNavigate,
   onLike,
-  onShare,
-  onComment
+  onShare
 }) => {
   const router = useRouter();
   const [isZoomed, setIsZoomed] = useState(false);
@@ -62,10 +61,6 @@ const MemeDetail: React.FC<MemeDetailProps> = ({
 
   const handleShare = () => {
     if (meme && !isLoading && onShare) onShare(meme.id);
-  };
-
-  const handleComment = () => {
-    if (meme && !isLoading && onComment) onComment(meme.id);
   };
 
   const handleNavigate = (direction: 'prev' | 'next') => {
@@ -194,14 +189,6 @@ const MemeDetail: React.FC<MemeDetailProps> = ({
                         >
                           <div className="font-bold text-base text-red-700 dark:text-red-300 mb-1">{meme.likes_count.toLocaleString()}</div>
                           <div className="text-xs font-medium text-red-600 dark:text-red-400">Like</div>
-                        </button>
-                        <button
-                          onClick={handleComment}
-                          disabled={isLoading}
-                          className="flex flex-col items-center justify-center w-14 h-14 bg-gradient-to-br from-blue-50 to-cyan-50 hover:from-blue-100 hover:to-cyan-100 dark:from-blue-900/20 dark:to-cyan-900/20 dark:hover:from-blue-900/30 dark:hover:to-cyan-900/30 rounded-lg border border-blue-200 hover:border-blue-300 dark:border-blue-800 transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed group p-2 shadow-md"
-                        >
-                          <div className="font-bold text-base text-blue-700 dark:text-blue-300 mb-1">{meme.comments_count.toLocaleString()}</div>
-                          <div className="text-xs font-medium text-blue-600 dark:text-blue-400">Comment</div>
                         </button>
                         <button
                           onClick={handleShare}

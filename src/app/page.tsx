@@ -125,11 +125,6 @@ export default function Home() {
     // Implement share functionality here
   };
 
-  const handleComment = (id: string) => {
-    console.log('Commenting on meme:', id);
-    // Implement comment functionality here
-  };
-
   const handleTagClick = (tag: { id: string; name: string; count: number; trending?: boolean }) => {
     console.log('Tag clicked:', tag);
     // Implement tag filtering functionality here
@@ -227,7 +222,6 @@ export default function Home() {
               memes={displayMemes}
               onLike={handleLike}
               onShare={handleShare}
-              onComment={handleComment}
               likedMemes={likedMemes}
             />
           ) : (
