@@ -128,17 +128,6 @@ export default function MemeDetailPage() {
       <Header onSearch={() => {}} />
       
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Navigation */}
-        <section className="mb-6">
-          <Button
-            variant="outline"
-            onClick={() => router.push('/memes')}
-            className="flex items-center space-x-2"
-          >
-            <span>←</span>
-            <span>Back to Memes</span>
-          </Button>
-        </section>
 
         {/* Meme Content */}
         <section className="max-w-4xl mx-auto">
