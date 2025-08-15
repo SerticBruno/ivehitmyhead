@@ -1,22 +1,24 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Header, Footer } from '@/components/layout';
-import { MemeGrid } from '@/components/meme';
-import { FiltersAndSorting, Button } from '@/components/ui';
+import { MemeGrid, FeaturedMemes } from '@/components/meme';
+import { FiltersAndSorting } from '@/components/ui';
 import { useMemes } from '@/lib/hooks/useMemes';
 import { useCategories } from '@/lib/hooks/useCategories';
 import { useMemeInteractions } from '@/lib/hooks/useMemeInteractions';
+import { Meme } from '@/lib/types/meme';
 
 export default function MemesPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('');
-  const [selectedFilter, setSelectedFilter] = useState<'newest' | 'trending' | 'hottest'>('hottest');
+  const [selectedFilter, setSelectedFilter] = useState<'newest' | 'trending' | 'hottest'>('newest');
   const [selectedTimePeriod, setSelectedTimePeriod] = useState<'all' | 'today' | 'week' | 'month'>('all');
+  const [localMemes, setLocalMemes] = useState<Meme[]>([]);
   const [likedMemes, setLikedMemes] = useState<Set<string>>(new Set());
-  const [localMemes, setLocalMemes] = useState<typeof memes>([]);
-
+  const [userInitiated, setUserInitiated] = useState(false);
+  
   // Ref for scrolling to meme grid
-  const memeGridRef = useRef<HTMLElement>(null);
+  const memeGridRef = useRef<HTMLDivElement>(null);
   
   // Track which memes have been viewed in this session to prevent double counting
   // Using sessionStorage to persist across filter changes and component re-renders
@@ -35,7 +37,7 @@ export default function MemesPage() {
     return viewedMemesRef.current;
   };
 
-  const addViewedMeme = useCallback((slug: string) => {
+  const addViewedMeme = React.useCallback((slug: string) => {
     const viewedMemes = getViewedMemes();
     viewedMemes.add(slug);
     if (typeof window !== 'undefined') {
@@ -49,9 +51,18 @@ export default function MemesPage() {
   // Function to scroll to top of meme grid
   const scrollToMemeGrid = () => {
     if (memeGridRef.current) {
-      memeGridRef.current.scrollIntoView({ 
-        behavior: 'smooth', 
-        block: 'start' 
+      // Get the navbar height dynamically
+      const header = document.querySelector('header');
+      const navbarHeight = header ? header.offsetHeight : 80;
+      
+      // Calculate the position to scroll to (accounting for navbar)
+      const elementTop = memeGridRef.current.offsetTop;
+      const offsetPosition = elementTop - navbarHeight - 20; // Extra 20px for breathing room
+      
+      // Scroll to the calculated position
+      window.scrollTo({
+        top: Math.max(0, offsetPosition), // Ensure we don't scroll to negative values
+        behavior: 'smooth'
       });
     }
   };
@@ -59,9 +70,11 @@ export default function MemesPage() {
   // Reset local memes when filter or category changes
   useEffect(() => {
     setLocalMemes([]);
-    // Scroll to top of meme grid when filters change
-    scrollToMemeGrid();
-  }, [selectedFilter, selectedCategory, selectedTimePeriod]);
+    // Only scroll to top if this is triggered by a user action
+    if (userInitiated) {
+      scrollToMemeGrid();
+    }
+  }, [selectedFilter, selectedCategory, selectedTimePeriod, userInitiated]);
 
   // Reset viewed memes tracking when major filters change to ensure fresh tracking
   useEffect(() => {
@@ -98,13 +111,15 @@ export default function MemesPage() {
 
   const handleFilterChange = (filter: string) => {
     if (filter === 'newest' || filter === 'trending' || filter === 'hottest') {
-      setSelectedFilter(filter);
+      setUserInitiated(true);
+      setSelectedFilter(filter as 'newest' | 'trending' | 'hottest');
     }
   };
 
   const handleTimePeriodChange = (period: string) => {
     if (period === 'all' || period === 'today' || period === 'week' || period === 'month') {
-      setSelectedTimePeriod(period);
+      setUserInitiated(true);
+      setSelectedTimePeriod(period as 'all' | 'today' | 'week' | 'month');
     }
   };
 
@@ -146,6 +161,7 @@ export default function MemesPage() {
   const displayMemes = localMemes.length > 0 ? localMemes : memes;
 
   const handleCategorySelect = (categoryId: string) => {
+    setUserInitiated(true);
     setSelectedCategory(categoryId);
   };
 
@@ -203,17 +219,9 @@ export default function MemesPage() {
           <p className="text-xl text-gray-600 dark:text-gray-400 mb-8 max-w-2xl mx-auto">
             {selectedCategory 
               ? `Discover ${selectedFilter} memes from this category${selectedTimePeriod !== 'all' ? ` in the last ${selectedTimePeriod === 'today' ? '24 hours' : selectedTimePeriod === 'week' ? '7 days' : '30 days'}` : ''}`
-              : `Discover ${selectedFilter} memes from all categories${selectedTimePeriod !== 'all' ? ` in the last ${selectedTimePeriod === 'today' ? '24 hours' : selectedTimePeriod === 'week' ? '7 days' : '30 days'}` : ''}. Scroll through our entire collection and find something that makes you laugh!`
+              : `Discover ${selectedFilter} memes from all categories${selectedTimePeriod !== 'all' ? ` in the last ${selectedTimePeriod === 'today' ? '24 hours' : selectedTimePeriod === 'week' ? '7 days' : '30 days'}` : ''}.`
             }
           </p>
-          {selectedCategory && (
-            <button
-              onClick={() => handleCategorySelect('')}
-              className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline"
-            >
-              ← Back to all memes
-            </button>
-          )}
         </section>
 
         {/* Main Content with Sidebar */}
@@ -231,7 +239,7 @@ export default function MemesPage() {
           </aside>
 
           {/* Memes Grid */}
-          <section ref={memeGridRef} className="flex-1">
+          <section className="flex-1">
             {/* Mobile Time Period Selector */}
             <div className="lg:hidden mb-6 bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
               <div className="flex flex-col gap-3">
@@ -319,38 +327,29 @@ export default function MemesPage() {
               </div>
             </div>
 
-            {/* Meme Sorting Controls */}
-            <div className="mb-6 bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  {selectedFilter === 'newest' && 'Newest Memes'}
-                  {selectedFilter === 'trending' && 'Trending Memes'}
-                  {selectedFilter === 'hottest' && 'Hottest Memes'}
-                  {selectedCategory && ` from ${selectedCategory ? 'this category' : 'all categories'}`}
-                  {selectedTimePeriod !== 'all' && ` in the last ${selectedTimePeriod === 'today' ? '24 hours' : selectedTimePeriod === 'week' ? '7 days' : '30 days'}`}
-                </h3>
-              </div>
-            </div>
-
             {memesError ? (
               <div className="text-center py-12">
                 <div className="text-4xl mb-4">😢</div>
                 <h3 className="text-xl font-semibold mb-2">Failed to load memes</h3>
                 <p className="text-gray-500 dark:text-gray-400 mb-4">{memesError}</p>
-                <Button onClick={refresh}>Try Again</Button>
+                {/* <Button onClick={refresh}>Try Again</Button> */}
               </div>
             ) : (
-              <MemeGrid
-                memes={displayMemes}
-                onLike={handleLike}
-                onShare={handleShare}
-                loading={memesLoading}
-                showLoadMore={true}
-                onLoadMore={loadMore}
-                hasMore={hasMore}
-                layout="vertical"
-                likedMemes={likedMemes}
-              />
+              <>
+                {/* Scroll anchor positioned exactly at the top of the meme grid */}
+                <div ref={memeGridRef}></div>
+                <MemeGrid
+                  memes={displayMemes}
+                  onLike={handleLike}
+                  onShare={handleShare}
+                  loading={memesLoading}
+                  showLoadMore={true}
+                  onLoadMore={loadMore}
+                  hasMore={hasMore}
+                  layout="vertical"
+                  likedMemes={likedMemes}
+                />
+              </>
             )}
           </section>
         </div>
@@ -366,9 +365,9 @@ export default function MemesPage() {
                 : `No ${selectedFilter} memes found${selectedTimePeriod !== 'all' ? ` in the last ${selectedTimePeriod === 'today' ? '24 hours' : selectedTimePeriod === 'week' ? '7 days' : '30 days'}` : ''} yet. Be the first to upload something hilarious!`
               }
             </p>
-            <Button onClick={() => window.location.href = '/upload'} className="mt-4">
+            {/* <Button onClick={() => window.location.href = '/upload'} className="mt-4">
               Upload First Meme
-            </Button>
+            </Button> */}
           </section>
         )}
       </main>

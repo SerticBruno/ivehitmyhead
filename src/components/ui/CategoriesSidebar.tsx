@@ -21,6 +21,7 @@ export const FiltersAndSorting: React.FC<FiltersAndSortingProps> = ({
   selectedTimePeriod = 'all'
 }) => {
   const [showBlurOverlay, setShowBlurOverlay] = React.useState(true);
+  const [userInitiated, setUserInitiated] = React.useState(false);
   const {
     categories,
     loading,
@@ -36,16 +37,19 @@ export const FiltersAndSorting: React.FC<FiltersAndSortingProps> = ({
   };
 
   const scrollToTop = () => {
-    // Find the meme grid/list container
-    const memeGrid = document.querySelector('.meme-grid, .memes-grid, [data-meme-grid], .grid, .memes-container') || 
-                     document.querySelector('main > div:has(img), main > div:has(.meme-card)');
-    
-    if (memeGrid) {
-      // Scroll to the start of the meme list
-      memeGrid.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    } else {
-      // Fallback: scroll to just below the navbar where memes typically start
-      window.scrollTo({ top: 80, behavior: 'smooth' });
+    // Only scroll if this is triggered by a user action
+    if (userInitiated) {
+      // Find the meme grid/list container
+      const memeGrid = document.querySelector('.meme-grid, .memes-grid, [data-meme-grid], .grid, .memes-container') || 
+                       document.querySelector('main > div:has(img), main > div:has(.meme-card)');
+      
+      if (memeGrid) {
+        // Scroll to the start of the meme list
+        memeGrid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else {
+        // Fallback: scroll to just below the navbar where memes typically start
+        window.scrollTo({ top: 80, behavior: 'smooth' });
+      }
     }
   };
 
@@ -87,6 +91,7 @@ export const FiltersAndSorting: React.FC<FiltersAndSortingProps> = ({
         <div className="flex justify-between gap-2">
           <button
             onClick={() => {
+              setUserInitiated(true);
               onTimePeriodChange?.('today');
               scrollToTop();
             }}
@@ -100,6 +105,7 @@ export const FiltersAndSorting: React.FC<FiltersAndSortingProps> = ({
           </button>
           <button
             onClick={() => {
+              setUserInitiated(true);
               onTimePeriodChange?.('week');
               scrollToTop();
             }}
@@ -113,6 +119,7 @@ export const FiltersAndSorting: React.FC<FiltersAndSortingProps> = ({
           </button>
           <button
             onClick={() => {
+              setUserInitiated(true);
               onTimePeriodChange?.('month');
               scrollToTop();
             }}
@@ -126,6 +133,7 @@ export const FiltersAndSorting: React.FC<FiltersAndSortingProps> = ({
           </button>
           <button
             onClick={() => {
+              setUserInitiated(true);
               onTimePeriodChange?.('all');
               scrollToTop();
             }}
@@ -146,6 +154,7 @@ export const FiltersAndSorting: React.FC<FiltersAndSortingProps> = ({
         <div className="flex justify-between gap-2">
           <button
             onClick={() => {
+              setUserInitiated(true);
               onFilterChange?.('hottest');
               scrollToTop();
             }}
@@ -159,6 +168,7 @@ export const FiltersAndSorting: React.FC<FiltersAndSortingProps> = ({
           </button>
           <button
             onClick={() => {
+              setUserInitiated(true);
               onFilterChange?.('trending');
               scrollToTop();
             }}
@@ -172,6 +182,7 @@ export const FiltersAndSorting: React.FC<FiltersAndSortingProps> = ({
           </button>
           <button
             onClick={() => {
+              setUserInitiated(true);
               onFilterChange?.('newest');
               scrollToTop();
             }}
@@ -194,6 +205,7 @@ export const FiltersAndSorting: React.FC<FiltersAndSortingProps> = ({
             {/* All Categories Option */}
             <button
               onClick={() => {
+                setUserInitiated(true);
                 onCategorySelect?.('');
                 scrollToTop();
               }}
@@ -216,6 +228,7 @@ export const FiltersAndSorting: React.FC<FiltersAndSortingProps> = ({
                 <button
                   key={category.id}
                   onClick={() => {
+                    setUserInitiated(true);
                     onCategorySelect?.(category.id);
                     scrollToTop();
                   }}
