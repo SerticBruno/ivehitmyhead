@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Header, Footer } from '@/components/layout';
 import { MemeGrid } from '@/components/meme';
 import { FiltersAndSorting, Button } from '@/components/ui';
@@ -15,12 +15,27 @@ export default function CategoriesPage() {
   const [likedMemes, setLikedMemes] = useState<Set<string>>(new Set());
   const [localMemes, setLocalMemes] = useState<any[]>([]);
 
+  // Ref for scrolling to meme grid
+  const memeGridRef = useRef<HTMLElement>(null);
+
   // Get categories for mobile selector
   const { categories } = useCategories({ limit: 50 });
+
+  // Function to scroll to top of meme grid
+  const scrollToMemeGrid = () => {
+    if (memeGridRef.current) {
+      memeGridRef.current.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'start' 
+      });
+    }
+  };
 
   // Reset local memes when filter or category changes
   useEffect(() => {
     setLocalMemes([]);
+    // Scroll to top of meme grid when filters change
+    scrollToMemeGrid();
   }, [selectedFilter, selectedCategory, selectedTimePeriod]);
 
   // Map filter values to API sort parameters
@@ -169,7 +184,7 @@ export default function CategoriesPage() {
           </aside>
 
           {/* Memes Grid */}
-          <section className="flex-1">
+          <section ref={memeGridRef} className="flex-1">
             {/* Mobile Time Period Selector */}
             <div className="lg:hidden mb-6 bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
               <div className="flex flex-col gap-3">
@@ -186,7 +201,7 @@ export default function CategoriesPage() {
                       onClick={() => handleTimePeriodChange(period.value)}
                       className={`flex flex-col items-center p-3 rounded-md transition-colors duration-150 ${
                         selectedTimePeriod === period.value
-                          ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-2 border-blue-500"
+                          ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300"
                           : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
                       }`}
                     >
@@ -213,7 +228,7 @@ export default function CategoriesPage() {
                       onClick={() => handleFilterChange(filter.value)}
                       className={`flex flex-col items-center p-3 rounded-md transition-colors duration-150 ${
                         selectedFilter === filter.value
-                          ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-2 border-blue-500"
+                          ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300"
                           : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
                       }`}
                     >
@@ -234,7 +249,7 @@ export default function CategoriesPage() {
                     onClick={() => handleCategorySelect('')}
                     className={`px-3 py-2 text-sm font-medium rounded-md transition-colors duration-150 ${
                       !selectedCategory 
-                        ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-2 border-blue-500"
+                        ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300"
                         : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
                     }`}
                   >
@@ -246,7 +261,7 @@ export default function CategoriesPage() {
                       onClick={() => handleCategorySelect(category.id)}
                       className={`px-3 py-2 text-sm font-medium rounded-md transition-colors duration-150 ${
                         selectedCategory === category.id 
-                          ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-2 border-blue-500"
+                          ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300"
                           : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
                       }`}
                     >

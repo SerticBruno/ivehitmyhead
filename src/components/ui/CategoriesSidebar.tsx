@@ -35,6 +35,20 @@ export const FiltersAndSorting: React.FC<FiltersAndSortingProps> = ({
     setShowBlurOverlay(!isAtBottom);
   };
 
+  const scrollToTop = () => {
+    // Find the meme grid/list container
+    const memeGrid = document.querySelector('.meme-grid, .memes-grid, [data-meme-grid], .grid, .memes-container') || 
+                     document.querySelector('main > div:has(img), main > div:has(.meme-card)');
+    
+    if (memeGrid) {
+      // Scroll to the start of the meme list
+      memeGrid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      // Fallback: scroll to just below the navbar where memes typically start
+      window.scrollTo({ top: 80, behavior: 'smooth' });
+    }
+  };
+
   if (loading) {
     return (
       <div className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 ${className}`}>
@@ -72,7 +86,10 @@ export const FiltersAndSorting: React.FC<FiltersAndSortingProps> = ({
         <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Time Period</h4>
         <div className="flex justify-between gap-2">
           <button
-            onClick={() => onTimePeriodChange?.('today')}
+            onClick={() => {
+              onTimePeriodChange?.('today');
+              scrollToTop();
+            }}
             className={`flex flex-col items-center px-3 py-3 text-xs font-medium rounded-lg transition-all duration-200 min-w-[60px] ${
               selectedTimePeriod === 'today'
                 ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-2 border-blue-500 shadow-sm"
@@ -82,7 +99,10 @@ export const FiltersAndSorting: React.FC<FiltersAndSortingProps> = ({
             <span>Today</span>
           </button>
           <button
-            onClick={() => onTimePeriodChange?.('week')}
+            onClick={() => {
+              onTimePeriodChange?.('week');
+              scrollToTop();
+            }}
             className={`flex flex-col items-center px-3 py-3 text-xs font-medium rounded-lg transition-all duration-200 min-w-[60px] ${
               selectedTimePeriod === 'week'
                 ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-2 border-blue-500 shadow-sm"
@@ -92,7 +112,10 @@ export const FiltersAndSorting: React.FC<FiltersAndSortingProps> = ({
             <span>This Week</span>
           </button>
           <button
-            onClick={() => onTimePeriodChange?.('month')}
+            onClick={() => {
+              onTimePeriodChange?.('month');
+              scrollToTop();
+            }}
             className={`flex flex-col items-center px-3 py-3 text-xs font-medium rounded-lg transition-all duration-200 min-w-[60px] ${
               selectedTimePeriod === 'month'
                 ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-2 border-blue-500 shadow-sm"
@@ -102,7 +125,10 @@ export const FiltersAndSorting: React.FC<FiltersAndSortingProps> = ({
             <span>This Month</span>
           </button>
           <button
-            onClick={() => onTimePeriodChange?.('all')}
+            onClick={() => {
+              onTimePeriodChange?.('all');
+              scrollToTop();
+            }}
             className={`flex flex-col items-center px-3 py-3 text-xs font-medium rounded-lg transition-all duration-200 min-w-[60px] ${
               selectedTimePeriod === 'all'
                 ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-2 border-blue-500 shadow-sm"
@@ -119,7 +145,10 @@ export const FiltersAndSorting: React.FC<FiltersAndSortingProps> = ({
         <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Sort By</h4>
         <div className="flex justify-between gap-2">
           <button
-            onClick={() => onFilterChange?.('newest')}
+            onClick={() => {
+              onFilterChange?.('newest');
+              scrollToTop();
+            }}
             className={`flex flex-col items-center px-3 py-3 text-xs font-medium rounded-lg transition-all duration-200 flex-1 ${
               selectedFilter === 'newest'
                 ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-2 border-blue-500 shadow-sm"
@@ -129,7 +158,10 @@ export const FiltersAndSorting: React.FC<FiltersAndSortingProps> = ({
             <span>Newest</span>
           </button>
           <button
-            onClick={() => onFilterChange?.('trending')}
+            onClick={() => {
+              onFilterChange?.('trending');
+              scrollToTop();
+            }}
             className={`flex flex-col items-center px-3 py-3 text-xs font-medium rounded-lg transition-all duration-200 flex-1 ${
               selectedFilter === 'trending'
                 ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-2 border-blue-500 shadow-sm"
@@ -139,7 +171,10 @@ export const FiltersAndSorting: React.FC<FiltersAndSortingProps> = ({
             <span>Trending</span>
           </button>
           <button
-            onClick={() => onFilterChange?.('hottest')}
+            onClick={() => {
+              onFilterChange?.('hottest');
+              scrollToTop();
+            }}
             className={`flex flex-col items-center px-3 py-3 text-xs font-medium rounded-lg transition-all duration-200 flex-1 ${
               selectedFilter === 'hottest'
                 ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-2 border-blue-500 shadow-sm"
@@ -154,11 +189,14 @@ export const FiltersAndSorting: React.FC<FiltersAndSortingProps> = ({
       {/* Categories */}
       <div className="p-4 flex-1 flex flex-col min-h-0">
         <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Categories</h4>
-        <div className="flex-1 overflow-y-auto pr-4 relative" onScroll={handleScroll}>
+        <div className="flex-1 overflow-y-auto pr-4 relative categories-scroll-container" onScroll={handleScroll}>
           <nav className="space-y-2">
             {/* All Categories Option */}
             <button
-              onClick={() => onCategorySelect?.('')}
+              onClick={() => {
+                onCategorySelect?.('');
+                scrollToTop();
+              }}
               className={`w-full flex items-center px-3 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
                 !selectedCategory 
                   ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-2 border-blue-500 shadow-sm"
@@ -177,7 +215,10 @@ export const FiltersAndSorting: React.FC<FiltersAndSortingProps> = ({
               return (
                 <button
                   key={category.id}
-                  onClick={() => onCategorySelect?.(category.id)}
+                  onClick={() => {
+                    onCategorySelect?.(category.id);
+                    scrollToTop();
+                  }}
                   className={`w-full flex items-center px-3 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
                     isSelected 
                       ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-2 border-blue-500 shadow-sm"
