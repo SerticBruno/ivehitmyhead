@@ -1,35 +1,72 @@
-export interface Meme {
+export interface User {
   id: string;
-  title: string;
-  imageUrl: string;
-  author: string;
-  likes: number;
-  comments: number;
-  shares: number;
-  createdAt: string;
-  tags?: string[];
-  category?: string;
+  username: string;
+  display_name?: string;
+  avatar_url?: string;
+  bio?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Category {
   id: string;
   name: string;
   emoji: string;
-  count: number;
   description?: string;
+  created_at: string;
+  count?: number; // For display purposes
 }
 
-export interface MemeCardProps {
+export interface Meme {
   id: string;
   title: string;
-  imageUrl: string;
-  author: string;
-  likes: number;
-  comments: number;
-  shares: number;
-  createdAt: string;
-  tags?: string[];
-  category?: string;
+  image_url: string;
+  cloudinary_public_id: string;
+  author_id: string;
+  author?: User;
+  category_id?: string;
+  category?: Category;
+  tags: string[];
+  views: number;
+  likes_count: number;
+  comments_count: number;
+  shares_count: number;
+  created_at: string;
+  updated_at: string;
+  is_liked?: boolean; // For current user
+}
+
+export interface MemeLike {
+  id: string;
+  meme_id: string;
+  user_id: string;
+  created_at: string;
+}
+
+export interface MemeComment {
+  id: string;
+  meme_id: string;
+  author_id: string;
+  author?: User;
+  content: string;
+  parent_id?: string;
+  created_at: string;
+  updated_at: string;
+  replies?: MemeComment[];
+}
+
+export interface MemeView {
+  id: string;
+  meme_id: string;
+  user_id?: string;
+  ip_address?: string;
+  user_agent?: string;
+  viewed_at: string;
+}
+
+// Component Props
+export interface MemeCardProps {
+  meme: Meme;
   onLike?: (id: string) => void;
   onShare?: (id: string) => void;
   onComment?: (id: string) => void;
@@ -47,7 +84,7 @@ export interface MemeDetailProps {
 }
 
 export interface MemeGridProps {
-  memes: Omit<MemeCardProps, 'onLike' | 'onShare' | 'onComment'>[];
+  memes: Meme[];
   onLike?: (id: string) => void;
   onShare?: (id: string) => void;
   onComment?: (id: string) => void;
@@ -56,4 +93,27 @@ export interface MemeGridProps {
   showLoadMore?: boolean;
   onLoadMore?: () => void;
   hasMore?: boolean;
+}
+
+// API Types
+export interface CreateMemeRequest {
+  title: string;
+  image: File;
+  category_id?: string;
+  tags?: string[];
+}
+
+export interface UpdateMemeRequest {
+  title?: string;
+  category_id?: string;
+  tags?: string[];
+}
+
+export interface CreateCommentRequest {
+  content: string;
+  parent_id?: string;
+}
+
+export interface UpdateCommentRequest {
+  content: string;
 }

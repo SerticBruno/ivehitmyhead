@@ -1,9 +1,10 @@
 export { Button } from './Button';
 export { Card } from './Card';
 export { Input } from './Input';
-export { Stats } from './Stats';
-export { Newsletter } from './Newsletter';
-export { FeaturedCreator } from './FeaturedCreator';
-export { TrendingTags } from './TrendingTags';
+export { CategoriesSidebar } from './CategoriesSidebar';
 export { CategoryCard } from './CategoryCard';
-export { CategoriesSidebar } from './CategoriesSidebar'; 
+export { FeaturedCreator } from './FeaturedCreator';
+export { Newsletter } from './Newsletter';
+export { Stats } from './Stats';
+export { TrendingTags } from './TrendingTags';
+export { MemeUpload } from './MemeUpload'; 
