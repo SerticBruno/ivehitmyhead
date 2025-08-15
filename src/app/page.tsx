@@ -68,9 +68,7 @@ export default function Home() {
   const { memes, loading: memesLoading, error: memesError, refresh: refreshMemes } = useMemes({ 
     limit: 6, 
     sort_by: 'views', 
-    sort_order: 'desc',
-    secondary_sort: 'created_at',
-    secondary_order: 'desc'
+    sort_order: 'desc'
   });
   const { categories, loading: categoriesLoading, error: categoriesError } = useCategories();
   const { likeMeme } = useMemeInteractions();

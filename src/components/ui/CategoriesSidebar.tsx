@@ -78,7 +78,7 @@ export const FiltersAndSorting: React.FC<FiltersAndSortingProps> = ({
     <div className={`sticky top-20 h-[calc(100vh-6rem)] bg-white dark:bg-gray-800 rounded-b-xl shadow-lg border border-gray-200 dark:border-gray-700 flex flex-col ${className}`}>
       {/* Header */}
       <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Filters & Sorting</h3>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Meme Filters</h3>
       </div>
 
       {/* Time Period Filter */}
@@ -146,16 +146,16 @@ export const FiltersAndSorting: React.FC<FiltersAndSortingProps> = ({
         <div className="flex justify-between gap-2">
           <button
             onClick={() => {
-              onFilterChange?.('newest');
+              onFilterChange?.('hottest');
               scrollToTop();
             }}
             className={`flex flex-col items-center px-3 py-3 text-xs font-medium rounded-lg flex-1 border-2 ${
-              selectedFilter === 'newest'
+              selectedFilter === 'hottest'
                 ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-500 shadow-sm"
                 : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 hover:shadow-sm border-transparent"
             }`}
           >
-            <span>Newest</span>
+            <span>Hottest</span>
           </button>
           <button
             onClick={() => {
@@ -172,16 +172,16 @@ export const FiltersAndSorting: React.FC<FiltersAndSortingProps> = ({
           </button>
           <button
             onClick={() => {
-              onFilterChange?.('hottest');
+              onFilterChange?.('newest');
               scrollToTop();
             }}
             className={`flex flex-col items-center px-3 py-3 text-xs font-medium rounded-lg flex-1 border-2 ${
-              selectedFilter === 'hottest'
+              selectedFilter === 'newest'
                 ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-500 shadow-sm"
                 : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 hover:shadow-sm border-transparent"
             }`}
           >
-            <span>Hottest</span>
+            <span>Newest</span>
           </button>
         </div>
       </div>

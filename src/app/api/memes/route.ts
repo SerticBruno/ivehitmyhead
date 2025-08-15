@@ -9,8 +9,6 @@ export async function GET(request: NextRequest) {
     const category_id = searchParams.get('category_id');
     const sort_by = searchParams.get('sort_by') || 'created_at';
     const sort_order = searchParams.get('sort_order') || 'desc';
-    const secondary_sort = searchParams.get('secondary_sort');
-    const secondary_order = searchParams.get('secondary_order') || 'desc';
     const time_period = searchParams.get('time_period');
     const search = searchParams.get('search');
 
@@ -60,20 +58,25 @@ export async function GET(request: NextRequest) {
       query = query.gte('created_at', startDate.toISOString());
     }
 
-    // Apply primary sorting
+    // Apply primary sorting with proper tie-breaking
     if (sort_by === 'likes') {
+      // Sort by likes first, then views as tie-breaker, then date as final tie-breaker
       query = query.order('likes_count', { ascending: sort_order === 'asc' });
+      query = query.order('views', { ascending: false }); // Always descending for views as tie-breaker
+      query = query.order('created_at', { ascending: false }); // Always descending for date as final tie-breaker
     } else if (sort_by === 'views') {
+      // Sort by views first, then likes as tie-breaker, then date as final tie-breaker
       query = query.order('views', { ascending: sort_order === 'asc' });
+      query = query.order('likes_count', { ascending: false }); // Always descending for likes as tie-breaker
+      query = query.order('created_at', { ascending: false }); // Always descending for date as final tie-breaker
     } else if (sort_by === 'comments') {
       query = query.order('comments_count', { ascending: sort_order === 'asc' });
+      // Add tie-breaking for comments: likes then date
+      query = query.order('likes_count', { ascending: false });
+      query = query.order('created_at', { ascending: false });
     } else {
+      // For newest (created_at), no tie-breaking needed
       query = query.order('created_at', { ascending: sort_order === 'asc' });
-    }
-
-    // Apply secondary sorting (usually by date for consistent ordering)
-    if (secondary_sort && secondary_sort !== sort_by) {
-      query = query.order('created_at', { ascending: secondary_order === 'asc' });
     }
 
     // Apply pagination

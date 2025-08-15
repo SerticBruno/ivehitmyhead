@@ -50,9 +50,9 @@ const Header: React.FC<HeaderProps> = ({ onSearch, showSearch = true }) => {
 
           {/* Navigation */}
           <nav className="flex items-center space-x-4">
-            <Link href="/categories" className="cursor-pointer">
+            <Link href="/memes" className="cursor-pointer">
               <Button variant="ghost" size="sm">
-                Categories
+                Memes
               </Button>
             </Link>
             <Link href="/trending" className="cursor-pointer">
