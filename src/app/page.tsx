@@ -244,75 +244,7 @@ export default function Home() {
           )}
         </section>
 
-        {/* Categories Section */}
-        <section className="mb-12">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold">Popular Categories</h2>
-            <Button variant="ghost" onClick={() => window.location.href = '/categories'}>
-              View All Memes →
-            </Button>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {categories.slice(0, 4).map((category) => (
-              <div
-                key={category.id}
-                className="bg-white dark:bg-gray-800 rounded-lg p-6 text-center hover:shadow-md transition-shadow cursor-pointer"
-                onClick={() => window.location.href = `/categories/${category.name.toLowerCase().replace(/\s+/g, '-')}`}
-              >
-                <div className="text-3xl mb-2">{category.emoji}</div>
-                <h3 className="font-semibold mb-1">{category.name}</h3>
-                <p className="text-sm text-gray-500">Browse memes</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Statistics Section */}
-        <section className="mb-12">
-          <h2 className="text-2xl font-bold mb-6 text-center">Platform Statistics</h2>
-          <Stats stats={mockStats} />
-        </section>
-
-        {/* Trending Tags Section */}
-        <section className="mb-12">
-          <h2 className="text-2xl font-bold mb-6">Trending Tags</h2>
-          <TrendingTags 
-            tags={mockTags} 
-            onTagClick={handleTagClick}
-            maxTags={8}
-          />
-        </section>
-
-        {/* Featured Creators Section */}
-        <section className="mb-12">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold">Featured Creators</h2>
-            <Button variant="ghost">
-              View All Creators →
-            </Button>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {mockCreators.map((creator) => (
-              <FeaturedCreator
-                key={creator.id}
-                creator={creator}
-                onFollow={handleFollowCreator}
-                onViewProfile={handleViewCreatorProfile}
-              />
-            ))}
-          </div>
-        </section>
-
-        {/* Newsletter Section */}
-        <section className="mb-12">
-          <Newsletter 
-            title="Get the latest memes"
-            description="Subscribe to our newsletter for the best memes delivered to your inbox."
-          />
-        </section>
-
       </main>
-
       <Footer />
     </div>
   );
