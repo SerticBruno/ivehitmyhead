@@ -90,10 +90,10 @@ export const FiltersAndSorting: React.FC<FiltersAndSortingProps> = ({
               onTimePeriodChange?.('today');
               scrollToTop();
             }}
-            className={`flex flex-col items-center px-3 py-3 text-xs font-medium rounded-lg transition-all duration-200 min-w-[60px] ${
+            className={`flex flex-col items-center px-3 py-3 text-xs font-medium rounded-lg min-w-[60px] border-2 ${
               selectedTimePeriod === 'today'
-                ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-2 border-blue-500 shadow-sm"
-                : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 hover:shadow-sm"
+                ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-500 shadow-sm"
+                : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 hover:shadow-sm border-transparent"
             }`}
           >
             <span>Today</span>
@@ -103,10 +103,10 @@ export const FiltersAndSorting: React.FC<FiltersAndSortingProps> = ({
               onTimePeriodChange?.('week');
               scrollToTop();
             }}
-            className={`flex flex-col items-center px-3 py-3 text-xs font-medium rounded-lg transition-all duration-200 min-w-[60px] ${
+            className={`flex flex-col items-center px-3 py-3 text-xs font-medium rounded-lg min-w-[60px] border-2 ${
               selectedTimePeriod === 'week'
-                ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-2 border-blue-500 shadow-sm"
-                : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 hover:shadow-sm"
+                ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-500 shadow-sm"
+                : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 hover:shadow-sm border-transparent"
             }`}
           >
             <span>This Week</span>
@@ -116,10 +116,10 @@ export const FiltersAndSorting: React.FC<FiltersAndSortingProps> = ({
               onTimePeriodChange?.('month');
               scrollToTop();
             }}
-            className={`flex flex-col items-center px-3 py-3 text-xs font-medium rounded-lg transition-all duration-200 min-w-[60px] ${
+            className={`flex flex-col items-center px-3 py-3 text-xs font-medium rounded-lg min-w-[60px] border-2 ${
               selectedTimePeriod === 'month'
-                ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-2 border-blue-500 shadow-sm"
-                : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 hover:shadow-sm"
+                ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-500 shadow-sm"
+                : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 hover:shadow-sm border-transparent"
             }`}
           >
             <span>This Month</span>
@@ -129,10 +129,10 @@ export const FiltersAndSorting: React.FC<FiltersAndSortingProps> = ({
               onTimePeriodChange?.('all');
               scrollToTop();
             }}
-            className={`flex flex-col items-center px-3 py-3 text-xs font-medium rounded-lg transition-all duration-200 min-w-[60px] ${
+            className={`flex flex-col items-center px-3 py-3 text-xs font-medium rounded-lg min-w-[60px] border-2 ${
               selectedTimePeriod === 'all'
-                ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-2 border-blue-500 shadow-sm"
-                : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 hover:shadow-sm"
+                ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-500 shadow-sm"
+                : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 hover:shadow-sm border-transparent"
             }`}
           >
             <span>All Time</span>
@@ -149,10 +149,10 @@ export const FiltersAndSorting: React.FC<FiltersAndSortingProps> = ({
               onFilterChange?.('newest');
               scrollToTop();
             }}
-            className={`flex flex-col items-center px-3 py-3 text-xs font-medium rounded-lg transition-all duration-200 flex-1 ${
+            className={`flex flex-col items-center px-3 py-3 text-xs font-medium rounded-lg flex-1 border-2 ${
               selectedFilter === 'newest'
-                ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-2 border-blue-500 shadow-sm"
-                : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 hover:shadow-sm"
+                ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-500 shadow-sm"
+                : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 hover:shadow-sm border-transparent"
             }`}
           >
             <span>Newest</span>
@@ -162,10 +162,10 @@ export const FiltersAndSorting: React.FC<FiltersAndSortingProps> = ({
               onFilterChange?.('trending');
               scrollToTop();
             }}
-            className={`flex flex-col items-center px-3 py-3 text-xs font-medium rounded-lg transition-all duration-200 flex-1 ${
+            className={`flex flex-col items-center px-3 py-3 text-xs font-medium rounded-lg flex-1 border-2 ${
               selectedFilter === 'trending'
-                ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-2 border-blue-500 shadow-sm"
-                : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 hover:shadow-sm"
+                ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-500 shadow-sm"
+                : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 hover:shadow-sm border-transparent"
             }`}
           >
             <span>Trending</span>
@@ -175,10 +175,10 @@ export const FiltersAndSorting: React.FC<FiltersAndSortingProps> = ({
               onFilterChange?.('hottest');
               scrollToTop();
             }}
-            className={`flex flex-col items-center px-3 py-3 text-xs font-medium rounded-lg transition-all duration-200 flex-1 ${
+            className={`flex flex-col items-center px-3 py-3 text-xs font-medium rounded-lg flex-1 border-2 ${
               selectedFilter === 'hottest'
-                ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-2 border-blue-500 shadow-sm"
-                : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 hover:shadow-sm"
+                ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-500 shadow-sm"
+                : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 hover:shadow-sm border-transparent"
             }`}
           >
             <span>Hottest</span>
@@ -197,10 +197,10 @@ export const FiltersAndSorting: React.FC<FiltersAndSortingProps> = ({
                 onCategorySelect?.('');
                 scrollToTop();
               }}
-              className={`w-full flex items-center px-3 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
+              className={`w-full flex items-center px-3 py-3 text-sm font-medium rounded-lg border-2 ${
                 !selectedCategory 
-                  ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-2 border-blue-500 shadow-sm"
-                  : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 hover:shadow-sm"
+                  ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-500 shadow-sm"
+                  : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 hover:shadow-sm border-transparent"
               }`}
             >
               <span className="text-lg mr-3 flex-shrink-0">🌟</span>
@@ -209,8 +209,8 @@ export const FiltersAndSorting: React.FC<FiltersAndSortingProps> = ({
               </div>
             </button>
 
-            {/* Category List */}
-            {categories.map((category) => {
+            {/* Category Options */}
+            {categories?.map((category) => {
               const isSelected = selectedCategory === category.id;
               return (
                 <button
@@ -219,13 +219,13 @@ export const FiltersAndSorting: React.FC<FiltersAndSortingProps> = ({
                     onCategorySelect?.(category.id);
                     scrollToTop();
                   }}
-                  className={`w-full flex items-center px-3 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
+                  className={`w-full flex items-center px-3 py-3 text-sm font-medium rounded-lg border-2 ${
                     isSelected 
-                      ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-2 border-blue-500 shadow-sm"
-                      : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 hover:shadow-sm"
+                      ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-500 shadow-sm"
+                      : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 hover:shadow-sm border-transparent"
                   }`}
                 >
-                  <span className="text-lg mr-3 flex-shrink-0">{category.emoji}</span>
+                  <span className="text-lg mr-3 flex-shrink-0">📁</span>
                   <div className="flex-1 text-left">
                     <div className="font-medium">{category.name}</div>
                   </div>
