@@ -4,9 +4,8 @@ import { Meme } from '@/lib/types/meme';
 
 interface FeaturedMemesProps {
   memes: Meme[];
-  onLike?: (slug: string) => void;
-  onShare?: (id: string) => void;
-  onComment?: (id: string) => void;
+  onLike: (slug: string) => void;
+  onShare: (id: string) => void;
   className?: string;
   likedMemes?: Set<string>;
 }
@@ -15,7 +14,6 @@ export const FeaturedMemes: React.FC<FeaturedMemesProps> = ({
   memes,
   onLike,
   onShare,
-  onComment,
   className = '',
   likedMemes
 }) => {
@@ -42,7 +40,6 @@ export const FeaturedMemes: React.FC<FeaturedMemesProps> = ({
             meme={meme}
             onLike={onLike}
             onShare={onShare}
-            onComment={onComment}
             className="h-full"
             isLiked={likedMemes?.has(meme.slug)}
           />

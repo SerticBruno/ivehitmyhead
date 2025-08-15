@@ -48,13 +48,8 @@ export default function TrendingPage() {
   };
 
   const handleShare = (id: string) => {
-    console.log('Sharing trending meme:', id);
+    console.log('Sharing meme:', id);
     // Implement share functionality here
-  };
-
-  const handleComment = (id: string) => {
-    console.log('Commenting on trending meme:', id);
-    // Implement comment functionality here
   };
 
   if (error) {
@@ -139,7 +134,6 @@ export default function TrendingPage() {
             memes={memes}
             onLike={handleLike}
             onShare={handleShare}
-            onComment={handleComment}
             loading={loading}
             showLoadMore={true}
             onLoadMore={loadMore}

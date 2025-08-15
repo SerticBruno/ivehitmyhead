@@ -89,11 +89,6 @@ export default function CategoryPage() {
     // Implement share functionality here
   };
 
-  const handleComment = (id: string) => {
-    console.log('Commenting on meme:', id);
-    // Implement comment functionality here
-  };
-
   if (error) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -182,8 +177,6 @@ export default function CategoryPage() {
               memes={memes}
               onLike={handleLike}
               onShare={handleShare}
-              onComment={handleComment}
-              likedMemes={likedMemes}
             />
             
             {/* Load More Button */}
