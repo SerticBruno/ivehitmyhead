@@ -6,6 +6,9 @@ interface UseMemesOptions {
   search?: string;
   sort_by?: 'created_at' | 'likes' | 'views' | 'comments';
   sort_order?: 'asc' | 'desc';
+  secondary_sort?: 'created_at' | 'likes' | 'views' | 'comments';
+  secondary_order?: 'asc' | 'desc';
+  time_period?: 'all' | 'today' | 'week' | 'month';
   limit?: number;
 }
 
@@ -31,6 +34,9 @@ export const useMemes = (options: UseMemesOptions = {}): UseMemesReturn => {
     search,
     sort_by = 'created_at',
     sort_order = 'desc',
+    secondary_sort,
+    secondary_order,
+    time_period,
     limit = 20
   } = options;
 
@@ -52,6 +58,15 @@ export const useMemes = (options: UseMemesOptions = {}): UseMemesReturn => {
 
       if (search) {
         params.append('search', search);
+      }
+
+      if (secondary_sort) {
+        params.append('secondary_sort', secondary_sort);
+        params.append('secondary_order', secondary_order || 'desc');
+      }
+
+      if (time_period) {
+        params.append('time_period', time_period);
       }
 
       const response = await fetch(`/api/memes?${params}`);
@@ -76,7 +91,7 @@ export const useMemes = (options: UseMemesOptions = {}): UseMemesReturn => {
     } finally {
       setLoading(false);
     }
-  }, [category_id, search, sort_by, sort_order, limit]);
+  }, [category_id, search, sort_by, sort_order, secondary_sort, secondary_order, time_period, limit]);
 
   const loadMore = useCallback(() => {
     if (!loading && hasMore) {

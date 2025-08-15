@@ -1,6 +1,6 @@
 export { Button } from './Button';
 export { Card } from './Card';
-export { CategoriesSidebar } from './CategoriesSidebar';
+export { FiltersAndSorting } from './CategoriesSidebar';
 export { CategorySorting } from './CategorySorting';
 export { CategoryCard } from './CategoryCard';
 export { FeaturedCreator } from './FeaturedCreator';

@@ -106,6 +106,10 @@ const FeaturedMemeCard: React.FC<FeaturedMemeCardProps> = ({
               <span>📤</span>
               <span>{meme.shares_count}</span>
             </button>
+            <div className="flex items-center gap-1 text-gray-500">
+              <span>👁️</span>
+              <span>{meme.views}</span>
+            </div>
           </div>
           <span className="text-xs">
             {formatRelativeTime(meme.created_at)} ({formatTime(meme.created_at)})

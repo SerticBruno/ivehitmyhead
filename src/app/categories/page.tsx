@@ -1,25 +1,72 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Header, Footer } from '@/components/layout';
 import { MemeGrid } from '@/components/meme';
-import { CategorySorting, Button } from '@/components/ui';
+import { FiltersAndSorting, Button } from '@/components/ui';
 import { useMemes } from '@/lib/hooks/useMemes';
+import { useCategories } from '@/lib/hooks/useCategories';
 import { useMemeInteractions } from '@/lib/hooks/useMemeInteractions';
 
 export default function CategoriesPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [selectedFilter, setSelectedFilter] = useState<'newest' | 'trending' | 'hottest'>('newest');
+  const [selectedTimePeriod, setSelectedTimePeriod] = useState<'all' | 'today' | 'week' | 'month'>('all');
   const [likedMemes, setLikedMemes] = useState<Set<string>>(new Set());
   const [localMemes, setLocalMemes] = useState<any[]>([]);
-  const [sortBy, setSortBy] = useState<'created_at' | 'views' | 'likes' | 'comments'>('created_at');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+
+  // Get categories for mobile selector
+  const { categories } = useCategories({ limit: 50 });
+
+  // Reset local memes when filter or category changes
+  useEffect(() => {
+    setLocalMemes([]);
+  }, [selectedFilter, selectedCategory, selectedTimePeriod]);
+
+  // Map filter values to API sort parameters
+  const getSortParams = () => {
+    switch (selectedFilter) {
+      case 'trending':
+        return { 
+          sort_by: 'views' as const, 
+          sort_order: 'desc' as const,
+          secondary_sort: 'created_at' as const,
+          secondary_order: 'desc' as const
+        };
+      case 'hottest':
+        return { 
+          sort_by: 'likes' as const, 
+          sort_order: 'desc' as const,
+          secondary_sort: 'created_at' as const,
+          secondary_order: 'desc' as const
+        };
+      case 'newest':
+      default:
+        return { 
+          sort_by: 'created_at' as const, 
+          sort_order: 'desc' as const
+        };
+    }
+  };
+
+  const handleFilterChange = (filter: string) => {
+    if (filter === 'newest' || filter === 'trending' || filter === 'hottest') {
+      setSelectedFilter(filter);
+    }
+  };
+
+  const handleTimePeriodChange = (period: string) => {
+    if (period === 'all' || period === 'today' || period === 'week' || period === 'month') {
+      setSelectedTimePeriod(period);
+    }
+  };
 
   // Fetch real data
   const { memes, loading: memesLoading, error: memesError, hasMore, loadMore, refresh } = useMemes({
     category_id: selectedCategory || undefined,
     limit: 12,
-    sort_by: sortBy,
-    sort_order: sortOrder
+    time_period: selectedTimePeriod,
+    ...getSortParams()
   });
   const { likeMeme } = useMemeInteractions();
 
@@ -33,7 +80,6 @@ export default function CategoriesPage() {
 
   const handleCategorySelect = (categoryId: string) => {
     setSelectedCategory(categoryId);
-    setLocalMemes([]); // Reset local memes when changing categories
   };
 
   const handleLike = async (slug: string) => {
@@ -90,12 +136,12 @@ export default function CategoriesPage() {
         {/* Hero Section */}
         <section className="text-center mb-12">
           <h1 className="text-4xl md:text-6xl font-bold mb-4">
-            {selectedCategory ? 'Category Memes' : 'All Categories'}
+            {selectedCategory ? 'Category Memes' : 'All Memes'}
           </h1>
           <p className="text-xl text-gray-600 dark:text-gray-400 mb-8 max-w-2xl mx-auto">
             {selectedCategory 
-              ? 'Discover memes from this category'
-              : 'Discover memes from all categories. Scroll through our entire collection and find something that makes you laugh!'
+              ? `Discover ${selectedFilter} memes from this category${selectedTimePeriod !== 'all' ? ` in the last ${selectedTimePeriod === 'today' ? '24 hours' : selectedTimePeriod === 'week' ? '7 days' : '30 days'}` : ''}`
+              : `Discover ${selectedFilter} memes from all categories${selectedTimePeriod !== 'all' ? ` in the last ${selectedTimePeriod === 'today' ? '24 hours' : selectedTimePeriod === 'week' ? '7 days' : '30 days'}` : ''}. Scroll through our entire collection and find something that makes you laugh!`
             }
           </p>
           {selectedCategory && (
@@ -112,58 +158,115 @@ export default function CategoriesPage() {
         <div className="flex flex-col lg:flex-row gap-8 max-w-7xl mx-auto">
           {/* Categories Sidebar */}
           <aside className="hidden lg:block lg:w-80 flex-shrink-0">
-            <CategorySorting
+            <FiltersAndSorting
               selectedCategory={selectedCategory}
               onCategorySelect={handleCategorySelect}
+              selectedFilter={selectedFilter}
+              onFilterChange={handleFilterChange}
+              selectedTimePeriod={selectedTimePeriod}
+              onTimePeriodChange={handleTimePeriodChange}
             />
           </aside>
 
           {/* Memes Grid */}
           <section className="flex-1">
+            {/* Mobile Time Period Selector */}
+            <div className="lg:hidden mb-6 bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+              <div className="flex flex-col gap-3">
+                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Time Period</h4>
+                <div className="grid grid-cols-4 gap-2">
+                  {[
+                    { value: 'today', label: 'Today', icon: '🌙' },
+                    { value: 'week', label: 'This Week', icon: '📅' },
+                    { value: 'month', label: 'This Month', icon: '📅' },
+                    { value: 'all', label: 'All Time', icon: '📅' }
+                  ].map((period) => (
+                    <button
+                      key={period.value}
+                      onClick={() => handleTimePeriodChange(period.value)}
+                      className={`flex flex-col items-center p-3 rounded-md transition-colors duration-150 ${
+                        selectedTimePeriod === period.value
+                          ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-2 border-blue-500"
+                          : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
+                      }`}
+                    >
+                      <span className="text-lg mb-1">{period.icon}</span>
+                      <span className="text-xs font-medium">{period.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Mobile Filter Selector */}
+            <div className="lg:hidden mb-6 bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+              <div className="flex flex-col gap-3">
+                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Sort By</h4>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { value: 'newest', label: 'Newest', icon: '🆕' },
+                    { value: 'trending', label: 'Trending', icon: '🔥' },
+                    { value: 'hottest', label: 'Hottest', icon: '❤️' }
+                  ].map((filter) => (
+                    <button
+                      key={filter.value}
+                      onClick={() => handleFilterChange(filter.value)}
+                      className={`flex flex-col items-center p-3 rounded-md transition-colors duration-150 ${
+                        selectedFilter === filter.value
+                          ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-2 border-blue-500"
+                          : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
+                      }`}
+                    >
+                      <span className="text-lg mb-1">{filter.icon}</span>
+                      <span className="text-xs font-medium">{filter.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Mobile Category Selector */}
+            <div className="lg:hidden mb-6 bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+              <div className="flex flex-col gap-3">
+                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Categories</h4>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => handleCategorySelect('')}
+                    className={`px-3 py-2 text-sm font-medium rounded-md transition-colors duration-150 ${
+                      !selectedCategory 
+                        ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-2 border-blue-500"
+                        : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
+                    }`}
+                  >
+                    🌟 All Categories
+                  </button>
+                  {categories?.map((category) => (
+                    <button
+                      key={category.id}
+                      onClick={() => handleCategorySelect(category.id)}
+                      className={`px-3 py-2 text-sm font-medium rounded-md transition-colors duration-150 ${
+                        selectedCategory === category.id 
+                          ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-2 border-blue-500"
+                          : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
+                      }`}
+                    >
+                      {category.emoji} {category.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
             {/* Meme Sorting Controls */}
             <div className="mb-6 bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  {selectedCategory ? 'Category Memes' : 'All Memes'}
+                  {selectedFilter === 'newest' && 'Newest Memes'}
+                  {selectedFilter === 'trending' && 'Trending Memes'}
+                  {selectedFilter === 'hottest' && 'Hottest Memes'}
+                  {selectedCategory && ` from ${selectedCategory ? 'this category' : 'all categories'}`}
+                  {selectedTimePeriod !== 'all' && ` in the last ${selectedTimePeriod === 'today' ? '24 hours' : selectedTimePeriod === 'week' ? '7 days' : '30 days'}`}
                 </h3>
-                
-                <div className="flex items-center gap-3">
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Sort by:
-                  </label>
-                  <select
-                    value={sortBy}
-                    onChange={(e) => {
-                      const newSortBy = e.target.value as 'created_at' | 'views' | 'likes' | 'comments';
-                      setSortBy(newSortBy);
-                      setLocalMemes([]); // Reset local memes when changing sorting
-                    }}
-                    className="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="created_at">Date Created</option>
-                    <option value="views">Most Viewed</option>
-                    <option value="likes">Most Liked</option>
-                    <option value="comments">Most Commented</option>
-                  </select>
-                  
-                  <button
-                    onClick={() => {
-                      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-                      setLocalMemes([]); // Reset local memes when changing sort order
-                    }}
-                    title={`Sort ${sortOrder === 'asc' ? 'Ascending' : 'Descending'}`}
-                    className="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                  >
-                    {sortOrder === 'asc' ? '↑' : '↓'}
-                  </button>
-                  
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
-                    {sortBy === 'created_at' && (sortOrder === 'desc' ? 'Newest first' : 'Oldest first')}
-                    {sortBy === 'views' && (sortOrder === 'desc' ? 'Most viewed first' : 'Least viewed first')}
-                    {sortBy === 'likes' && (sortOrder === 'desc' ? 'Most liked first' : 'Least liked first')}
-                    {sortBy === 'comments' && (sortOrder === 'desc' ? 'Most commented first' : 'Least commented first')}
-                  </span>
-                </div>
               </div>
             </div>
 
@@ -198,8 +301,8 @@ export default function CategoriesPage() {
             <h3 className="text-xl font-semibold mb-2">No memes found</h3>
             <p className="text-gray-500 dark:text-gray-400 text-center max-w-md">
               {selectedCategory 
-                ? 'No memes found in this category yet.'
-                : 'Looks like there are no memes yet. Be the first to upload something hilarious!'
+                ? `No ${selectedFilter} memes found in this category${selectedTimePeriod !== 'all' ? ` in the last ${selectedTimePeriod === 'today' ? '24 hours' : selectedTimePeriod === 'week' ? '7 days' : '30 days'}` : ''} yet.`
+                : `No ${selectedFilter} memes found${selectedTimePeriod !== 'all' ? ` in the last ${selectedTimePeriod === 'today' ? '24 hours' : selectedTimePeriod === 'week' ? '7 days' : '30 days'}` : ''} yet. Be the first to upload something hilarious!`
               }
             </p>
             <Button onClick={() => window.location.href = '/upload'} className="mt-4">

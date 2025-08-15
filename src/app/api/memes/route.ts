@@ -9,6 +9,9 @@ export async function GET(request: NextRequest) {
     const category_id = searchParams.get('category_id');
     const sort_by = searchParams.get('sort_by') || 'created_at';
     const sort_order = searchParams.get('sort_order') || 'desc';
+    const secondary_sort = searchParams.get('secondary_sort');
+    const secondary_order = searchParams.get('secondary_order') || 'desc';
+    const time_period = searchParams.get('time_period');
     const search = searchParams.get('search');
 
     // Calculate offset
@@ -32,7 +35,32 @@ export async function GET(request: NextRequest) {
       query = query.or(`title.ilike.%${search}%,tags.cs.{${search}}`);
     }
 
-    // Apply sorting
+    // Apply time period filter
+    if (time_period && time_period !== 'all') {
+      const now = new Date();
+      let startDate: Date;
+
+      switch (time_period) {
+        case 'today':
+          startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+          break;
+        case 'week':
+          // Start of current week (Monday)
+          const dayOfWeek = now.getDay();
+          const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+          startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysToSubtract);
+          break;
+        case 'month':
+          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+          break;
+        default:
+          startDate = new Date(0); // Beginning of time
+      }
+
+      query = query.gte('created_at', startDate.toISOString());
+    }
+
+    // Apply primary sorting
     if (sort_by === 'likes') {
       query = query.order('likes_count', { ascending: sort_order === 'asc' });
     } else if (sort_by === 'views') {
@@ -41,6 +69,11 @@ export async function GET(request: NextRequest) {
       query = query.order('comments_count', { ascending: sort_order === 'asc' });
     } else {
       query = query.order('created_at', { ascending: sort_order === 'asc' });
+    }
+
+    // Apply secondary sorting (usually by date for consistent ordering)
+    if (secondary_sort && secondary_sort !== sort_by) {
+      query = query.order('created_at', { ascending: secondary_order === 'asc' });
     }
 
     // Apply pagination

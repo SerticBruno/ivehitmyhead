@@ -64,8 +64,14 @@ const mockCreators = [
 ];
 
 export default function Home() {
-  // Fetch real memes and categories
-  const { memes, loading: memesLoading, error: memesError, refresh: refreshMemes } = useMemes({ limit: 6 });
+  // Fetch real memes and categories - sorted by views for featured section
+  const { memes, loading: memesLoading, error: memesError, refresh: refreshMemes } = useMemes({ 
+    limit: 6, 
+    sort_by: 'views', 
+    sort_order: 'desc',
+    secondary_sort: 'created_at',
+    secondary_order: 'desc'
+  });
   const { categories, loading: categoriesLoading, error: categoriesError } = useCategories();
   const { likeMeme } = useMemeInteractions();
   const [likedMemes, setLikedMemes] = useState<Set<string>>(new Set());
@@ -150,7 +156,7 @@ export default function Home() {
           <div className="text-center py-20">
             <div className="text-4xl mb-4">⏳</div>
             <h2 className="text-2xl font-bold mb-2">Loading...</h2>
-            <p className="text-gray-600 dark:text-gray-400">Fetching the latest memes</p>
+            <p className="text-gray-600 dark:text-gray-400">Fetching the most viewed memes</p>
           </div>
         </main>
         <Footer />
@@ -204,10 +210,15 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Featured Memes Section */}
+        {/* Most Viewed Memes Section */}
         <section className="mb-12">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold">Featured Memes</h2>
+            <div>
+              <h2 className="text-2xl font-bold">Most Viewed Memes</h2>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                The memes that everyone is talking about
+              </p>
+            </div>
             <Button variant="ghost" onClick={() => window.location.href = '/memes'}>
               View All →
             </Button>
