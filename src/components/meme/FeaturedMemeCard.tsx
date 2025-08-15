@@ -29,7 +29,7 @@ const FeaturedMemeCard: React.FC<FeaturedMemeCardProps> = ({
   // Record view when meme is displayed
   useEffect(() => {
     recordView(meme.slug);
-  }, [meme.slug, recordView]);
+  }, [meme.slug]); // Removed recordView from dependencies
 
   const handleCardClick = () => {
     router.push(`/meme/${meme.slug}`);

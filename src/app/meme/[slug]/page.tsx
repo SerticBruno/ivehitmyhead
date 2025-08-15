@@ -41,6 +41,9 @@ export default function MemeDetailPage() {
         const data = await response.json();
         setMeme(data.meme);
         setLikesCount(data.meme.likes_count || 0);
+        
+        // Record view after successful fetch, but only once per meme load
+        recordView(slug);
       } catch (err) {
         console.error('Error fetching meme:', err);
         setError(err instanceof Error ? err.message : 'Failed to fetch meme');
@@ -52,7 +55,7 @@ export default function MemeDetailPage() {
     if (slug) {
       fetchMeme();
     }
-  }, [slug, recordView]);
+  }, [slug]); // Removed recordView from dependencies
 
   const handleLike = async () => {
     if (!meme) return;
@@ -68,13 +71,8 @@ export default function MemeDetailPage() {
         setLikesCount(prev => Math.max(0, prev - 1));
       }
       
-      // Refresh meme data to get updated counts
-      const response = await fetch(`/api/memes/${slug}`);
-      if (response.ok) {
-        const data = await response.json();
-        setMeme(data.meme);
-        setLikesCount(data.meme.likes_count || 0);
-      }
+      // No need to refresh meme data - we're managing counts locally
+      // This prevents unnecessary view increments
     } catch (error) {
       console.error('Failed to like meme:', error);
     }

@@ -83,7 +83,7 @@ export const useMemeInteractions = (): UseMemeInteractionsReturn => {
       // Silently fail for views - don't show error to user
       console.error('Failed to record view:', err);
     }
-  }, []);
+  }, []); // Empty dependency array ensures this function is stable
 
   return {
     likeMeme,

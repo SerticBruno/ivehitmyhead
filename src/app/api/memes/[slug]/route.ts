@@ -38,18 +38,12 @@ export async function GET(
       throw error;
     }
 
-    // Increment view count
-    await supabaseAdmin
-      .from('memes')
-      .update({ views: meme.views + 1 })
-      .eq('id', meme.id);
+    // Don't increment view count here - it's handled by the separate view endpoint
+    // This prevents double-counting when the meme is fetched
 
     return NextResponse.json({
       success: true,
-      meme: {
-        ...meme,
-        views: meme.views + 1 // Return updated view count
-      }
+      meme
     });
 
   } catch (error) {
