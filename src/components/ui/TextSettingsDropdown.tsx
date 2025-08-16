@@ -7,7 +7,7 @@ interface TextSettingsDropdownProps {
   field: TextField;
   isOpen: boolean;
   onClose: () => void;
-  onUpdateProperty: (fieldId: string, property: string, value: any) => void;
+  onUpdateProperty: (fieldId: string, property: string, value: string | number | boolean) => void;
 }
 
 export const TextSettingsDropdown: React.FC<TextSettingsDropdownProps> = ({

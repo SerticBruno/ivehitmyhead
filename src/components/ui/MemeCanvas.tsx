@@ -4,7 +4,6 @@ import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { MemeTemplate, TextField } from '../../lib/types/meme';
 import { 
   isPointInTextField,
-  getResizeHandle,
   renderTextOnCanvas
 } from '../../lib/utils/templateUtils';
 
@@ -116,7 +115,7 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
   }, []);
 
   // Helper function to check if a point is over a rotated resize handle
-  const isOverRotatedResizeHandle = useCallback((x: number, y: number, handle: any, field: TextField, canvasWidth: number, canvasHeight: number): boolean => {
+  const isOverRotatedResizeHandle = useCallback((x: number, y: number, handle: { x: number; y: number; type: string }, field: TextField, canvasWidth: number, canvasHeight: number): boolean => {
     if (!field.rotation || field.rotation === 0) {
       // No rotation, use simple distance calculation
       return Math.abs(x - handle.x) <= 6 && Math.abs(y - handle.y) <= 6;
@@ -201,7 +200,7 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
             const containerWidth_px = (selectedField.width / 100) * containerWidth;
             const containerHeight_px = (selectedField.height / 100) * containerHeight;
 
-            const padding = 16 * scale;
+
             
             // Draw border
             ctx.strokeStyle = '#007bff';
@@ -247,7 +246,7 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
               ctx.translate(-containerX, -containerY);
             }
             
-            handles.forEach((handle, index) => {
+            handles.forEach((handle) => {
               // Check if mouse is over this handle (we'll update this in mouse events)
               const isHovered = false; // Will be updated in mouse events
               
@@ -325,8 +324,7 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
             const containerWidth_px = (hoveredFieldObj.width / 100) * containerWidth;
             const containerHeight_px = (hoveredFieldObj.height / 100) * containerHeight;
 
-            const scale = Math.min(containerWidth / canvas.width, containerHeight / canvas.height);
-            const padding = 16 * scale;
+
             
             // If the field is rotated, we need to rotate the hover border too
             if (hoveredFieldObj.rotation && hoveredFieldObj.rotation !== 0) {
@@ -362,7 +360,7 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
       }
     };
     img.src = selectedTemplate.src;
-  }, [selectedTemplate, textFields, activeField, hoveredField, getResizeHandleInfo, isOverRotationHandle]);
+  }, [selectedTemplate, textFields, activeField, hoveredField, getResizeHandleInfo]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!canvasRef.current) return;
@@ -389,7 +387,7 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
           return;
         }
         
-        const { handles, handleSize } = getResizeHandleInfo(selectedField, rect.width, rect.height);
+        const { handles } = getResizeHandleInfo(selectedField, rect.width, rect.height);
         
         // Check if clicking on a resize handle
         for (const handle of handles) {
@@ -433,7 +431,7 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
     } else {
       onFieldSelect(null);
     }
-  }, [textFields, onFieldSelect, activeField, isOverRotationHandle, isOverRotatedResizeHandle]);
+  }, [textFields, onFieldSelect, activeField, isOverRotatedResizeHandle, isOverRotationHandle, getResizeHandleInfo]);
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
@@ -458,7 +456,7 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
         canvasRef.current.style.cursor = 'default';
       }
     }
-  }, [activeField, textFields, isOverRotationHandle]);
+  }, [activeField, textFields]);
 
   const handleCanvasClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!canvasRef.current || isDragging || isResizing) return;
@@ -507,7 +505,7 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
   const handleResize = useCallback((handle: 'nw' | 'ne' | 'sw' | 'se', deltaX: number, deltaY: number) => {
     if (!activeField || !resizeStartState.field) return;
     
-    const field = resizeStartState.field;
+
     const deltaXPercent = (deltaX / (canvasRef.current?.width || 1)) * 100;
     const deltaYPercent = (deltaY / (canvasRef.current?.height || 1)) * 100;
     
@@ -575,7 +573,7 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
           isOverRotationHandleVar = true;
         }
         
-        const { handles, handleSize } = getResizeHandleInfo(selectedField, rect.width, rect.height);
+        const { handles } = getResizeHandleInfo(selectedField, rect.width, rect.height);
         
         // Check if mouse is over a resize handle
         for (const handle of handles) {
@@ -643,7 +641,7 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
       
       onFieldMove(activeField, newX, newY);
     }
-  }, [isDragging, isResizing, isRotating, activeField, resizeHandle, dragOffset, textFields, onFieldHover, onFieldMove, resizeStartState, rotationStartState, onFieldRotate, handleResize, isOverRotatedResizeHandle]);
+  }, [isDragging, isResizing, isRotating, activeField, resizeHandle, dragOffset, textFields, onFieldHover, onFieldMove, resizeStartState, rotationStartState, onFieldRotate, handleResize, isOverRotatedResizeHandle, getResizeHandleInfo, isOverRotationHandle]);
 
   // Effects
   useEffect(() => {

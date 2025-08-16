@@ -10,7 +10,7 @@ interface TextFieldsPanelProps {
   activeField: string | null;
   onTextChange: (fieldId: string, text: string) => void;
   onFieldSelect: (fieldId: string) => void;
-  onUpdateProperty: (fieldId: string, property: string, value: any) => void;
+  onUpdateProperty: (fieldId: string, property: string, value: string | number | boolean) => void;
 }
 
 export const TextFieldsPanel: React.FC<TextFieldsPanelProps> = ({

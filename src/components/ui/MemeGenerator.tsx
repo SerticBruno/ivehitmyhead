@@ -51,15 +51,7 @@ export const MemeGenerator: React.FC = () => {
     setTextFields(initializeTextFields(template));
   }, []);
 
-  const handleCreateTemplate = useCallback(() => {
-    setEditingTemplate(null);
-    setShowTemplateManager(true);
-  }, []);
 
-  const handleEditTemplate = useCallback((template: MemeTemplate) => {
-    setEditingTemplate(template);
-    setShowTemplateManager(true);
-  }, []);
 
   const handleSaveTemplate = useCallback((template: MemeTemplate) => {
     console.log('Saving template:', template);
@@ -104,7 +96,7 @@ export const MemeGenerator: React.FC = () => {
     );
   }, []);
 
-  const updateTextFieldProperty = useCallback((fieldId: string, property: string, value: any) => {
+  const updateTextFieldProperty = useCallback((fieldId: string, property: string, value: string | number | boolean) => {
     setTextFields(prev => 
       prev.map(field => 
         field.id === fieldId ? { ...field, [property]: value } : field

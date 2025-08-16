@@ -267,7 +267,7 @@ export const renderTextOnCanvas = (
   
   const wrappedLines = wrapText(field.text, textBoxWidth);
   const lineHeight = (field.fontSize * scale) * 1.2;
-  const totalHeight = wrappedLines.length * lineHeight;
+
   const padding = 16 * scale;
   
   // Calculate Y position with smart vertical centering
