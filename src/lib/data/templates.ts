@@ -14,10 +14,10 @@ export const MEME_TEMPLATES: MemeTemplate[] = [
     textFields: [
       {
         id: 'top-left',
-        x: 40, // 25% from left
+        x: 37, // 25% from left
         y: 20, // 20% from top
-        width: 35, // 35% of image width
-        height: 15, // 15% of image height
+        width: 15, // 35% of image width
+        height: 25, // 15% of image height
         fontSize: 46,
         color: '#ffffff',
         fontFamily: 'Impact',
@@ -29,10 +29,10 @@ export const MEME_TEMPLATES: MemeTemplate[] = [
       },
       {
         id: 'top-right',
-        x: 75, // 75% from left
+        x: 60, // 75% from left
         y: 20, // 20% from top
-        width: 35, // 35% of image width
-        height: 15, // 15% of image height
+        width: 15, // 35% of image width
+        height: 25, // 15% of image height
         fontSize: 46,
         color: '#ffffff',
         fontFamily: 'Impact',
@@ -46,8 +46,8 @@ export const MEME_TEMPLATES: MemeTemplate[] = [
         id: 'bottom',
         x: 50, // center horizontally
         y: 80, // 80% from top
-        width: 70, // 70% of image width
-        height: 15, // 15% of image height
+        width: 30, // 70% of image width
+        height: 10, // 15% of image height
         fontSize: 46,
         color: '#ffffff',
         fontFamily: 'Impact',
@@ -76,10 +76,10 @@ export const MEME_TEMPLATES: MemeTemplate[] = [
       {
         id: 'bottom',
         x: 50, // center horizontally
-        y: 85, // 85% from top
-        width: 70, // 70% of image width
+        y: 90, // 85% from top
+        width: 40, // 70% of image width
         height: 15, // 15% of image height
-        fontSize: 46,
+        fontSize: 42,
         color: '#ffffff',
         fontFamily: 'Impact',
         fontWeight: 'bold',
