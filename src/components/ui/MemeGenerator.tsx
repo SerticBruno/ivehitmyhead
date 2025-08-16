@@ -4,44 +4,11 @@ import React, { useState, useRef, useCallback } from 'react';
 import { Button } from './Button';
 import { Input } from './Input';
 import { Card } from './Card';
-
-interface TextField {
-  id: string;
-  text: string;
-  x: number;
-  y: number;
-  fontSize: number;
-  color: string;
-  isDragging: boolean;
-}
-
-interface MemeTemplate {
-  id: string;
-  name: string;
-  src: string;
-  textFields: Omit<TextField, 'text' | 'isDragging'>[];
-}
-
-const MEME_TEMPLATES: MemeTemplate[] = [
-  {
-    id: 'ab',
-    name: 'AB Template',
-    src: '/images/templates/ab.png',
-    textFields: [
-      { id: 'top', x: 50, y: 20, fontSize: 48, color: '#ffffff' },
-      { id: 'bottom', x: 50, y: 80, fontSize: 48, color: '#ffffff' }
-    ]
-  },
-  {
-    id: 'imonceagain',
-    name: 'I\'m Once Again Template',
-    src: '/images/templates/imonceagain.png',
-    textFields: [
-      { id: 'top', x: 50, y: 15, fontSize: 36, color: '#ffffff' },
-      { id: 'bottom', x: 50, y: 85, fontSize: 36, color: '#ffffff' }
-    ]
-  }
-];
+import { TemplateBrowser } from './TemplateBrowser';
+import { TemplateManager } from './TemplateManager';
+import { MemeTemplate, TextField } from '../../lib/types/meme';
+import { MEME_TEMPLATES } from '../../lib/data/templates';
+import { initializeTextFields, calculateFontSize, percentageToPixels, getTemplateDefaults } from '../../lib/utils/templateUtils';
 
 export const MemeGenerator: React.FC = () => {
   const [selectedTemplate, setSelectedTemplate] = useState<MemeTemplate | null>(null);
@@ -51,6 +18,9 @@ export const MemeGenerator: React.FC = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [showTemplateBrowser, setShowTemplateBrowser] = useState(false);
+  const [showTemplateManager, setShowTemplateManager] = useState(false);
+  const [editingTemplate, setEditingTemplate] = useState<MemeTemplate | null>(null);
 
 
 
@@ -60,6 +30,36 @@ export const MemeGenerator: React.FC = () => {
         field.id === fieldId ? { ...field, text } : field
       )
     );
+  }, []);
+
+  const handleTemplateSelect = useCallback((template: MemeTemplate) => {
+    setSelectedTemplate(template);
+    setTextFields(initializeTextFields(template));
+    setShowTemplateBrowser(false);
+  }, []);
+
+  const handleCreateTemplate = useCallback(() => {
+    setEditingTemplate(null);
+    setShowTemplateManager(true);
+    setShowTemplateBrowser(false);
+  }, []);
+
+  const handleEditTemplate = useCallback((template: MemeTemplate) => {
+    setEditingTemplate(template);
+    setShowTemplateManager(true);
+    setShowTemplateBrowser(false);
+  }, []);
+
+  const handleSaveTemplate = useCallback((template: MemeTemplate) => {
+    // In a real app, you'd save this to your database
+    console.log('Saving template:', template);
+    setShowTemplateManager(false);
+    setEditingTemplate(null);
+  }, []);
+
+  const handleCancelTemplate = useCallback(() => {
+    setShowTemplateManager(false);
+    setEditingTemplate(null);
   }, []);
 
   const handleMouseDown = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -203,16 +203,7 @@ export const MemeGenerator: React.FC = () => {
     img.src = selectedTemplate.src;
   }, [selectedTemplate, textFields]);
 
-  const handleTemplateSelect = useCallback((template: MemeTemplate) => {
-    setSelectedTemplate(template);
-    setTextFields(
-      template.textFields.map(field => ({
-        ...field,
-        text: '',
-        isDragging: false
-      }))
-    );
-  }, []);
+
 
   // Re-render canvas when selectedTemplate or text fields change
   React.useEffect(() => {
@@ -268,9 +259,35 @@ export const MemeGenerator: React.FC = () => {
         </p>
       </div>
 
-             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-[80vh]">
-         {/* Left Side - Meme Preview */}
-         <div className="lg:col-span-2">
+      {/* Template Management UI */}
+      {showTemplateBrowser && (
+        <TemplateBrowser
+          onSelectTemplate={handleTemplateSelect}
+          onCreateTemplate={handleCreateTemplate}
+          onEditTemplate={handleEditTemplate}
+        />
+      )}
+
+      {showTemplateManager && (
+        <TemplateManager
+          onSave={handleSaveTemplate}
+          onCancel={handleCancelTemplate}
+          existingTemplate={editingTemplate || undefined}
+        />
+      )}
+
+      {!showTemplateBrowser && !showTemplateManager && (
+        <div className="mb-6 flex justify-center">
+          <Button onClick={() => setShowTemplateBrowser(true)} size="lg">
+            Browse Templates
+          </Button>
+        </div>
+      )}
+
+      {!showTemplateBrowser && !showTemplateManager && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-[80vh]">
+          {/* Left Side - Meme Preview */}
+          <div className="lg:col-span-2">
            <Card className="p-6 flex flex-col">
              <div className="flex justify-between items-center mb-4">
                <h2 className="text-2xl font-semibold">Preview & Edit</h2>
@@ -309,64 +326,64 @@ export const MemeGenerator: React.FC = () => {
            </Card>
          </div>
 
-        {/* Right Side - Controls */}
+          {/* Right Side - Controls */}
         <div className="space-y-6">
-                     {/* Template Selection */}
-           <Card className="p-6">
-             <h2 className="text-xl font-semibold mb-4">Choose Template</h2>
-             <div className="space-y-4">
-               {/* Custom Template Dropdown */}
-               <div className="relative" data-dropdown>
-                 <button
-                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                   className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent flex items-center justify-between"
-                 >
-                   <div className="flex items-center space-x-3">
-                     {selectedTemplate ? (
-                       <>
-                         <img
-                           src={selectedTemplate.src}
-                           alt={selectedTemplate.name}
-                           className="w-8 h-8 object-cover rounded"
-                         />
-                         <span>{selectedTemplate.name}</span>
-                       </>
-                     ) : (
-                       <span className="text-gray-500">Select a template...</span>
-                     )}
-                   </div>
-                   <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                   </svg>
-                 </button>
-                 
-                 {/* Dropdown Options */}
-                 {isDropdownOpen && (
-                   <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                     {MEME_TEMPLATES.map((template) => (
-                       <div
-                         key={template.id}
-                         className={`px-3 py-2 cursor-pointer hover:bg-gray-50 flex items-center space-x-3 ${
-                           selectedTemplate?.id === template.id ? 'bg-blue-50' : ''
-                         }`}
-                         onClick={() => {
-                           handleTemplateSelect(template);
-                           setIsDropdownOpen(false);
-                         }}
-                       >
-                         <img
-                           src={template.src}
-                           alt={template.name}
-                           className="w-8 h-8 object-cover rounded"
-                         />
-                         <span className="text-gray-900">{template.name}</span>
-                       </div>
-                     ))}
-                   </div>
-                 )}
-               </div>
-             </div>
-           </Card>
+          {/* Template Selection */}
+          <Card className="p-6">
+            <h2 className="text-xl font-semibold mb-4">Choose Template</h2>
+            <div className="space-y-4">
+              {/* Custom Template Dropdown */}
+              <div className="relative" data-dropdown>
+                <button
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent flex items-center justify-between"
+                >
+                  <div className="flex items-center space-x-3">
+                    {selectedTemplate ? (
+                      <>
+                        <img
+                          src={selectedTemplate.src}
+                          alt={selectedTemplate.name}
+                          className="w-8 h-8 object-cover rounded"
+                        />
+                        <span>{selectedTemplate.name}</span>
+                      </>
+                    ) : (
+                      <span className="text-gray-500">Select a template...</span>
+                    )}
+                  </div>
+                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                
+                {/* Dropdown Options */}
+                {isDropdownOpen && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                    {MEME_TEMPLATES.map((template) => (
+                      <div
+                        key={template.id}
+                        className={`px-3 py-2 cursor-pointer hover:bg-gray-50 flex items-center space-x-3 ${
+                          selectedTemplate?.id === template.id ? 'bg-blue-50' : ''
+                        }`}
+                        onClick={() => {
+                          handleTemplateSelect(template);
+                          setIsDropdownOpen(false);
+                        }}
+                      >
+                        <img
+                          src={template.src}
+                          alt={template.name}
+                          className="w-8 h-8 object-cover rounded"
+                        />
+                        <span className="text-gray-900">{template.name}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </Card>
 
           {/* Text Input Fields */}
           {selectedTemplate && (
@@ -455,6 +472,7 @@ export const MemeGenerator: React.FC = () => {
           )}
         </div>
       </div>
+      )}
     </div>
   );
 };

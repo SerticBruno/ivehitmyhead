@@ -121,3 +121,43 @@ export interface CreateCommentRequest {
 export interface UpdateCommentRequest {
   content: string;
 }
+
+export interface TextField {
+  id: string;
+  text: string;
+  x: number; // percentage from left (0-100)
+  y: number; // percentage from top (0-100)
+  fontSize: number; // percentage of image height
+  color: string;
+  fontFamily?: string;
+  fontWeight?: string;
+  textAlign?: 'left' | 'center' | 'right';
+  maxWidth?: number; // percentage of image width
+  strokeColor?: string; // outline color
+  strokeWidth?: number; // outline width
+  rotation?: number; // rotation in degrees
+  isDragging?: boolean;
+}
+
+export interface MemeTemplate {
+  id: string;
+  name: string;
+  description?: string;
+  src: string;
+  width: number; // original image width
+  height: number; // original image height
+  textFields: Omit<TextField, 'text' | 'isDragging'>[];
+  defaultFont?: string;
+  defaultFontSize?: number;
+  defaultColor?: string;
+  tags?: string[];
+  category?: string;
+  difficulty?: 'easy' | 'medium' | 'hard';
+}
+
+export interface TemplateCategory {
+  id: string;
+  name: string;
+  description?: string;
+  templates: MemeTemplate[];
+}
