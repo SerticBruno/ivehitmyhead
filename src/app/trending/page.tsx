@@ -19,10 +19,7 @@ export default function TrendingPage() {
 
   const { likeMeme } = useMemeInteractions();
 
-  const handleSearch = (query: string) => {
-    console.log('Searching trending memes for:', query);
-    // Implement search functionality here
-  };
+
 
   const handleLike = async (slug: string) => {
     try {

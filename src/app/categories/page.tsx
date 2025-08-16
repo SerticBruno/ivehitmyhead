@@ -11,7 +11,7 @@ export default function CategoriesPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <Header onSearch={() => {}} />
+        <Header />
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center py-20">
             <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
@@ -26,7 +26,7 @@ export default function CategoriesPage() {
   if (error) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <Header onSearch={() => {}} />
+        <Header />
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center py-20">
             <div className="text-4xl mb-4">😢</div>
@@ -43,7 +43,7 @@ export default function CategoriesPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <Header onSearch={() => {}} />
+      <Header />
       
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Page Header */}

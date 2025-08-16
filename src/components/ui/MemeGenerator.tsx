@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useCallback } from 'react';
+import Image from 'next/image';
 import { Button } from './Button';
 import { Card } from './Card';
 import { TemplateBrowser } from './TemplateBrowser';
@@ -327,7 +328,7 @@ export const MemeGenerator: React.FC = () => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const img = new Image();
+    const img = new window.Image();
     img.onload = () => {
       // Get the container dimensions
       const container = canvas.parentElement;
@@ -701,9 +702,11 @@ export const MemeGenerator: React.FC = () => {
                   <div className="flex items-center space-x-3">
                     {selectedTemplate ? (
                       <>
-                        <img
+                        <Image
                           src={selectedTemplate.src}
                           alt={selectedTemplate.name}
+                          width={32}
+                          height={32}
                           className="w-8 h-8 object-cover rounded"
                         />
                         <span>{selectedTemplate.name}</span>
@@ -731,9 +734,11 @@ export const MemeGenerator: React.FC = () => {
                           setIsDropdownOpen(false);
                         }}
                       >
-                        <img
+                        <Image
                           src={template.src}
                           alt={template.name}
+                          width={32}
+                          height={32}
                           className="w-8 h-8 object-cover rounded"
                         />
                         <span className="text-gray-900">{template.name}</span>

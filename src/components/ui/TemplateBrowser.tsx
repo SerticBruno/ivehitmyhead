@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { Card } from './Card';
 import { Button } from './Button';
 import { MemeTemplate } from '../../lib/types/meme';
@@ -42,9 +43,11 @@ export const TemplateBrowser: React.FC<TemplateBrowserProps> = ({
               <Card key={template.id} className="p-4 hover:shadow-lg transition-shadow cursor-pointer">
                 <div className="space-y-3">
                   <div className="aspect-video bg-gray-100 rounded-lg overflow-hidden">
-                    <img
+                    <Image
                       src={template.src}
                       alt={template.name}
+                      width={400}
+                      height={225}
                       className="w-full h-full object-cover"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
