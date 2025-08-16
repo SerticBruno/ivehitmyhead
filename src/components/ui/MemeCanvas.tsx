@@ -533,16 +533,45 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
         
         // Settings cog always positioned below the text field (no rotation following)
         
-        // Convert canvas coordinates to screen coordinates for fixed positioning
+        // Position popup below the cog (at the bottom of the text area)
         const canvasRect = canvasRef.current!.getBoundingClientRect();
-        const screenX = canvasRect.left + settingsCogX;
-        const screenY = canvasRect.top + settingsCogY;
         
+        // Calculate cog position in screen coordinates
+        const screenCogX = canvasRect.left + settingsCogX;
+        const screenCogY = canvasRect.top + settingsCogY;
+        
+        // Calculate popup position below the cog
+        let popupY = screenCogY + 20 + window.scrollY;
+        let popupX = screenCogX;
+        
+        // Check if popup would go below viewport and adjust if needed
+        const popupHeight = 300; // Approximate height of the popup
+        const popupWidth = 320; // Approximate width of the popup (min-w-80 = 320px)
+        const viewportHeight = window.innerHeight;
+        const viewportWidth = window.innerWidth;
+        
+        if (popupY + popupHeight > viewportHeight + window.scrollY) {
+          // Position popup above the cog instead
+          popupY = screenCogY - popupHeight - 20 + window.scrollY;
+        }
+        
+        // Check if popup would go off the left or right edges (since we're centering on cog)
+        if (popupX - popupWidth / 2 < 0) {
+          popupX = popupWidth / 2; // Align to left edge
+        } else if (popupX + popupWidth / 2 > viewportWidth) {
+          popupX = viewportWidth - popupWidth / 2; // Align to right edge
+        }
+        
+        // Ensure the field is selected when opening settings
+        onFieldSelect(field.id);
+        
+        // Position popup below the cog so it's at the bottom of the text area
+        // Add scroll offset to ensure correct positioning
         setSettingsPopup({
           isOpen: true,
           fieldId: field.id,
-          x: screenX,
-          y: screenY
+          x: popupX,
+          y: popupY
         });
         return;
       }
@@ -607,10 +636,11 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
         x: x - fieldCenterX,
         y: y - fieldCenterY
       });
-    } else {
+    } else if (!settingsPopup) {
+      // Only deselect if settings popup is not open
       onFieldSelect(null);
     }
-  }, [textFields, onFieldSelect, activeField, isOverRotatedResizeHandle, isOverRotationHandle, getResizeHandleInfo, isOverSettingsCog]);
+  }, [textFields, onFieldSelect, activeField, isOverRotatedResizeHandle, isOverRotationHandle, getResizeHandleInfo, isOverSettingsCog, settingsPopup]);
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);

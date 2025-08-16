@@ -104,8 +104,8 @@ export const FloatingSettingsPopup: React.FC<FloatingSettingsPopupProps> = ({
       className="absolute z-[9999] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-4 min-w-80 pointer-events-auto"
       style={{
         left: x,
-        top: y + 20,
-        transform: 'translate(-50%, 0)'
+        top: y,
+        transform: 'translateX(-50%)' // Center horizontally on the cog position
       }}
     >
       {/* Header */}
