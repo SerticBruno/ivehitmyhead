@@ -162,29 +162,32 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
     
     const settingsCogSize = 14; // 12 * 1.2
     
-    // Calculate the position beneath the text field, accounting for rotation (same logic as drawing)
+    // Calculate the position beneath the text field
     let settingsCogX = containerX;
     let settingsCogY = containerY + containerHeight_px / 2 + settingsCogSize + 8;
     
-    // If the field is rotated, adjust the settings cog position to follow the rotated text
-    if (field.rotation && field.rotation !== 0) {
-      const angleRad = (field.rotation * Math.PI) / 180;
-      const cos = Math.cos(angleRad);
-      const sin = Math.sin(angleRad);
-      
-      // Calculate the offset from the center to the bottom of the text field
-      const bottomOffset = containerHeight_px / 2 + settingsCogSize + 8;
-      
-      // Apply rotation to the offset
-      const rotatedOffsetX = bottomOffset * sin;
-      const rotatedOffsetY = bottomOffset * cos;
-      
-      settingsCogX = containerX + rotatedOffsetX;
-      settingsCogY = containerY + rotatedOffsetY;
+    if (!field.rotation || field.rotation === 0) {
+      // No rotation, use simple distance calculation
+      const distance = Math.sqrt((x - settingsCogX) ** 2 + (y - settingsCogY) ** 2);
+      return distance <= settingsCogSize / 2;
     }
     
-    // Simple distance calculation
-    const distance = Math.sqrt((x - settingsCogX) ** 2 + (y - settingsCogY) ** 2);
+    // For rotated fields, we need to transform the mouse coordinates to the rotated coordinate system
+    const angleRad = (field.rotation * Math.PI) / 180;
+    const cos = Math.cos(-angleRad); // Negative angle to reverse the rotation
+    const sin = Math.sin(-angleRad);
+    
+    // Translate to origin, rotate, then translate back
+    const translatedX = x - containerX;
+    const translatedY = y - containerY;
+    const rotatedX = translatedX * cos - translatedY * sin;
+    const rotatedY = translatedX * sin + translatedY * cos;
+    
+    // Check distance to the rotated cog position
+    const cogX = settingsCogX - containerX;
+    const cogY = settingsCogY - containerY;
+    const distance = Math.sqrt((rotatedX - cogX) ** 2 + (rotatedY - cogY) ** 2);
+    
     return distance <= settingsCogSize / 2;
   }, []);
 
@@ -365,24 +368,16 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
             let settingsCogX = containerX;
             let settingsCogY = containerY + containerHeight_px / 2 + settingsCogSize + 8;
             
-            // If the field is rotated, adjust the settings cog position to follow the rotated text
+            // Settings cog always positioned below the text field (no rotation following)
+            
+            // Draw settings cog icon - rotate with the text field
             if (selectedField.rotation && selectedField.rotation !== 0) {
-              const angleRad = (selectedField.rotation * Math.PI) / 180;
-              const cos = Math.cos(angleRad);
-              const sin = Math.sin(angleRad);
-              
-              // Calculate the offset from the center to the bottom of the text field
-              const bottomOffset = containerHeight_px / 2 + settingsCogSize + 8;
-              
-              // Apply rotation to the offset
-              const rotatedOffsetX = bottomOffset * sin;
-              const rotatedOffsetY = bottomOffset * cos;
-              
-              settingsCogX = containerX + rotatedOffsetX;
-              settingsCogY = containerY + rotatedOffsetY;
+              ctx.save();
+              ctx.translate(containerX, containerY);
+              ctx.rotate((selectedField.rotation * Math.PI) / 180);
+              ctx.translate(-containerX, -containerY);
             }
             
-            // Draw settings cog icon
             ctx.fillStyle = '#6b7280';
             ctx.strokeStyle = '#ffffff';
             ctx.lineWidth = 2;
@@ -413,6 +408,10 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
               ctx.lineTo(innerX, innerY);
             }
             ctx.stroke();
+            
+            if (selectedField.rotation && selectedField.rotation !== 0) {
+              ctx.restore();
+            }
           }
         }
 
@@ -459,24 +458,16 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
             let settingsCogX = containerX;
             let settingsCogY = containerY + containerHeight_px / 2 + settingsCogSize + 8;
             
-            // If the field is rotated, adjust the settings cog position to follow the rotated text
+            // Settings cog always positioned below the text field (no rotation following)
+            
+            // Draw settings cog icon - rotate with the text field
             if (hoveredFieldObj.rotation && hoveredFieldObj.rotation !== 0) {
-              const angleRad = (hoveredFieldObj.rotation * Math.PI) / 180;
-              const cos = Math.cos(angleRad);
-              const sin = Math.sin(angleRad);
-              
-              // Calculate the offset from the center to the bottom of the text field
-              const bottomOffset = containerHeight_px / 2 + settingsCogSize + 8;
-              
-              // Apply rotation to the offset
-              const rotatedOffsetX = bottomOffset * sin;
-              const rotatedOffsetY = bottomOffset * cos;
-              
-              settingsCogX = containerX + rotatedOffsetX;
-              settingsCogY = containerY + rotatedOffsetY;
+              ctx.save();
+              ctx.translate(containerX, containerY);
+              ctx.rotate((hoveredFieldObj.rotation * Math.PI) / 180);
+              ctx.translate(-containerX, -containerY);
             }
             
-            // Draw settings cog icon
             ctx.fillStyle = '#9ca3af';
             ctx.strokeStyle = '#ffffff';
             ctx.lineWidth = 1;
@@ -540,22 +531,7 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
         let settingsCogX = fieldCenterX;
         let settingsCogY = fieldCenterY + containerHeight_px / 2 + settingsCogSize + 8;
         
-        // If the field is rotated, adjust the settings cog position to follow the rotated text
-        if (field.rotation && field.rotation !== 0) {
-          const angleRad = (field.rotation * Math.PI) / 180;
-          const cos = Math.cos(angleRad);
-          const sin = Math.sin(angleRad);
-          
-          // Calculate the offset from the center to the bottom of the text field
-          const bottomOffset = containerHeight_px / 2 + settingsCogSize + 8;
-          
-          // Apply rotation to the offset
-          const rotatedOffsetX = bottomOffset * sin;
-          const rotatedOffsetY = bottomOffset * cos;
-          
-          settingsCogX = fieldCenterX + rotatedOffsetX;
-          settingsCogY = fieldCenterY + rotatedOffsetY;
-        }
+        // Settings cog always positioned below the text field (no rotation following)
         
         // Convert canvas coordinates to screen coordinates for fixed positioning
         const canvasRect = canvasRef.current!.getBoundingClientRect();
