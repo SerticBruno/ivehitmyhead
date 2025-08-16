@@ -195,31 +195,32 @@ export const getResizeHandle = (
   const fieldPixelWidth = (field.width / 100) * canvasWidth;
   const fieldPixelHeight = (field.height / 100) * canvasHeight;
   
-  const handleSize = 24; // Increased size for easier grabbing
+  const handleSize = 32; // Increased size for easier grabbing
+  const handleOffset = handleSize / 2;
   
-  // Check each corner with extended handle areas
+  // Calculate handle positions with bounds checking
   const nw = {
-    x: fieldPixelPos.x - fieldPixelWidth / 2,
-    y: fieldPixelPos.y - fieldPixelHeight / 2
+    x: Math.max(handleOffset, fieldPixelPos.x - fieldPixelWidth / 2),
+    y: Math.max(handleOffset, fieldPixelPos.y - fieldPixelHeight / 2)
   };
   const ne = {
-    x: fieldPixelPos.x + fieldPixelWidth / 2,
-    y: fieldPixelPos.y - fieldPixelHeight / 2
+    x: Math.min(canvasWidth - handleOffset, fieldPixelPos.x + fieldPixelWidth / 2),
+    y: Math.max(handleOffset, fieldPixelPos.y - fieldPixelHeight / 2)
   };
   const sw = {
-    x: fieldPixelPos.x - fieldPixelWidth / 2,
-    y: fieldPixelPos.y + fieldPixelHeight / 2
+    x: Math.max(handleOffset, fieldPixelPos.x - fieldPixelWidth / 2),
+    y: Math.min(canvasHeight - handleOffset, fieldPixelPos.y + fieldPixelHeight / 2)
   };
   const se = {
-    x: fieldPixelPos.x + fieldPixelWidth / 2,
-    y: fieldPixelPos.y + fieldPixelHeight / 2
+    x: Math.min(canvasWidth - handleOffset, fieldPixelPos.x + fieldPixelWidth / 2),
+    y: Math.min(canvasHeight - handleOffset, fieldPixelPos.y + fieldPixelHeight / 2)
   };
   
-  // Check if point is within handle area (extended for easier grabbing)
-  if (Math.abs(pointX - nw.x) <= handleSize && Math.abs(pointY - nw.y) <= handleSize) return 'nw';
-  if (Math.abs(pointX - ne.x) <= handleSize && Math.abs(pointY - ne.y) <= handleSize) return 'ne';
-  if (Math.abs(pointX - sw.x) <= handleSize && Math.abs(pointY - sw.y) <= handleSize) return 'sw';
-  if (Math.abs(pointX - se.x) <= handleSize && Math.abs(pointY - se.y) <= handleSize) return 'se';
+  // Check if point is within handle area with improved detection
+  if (Math.abs(pointX - nw.x) <= handleOffset && Math.abs(pointY - nw.y) <= handleOffset) return 'nw';
+  if (Math.abs(pointX - ne.x) <= handleOffset && Math.abs(pointY - ne.y) <= handleOffset) return 'ne';
+  if (Math.abs(pointX - sw.x) <= handleOffset && Math.abs(pointY - sw.y) <= handleOffset) return 'sw';
+  if (Math.abs(pointX - se.x) <= handleOffset && Math.abs(pointY - se.y) <= handleOffset) return 'se';
   
   return null;
 };

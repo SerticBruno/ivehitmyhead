@@ -78,175 +78,25 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
     if (clickedField) {
       onFieldSelect(clickedField.id);
       
-      // Check if clicking on a resize handle
-      const handle = getResizeHandle(x, y, clickedField, rect.width, rect.height);
-      if (handle) {
-        e.preventDefault();
-        e.stopPropagation();
-        setIsResizing(true);
-        setResizeHandle(handle);
-        
-        // Set the appropriate resize cursor
-        const cursorMap = {
-          'nw': 'nw-resize',
-          'ne': 'ne-resize',
-          'sw': 'sw-resize',
-          'se': 'se-resize'
-        };
-        e.currentTarget.style.cursor = cursorMap[handle];
-        
-        // Store initial state for delta-based resizing
-        setResizeStartState({
-          field: clickedField,
-          mouseX: x,
-          mouseY: y,
-          startWidth: clickedField.width,
-          startHeight: clickedField.height,
-          startX: clickedField.x,
-          startY: clickedField.y
-        });
-        
-        // For resizing, we don't need to store drag offset since we're not moving the field
-        setDragOffset({ x: 0, y: 0 });
-      } else {
-        // Regular dragging
-        setIsDragging(true);
-        e.currentTarget.style.cursor = 'grabbing';
-        
-        const fieldCenterX = (clickedField.x / 100) * rect.width;
-        const fieldCenterY = (clickedField.y / 100) * rect.height;
-        
-        setDragOffset({
-          x: x - fieldCenterX,
-          y: y - fieldCenterY
-        });
-      }
+      // Start dragging (resize handles are now handled by HTML overlay)
+      setIsDragging(true);
+      e.currentTarget.style.cursor = 'grabbing';
+      
+      const fieldCenterX = (clickedField.x / 100) * rect.width;
+      const fieldCenterY = (clickedField.y / 100) * rect.height;
+      
+      setDragOffset({
+        x: x - fieldCenterX,
+        y: y - fieldCenterY
+      });
     } else {
       onFieldSelect(null);
     }
   }, [textFields, onFieldSelect]);
 
-  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!canvasRef.current) return;
-
-    const rect = canvasRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    // Check for hover on text fields
-    const hoveredField = textFields.find(field => {
-      return isPointInTextField(x, y, field, rect.width, rect.height, 20);
-    });
-    onFieldHover(hoveredField?.id || null);
-
-    // Update cursor based on what we're hovering over
-    if (hoveredField) {
-      const handle = getResizeHandle(x, y, hoveredField, rect.width, rect.height);
-      if (handle) {
-        const cursorMap = {
-          'nw': 'nw-resize',
-          'ne': 'ne-resize',
-          'sw': 'sw-resize',
-          'se': 'se-resize'
-        };
-        e.currentTarget.style.cursor = cursorMap[handle];
-      } else if (hoveredField.id === activeField) {
-        e.currentTarget.style.cursor = 'grab';
-      } else {
-        e.currentTarget.style.cursor = 'pointer';
-      }
-    } else if (activeField) {
-      e.currentTarget.style.cursor = 'default';
-    } else {
-      e.currentTarget.style.cursor = 'default';
-    }
-
-    if (!activeField) return;
-
-    if (isResizing && resizeHandle && resizeStartState.field) {
-      // Handle resizing from the specific corner using delta movement
-      // Calculate mouse movement delta from start position
-      const deltaX = x - resizeStartState.mouseX;
-      const deltaY = y - resizeStartState.mouseY;
-      
-      // Convert delta to percentage of canvas
-      const deltaXPercent = (deltaX / rect.width) * 100;
-      const deltaYPercent = (deltaY / rect.height) * 100;
-      
-      let newWidth = resizeStartState.startWidth;
-      let newHeight = resizeStartState.startHeight;
-      let newX = resizeStartState.startX;
-      let newY = resizeStartState.startY;
-      
-      switch (resizeHandle) {
-                 case 'nw': // Northwest handle - anchor at southeast corner
-           // Resize based on delta movement
-           newWidth = Math.max(8, resizeStartState.startWidth - deltaXPercent);
-           newHeight = Math.max(8, resizeStartState.startHeight - deltaYPercent);
-          
-          // Calculate new center position to keep southeast corner fixed
-          const nwRightEdge = (resizeStartState.startX + resizeStartState.startWidth / 2) / 100 * rect.width;
-          const nwBottomEdge = (resizeStartState.startY + resizeStartState.startHeight / 2) / 100 * rect.height;
-          newX = ((nwRightEdge - (newWidth / 100 * rect.width / 2)) / rect.width) * 100;
-          newY = ((nwBottomEdge - (newHeight / 100 * rect.height / 2)) / rect.height) * 100;
-          break;
-          
-                 case 'ne': // Northeast handle - anchor at southwest corner
-           // Resize based on delta movement
-           newWidth = Math.max(8, resizeStartState.startWidth + deltaXPercent);
-           newHeight = Math.max(8, resizeStartState.startHeight - deltaYPercent);
-          
-          // Calculate new center position to keep southwest corner fixed
-          const neLeftEdge = (resizeStartState.startX - resizeStartState.startWidth / 2) / 100 * rect.width;
-          const neBottomEdge = (resizeStartState.startY + resizeStartState.startHeight / 2) / 100 * rect.height;
-          newX = ((neLeftEdge + (newWidth / 100 * rect.width / 2)) / rect.width) * 100;
-          newY = ((neBottomEdge - (newHeight / 100 * rect.height / 2)) / rect.height) * 100;
-          break;
-          
-                 case 'sw': // Southwest handle - anchor at northeast corner
-           // Resize based on delta movement
-           newWidth = Math.max(8, resizeStartState.startWidth - deltaXPercent);
-           newHeight = Math.max(8, resizeStartState.startHeight + deltaYPercent);
-          
-          // Calculate new center position to keep northeast corner fixed
-          const swRightEdge = (resizeStartState.startX + resizeStartState.startWidth / 2) / 100 * rect.width;
-          const swTopEdge = (resizeStartState.startY - resizeStartState.startHeight / 2) / 100 * rect.height;
-          newX = ((swRightEdge - (newWidth / 100 * rect.width / 2)) / rect.width) * 100;
-          newY = ((swTopEdge + (newHeight / 100 * rect.height / 2)) / rect.height) * 100;
-          break;
-          
-                 case 'se': // Southeast handle - anchor at northwest corner
-           // Resize based on delta movement
-           newWidth = Math.max(8, resizeStartState.startWidth + deltaXPercent);
-           newHeight = Math.max(8, resizeStartState.startHeight + deltaYPercent);
-          
-          // Calculate new center position to keep northwest corner fixed
-          const seLeftEdge = (resizeStartState.startX - resizeStartState.startWidth / 2) / 100 * rect.width;
-          const seTopEdge = (resizeStartState.startY - resizeStartState.startHeight / 2) / 100 * rect.height;
-          newX = ((seLeftEdge + (newWidth / 100 * rect.width / 2)) / rect.width) * 100;
-          newY = ((seTopEdge + (newHeight / 100 * rect.height / 2)) / rect.height) * 100;
-          break;
-      }
-      
-      // Update both size and position to maintain the corner-based behavior
-      onFieldResize(activeField, newWidth, newHeight);
-      onFieldMove(activeField, newX, newY);
-      
-      // Debug info (can be removed in production)
-      console.log(`Resizing ${resizeHandle}: delta(${deltaXPercent.toFixed(2)},${deltaYPercent.toFixed(2)}) → ${newWidth.toFixed(2)}x${newHeight.toFixed(2)}`);
-    } else if (isDragging) {
-      // Handle dragging
-      const newX = Math.max(0, Math.min(100, ((x - dragOffset.x) / rect.width) * 100));
-      const newY = Math.max(0, Math.min(100, ((y - dragOffset.y) / rect.height) * 100));
-      
-      onFieldMove(activeField, newX, newY);
-    }
-  }, [isDragging, isResizing, activeField, resizeHandle, dragOffset, textFields, onFieldHover, onFieldMove, onFieldResize, resizeStartState]);
-
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
-    setIsResizing(false);
-    setResizeHandle(null);
+    // Don't reset resizing here - let the global handler do it
     
     if (canvasRef.current) {
       const rect = canvasRef.current.getBoundingClientRect();
@@ -439,55 +289,24 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
           containerWidth_px,
           containerHeight_px
         );
-
-                 // Draw resize handles with higher z-index (drawn on top)
-         // This ensures handles are always clickable above the text field content
-         const handleSize = 24; // Increased from 16 to 24 for better clickability
-        const handles = [
-          { x: containerX - containerWidth_px / 2, y: containerY - containerHeight_px / 2, type: 'nw' }, // nw
-          { x: containerX + containerWidth_px / 2, y: containerY - containerHeight_px / 2, type: 'ne' }, // ne
-          { x: containerX - containerWidth_px / 2, y: containerY + containerHeight_px / 2, type: 'sw' }, // sw
-          { x: containerX + containerWidth_px / 2, y: containerY + containerHeight_px / 2, type: 'se' }  // se
+        
+        // Debug: Draw corner markers to show exact handle positions
+        ctx.fillStyle = '#ff0000';
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        
+        const cornerSize = 6;
+        const corners = [
+          { x: containerX - containerWidth_px / 2, y: containerY - containerHeight_px / 2 }, // NW
+          { x: containerX + containerWidth_px / 2, y: containerY - containerHeight_px / 2 }, // NE
+          { x: containerX - containerWidth_px / 2, y: containerY + containerHeight_px / 2 }, // SW
+          { x: containerX + containerWidth_px / 2, y: containerY + containerHeight_px / 2 }  // SE
         ];
-
-                 handles.forEach(handle => {
-           // Highlight the active resize handle
-           if (isResizing && resizeHandle === handle.type) {
-             ctx.fillStyle = '#ff6b6b'; // Red for active handle
-             ctx.strokeStyle = '#ffffff';
-             ctx.lineWidth = 3;
-           } else {
-             ctx.fillStyle = '#007bff'; // Blue for inactive handles
-             ctx.strokeStyle = '#ffffff';
-             ctx.lineWidth = 2;
-           }
-           
-           // Draw a subtle shadow/glow effect for better visibility
-           ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
-           ctx.shadowBlur = 4;
-           ctx.shadowOffsetX = 1;
-           ctx.shadowOffsetY = 1;
-           
-           ctx.fillRect(
-             handle.x - handleSize / 2,
-             handle.y - handleSize / 2,
-             handleSize,
-             handleSize
-           );
-           
-           // Reset shadow for stroke
-           ctx.shadowColor = 'transparent';
-           ctx.shadowBlur = 0;
-           ctx.shadowOffsetX = 0;
-           ctx.shadowOffsetY = 0;
-           
-           ctx.strokeRect(
-             handle.x - handleSize / 2,
-             handle.y - handleSize / 2,
-             handleSize,
-             handleSize
-           );
-         });
+        
+        corners.forEach(corner => {
+          ctx.fillRect(corner.x - cornerSize/2, corner.y - cornerSize/2, cornerSize, cornerSize);
+          ctx.strokeRect(corner.x - cornerSize/2, corner.y - cornerSize/2, cornerSize, cornerSize);
+        });
       }
     }
 
@@ -511,7 +330,95 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
         ctx.setLineDash([]);
       }
     }
-  }, [selectedTemplate, textFields, activeField, hoveredField, isResizing, resizeHandle]);
+  }, [selectedTemplate, textFields, activeField, hoveredField]);
+
+  // Simplified resize logic
+  const handleResize = useCallback((handle: 'nw' | 'ne' | 'sw' | 'se', deltaX: number, deltaY: number) => {
+    if (!activeField || !resizeStartState.field) return;
+    
+    const field = resizeStartState.field;
+    const deltaXPercent = (deltaX / (canvasRef.current?.width || 1)) * 100;
+    const deltaYPercent = (deltaY / (canvasRef.current?.height || 1)) * 100;
+    
+    let newWidth = resizeStartState.startWidth;
+    let newHeight = resizeStartState.startHeight;
+    let newX = resizeStartState.startX;
+    let newY = resizeStartState.startY;
+    
+    // Simple resize logic - just adjust width/height based on handle
+    switch (handle) {
+      case 'nw': // Northwest - adjust left and top
+        newWidth = Math.max(10, resizeStartState.startWidth - deltaXPercent);
+        newHeight = Math.max(10, resizeStartState.startHeight - deltaYPercent);
+        newX = resizeStartState.startX + (resizeStartState.startWidth - newWidth) / 2;
+        newY = resizeStartState.startY + (resizeStartState.startHeight - newHeight) / 2;
+        break;
+      case 'ne': // Northeast - adjust right and top
+        newWidth = Math.max(10, resizeStartState.startWidth + deltaXPercent);
+        newHeight = Math.max(10, resizeStartState.startHeight - deltaYPercent);
+        newX = resizeStartState.startX + (newWidth - resizeStartState.startWidth) / 2;
+        newY = resizeStartState.startY + (resizeStartState.startHeight - newHeight) / 2;
+        break;
+      case 'sw': // Southwest - adjust left and bottom
+        newWidth = Math.max(10, resizeStartState.startWidth - deltaXPercent);
+        newHeight = Math.max(10, resizeStartState.startHeight + deltaYPercent);
+        newX = resizeStartState.startX + (resizeStartState.startWidth - newWidth) / 2;
+        newY = resizeStartState.startY + (newHeight - resizeStartState.startHeight) / 2;
+        break;
+      case 'se': // Southeast - adjust right and bottom
+        newWidth = Math.max(10, resizeStartState.startWidth + deltaXPercent);
+        newHeight = Math.max(10, resizeStartState.startHeight + deltaYPercent);
+        newX = resizeStartState.startX + (newWidth - resizeStartState.startWidth) / 2;
+        newY = resizeStartState.startY + (newHeight - resizeStartState.startHeight) / 2;
+        break;
+    }
+    
+    // Update the field
+    onFieldResize(activeField, newWidth, newHeight);
+    onFieldMove(activeField, newX, newY);
+  }, [activeField, resizeStartState, onFieldResize, onFieldMove]);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!canvasRef.current) return;
+
+    const rect = canvasRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    // Check for hover on text fields
+    const hoveredField = textFields.find(field => {
+      return isPointInTextField(x, y, field, rect.width, rect.height, 20);
+    });
+    onFieldHover(hoveredField?.id || null);
+
+    // Update cursor based on what we're hovering over
+    if (hoveredField) {
+      if (hoveredField.id === activeField) {
+        e.currentTarget.style.cursor = 'grab';
+      } else {
+        e.currentTarget.style.cursor = 'pointer';
+      }
+    } else if (activeField) {
+      e.currentTarget.style.cursor = 'default';
+    } else {
+      e.currentTarget.style.cursor = 'default';
+    }
+
+    if (!activeField) return;
+
+    if (isResizing && resizeHandle && resizeStartState.field) {
+      // Handle resizing with simplified logic
+      const deltaX = x - resizeStartState.mouseX;
+      const deltaY = y - resizeStartState.mouseY;
+      handleResize(resizeHandle, deltaX, deltaY);
+    } else if (isDragging) {
+      // Handle dragging
+      const newX = Math.max(0, Math.min(100, ((x - dragOffset.x) / rect.width) * 100));
+      const newY = Math.max(0, Math.min(100, ((y - dragOffset.y) / rect.height) * 100));
+      
+      onFieldMove(activeField, newX, newY);
+    }
+  }, [isDragging, isResizing, activeField, resizeHandle, dragOffset, textFields, onFieldHover, onFieldMove, resizeStartState, handleResize]);
 
   // Effects
   useEffect(() => {
@@ -525,6 +432,40 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
       });
     }
   }, [renderOverlays, activeField, hoveredField]);
+
+  // Global mouse event listeners for resize operations
+  useEffect(() => {
+    const handleGlobalMouseMove = (e: MouseEvent) => {
+      if (isResizing && resizeHandle && resizeStartState.field && canvasRef.current) {
+        const rect = canvasRef.current.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        
+        const deltaX = x - resizeStartState.mouseX;
+        const deltaY = y - resizeStartState.mouseY;
+        
+        handleResize(resizeHandle, deltaX, deltaY);
+      }
+    };
+
+    const handleGlobalMouseUp = () => {
+      if (isResizing) {
+        console.log('RESIZE END');
+        setIsResizing(false);
+        setResizeHandle(null);
+      }
+    };
+
+    if (isResizing) {
+      document.addEventListener('mousemove', handleGlobalMouseMove);
+      document.addEventListener('mouseup', handleGlobalMouseUp);
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleGlobalMouseMove);
+      document.removeEventListener('mouseup', handleGlobalMouseUp);
+    };
+  }, [isResizing, resizeHandle, resizeStartState, handleResize]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -563,7 +504,7 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
   }
 
   return (
-    <div className="border-2 border-gray-200 rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center flex-1 p-4" style={{ minHeight: '300px', maxHeight: '500px' }}>
+    <div className="border-2 border-gray-200 rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center flex-1 p-4 relative" style={{ minHeight: '300px', maxHeight: '500px' }}>
       <canvas
         ref={canvasRef}
         className="w-full h-full cursor-default"
@@ -580,6 +521,108 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
           handleMouseUp();
         }}
       />
+      
+      {/* HTML Overlay Resize Handles */}
+      {activeField && selectedTemplate && (
+        (() => {
+          const selectedField = textFields.find(f => f.id === activeField);
+          if (!selectedField) return null;
+          
+          const container = canvasRef.current?.parentElement;
+          if (!container) return null;
+          
+                     // Get the actual canvas dimensions and position
+           const canvasRect = canvasRef.current?.getBoundingClientRect();
+           if (!canvasRect) return null;
+           
+           const containerRect = container.getBoundingClientRect();
+           
+           // Calculate the offset between container and canvas
+           const offsetX = canvasRect.left - containerRect.left;
+           const offsetY = canvasRect.top - containerRect.top;
+           
+           // Use the same dimensions that the canvas rendering uses
+           const canvasWidth = container.clientWidth - 40;
+           const canvasHeight = container.clientHeight - 40;
+           
+           const canvasX = (selectedField.x / 100) * canvasWidth;
+           const canvasY = (selectedField.y / 100) * canvasHeight;
+           const canvasWidth_px = (selectedField.width / 100) * canvasWidth;
+           const canvasHeight_px = (selectedField.height / 100) * canvasHeight;
+          
+          const handleSize = 20;
+          
+          // Calculate handle positions relative to the container, accounting for canvas offset
+          const handles = [
+            { 
+              x: offsetX + canvasX - canvasWidth_px / 2, 
+              y: offsetY + canvasY - canvasHeight_px / 2, 
+              type: 'nw',
+              cursor: 'nw-resize'
+            },
+            { 
+              x: offsetX + canvasX + canvasWidth_px / 2, 
+              y: offsetY + canvasY - canvasHeight_px / 2, 
+              type: 'ne',
+              cursor: 'ne-resize'
+            },
+            { 
+              x: offsetX + canvasX - canvasWidth_px / 2, 
+              y: offsetY + canvasY + canvasHeight_px / 2, 
+              type: 'sw',
+              cursor: 'sw-resize'
+            },
+            { 
+              x: offsetX + canvasX + canvasWidth_px / 2, 
+              y: offsetY + canvasY + canvasHeight_px / 2, 
+              type: 'se',
+              cursor: 'se-resize'
+            }
+          ];
+          
+          return handles.map((handle, index) => (
+            <div
+              key={handle.type}
+              className="absolute bg-blue-500 border-2 border-white rounded cursor-pointer hover:bg-blue-600 transition-colors shadow-lg z-50"
+                             style={{
+                 width: handleSize,
+                 height: handleSize,
+                 left: handle.x - handleSize/2,
+                 top: handle.y - handleSize/2,
+                 cursor: handle.cursor
+               }}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log(`RESIZE START: ${handle.type} for field ${selectedField.id}`);
+                
+                setIsResizing(true);
+                setResizeHandle(handle.type as 'nw' | 'ne' | 'sw' | 'se');
+                
+                // Get canvas coordinates for the resize start
+                const rect = canvasRef.current?.getBoundingClientRect();
+                if (!rect) return;
+                
+                const canvasX = e.clientX - rect.left;
+                const canvasY = e.clientY - rect.top;
+                
+                setResizeStartState({
+                  field: selectedField,
+                  mouseX: canvasX,
+                  mouseY: canvasY,
+                  startWidth: selectedField.width,
+                  startHeight: selectedField.height,
+                  startX: selectedField.x,
+                  startY: selectedField.y
+                });
+              }}
+              title={`Resize ${handle.type.toUpperCase()}`}
+            >
+              
+            </div>
+          ));
+        })()
+      )}
     </div>
   );
 };
