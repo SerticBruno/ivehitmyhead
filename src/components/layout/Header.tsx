@@ -65,6 +65,11 @@ const Header: React.FC<HeaderProps> = ({ onSearch, showSearch = true }) => {
                 Upload
               </Button>
             </Link>
+            <Link href="/about" className="cursor-pointer">
+              <Button variant="ghost" size="sm">
+                About
+              </Button>
+            </Link>
             <Link href="/profile" className="cursor-pointer">
               <Button variant="ghost" size="sm">
                   Profile

@@ -42,7 +42,9 @@ const MemeCard: React.FC<MemeCardProps> = ({
 
   const handleShare = (e: React.MouseEvent) => {
     e.stopPropagation();
-    onShare(meme.id);
+    if (onShare) {
+      onShare(meme.id);
+    }
   };
 
   return (

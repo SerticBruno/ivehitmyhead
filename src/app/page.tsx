@@ -3,65 +3,13 @@
 import React, { useState } from 'react';
 import { Header, Footer } from '@/components/layout';
 import { FeaturedMemes } from '@/components/meme';
-import { Button, Stats, Newsletter, FeaturedCreator, TrendingTags } from '@/components/ui';
+import { Button } from '@/components/ui';
 
 import { useMemes } from '@/lib/hooks/useMemes';
 import { useCategories } from '@/lib/hooks/useCategories';
 import { useMemeInteractions } from '@/lib/hooks/useMemeInteractions';
 
-// Mock data for components that don't have APIs yet
-const mockStats = [
-  { label: 'Total Memes', value: 12543, suffix: '+', icon: '🎭', color: 'text-blue-600' },
-  { label: 'Active Users', value: 8921, suffix: '', icon: '👥', color: 'text-green-600' },
-  { label: 'Total Likes', value: 456789, suffix: '', icon: '❤️', color: 'text-red-600' },
-  { label: 'Daily Uploads', value: 234, suffix: '', icon: '📤', color: 'text-purple-600' }
-];
 
-const mockTags = [
-  { id: '1', name: 'programming', count: 15420, trending: true },
-  { id: '2', name: 'gaming', count: 12340 },
-  { id: '3', name: 'animals', count: 9876 },
-  { id: '4', name: 'work', count: 8765 },
-  { id: '5', name: 'coffee', count: 7654 },
-  { id: '6', name: 'monday', count: 6543 },
-  { id: '7', name: 'debugging', count: 5432 },
-  { id: '8', name: 'life', count: 4321 }
-];
-
-const mockCreators = [
-  {
-    id: '1',
-    name: 'MemeMaster Pro',
-    username: 'mememaster',
-    avatar: '/images/memes/472430542_1126225565970074_979514438589799433_n.jpg',
-    followers: 15420,
-    totalMemes: 234,
-    totalLikes: 45678,
-    bestMeme: {
-      id: 'best1',
-      title: 'The perfect debugging meme',
-      imageUrl: '/images/memes/475860537_939831201626003_5967668030448102085_n.jpg',
-      likes: 1234
-    },
-    isFollowing: false
-  },
-  {
-    id: '2',
-    name: 'FunnyGamer',
-    username: 'funnygamer',
-    avatar: '/images/memes/473097286_9541662545852430_6677387785309997730_n.jpg',
-    followers: 8921,
-    totalMemes: 156,
-    totalLikes: 23456,
-    bestMeme: {
-      id: 'best2',
-      title: 'Gaming life in a nutshell',
-      imageUrl: '/images/memes/476970358_1149823343610296_9211814444182508066_n.jpg',
-      likes: 987
-    },
-    isFollowing: true
-  }
-];
 
 export default function Home() {
   // Fetch real memes and categories - sorted by views for featured section
@@ -70,7 +18,7 @@ export default function Home() {
     sort_by: 'views', 
     sort_order: 'desc'
   });
-  const { categories, loading: categoriesLoading, error: categoriesError } = useCategories();
+  const { loading: categoriesLoading, error: categoriesError } = useCategories();
   const { likeMeme } = useMemeInteractions();
   const [likedMemes, setLikedMemes] = useState<Set<string>>(new Set());
   const [localMemes, setLocalMemes] = useState<typeof memes>([]);
@@ -125,20 +73,7 @@ export default function Home() {
     // Implement share functionality here
   };
 
-  const handleTagClick = (tag: { id: string; name: string; count: number; trending?: boolean }) => {
-    console.log('Tag clicked:', tag);
-    // Implement tag filtering functionality here
-  };
 
-  const handleFollowCreator = (creatorId: string) => {
-    console.log('Following creator:', creatorId);
-    // Implement follow functionality here
-  };
-
-  const handleViewCreatorProfile = (creatorId: string) => {
-    console.log('Viewing creator profile:', creatorId);
-    // Implement profile navigation here
-  };
 
   // Show loading state while fetching data
   if (memesLoading || categoriesLoading) {

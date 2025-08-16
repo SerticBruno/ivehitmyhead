@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Header, Footer } from '@/components/layout';
-import { MemeGrid, FeaturedMemes } from '@/components/meme';
+import { MemeGrid } from '@/components/meme';
 import { FiltersAndSorting } from '@/components/ui';
 import { useMemes } from '@/lib/hooks/useMemes';
 import { useCategories } from '@/lib/hooks/useCategories';
@@ -124,7 +124,7 @@ export default function MemesPage() {
   };
 
   // Fetch real data
-  const { memes, loading: memesLoading, error: memesError, hasMore, loadMore, refresh } = useMemes({
+  const { memes, loading: memesLoading, error: memesError, hasMore, loadMore } = useMemes({
     category_id: selectedCategory || undefined,
     limit: 7, // Changed from 2 to 7 for initial load
     time_period: selectedTimePeriod,

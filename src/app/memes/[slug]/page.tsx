@@ -17,7 +17,7 @@ export default function CategoryPage() {
   
   const [category, setCategory] = useState<Category | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [likedMemes, setLikedMemes] = useState<Set<string>>(new Set());
+
 
   // Fetch categories to find the current one
   const { categories, loading: categoriesLoading, error: categoriesError } = useCategories();
@@ -66,17 +66,6 @@ export default function CategoryPage() {
       const isLiked = await likeMeme(slug);
       console.log('Categories page: likeMeme result:', isLiked);
       
-      // Update local state to reflect the like change
-      setLikedMemes(prev => {
-        const newSet = new Set(prev);
-        if (isLiked) {
-          newSet.add(slug);
-        } else {
-          newSet.delete(slug);
-        }
-        return newSet;
-      });
-
       // Refresh the memes to get updated counts
       refresh();
     } catch (error) {
