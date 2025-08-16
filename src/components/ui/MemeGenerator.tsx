@@ -237,32 +237,22 @@ export const MemeGenerator: React.FC = () => {
         })
       );
     } else if (isDragging) {
-      // Handle dragging - move the field to follow the mouse
-      // Add a small threshold to prevent jittery movement
-      const threshold = 1; // 1 pixel threshold
+      // Handle dragging - move the field to follow the mouse smoothly
       const newX = Math.max(0, Math.min(100, ((x - dragOffset.x) / rect.width) * 100));
       const newY = Math.max(0, Math.min(100, ((y - dragOffset.y) / rect.height) * 100));
       
-      // Only update if the change is significant enough
-      const currentField = textFields.find(f => f.id === activeField);
-      if (currentField) {
-        const deltaX = Math.abs(newX - currentField.x);
-        const deltaY = Math.abs(newY - currentField.y);
-        
-        if (deltaX > threshold || deltaY > threshold) {
-          setTextFields(prev => 
-            prev.map(field => 
-              field.id === activeField 
-                ? { 
-                    ...field, 
-                    x: newX,
-                    y: newY
-                  }
-                : field
-            )
-          );
-        }
-      }
+      // Update position immediately for smooth dragging
+      setTextFields(prev => 
+        prev.map(field => 
+          field.id === activeField 
+            ? { 
+                ...field, 
+                x: newX,
+                y: newY
+              }
+            : field
+        )
+      );
     }
   }, [isDragging, isResizing, activeField, resizeHandle, dragOffset, textFields]);
 

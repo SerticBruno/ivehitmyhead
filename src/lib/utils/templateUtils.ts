@@ -195,7 +195,7 @@ export const getResizeHandle = (
   const fieldPixelWidth = (field.width / 100) * canvasWidth;
   const fieldPixelHeight = (field.height / 100) * canvasHeight;
   
-  const handleSize = 16; // Increased size for easier grabbing
+  const handleSize = 24; // Increased size for easier grabbing
   
   // Check each corner with extended handle areas
   const nw = {
