@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Header, Footer } from '@/components/layout';
+
 import { FeaturedMemes } from '@/components/meme';
 import { Button } from '@/components/ui';
 
@@ -31,10 +31,7 @@ export default function Home() {
   // Use local memes if available, otherwise use memes from the hook
   const displayMemes = localMemes.length > 0 ? localMemes : memes;
 
-  const handleSearch = (query: string) => {
-    console.log('Searching for:', query);
-    // Implement search functionality here
-  };
+
 
   const handleLike = async (slug: string) => {
     try {
@@ -78,8 +75,7 @@ export default function Home() {
   // Show loading state while fetching data
   if (memesLoading || categoriesLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <Header onSearch={handleSearch} />
+      <div className="bg-gray-50 dark:bg-gray-900">
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center py-20">
             <div className="text-4xl mb-4">⏳</div>
@@ -87,7 +83,6 @@ export default function Home() {
             <p className="text-gray-600 dark:text-gray-400">Fetching the most viewed memes</p>
           </div>
         </main>
-        <Footer />
       </div>
     );
   }
@@ -95,8 +90,7 @@ export default function Home() {
   // Show error state if there's an issue
   if (memesError || categoriesError) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <Header onSearch={handleSearch} />
+      <div className="bg-gray-50 dark:bg-gray-900">
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center py-20">
             <div className="text-4xl mb-4">😢</div>
@@ -109,15 +103,12 @@ export default function Home() {
             </Button>
           </div>
         </main>
-        <Footer />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <Header onSearch={handleSearch} />
-      
+    <div className="bg-gray-50 dark:bg-gray-900">
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Hero Section */}
         <section className="text-center mb-12">
@@ -173,7 +164,6 @@ export default function Home() {
         </section>
 
       </main>
-      <Footer />
     </div>
   );
 }

@@ -567,7 +567,7 @@ export const MemeGenerator: React.FC = () => {
   }, [isDropdownOpen, openSettingsDropdown]);
 
   return (
-    <div className="max-w-7xl mx-auto p-6">
+    <div className="max-w-7xl mx-auto p-6 pb-16">
       <div className="text-center mb-8">
         <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
           Meme Generator
@@ -603,7 +603,7 @@ export const MemeGenerator: React.FC = () => {
       )}
 
       {!showTemplateBrowser && !showTemplateManager && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-[80vh]">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
           {/* Left Side - Meme Preview */}
           <div className="lg:col-span-2">
            <Card className="p-6 flex flex-col">
@@ -634,7 +634,7 @@ export const MemeGenerator: React.FC = () => {
                   />
                 </div>
               ) : (
-                <div className="border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center flex-1 bg-gray-50">
+                <div className="border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center flex-1 bg-gray-50" style={{ minHeight: '300px' }}>
                   <div className="text-center text-gray-500">
                     <div className="text-6xl mb-4">🎭</div>
                     <p className="text-lg">Select a template to get started</p>

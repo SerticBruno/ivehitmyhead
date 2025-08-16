@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Header, Footer } from '@/components/layout';
 import { MemeGrid } from '@/components/meme';
 import { FiltersAndSorting } from '@/components/ui';
 import { useMemes } from '@/lib/hooks/useMemes';
@@ -208,8 +207,6 @@ export default function MemesPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <Header onSearch={() => {}} />
-      
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Hero Section */}
         <section className="text-center mb-12">
@@ -371,8 +368,6 @@ export default function MemesPage() {
           </section>
         )}
       </main>
-
-      <Footer />
     </div>
   );
 }

@@ -1,14 +1,11 @@
 'use client';
 
 import React from 'react';
-import { Header, Footer } from '@/components/layout';
 import { Button } from '@/components/ui';
 
 export default function AboutPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <Header showSearch={false} />
-      
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="max-w-4xl mx-auto">
           {/* Hero Section */}
@@ -124,8 +121,6 @@ export default function AboutPage() {
            </div>
         </div>
       </main>
-      
-      <Footer />
     </div>
   );
 }

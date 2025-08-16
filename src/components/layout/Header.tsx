@@ -1,19 +1,26 @@
+'use client';
+
 import React from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 
 interface HeaderProps {
-  onSearch?: (query: string) => void;
   showSearch?: boolean;
 }
 
-const Header: React.FC<HeaderProps> = ({ onSearch, showSearch = true }) => {
+const Header: React.FC<HeaderProps> = ({ showSearch = true }) => {
+  const router = useRouter();
+  
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const query = formData.get('search') as string;
-    onSearch?.(query);
+    if (query.trim()) {
+      // Navigate to memes page with search query
+      router.push(`/memes?search=${encodeURIComponent(query.trim())}`);
+    }
   };
 
   return (
