@@ -18,14 +18,14 @@ export const MEME_TEMPLATES: MemeTemplate[] = [
         y: 20, // 20% from top
         width: 35, // 35% of image width
         height: 15, // 15% of image height
-        fontSize: 40,
+        fontSize: 46,
         color: '#ffffff',
         fontFamily: 'Impact',
         fontWeight: 'bold',
         textAlign: 'left',
         maxWidth: 40, // 40% of image width
         strokeColor: '#000000',
-        strokeWidth: 2
+        strokeWidth: 6
       },
       {
         id: 'top-right',
@@ -33,14 +33,14 @@ export const MEME_TEMPLATES: MemeTemplate[] = [
         y: 20, // 20% from top
         width: 35, // 35% of image width
         height: 15, // 15% of image height
-        fontSize: 40,
+        fontSize: 46,
         color: '#ffffff',
         fontFamily: 'Impact',
         fontWeight: 'bold',
         textAlign: 'right',
         maxWidth: 40, // 40% of image width
         strokeColor: '#000000',
-        strokeWidth: 2
+        strokeWidth: 6
       },
       {
         id: 'bottom',
@@ -48,14 +48,14 @@ export const MEME_TEMPLATES: MemeTemplate[] = [
         y: 80, // 80% from top
         width: 70, // 70% of image width
         height: 15, // 15% of image height
-        fontSize: 40,
+        fontSize: 46,
         color: '#ffffff',
         fontFamily: 'Impact',
         fontWeight: 'bold',
         textAlign: 'center',
         maxWidth: 80, // 80% of image width
         strokeColor: '#000000',
-        strokeWidth: 2
+        strokeWidth: 6
       }
     ],
     tags: ['classic', 'three-text', 'impact-font'],
@@ -79,95 +79,19 @@ export const MEME_TEMPLATES: MemeTemplate[] = [
         y: 85, // 85% from top
         width: 70, // 70% of image width
         height: 15, // 15% of image height
-        fontSize: 40,
+        fontSize: 46,
         color: '#ffffff',
         fontFamily: 'Impact',
         fontWeight: 'bold',
         textAlign: 'center',
         maxWidth: 80, // 80% of image width
         strokeColor: '#000000',
-        strokeWidth: 2
+        strokeWidth: 6
       }
     ],
     tags: ['bernie', 'politics', 'single-text'],
     category: 'politics',
     difficulty: 'easy'
-  },
-  // Example of a more complex template with multiple text fields
-  {
-    id: 'complex-example',
-    name: 'Complex Multi-Text Template',
-    description: 'Example template showing advanced text positioning',
-    src: '/images/templates/complex-example.png', // You'd need to add this image
-    width: 800,
-    height: 600,
-    defaultFont: 'Arial',
-    defaultFontSize: 40,
-    defaultColor: '#ffffff',
-    textFields: [
-      {
-        id: 'title',
-        x: 50,
-        y: 10,
-        width: 80, // 80% of image width
-        height: 12, // 12% of image height
-        fontSize: 40,
-        color: '#ffffff',
-        fontFamily: 'Impact',
-        fontWeight: 'bold',
-        textAlign: 'center',
-        maxWidth: 90,
-        strokeColor: '#000000',
-        strokeWidth: 3
-      },
-      {
-        id: 'left-text',
-        x: 20,
-        y: 50,
-        width: 30, // 30% of image width
-        height: 20, // 20% of image height
-        fontSize: 40,
-        color: '#ffffff',
-        fontFamily: 'Arial',
-        fontWeight: 'normal',
-        textAlign: 'left',
-        maxWidth: 35,
-        strokeColor: '#000000',
-        strokeWidth: 1
-      },
-      {
-        id: 'right-text',
-        x: 80,
-        y: 50,
-        width: 30, // 30% of image width
-        height: 20, // 20% of image height
-        fontSize: 40,
-        color: '#ffffff',
-        fontFamily: 'Arial',
-        fontWeight: 'normal',
-        textAlign: 'right',
-        maxWidth: 35,
-        strokeColor: '#000000',
-        strokeWidth: 1
-      },
-      {
-        id: 'bottom-note',
-        x: 50,
-        y: 90,
-        width: 50, // 50% of image width
-        height: 10, // 10% of image height
-        fontSize: 40,
-        color: '#ffff00',
-        fontFamily: 'Comic Sans MS',
-        fontWeight: 'normal',
-        textAlign: 'center',
-        maxWidth: 60,
-        rotation: 5 // slight rotation for style
-      }
-    ],
-    tags: ['complex', 'multi-text', 'advanced'],
-    category: 'advanced',
-    difficulty: 'hard'
   }
 ];
 

@@ -138,6 +138,7 @@ export interface TextField {
   strokeColor?: string; // outline color
   strokeWidth?: number; // outline width
   rotation?: number; // rotation in degrees
+  letterSpacing?: string; // letter spacing (e.g., '0.05em')
   isDragging?: boolean;
   isResizing?: boolean;
 }

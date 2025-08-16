@@ -43,6 +43,24 @@ export const MemeGenerator: React.FC = () => {
     );
   }, []);
 
+  const resetToMemeDefaults = useCallback(() => {
+    if (!selectedTemplate) return;
+    
+    setTextFields(prev => 
+      prev.map(field => ({
+        ...field,
+        fontFamily: 'Impact',
+        fontWeight: 'bold',
+        fontSize: 46,
+        color: '#ffffff',
+        strokeColor: '#000000',
+        strokeWidth: 6,
+        textAlign: field.textAlign || 'center', // Keep existing alignment
+        letterSpacing: '0.05em' // Classic Impact font letter spacing
+      }))
+    );
+  }, [selectedTemplate]);
+
   const handleTemplateSelect = useCallback((template: MemeTemplate) => {
     setSelectedTemplate(template);
     setTextFields(initializeTextFields(template));
@@ -254,6 +272,26 @@ export const MemeGenerator: React.FC = () => {
     }
   }, []);
 
+  // Helper function to wrap text to fit within a specified width
+  const wrapText = useCallback((ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] => {
+    const words = text.split(' ');
+    const lines: string[] = [];
+    let currentLine = words[0];
+
+    for (let i = 1; i < words.length; i++) {
+      const word = words[i];
+      const width = ctx.measureText(currentLine + ' ' + word).width;
+      if (width < maxWidth) {
+        currentLine += ' ' + word;
+      } else {
+        lines.push(currentLine);
+        currentLine = word;
+      }
+    }
+    lines.push(currentLine);
+    return lines;
+  }, []);
+
   const downloadMeme = useCallback(() => {
     if (!canvasRef.current || !selectedTemplate) return;
 
@@ -320,21 +358,64 @@ export const MemeGenerator: React.FC = () => {
 
         const fontFamily = field.fontFamily || 'Impact';
         const fontWeight = field.fontWeight || 'bold';
+        const letterSpacing = field.letterSpacing || '0.05em';
         ctx.font = `${fontWeight} ${field.fontSize * scale}px ${fontFamily}, Arial, sans-serif`;
+        // Apply letter spacing if specified
+        if (letterSpacing) {
+          ctx.letterSpacing = letterSpacing;
+        }
         ctx.fillStyle = field.color;
         ctx.strokeStyle = field.strokeColor || '#000000';
-        ctx.lineWidth = (field.strokeWidth || 2) * scale;
-        ctx.textAlign = field.textAlign || 'center';
+        ctx.lineWidth = (field.strokeWidth || 6) * scale;
+        // Set text alignment based on field property
+        if (field.textAlign === 'left') {
+          ctx.textAlign = 'left';
+        } else if (field.textAlign === 'right') {
+          ctx.textAlign = 'right';
+        } else {
+          ctx.textAlign = 'center';
+        }
         ctx.textBaseline = 'middle';
 
         // Convert percentage positions to actual canvas coordinates
         const textX = (field.x / 100) * containerWidth;
         const textY = (field.y / 100) * containerHeight;
-
-        // Draw stroke
-        ctx.strokeText(field.text, textX, textY);
-        // Draw fill
-        ctx.fillText(field.text, textX, textY);
+        
+        // Calculate the actual width of the text box in pixels
+        const textBoxWidth = (field.width / 100) * containerWidth;
+        
+        // Wrap text to fit within the text box width
+        const wrappedLines = wrapText(ctx, field.text, textBoxWidth);
+        
+        // Calculate line height (font size + some padding)
+        const lineHeight = (field.fontSize * scale) * 1.2;
+        
+        // Calculate starting Y position to center all lines vertically
+        const totalHeight = wrappedLines.length * lineHeight;
+        const startY = textY - (totalHeight / 2) + (lineHeight / 2);
+        
+        // Calculate X position based on text alignment
+        let lineX = textX;
+        if (field.textAlign === 'left') {
+          // For left alignment, start from the left edge of the text box
+          lineX = textX - (textBoxWidth / 2);
+        } else if (field.textAlign === 'right') {
+          // For right alignment, end at the right edge of the text box
+          lineX = textX + (textBoxWidth / 2);
+        } else {
+          // For center alignment, center within the text box
+          lineX = textX;
+        }
+        
+        // Draw each line of wrapped text
+        wrappedLines.forEach((line, index) => {
+          const lineY = startY + (index * lineHeight);
+          
+          // Draw stroke
+          ctx.strokeText(line, lineX, lineY);
+          // Draw fill
+          ctx.fillText(line, lineX, lineY);
+        });
       });
 
       // Draw text containers and resize handles for selected field or hovered field
@@ -431,7 +512,7 @@ export const MemeGenerator: React.FC = () => {
       }
     };
     img.src = selectedTemplate.src;
-  }, [selectedTemplate, textFields, activeField, hoveredField, isResizing, isDragging]);
+  }, [selectedTemplate, textFields, activeField, hoveredField, isResizing, isDragging, wrapText]);
 
 
 
@@ -759,6 +840,99 @@ export const MemeGenerator: React.FC = () => {
                                     </span>
                                   </div>
                                 </div>
+
+                                {/* Stroke Width */}
+                                <div>
+                                  <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">
+                                    Border Width: {field.strokeWidth || 6}px
+                                  </label>
+                                  <input
+                                    type="range"
+                                    min="2"
+                                    max="20"
+                                    value={field.strokeWidth || 6}
+                                    onChange={(e) => 
+                                      setTextFields(prev => 
+                                        prev.map(f => 
+                                          f.id === field.id 
+                                            ? { ...f, strokeWidth: parseInt(e.target.value) }
+                                            : f
+                                        )
+                                      )
+                                    }
+                                    className="w-full"
+                                  />
+                                </div>
+
+                                {/* Stroke Color */}
+                                <div>
+                                  <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">Border Color</label>
+                                  <div className="flex items-center space-x-2">
+                                    <input
+                                      type="color"
+                                      value={field.strokeColor || '#000000'}
+                                      onChange={(e) => 
+                                        setTextFields(prev => 
+                                          prev.map(f => 
+                                            f.id === field.id 
+                                              ? { ...f, strokeColor: e.target.value }
+                                              : f
+                                          )
+                                        )
+                                      }
+                                      className="w-10 h-10 rounded border cursor-pointer"
+                                    />
+                                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                                      {field.strokeColor || '#000000'}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                {/* Text Alignment */}
+                                <div>
+                                  <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">Text Alignment</label>
+                                  <select
+                                    value={field.textAlign || 'center'}
+                                    onChange={(e) => 
+                                      setTextFields(prev => 
+                                        prev.map(f => 
+                                          f.id === field.id 
+                                            ? { ...f, textAlign: e.target.value as 'left' | 'center' | 'right' }
+                                            : f
+                                        )
+                                      )
+                                    }
+                                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                  >
+                                    <option value="left">Left</option>
+                                    <option value="center">Center</option>
+                                    <option value="right">Right</option>
+                                  </select>
+                                </div>
+
+                                {/* Letter Spacing */}
+                                <div>
+                                  <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">
+                                    Letter Spacing: {field.letterSpacing || '0.05em'}
+                                  </label>
+                                  <input
+                                    type="range"
+                                    min="0"
+                                    max="0.2"
+                                    step="0.01"
+                                    value={parseFloat(field.letterSpacing || '0.05')}
+                                    onChange={(e) => 
+                                      setTextFields(prev => 
+                                        prev.map(f => 
+                                          f.id === field.id 
+                                            ? { ...f, letterSpacing: `${parseFloat(e.target.value)}em` }
+                                            : f
+                                        )
+                                      )
+                                    }
+                                    className="w-full"
+                                  />
+                                </div>
                               </div>
                             </div>
                           )}
@@ -792,7 +966,14 @@ export const MemeGenerator: React.FC = () => {
                   variant="outline"
                   className="w-full"
                 >
-                  Reset to Default
+                  Reset to Template Default
+                </Button>
+                <Button 
+                  onClick={resetToMemeDefaults}
+                  variant="outline"
+                  className="w-full"
+                >
+                  Reset to Meme Defaults
                 </Button>
               </div>
             </Card>
