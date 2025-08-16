@@ -4,7 +4,7 @@ import React, { useState, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import { Button } from './Button';
 import { Card } from './Card';
-import { TemplateBrowser } from './TemplateBrowser';
+
 import { TemplateManager } from './TemplateManager';
 import { MemeTemplate, TextField } from '../../lib/types/meme';
 import { MEME_TEMPLATES } from '../../lib/data/templates';
@@ -25,7 +25,7 @@ export const MemeGenerator: React.FC = () => {
   const [resizeHandle, setResizeHandle] = useState<'nw' | 'ne' | 'sw' | 'se' | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [showTemplateBrowser, setShowTemplateBrowser] = useState(false);
+
   const [showTemplateManager, setShowTemplateManager] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<MemeTemplate | null>(null);
   const [openSettingsDropdown, setOpenSettingsDropdown] = useState<string | null>(null);
@@ -61,19 +61,16 @@ export const MemeGenerator: React.FC = () => {
   const handleTemplateSelect = useCallback((template: MemeTemplate) => {
     setSelectedTemplate(template);
     setTextFields(initializeTextFields(template));
-    setShowTemplateBrowser(false);
   }, []);
 
   const handleCreateTemplate = useCallback(() => {
     setEditingTemplate(null);
     setShowTemplateManager(true);
-    setShowTemplateBrowser(false);
   }, []);
 
   const handleEditTemplate = useCallback((template: MemeTemplate) => {
     setEditingTemplate(template);
     setShowTemplateManager(true);
-    setShowTemplateBrowser(false);
   }, []);
 
   const handleSaveTemplate = useCallback((template: MemeTemplate) => {
@@ -440,126 +437,155 @@ export const MemeGenerator: React.FC = () => {
         });
       });
 
-      // Draw text containers and resize handles for selected field or hovered field
-      const fieldToShow = activeField || hoveredField;
-      if (fieldToShow) {
-        const selectedField = textFields.find(f => f.id === fieldToShow);
-        if (selectedField) {
-          const containerX = (selectedField.x / 100) * containerWidth;
-          const containerY = (selectedField.y / 100) * containerHeight;
-          const containerWidth_px = (selectedField.width / 100) * containerWidth;
-          const containerHeight_px = (selectedField.height / 100) * containerHeight;
-
-          // Define border color for handles
-          const borderColor = activeField === fieldToShow ? '#007bff' : '#6b7280';
-
-          // Draw container border
-          const borderWidth = activeField === fieldToShow ? 3 : 1;
-          ctx.strokeStyle = borderColor;
-          ctx.lineWidth = borderWidth;
-          
-          if (activeField === fieldToShow) {
-            // Solid border for active field
-            ctx.setLineDash([]);
-            ctx.strokeRect(
-              containerX - containerWidth_px / 2,
-              containerY - containerHeight_px / 2,
-              containerWidth_px,
-              containerHeight_px
-            );
-          } else {
-            // Dashed border for hovered field
-            ctx.setLineDash([5, 5]);
-            ctx.strokeRect(
-              containerX - containerWidth_px / 2,
-              containerY - containerHeight_px / 2,
-              containerWidth_px,
-              containerHeight_px
-            );
-            ctx.setLineDash([]);
-          }
-
-          // Always show resize handles for selected field, or when hovering
-          if (activeField === fieldToShow || hoveredField === fieldToShow) {
-            // Draw resize handles
-            const handleSize = 16; // Increased size for easier grabbing
-            ctx.fillStyle = borderColor;
-            ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 2;
-
-            // Northwest handle
-            ctx.fillRect(
-              containerX - containerWidth_px / 2 - handleSize / 2,
-              containerY - containerHeight_px / 2 - handleSize / 2,
-              handleSize,
-              handleSize
-            );
-            ctx.strokeRect(
-              containerX - containerWidth_px / 2 - handleSize / 2,
-              containerY - containerHeight_px / 2 - handleSize / 2,
-              handleSize,
-              handleSize
-            );
-
-            // Northeast handle
-            ctx.fillRect(
-              containerX + containerWidth_px / 2 - handleSize / 2,
-              containerY - containerHeight_px / 2 - handleSize / 2,
-              handleSize,
-              handleSize
-            );
-            ctx.strokeRect(
-              containerX + containerWidth_px / 2 - handleSize / 2,
-              containerY - containerHeight_px / 2 - handleSize / 2,
-              handleSize,
-              handleSize
-            );
-
-            // Southwest handle
-            ctx.fillRect(
-              containerX - containerWidth_px / 2 - handleSize / 2,
-              containerY + containerHeight_px / 2 - handleSize / 2,
-              handleSize,
-              handleSize
-            );
-            ctx.strokeRect(
-              containerX - containerWidth_px / 2 - handleSize / 2,
-              containerY + containerHeight_px / 2 - handleSize / 2,
-              handleSize,
-              handleSize
-            );
-
-            // Southeast handle
-            ctx.fillRect(
-              containerX + containerWidth_px / 2 - handleSize / 2,
-              containerY + containerHeight_px / 2 - handleSize / 2,
-              handleSize,
-              handleSize
-            );
-            ctx.strokeRect(
-              containerX + containerWidth_px / 2 - handleSize / 2,
-              containerY + containerHeight_px / 2 - handleSize / 2,
-              handleSize,
-              handleSize
-            );
-          }
-        }
-      }
+      // Overlays (borders, handles) are now rendered separately by renderOverlays
     };
     img.src = selectedTemplate.src;
-  }, [selectedTemplate, textFields, activeField, hoveredField, wrapText]);
+  }, [selectedTemplate, textFields, wrapText]);
 
+  // Separate function for rendering overlays (borders, handles) that doesn't depend on text field properties
+  const renderOverlays = useCallback(() => {
+    if (!canvasRef.current || !selectedTemplate) return;
 
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Get the container dimensions
+    const container = canvas.parentElement;
+    if (!container) return;
+    
+    const containerWidth = container.clientWidth - 40;
+    const containerHeight = container.clientHeight - 40;
+
+    // Draw text containers and resize handles for selected field or hovered field
+    const fieldToShow = activeField || hoveredField;
+    if (fieldToShow) {
+      const selectedField = textFields.find(f => f.id === fieldToShow);
+      if (selectedField) {
+        const containerX = (selectedField.x / 100) * containerWidth;
+        const containerY = (selectedField.y / 100) * containerHeight;
+        const containerWidth_px = (selectedField.width / 100) * containerWidth;
+        const containerHeight_px = (selectedField.height / 100) * containerHeight;
+
+        // Define border color for handles
+        const borderColor = activeField === fieldToShow ? '#007bff' : '#6b7280';
+
+        // Draw container border
+        const borderWidth = activeField === fieldToShow ? 3 : 1;
+        ctx.strokeStyle = borderColor;
+        ctx.lineWidth = borderWidth;
+        
+        if (activeField === fieldToShow) {
+          // Solid border for active field
+          ctx.setLineDash([]);
+          ctx.strokeRect(
+            containerX - containerWidth_px / 2,
+            containerY - containerHeight_px / 2,
+            containerWidth_px,
+            containerHeight_px
+          );
+        } else {
+          // Dashed border for hovered field
+          ctx.setLineDash([5, 5]);
+          ctx.strokeRect(
+            containerX - containerWidth_px / 2,
+            containerY - containerHeight_px / 2,
+            containerWidth_px,
+            containerHeight_px
+          );
+          ctx.setLineDash([]);
+        }
+
+        // Always show resize handles for selected field, or when hovering
+        if (activeField === fieldToShow || hoveredField === fieldToShow) {
+          // Draw resize handles
+          const handleSize = 16;
+          ctx.fillStyle = borderColor;
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 2;
+
+          // Northwest handle
+          ctx.fillRect(
+            containerX - containerWidth_px / 2 - handleSize / 2,
+            containerY - containerHeight_px / 2 - handleSize / 2,
+            handleSize,
+            handleSize
+          );
+          ctx.strokeRect(
+            containerX - containerWidth_px / 2 - handleSize / 2,
+            containerY - containerHeight_px / 2 - handleSize / 2,
+            handleSize,
+            handleSize
+          );
+
+          // Northeast handle
+          ctx.fillRect(
+            containerX + containerWidth_px / 2 - handleSize / 2,
+            containerY - containerHeight_px / 2 - handleSize / 2,
+            handleSize,
+            handleSize
+          );
+          ctx.strokeRect(
+            containerX + containerWidth_px / 2 - handleSize / 2,
+            containerY - containerHeight_px / 2 - handleSize / 2,
+            handleSize,
+            handleSize
+          );
+
+          // Southwest handle
+          ctx.fillRect(
+            containerX - containerWidth_px / 2 - handleSize / 2,
+            containerY + containerHeight_px / 2 - handleSize / 2,
+            handleSize,
+            handleSize
+          );
+          ctx.strokeRect(
+            containerX - containerWidth_px / 2 - handleSize / 2,
+            containerY + containerHeight_px / 2 - handleSize / 2,
+            handleSize,
+            handleSize
+          );
+
+          // Southeast handle
+          ctx.fillRect(
+            containerX + containerWidth_px / 2 - handleSize / 2,
+            containerY + containerHeight_px / 2 - handleSize / 2,
+            handleSize,
+            handleSize
+          );
+          ctx.strokeRect(
+            containerX + containerWidth_px / 2 - handleSize / 2,
+            containerY + containerHeight_px / 2 - handleSize / 2,
+            handleSize,
+            handleSize
+          );
+        }
+      }
+    }
+  }, [selectedTemplate, textFields, activeField, hoveredField]);
+
+  // Helper function to update text field properties and re-render overlays
+  const updateTextFieldProperty = useCallback((fieldId: string, property: string, value: any) => {
+    setTextFields(prev => 
+      prev.map(field => 
+        field.id === fieldId ? { ...field, [property]: value } : field
+      )
+    );
+    // Re-render overlays after a short delay to ensure state is updated
+    setTimeout(() => renderOverlays(), 0);
+  }, [renderOverlays]);
 
   // Re-render canvas when selectedTemplate or text fields change
   React.useEffect(() => {
     renderCanvas();
-  }, [renderCanvas, selectedTemplate]);
+    renderOverlays();
+  }, [renderCanvas, renderOverlays, selectedTemplate]);
 
   // Handle window resize and container size changes
   React.useEffect(() => {
     const handleResize = () => {
       renderCanvas();
+      renderOverlays();
     };
 
     // Use ResizeObserver for more efficient container size monitoring
@@ -578,6 +604,11 @@ export const MemeGenerator: React.FC = () => {
       }
     };
   }, [renderCanvas]);
+
+  // Re-render overlays when activeField or hoveredField change (without affecting main canvas)
+  React.useEffect(() => {
+    renderOverlays();
+  }, [renderOverlays, activeField, hoveredField]);
 
   // Handle click outside dropdown
   React.useEffect(() => {
@@ -613,14 +644,7 @@ export const MemeGenerator: React.FC = () => {
         </p>
       </div>
 
-      {/* Template Management UI */}
-      {showTemplateBrowser && (
-        <TemplateBrowser
-          onSelectTemplate={handleTemplateSelect}
-          onCreateTemplate={handleCreateTemplate}
-          onEditTemplate={handleEditTemplate}
-        />
-      )}
+
 
       {showTemplateManager && (
         <TemplateManager
@@ -630,15 +654,9 @@ export const MemeGenerator: React.FC = () => {
         />
       )}
 
-      {!showTemplateBrowser && !showTemplateManager && (
-        <div className="mb-6 flex justify-center">
-          <Button onClick={() => setShowTemplateBrowser(true)} size="lg">
-            Browse Templates
-          </Button>
-        </div>
-      )}
 
-      {!showTemplateBrowser && !showTemplateManager && (
+
+      {!showTemplateManager && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
           {/* Left Side - Meme Preview */}
           <div className="lg:col-span-2">
@@ -673,7 +691,6 @@ export const MemeGenerator: React.FC = () => {
               ) : (
                 <div className="border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center flex-1 bg-gray-50" style={{ minHeight: '300px' }}>
                   <div className="text-center text-gray-500">
-                    <div className="text-6xl mb-4">🎭</div>
                     <p className="text-lg">Select a template to get started</p>
                   </div>
                 </div>
@@ -834,13 +851,7 @@ export const MemeGenerator: React.FC = () => {
                                   <select
                                     value={field.fontFamily || 'Impact'}
                                     onChange={(e) => 
-                                      setTextFields(prev => 
-                                        prev.map(f => 
-                                          f.id === field.id 
-                                            ? { ...f, fontFamily: e.target.value }
-                                            : f
-                                        )
-                                      )
+                                      updateTextFieldProperty(field.id, 'fontFamily', e.target.value)
                                     }
                                     className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                                   >
@@ -863,13 +874,7 @@ export const MemeGenerator: React.FC = () => {
                                     max="80"
                                     value={field.fontSize}
                                     onChange={(e) => 
-                                      setTextFields(prev => 
-                                        prev.map(f => 
-                                          f.id === field.id 
-                                            ? { ...f, fontSize: parseInt(e.target.value) }
-                                            : f
-                                        )
-                                      )
+                                      updateTextFieldProperty(field.id, 'fontSize', parseInt(e.target.value))
                                     }
                                     className="w-full"
                                   />
@@ -883,13 +888,7 @@ export const MemeGenerator: React.FC = () => {
                                       type="color"
                                       value={field.color}
                                       onChange={(e) => 
-                                        setTextFields(prev => 
-                                          prev.map(f => 
-                                            f.id === field.id 
-                                              ? { ...f, color: e.target.value }
-                                              : f
-                                          )
-                                        )
+                                        updateTextFieldProperty(field.id, 'color', e.target.value)
                                       }
                                       className="w-10 h-10 rounded border cursor-pointer"
                                     />
@@ -910,13 +909,7 @@ export const MemeGenerator: React.FC = () => {
                                     max="20"
                                     value={field.strokeWidth || 6}
                                     onChange={(e) => 
-                                      setTextFields(prev => 
-                                        prev.map(f => 
-                                          f.id === field.id 
-                                            ? { ...f, strokeWidth: parseInt(e.target.value) }
-                                            : f
-                                        )
-                                      )
+                                      updateTextFieldProperty(field.id, 'strokeWidth', parseInt(e.target.value))
                                     }
                                     className="w-full"
                                   />
@@ -930,13 +923,7 @@ export const MemeGenerator: React.FC = () => {
                                       type="color"
                                       value={field.strokeColor || '#000000'}
                                       onChange={(e) => 
-                                        setTextFields(prev => 
-                                          prev.map(f => 
-                                            f.id === field.id 
-                                              ? { ...f, strokeColor: e.target.value }
-                                              : f
-                                          )
-                                        )
+                                        updateTextFieldProperty(field.id, 'strokeColor', e.target.value)
                                       }
                                       className="w-10 h-10 rounded border cursor-pointer"
                                     />
@@ -952,13 +939,7 @@ export const MemeGenerator: React.FC = () => {
                                   <select
                                     value={field.textAlign || 'center'}
                                     onChange={(e) => 
-                                      setTextFields(prev => 
-                                        prev.map(f => 
-                                          f.id === field.id 
-                                            ? { ...f, textAlign: e.target.value as 'left' | 'center' | 'right' }
-                                            : f
-                                        )
-                                      )
+                                      updateTextFieldProperty(field.id, 'textAlign', e.target.value as 'left' | 'center' | 'right')
                                     }
                                     className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                                   >
@@ -980,13 +961,7 @@ export const MemeGenerator: React.FC = () => {
                                     step="0.01"
                                     value={parseFloat(field.letterSpacing || '0.05')}
                                     onChange={(e) => 
-                                      setTextFields(prev => 
-                                        prev.map(f => 
-                                          f.id === field.id 
-                                            ? { ...f, letterSpacing: `${parseFloat(e.target.value)}em` }
-                                            : f
-                                        )
-                                      )
+                                      updateTextFieldProperty(field.id, 'letterSpacing', `${parseFloat(e.target.value)}em`)
                                     }
                                     className="w-full"
                                   />

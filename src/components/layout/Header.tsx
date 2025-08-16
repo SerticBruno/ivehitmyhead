@@ -62,11 +62,6 @@ const Header: React.FC<HeaderProps> = ({ showSearch = true }) => {
                 Memes
               </Button>
             </Link>
-            <Link href="/trending" className="cursor-pointer">
-              <Button variant="ghost" size="sm">
-                Trending
-              </Button>
-            </Link>
             <Link href="/meme-generator" className="cursor-pointer">
               <Button variant="ghost" size="sm">
                 Generator
