@@ -122,17 +122,23 @@ export const MemeGenerator: React.FC = () => {
         };
         e.currentTarget.style.cursor = cursorMap[handle];
       } else {
-        // Regular dragging
+        // Regular dragging - calculate offset from the click point to field center
         setIsDragging(true);
         e.currentTarget.style.cursor = 'grabbing';
-        // Calculate offset from center of the field
+        
+        // Calculate the field's center in pixels
         const fieldCenterX = (clickedField.x / 100) * rect.width;
         const fieldCenterY = (clickedField.y / 100) * rect.height;
+        
+        // Calculate offset from click point to field center
         setDragOffset({
           x: x - fieldCenterX,
           y: y - fieldCenterY
         });
       }
+    } else {
+      // Clicked outside any field - clear selection
+      setActiveField(null);
     }
   }, [textFields]);
 
@@ -161,9 +167,16 @@ export const MemeGenerator: React.FC = () => {
           'se': 'se-resize'
         };
         e.currentTarget.style.cursor = cursorMap[handle];
+      } else if (hoveredField.id === activeField) {
+        // Active field shows grab cursor
+        e.currentTarget.style.cursor = 'grab';
       } else {
-        e.currentTarget.style.cursor = 'text';
+        // Hovered but not active field shows pointer
+        e.currentTarget.style.cursor = 'pointer';
       }
+    } else if (activeField) {
+      // If we have an active field but not hovering over any field, show default
+      e.currentTarget.style.cursor = 'default';
     } else {
       e.currentTarget.style.cursor = 'default';
     }
@@ -171,7 +184,7 @@ export const MemeGenerator: React.FC = () => {
     if (!activeField) return;
 
     if (isResizing && resizeHandle) {
-      // Handle resizing
+      // Handle resizing - don't move the field, just resize it
       setTextFields(prev => 
         prev.map(field => {
           if (field.id !== activeField) return field;
@@ -185,86 +198,99 @@ export const MemeGenerator: React.FC = () => {
           const currentPixelX = (currentField.x / 100) * rect.width;
           const currentPixelY = (currentField.y / 100) * rect.height;
           
-          // Calculate new dimensions and position based on resize handle
+          // Calculate new dimensions based on resize handle, keeping the field centered
           let newPixelWidth = currentPixelWidth;
           let newPixelHeight = currentPixelHeight;
-          let newPixelX = currentPixelX;
-          let newPixelY = currentPixelY;
           
           switch (resizeHandle) {
-            case 'nw': // Northwest - resize from top-left, anchor at bottom-right
-              newPixelWidth = Math.max(20, currentPixelX + currentPixelWidth/2 - x);
-              newPixelHeight = Math.max(20, currentPixelY + currentPixelHeight/2 - y);
-              newPixelX = x + newPixelWidth/2;
-              newPixelY = y + newPixelHeight/2;
+            case 'nw': // Northwest - resize from top-left, anchor at center
+              newPixelWidth = Math.max(20, 2 * (currentPixelX - x));
+              newPixelHeight = Math.max(20, 2 * (currentPixelY - y));
               break;
               
-            case 'ne': // Northeast - resize from top-right, anchor at bottom-left
-              newPixelWidth = Math.max(20, x - (currentPixelX - currentPixelWidth/2));
-              newPixelHeight = Math.max(20, currentPixelY + currentPixelHeight/2 - y);
-              newPixelX = x - newPixelWidth/2;
-              newPixelY = y + newPixelHeight/2;
+            case 'ne': // Northeast - resize from top-right, anchor at center
+              newPixelWidth = Math.max(20, 2 * (x - currentPixelX));
+              newPixelHeight = Math.max(20, 2 * (currentPixelY - y));
               break;
               
-            case 'sw': // Southwest - resize from bottom-left, anchor at top-right
-              newPixelWidth = Math.max(20, currentPixelX + currentPixelWidth/2 - x);
-              newPixelHeight = Math.max(20, y - (currentPixelY - currentPixelHeight/2));
-              newPixelX = x + newPixelWidth/2;
-              newPixelY = y - newPixelHeight/2;
+            case 'sw': // Southwest - resize from bottom-left, anchor at center
+              newPixelWidth = Math.max(20, 2 * (currentPixelX - x));
+              newPixelHeight = Math.max(20, 2 * (y - currentPixelY));
               break;
               
-            case 'se': // Southeast - resize from bottom-right, anchor at top-left
-              newPixelWidth = Math.max(20, x - (currentPixelX - currentPixelWidth/2));
-              newPixelHeight = Math.max(20, y - (currentPixelY - currentPixelHeight/2));
-              newPixelX = x - newPixelWidth/2;
-              newPixelY = y - newPixelHeight/2;
+            case 'se': // Southeast - resize from bottom-right, anchor at center
+              newPixelWidth = Math.max(20, 2 * (x - currentPixelX));
+              newPixelHeight = Math.max(20, 2 * (y - currentPixelY));
               break;
           }
           
-          // Convert back to percentages
+          // Convert back to percentages, keeping the field centered
           const newWidth = Math.min(90, (newPixelWidth / rect.width) * 100);
           const newHeight = Math.min(40, (newPixelHeight / rect.height) * 100);
-          const newX = Math.max(newWidth/2, Math.min(100 - newWidth/2, (newPixelX / rect.width) * 100));
-          const newY = Math.max(newHeight/2, Math.min(100 - newHeight/2, (newPixelY / rect.height) * 100));
           
           return {
             ...field,
             width: newWidth,
-            height: newHeight,
-            x: newX,
-            y: newY
+            height: newHeight
+            // Keep x and y the same - field stays centered
           };
         })
       );
     } else if (isDragging) {
-      // Handle dragging
+      // Handle dragging - move the field to follow the mouse
+      // Add a small threshold to prevent jittery movement
+      const threshold = 1; // 1 pixel threshold
       const newX = Math.max(0, Math.min(100, ((x - dragOffset.x) / rect.width) * 100));
       const newY = Math.max(0, Math.min(100, ((y - dragOffset.y) / rect.height) * 100));
       
-      setTextFields(prev => 
-        prev.map(field => 
-          field.id === activeField 
-            ? { 
-                ...field, 
-                x: newX,
-                y: newY
-              }
-            : field
-        )
-      );
+      // Only update if the change is significant enough
+      const currentField = textFields.find(f => f.id === activeField);
+      if (currentField) {
+        const deltaX = Math.abs(newX - currentField.x);
+        const deltaY = Math.abs(newY - currentField.y);
+        
+        if (deltaX > threshold || deltaY > threshold) {
+          setTextFields(prev => 
+            prev.map(field => 
+              field.id === activeField 
+                ? { 
+                    ...field, 
+                    x: newX,
+                    y: newY
+                  }
+                : field
+            )
+          );
+        }
+      }
     }
   }, [isDragging, isResizing, activeField, resizeHandle, dragOffset, textFields]);
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
     setIsResizing(false);
-    setActiveField(null);
     setResizeHandle(null);
-    // Reset cursor
+    // Don't clear activeField here - keep it selected for editing
+    // Reset cursor to show the field is still active
     if (canvasRef.current) {
-      canvasRef.current.style.cursor = 'default';
+      const rect = canvasRef.current.getBoundingClientRect();
+      const activeFieldElement = textFields.find(f => f.id === activeField);
+      
+      if (activeFieldElement) {
+        // Check if mouse is still over the active field
+        const mouseX = rect.width / 2; // Assume center for cursor reset
+        const mouseY = rect.height / 2;
+        
+        if (isPointInTextField(mouseX, mouseY, activeFieldElement, rect.width, rect.height)) {
+          canvasRef.current.style.cursor = 'grab';
+        } else {
+          canvasRef.current.style.cursor = 'default';
+        }
+      } else {
+        canvasRef.current.style.cursor = 'default';
+      }
     }
-  }, []);
+  }, [activeField, textFields]);
 
   const handleCanvasClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!canvasRef.current || isDragging || isResizing) return;
@@ -284,6 +310,32 @@ export const MemeGenerator: React.FC = () => {
       const inputElement = document.querySelector(`input[data-field-id="${clickedField.id}"]`) as HTMLInputElement;
       if (inputElement) {
         inputElement.focus();
+      }
+    } else {
+      // Clicked outside any field - clear selection
+      setActiveField(null);
+    }
+  }, [textFields, isDragging, isResizing]);
+
+  const handleCanvasDoubleClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!canvasRef.current || isDragging || isResizing) return;
+    
+    const rect = canvasRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    // Find if double-clicking on a text field
+    const clickedField = textFields.find(field => {
+      return isPointInTextField(x, y, field, rect.width, rect.height);
+    });
+
+    if (clickedField) {
+      setActiveField(clickedField.id);
+      // Focus the corresponding input field and scroll it into view
+      const inputElement = document.querySelector(`input[data-field-id="${clickedField.id}"]`) as HTMLInputElement;
+      if (inputElement) {
+        inputElement.focus();
+        inputElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
     }
   }, [textFields, isDragging, isResizing]);
@@ -444,7 +496,7 @@ export const MemeGenerator: React.FC = () => {
 
   // Separate function for rendering overlays (borders, handles) that doesn't depend on text field properties
   const renderOverlays = useCallback(() => {
-    if (!canvasRef.current || !selectedTemplate) return;
+    if (!canvasRef.current || !selectedTemplate || (!activeField && !hoveredField)) return;
 
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
@@ -457,109 +509,110 @@ export const MemeGenerator: React.FC = () => {
     const containerWidth = container.clientWidth - 40;
     const containerHeight = container.clientHeight - 40;
 
-    // Draw text containers and resize handles for selected field or hovered field
-    const fieldToShow = activeField || hoveredField;
-    if (fieldToShow) {
-      const selectedField = textFields.find(f => f.id === fieldToShow);
+    // Always show the active field if there is one
+    if (activeField) {
+      const selectedField = textFields.find(f => f.id === activeField);
       if (selectedField) {
         const containerX = (selectedField.x / 100) * containerWidth;
         const containerY = (selectedField.y / 100) * containerHeight;
         const containerWidth_px = (selectedField.width / 100) * containerWidth;
         const containerHeight_px = (selectedField.height / 100) * containerHeight;
 
-        // Define border color for handles
-        const borderColor = activeField === fieldToShow ? '#007bff' : '#6b7280';
+        // Draw active field border with glow effect
+        ctx.strokeStyle = '#007bff';
+        ctx.lineWidth = 3;
+        ctx.setLineDash([]);
+        ctx.strokeRect(
+          containerX - containerWidth_px / 2,
+          containerY - containerHeight_px / 2,
+          containerWidth_px,
+          containerHeight_px
+        );
 
-        // Draw container border
-        const borderWidth = activeField === fieldToShow ? 3 : 1;
-        ctx.strokeStyle = borderColor;
-        ctx.lineWidth = borderWidth;
-        
-        if (activeField === fieldToShow) {
-          // Solid border for active field
-          ctx.setLineDash([]);
-          ctx.strokeRect(
-            containerX - containerWidth_px / 2,
-            containerY - containerHeight_px / 2,
-            containerWidth_px,
-            containerHeight_px
-          );
-        } else {
-          // Dashed border for hovered field
-          ctx.setLineDash([5, 5]);
-          ctx.strokeRect(
-            containerX - containerWidth_px / 2,
-            containerY - containerHeight_px / 2,
-            containerWidth_px,
-            containerHeight_px
-          );
-          ctx.setLineDash([]);
-        }
+        // Always show resize handles for active field
+        const handleSize = 16;
+        ctx.fillStyle = '#007bff';
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
 
-        // Always show resize handles for selected field, or when hovering
-        if (activeField === fieldToShow || hoveredField === fieldToShow) {
-          // Draw resize handles
-          const handleSize = 16;
-          ctx.fillStyle = borderColor;
-          ctx.strokeStyle = '#ffffff';
-          ctx.lineWidth = 2;
+        // Northwest handle
+        ctx.fillRect(
+          containerX - containerWidth_px / 2 - handleSize / 2,
+          containerY - containerHeight_px / 2 - handleSize / 2,
+          handleSize,
+          handleSize
+        );
+        ctx.strokeRect(
+          containerX - containerWidth_px / 2 - handleSize / 2,
+          containerY - containerHeight_px / 2 - handleSize / 2,
+          handleSize,
+          handleSize
+        );
 
-          // Northwest handle
-          ctx.fillRect(
-            containerX - containerWidth_px / 2 - handleSize / 2,
-            containerY - containerHeight_px / 2 - handleSize / 2,
-            handleSize,
-            handleSize
-          );
-          ctx.strokeRect(
-            containerX - containerWidth_px / 2 - handleSize / 2,
-            containerY - containerHeight_px / 2 - handleSize / 2,
-            handleSize,
-            handleSize
-          );
+        // Northeast handle
+        ctx.fillRect(
+          containerX + containerWidth_px / 2 - handleSize / 2,
+          containerY - containerHeight_px / 2 - handleSize / 2,
+          handleSize,
+          handleSize
+        );
+        ctx.strokeRect(
+          containerX + containerWidth_px / 2 - handleSize / 2,
+          containerY - containerHeight_px / 2 - handleSize / 2,
+          handleSize,
+          handleSize
+        );
 
-          // Northeast handle
-          ctx.fillRect(
-            containerX + containerWidth_px / 2 - handleSize / 2,
-            containerY - containerHeight_px / 2 - handleSize / 2,
-            handleSize,
-            handleSize
-          );
-          ctx.strokeRect(
-            containerX + containerWidth_px / 2 - handleSize / 2,
-            containerY - containerHeight_px / 2 - handleSize / 2,
-            handleSize,
-            handleSize
-          );
+        // Southwest handle
+        ctx.fillRect(
+          containerX - containerWidth_px / 2 - handleSize / 2,
+          containerY + containerHeight_px / 2 - handleSize / 2,
+          handleSize,
+          handleSize
+        );
+        ctx.strokeRect(
+          containerX - containerWidth_px / 2 - handleSize / 2,
+          containerY + containerHeight_px / 2 - handleSize / 2,
+          handleSize,
+          handleSize
+        );
 
-          // Southwest handle
-          ctx.fillRect(
-            containerX - containerWidth_px / 2 - handleSize / 2,
-            containerY + containerHeight_px / 2 - handleSize / 2,
-            handleSize,
-            handleSize
-          );
-          ctx.strokeRect(
-            containerX - containerWidth_px / 2 - handleSize / 2,
-            containerY + containerHeight_px / 2 - handleSize / 2,
-            handleSize,
-            handleSize
-          );
+        // Southeast handle
+        ctx.fillRect(
+          containerX + containerWidth_px / 2 - handleSize / 2,
+          containerY + containerHeight_px / 2 - handleSize / 2,
+          handleSize,
+          handleSize
+        );
+        ctx.strokeRect(
+          containerX + containerWidth_px / 2 - handleSize / 2,
+          containerY + containerHeight_px / 2 - handleSize / 2,
+          handleSize,
+          handleSize
+        );
+      }
+    }
 
-          // Southeast handle
-          ctx.fillRect(
-            containerX + containerWidth_px / 2 - handleSize / 2,
-            containerY + containerHeight_px / 2 - handleSize / 2,
-            handleSize,
-            handleSize
-          );
-          ctx.strokeRect(
-            containerX + containerWidth_px / 2 - handleSize / 2,
-            containerY + containerHeight_px / 2 - handleSize / 2,
-            handleSize,
-            handleSize
-          );
-        }
+    // Show hover effect for non-active fields
+    if (hoveredField && hoveredField !== activeField) {
+      const hoveredFieldObj = textFields.find(f => f.id === hoveredField);
+      if (hoveredFieldObj) {
+        const containerX = (hoveredFieldObj.x / 100) * containerWidth;
+        const containerY = (hoveredFieldObj.y / 100) * containerHeight;
+        const containerWidth_px = (hoveredFieldObj.width / 100) * containerWidth;
+        const containerHeight_px = (hoveredFieldObj.height / 100) * containerHeight;
+
+        // Draw dashed border for hovered field
+        ctx.strokeStyle = '#6b7280';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([5, 5]);
+        ctx.strokeRect(
+          containerX - containerWidth_px / 2,
+          containerY - containerHeight_px / 2,
+          containerWidth_px,
+          containerHeight_px
+        );
+        ctx.setLineDash([]);
       }
     }
   }, [selectedTemplate, textFields, activeField, hoveredField]);
@@ -571,21 +624,44 @@ export const MemeGenerator: React.FC = () => {
         field.id === fieldId ? { ...field, [property]: value } : field
       )
     );
-    // Re-render overlays after a short delay to ensure state is updated
-    setTimeout(() => renderOverlays(), 0);
-  }, [renderOverlays]);
+    // Re-render overlays smoothly using requestAnimationFrame
+    if (activeField || hoveredField) {
+      requestAnimationFrame(() => {
+        renderOverlays();
+      });
+    }
+  }, [renderOverlays, activeField, hoveredField]);
 
   // Re-render canvas when selectedTemplate or text fields change
   React.useEffect(() => {
     renderCanvas();
-    renderOverlays();
-  }, [renderCanvas, renderOverlays, selectedTemplate]);
+  }, [renderCanvas, selectedTemplate]);
+
+  // Re-render overlays when activeField or hoveredField change (without affecting main canvas)
+  React.useEffect(() => {
+    // Always re-render overlays when activeField changes to ensure visibility
+    if (activeField) {
+      requestAnimationFrame(() => {
+        renderOverlays();
+      });
+    } else if (hoveredField) {
+      // Only re-render for hover if no active field
+      requestAnimationFrame(() => {
+        renderOverlays();
+      });
+    }
+  }, [renderOverlays, activeField, hoveredField]);
 
   // Handle window resize and container size changes
   React.useEffect(() => {
     const handleResize = () => {
       renderCanvas();
-      renderOverlays();
+      // Re-render overlays after canvas is updated
+      if (activeField || hoveredField) {
+        requestAnimationFrame(() => {
+          renderOverlays();
+        });
+      }
     };
 
     // Use ResizeObserver for more efficient container size monitoring
@@ -603,12 +679,7 @@ export const MemeGenerator: React.FC = () => {
         resizeObserver.disconnect();
       }
     };
-  }, [renderCanvas]);
-
-  // Re-render overlays when activeField or hoveredField change (without affecting main canvas)
-  React.useEffect(() => {
-    renderOverlays();
-  }, [renderOverlays, activeField, hoveredField]);
+  }, [renderCanvas, renderOverlays, activeField, hoveredField]);
 
   // Handle click outside dropdown
   React.useEffect(() => {
@@ -629,8 +700,21 @@ export const MemeGenerator: React.FC = () => {
       }
     };
 
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setActiveField(null);
+        setIsDropdownOpen(false);
+        setOpenSettingsDropdown(null);
+      }
+    };
+
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
   }, [isDropdownOpen, openSettingsDropdown]);
 
   return (
@@ -674,11 +758,12 @@ export const MemeGenerator: React.FC = () => {
                 <div className="border-2 border-gray-200 rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center flex-1 p-4" style={{ minHeight: '300px', maxHeight: '500px' }}>
                   <canvas
                     ref={canvasRef}
-                    className="w-full h-full cursor-move"
+                    className="w-full h-full cursor-default"
                     onMouseDown={handleMouseDown}
                     onMouseMove={handleMouseMove}
                     onMouseUp={handleMouseUp}
                     onClick={handleCanvasClick}
+                    onDoubleClick={handleCanvasDoubleClick}
                     onMouseLeave={() => {
                       setHoveredField(null);
                       if (canvasRef.current) {
@@ -698,7 +783,7 @@ export const MemeGenerator: React.FC = () => {
              
              {selectedTemplate && (
                <p className="text-sm text-gray-600 dark:text-gray-400 mt-3 text-center">
-                 Click on text boxes to edit • Hover to see handles • Drag text to move • Drag corner handles to resize
+                 <strong>Click</strong> to select • <strong>Double-click</strong> to edit • <strong>Drag</strong> to move • <strong>Drag corners</strong> to resize • <strong>Escape</strong> to deselect
                </p>
              )}
            </Card>
@@ -776,16 +861,23 @@ export const MemeGenerator: React.FC = () => {
                   <div key={field.id} className="space-y-2">
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                       {field.id.charAt(0).toUpperCase() + field.id.slice(1)} Text
+                      {activeField === field.id && (
+                        <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                          Active
+                        </span>
+                      )}
                     </label>
                     <div 
                       className={`flex items-center justify-between p-3 rounded-lg border-2 transition-all duration-200 cursor-text hover:border-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 ${
                         activeField === field.id 
-                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 shadow-sm' 
+                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 shadow-md ring-2 ring-blue-200 dark:ring-blue-800' 
                           : 'border-gray-200 dark:border-gray-700'
                       }`}
                       onClick={(e) => {
-                        // Don't trigger if clicking directly on the input
-                        if (e.target === e.currentTarget || (e.target as Element).closest('button')) {
+                        // Don't trigger if clicking directly on the input or buttons
+                        if (e.target === e.currentTarget || 
+                            (e.target as Element).closest('button') ||
+                            (e.target as Element).closest('input')) {
                           return;
                         }
                         setActiveField(field.id);
@@ -803,18 +895,9 @@ export const MemeGenerator: React.FC = () => {
                         placeholder={`Enter ${field.id} text...`}
                         data-field-id={field.id}
                         className="flex-1 h-10 px-3 py-2 text-sm border-0 bg-transparent focus:outline-none focus:ring-0 placeholder:text-gray-500 dark:placeholder:text-gray-400"
+                        onFocus={() => setActiveField(field.id)}
                       />
                       <div className="flex items-center space-x-2 ml-2">
-                        <button
-                          onClick={() => setActiveField(field.id)}
-                          className={`px-3 py-2 text-xs rounded transition-colors ${
-                            activeField === field.id
-                              ? 'bg-blue-500 text-white'
-                              : 'bg-gray-200 text-gray-600 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
-                          }`}
-                        >
-                          {activeField === field.id ? 'Active' : 'Select'}
-                        </button>
                         <div className="relative" data-settings-container={field.id}>
                           <button
                             onClick={() => toggleSettingsDropdown(field.id)}
