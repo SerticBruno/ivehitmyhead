@@ -65,6 +65,16 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
     y: number;
   } | null>(null);
 
+  // Track initial positions for popup delta calculation
+  const [initialDragState, setInitialDragState] = useState<{
+    fieldX: number;
+    fieldY: number;
+    popupX: number;
+    popupY: number;
+  } | null>(null);
+
+  // Track previous mouse position for delta calculation
+  const [previousMousePos, setPreviousMousePos] = useState<{ x: number; y: number } | null>(null);
 
 
   // Helper function to get resize handle information for a field
@@ -636,6 +646,19 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
         x: x - fieldCenterX,
         y: y - fieldCenterY
       });
+      
+      // Store initial positions for popup delta calculation
+      if (settingsPopup && settingsPopup.fieldId === clickedField.id) {
+        setInitialDragState({
+          fieldX: clickedField.x,
+          fieldY: clickedField.y,
+          popupX: settingsPopup.x,
+          popupY: settingsPopup.y
+        });
+      }
+      
+      // Initialize previous mouse position for delta calculation
+      setPreviousMousePos({ x, y });
     } else if (!settingsPopup) {
       // Only deselect if settings popup is not open
       onFieldSelect(null);
@@ -647,6 +670,8 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
     setIsResizing(false);
     setIsRotating(false);
     setResizeHandle(null);
+    setInitialDragState(null); // Reset initial drag state
+    setPreviousMousePos(null); // Reset previous mouse position
     
     if (canvasRef.current) {
       const rect = canvasRef.current.getBoundingClientRect();
@@ -715,6 +740,63 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
     setSettingsPopup(null);
   }, []);
 
+  // Function to update popup position using delta (simpler approach)
+  const updatePopupPositionByDelta = useCallback((deltaX: number, deltaY: number) => {
+    if (!settingsPopup || !canvasRef.current) return;
+    
+    setSettingsPopup(prev => prev ? {
+      ...prev,
+      x: prev.x + deltaX,
+      y: prev.y + deltaY
+    } : null);
+  }, [settingsPopup]);
+
+  // Function to recalculate popup position from scratch (for resize/rotation)
+  const recalculatePopupPosition = useCallback(() => {
+    if (!settingsPopup || !canvasRef.current) return;
+    
+    const field = textFields.find(f => f.id === settingsPopup.fieldId);
+    if (!field) return;
+    
+    const rect = canvasRef.current.getBoundingClientRect();
+    const fieldCenterX = (field.x / 100) * rect.width;
+    const fieldCenterY = (field.y / 100) * rect.height;
+    
+    // Calculate cog position
+    const containerHeight_px = (field.height / 100) * rect.height;
+    const settingsCogSize = 12 * 1.2;
+    let settingsCogX = fieldCenterX;
+    let settingsCogY = fieldCenterY + containerHeight_px / 2 + settingsCogSize + 8;
+    
+    // Calculate popup position below the cog
+    let popupY = settingsCogY + 20;
+    let popupX = settingsCogX;
+    
+    // Check if popup would go below viewport and adjust if needed
+    const popupHeight = 300;
+    const popupWidth = 320;
+    const viewportHeight = window.innerHeight;
+    const viewportWidth = window.innerWidth;
+    
+    if (popupY + popupHeight > viewportHeight + window.scrollY) {
+      popupY = settingsCogY - popupHeight - 20;
+    }
+    
+    // Check if popup would go off the left or right edges
+    if (popupX - popupWidth / 2 < 0) {
+      popupX = popupWidth / 2;
+    } else if (popupX + popupWidth / 2 > viewportWidth) {
+      popupX = viewportWidth - popupWidth / 2;
+    }
+    
+    // Update popup position
+    setSettingsPopup(prev => prev ? {
+      ...prev,
+      x: popupX + window.scrollX,
+      y: popupY + window.scrollY
+    } : null);
+  }, [settingsPopup, textFields]);
+
   // Function to handle property updates
   const handlePropertyUpdate = useCallback((fieldId: string, property: string, value: string | number | boolean) => {
     if (onUpdateProperty) {
@@ -766,7 +848,12 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
     // Update the field
     onFieldResize(activeField, newWidth, newHeight);
     onFieldMove(activeField, newX, newY);
-  }, [activeField, resizeStartState, onFieldResize, onFieldMove]);
+    
+    // Update popup position if it's open for this field
+    if (settingsPopup && settingsPopup.fieldId === activeField) {
+      recalculatePopupPosition();
+    }
+  }, [activeField, resizeStartState, onFieldResize, onFieldMove, settingsPopup, recalculatePopupPosition]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!canvasRef.current) return;
@@ -861,6 +948,8 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
       
       const newRotation = rotationStartState.startRotation + rotationDiff;
       onFieldRotate(activeField, newRotation);
+      
+      // No need to update popup position during rotation - field is just rotating in place
     } else if (isResizing && resizeHandle && resizeStartState.field) {
       // Handle resizing with simplified logic
       const deltaX = x - resizeStartState.mouseX;
@@ -872,8 +961,18 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
       const newY = Math.max(0, Math.min(100, ((y - dragOffset.y) / rect.height) * 100));
       
       onFieldMove(activeField, newX, newY);
+      
+      // Update popup position using mouse movement delta
+      if (settingsPopup && settingsPopup.fieldId === activeField && previousMousePos) {
+        const mouseDeltaX = x - previousMousePos.x;
+        const mouseDeltaY = y - previousMousePos.y;
+        updatePopupPositionByDelta(mouseDeltaX, mouseDeltaY);
+      }
+      
+      // Store current mouse position for next frame
+      setPreviousMousePos({ x, y });
     }
-  }, [isDragging, isResizing, isRotating, activeField, resizeHandle, dragOffset, textFields, onFieldHover, onFieldMove, resizeStartState, rotationStartState, onFieldRotate, handleResize, isOverRotatedResizeHandle, getResizeHandleInfo, isOverRotationHandle, isOverSettingsCog]);
+  }, [isDragging, isResizing, isRotating, activeField, resizeHandle, dragOffset, textFields, onFieldHover, onFieldMove, resizeStartState, rotationStartState, onFieldRotate, handleResize, isOverRotatedResizeHandle, getResizeHandleInfo, isOverRotationHandle, isOverSettingsCog, updatePopupPositionByDelta, initialDragState, recalculatePopupPosition, previousMousePos]);
 
   // Effects
   useEffect(() => {
@@ -920,6 +1019,8 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
         
         const newRotation = rotationStartState.startRotation + rotationDiff;
         onFieldRotate(activeField!, newRotation);
+        
+        // No need to update popup position during rotation - field is just rotating in place
       }
     };
 
@@ -931,9 +1032,14 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
       if (isRotating) {
         setIsRotating(false);
       }
+      if (isDragging) {
+        setIsDragging(false);
+        setInitialDragState(null);
+        setPreviousMousePos(null);
+      }
     };
 
-    if (isResizing || isRotating) {
+    if (isResizing || isRotating || isDragging) {
       document.addEventListener('mousemove', handleGlobalMouseMove);
       document.addEventListener('mouseup', handleGlobalMouseUp);
     }
@@ -942,7 +1048,7 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
       document.removeEventListener('mousemove', handleGlobalMouseMove);
       document.removeEventListener('mouseup', handleGlobalMouseUp);
     };
-  }, [isResizing, isRotating, resizeHandle, resizeStartState, rotationStartState, onFieldRotate, activeField, handleResize]);
+  }, [isResizing, isRotating, isDragging, resizeHandle, resizeStartState, rotationStartState, onFieldRotate, activeField, handleResize, settingsPopup, recalculatePopupPosition, initialDragState, previousMousePos, updatePopupPositionByDelta]);
 
   useEffect(() => {
     const handleResize = () => {
