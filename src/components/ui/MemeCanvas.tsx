@@ -321,7 +321,6 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
       const inputElement = document.querySelector(`input[data-field-id="${clickedField.id}"]`) as HTMLInputElement;
       if (inputElement) {
         inputElement.focus();
-        inputElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
     }
   }, [textFields, isDragging, isResizing, onFieldSelect]);

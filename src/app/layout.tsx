@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "IVEHITMYHEAD",
-  description: "The best place to discover, share, and create hilarious memes",
+  description: "The best place to discover, share, and create dullest memes",
 };
 
 export default function RootLayout({

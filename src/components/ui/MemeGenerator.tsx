@@ -16,7 +16,8 @@ export const MemeGenerator: React.FC = () => {
   const [hoveredField, setHoveredField] = useState<string | null>(null);
   const [showTemplateManager, setShowTemplateManager] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<MemeTemplate | null>(null);
-  const [selectedTimePeriod, setSelectedTimePeriod] = useState<string>('all');
+
+
 
   const handleTextChange = useCallback((fieldId: string, text: string) => {
     setTextFields(prev => 
@@ -102,11 +103,9 @@ export const MemeGenerator: React.FC = () => {
     );
   }, []);
 
-  const handleTimePeriodChange = useCallback((period: string) => {
-    setSelectedTimePeriod(period);
-    // You can add additional logic here for filtering templates or other time-based functionality
-    console.log('Time period changed to:', period);
-  }, []);
+
+
+
 
   const downloadMeme = useCallback(() => {
     if (!selectedTemplate) return;
@@ -176,7 +175,7 @@ export const MemeGenerator: React.FC = () => {
           Meme Generator
         </h1>
         <p className="text-gray-600 dark:text-gray-400">
-          Choose a template, add your text, and create hilarious memes!
+          Choose a template, add your text, and create dullest memes
         </p>
       </div>
 
@@ -225,8 +224,6 @@ export const MemeGenerator: React.FC = () => {
                 <QuickActions
                   onClearAllText={clearAllText}
                   onResetToDefaults={resetToMemeDefaults}
-                  onTimePeriodChange={handleTimePeriodChange}
-                  selectedTimePeriod={selectedTimePeriod}
                 />
               </>
             )}
