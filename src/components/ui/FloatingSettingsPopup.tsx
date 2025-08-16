@@ -30,7 +30,9 @@ const StyledRangeInput: React.FC<{
     <div className="space-y-1">
       <div className="flex justify-between items-center">
         <label className="text-xs text-gray-700 dark:text-gray-300">{label}</label>
-        <span className="text-xs text-gray-500 dark:text-gray-400">{value}{unit}</span>
+        <span className="text-xs text-gray-500 dark:text-gray-400">
+          {label === 'Rotation' ? Number(value).toFixed(0) : value}{unit}
+        </span>
       </div>
       <input
         type="range"
