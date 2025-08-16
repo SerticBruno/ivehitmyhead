@@ -4,7 +4,9 @@ import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { MemeTemplate, TextField } from '../../lib/types/meme';
 import { 
   isPointInTextField,
-  getResizeHandle
+  getResizeHandle,
+  calculateAdjustedYPosition,
+  calculateAdjustedBorderYPosition
 } from '../../lib/utils/templateUtils';
 
 interface MemeCanvasProps {
@@ -63,104 +65,29 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
     return lines;
   }, []);
 
-  const handleMouseDown = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!canvasRef.current) return;
+  // Helper function to get resize handle information for a field
+  const getResizeHandleInfo = useCallback((field: TextField, canvasWidth: number, canvasHeight: number) => {
+    const containerX = (field.x / 100) * canvasWidth;
+    const containerY = (field.y / 100) * canvasHeight;
+    const containerWidth_px = (field.width / 100) * canvasWidth;
+    const containerHeight_px = (field.height / 100) * canvasHeight;
+
+    const scale = Math.min(canvasWidth / (canvasRef.current?.width || 1), canvasHeight / (canvasRef.current?.height || 1));
+    const padding = 16 * scale;
+    const adjustedY = calculateAdjustedBorderYPosition(field.y, containerY, containerHeight_px, padding);
     
-    const rect = canvasRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    // Find if clicking on a text field
-    const clickedField = textFields.find(field => {
-      return isPointInTextField(x, y, field, rect.width, rect.height);
-    });
-
-    if (clickedField) {
-      onFieldSelect(clickedField.id);
-      
-      // Start dragging (resize handles are now handled by HTML overlay)
-      setIsDragging(true);
-      e.currentTarget.style.cursor = 'grabbing';
-      
-      const fieldCenterX = (clickedField.x / 100) * rect.width;
-      const fieldCenterY = (clickedField.y / 100) * rect.height;
-      
-      setDragOffset({
-        x: x - fieldCenterX,
-        y: y - fieldCenterY
-      });
-    } else {
-      onFieldSelect(null);
-    }
-  }, [textFields, onFieldSelect]);
-
-  const handleMouseUp = useCallback(() => {
-    setIsDragging(false);
-    // Don't reset resizing here - let the global handler do it
+    const handleSize = 12;
+    const handles = [
+      { x: containerX - containerWidth_px / 2, y: adjustedY, type: 'nw' as const, cursor: 'nw-resize' },
+      { x: containerX + containerWidth_px / 2, y: adjustedY, type: 'ne' as const, cursor: 'ne-resize' },
+      { x: containerX - containerWidth_px / 2, y: adjustedY + containerHeight_px, type: 'sw' as const, cursor: 'sw-resize' },
+      { x: containerX + containerWidth_px / 2, y: adjustedY + containerHeight_px, type: 'se' as const, cursor: 'se-resize' }
+    ];
     
-    if (canvasRef.current) {
-      const rect = canvasRef.current.getBoundingClientRect();
-      const activeFieldElement = textFields.find(f => f.id === activeField);
-      
-      if (activeFieldElement) {
-        const mouseX = rect.width / 2;
-        const mouseY = rect.height / 2;
-        
-        if (isPointInTextField(mouseX, mouseY, activeFieldElement, rect.width, rect.height)) {
-          canvasRef.current.style.cursor = 'grab';
-        } else {
-          canvasRef.current.style.cursor = 'default';
-        }
-      } else {
-        canvasRef.current.style.cursor = 'default';
-      }
-    }
-  }, [activeField, textFields]);
+    return { handles, handleSize };
+  }, []);
 
-  const handleCanvasClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!canvasRef.current || isDragging || isResizing) return;
-    
-    const rect = canvasRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    const clickedField = textFields.find(field => {
-      return isPointInTextField(x, y, field, rect.width, rect.height);
-    });
-
-    if (clickedField) {
-      onFieldSelect(clickedField.id);
-      // Focus the corresponding input field
-      const inputElement = document.querySelector(`input[data-field-id="${clickedField.id}"]`) as HTMLInputElement;
-      if (inputElement) {
-        inputElement.focus();
-      }
-    } else {
-      onFieldSelect(null);
-    }
-  }, [textFields, isDragging, isResizing, onFieldSelect]);
-
-  const handleCanvasDoubleClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!canvasRef.current || isDragging || isResizing) return;
-    
-    const rect = canvasRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    const clickedField = textFields.find(field => {
-      return isPointInTextField(x, y, field, rect.width, rect.height);
-    });
-
-    if (clickedField) {
-      onFieldSelect(clickedField.id);
-      const inputElement = document.querySelector(`input[data-field-id="${clickedField.id}"]`) as HTMLInputElement;
-      if (inputElement) {
-        inputElement.focus();
-        inputElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-    }
-  }, [textFields, isDragging, isResizing, onFieldSelect]);
-
+  // Single render function that handles everything
   const renderCanvas = useCallback(() => {
     if (!canvasRef.current || !selectedTemplate) return;
 
@@ -225,7 +152,7 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
         } else {
           ctx.textAlign = 'center';
         }
-        ctx.textBaseline = 'middle';
+        ctx.textBaseline = 'top';
 
         const textX = (field.x / 100) * containerWidth;
         const textY = (field.y / 100) * containerHeight;
@@ -234,11 +161,12 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
         const wrappedLines = wrapText(ctx, field.text, textBoxWidth);
         const lineHeight = (field.fontSize * scale) * 1.2;
         const totalHeight = wrappedLines.length * lineHeight;
-        const topPadding = 16 * scale;
-        const startY = textY - (totalHeight / 2) + topPadding;
+        const padding = 16 * scale;
+        
+        // Calculate Y position based on text field location
+        const startY = calculateAdjustedYPosition(field.y, textY, totalHeight, padding);
         
         let lineX = textX;
-        const padding = 16 * scale;
         
         if (field.textAlign === 'left') {
           lineX = textX - (textBoxWidth / 2) + padding;
@@ -254,83 +182,233 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
           ctx.fillText(line, lineX, lineY);
         });
       });
+
+      // Draw overlays and interactive elements
+      if (activeField || hoveredField) {
+        // Draw active field border
+        if (activeField) {
+          const selectedField = textFields.find(f => f.id === activeField);
+          if (selectedField) {
+            const containerX = (selectedField.x / 100) * containerWidth;
+            const containerY = (selectedField.y / 100) * containerHeight;
+            const containerWidth_px = (selectedField.width / 100) * containerWidth;
+            const containerHeight_px = (selectedField.height / 100) * containerHeight;
+
+            const padding = 16 * scale;
+            const adjustedY = calculateAdjustedBorderYPosition(selectedField.y, containerY, containerHeight_px, padding);
+            
+            // Draw border
+            ctx.strokeStyle = '#007bff';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([]);
+            ctx.strokeRect(
+              containerX - containerWidth_px / 2,
+              adjustedY,
+              containerWidth_px,
+              containerHeight_px
+            );
+            
+            // Draw resize handles
+            const handleSize = 12;
+            const handles = [
+              { x: containerX - containerWidth_px / 2, y: adjustedY }, // NW
+              { x: containerX + containerWidth_px / 2, y: adjustedY }, // NE
+              { x: containerX - containerWidth_px / 2, y: adjustedY + containerHeight_px }, // SW
+              { x: containerX + containerWidth_px / 2, y: adjustedY + containerHeight_px }  // SE
+            ];
+            
+            ctx.fillStyle = '#007bff';
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            
+            handles.forEach((handle, index) => {
+              const handleTypes = ['nw', 'ne', 'sw', 'se'];
+              const handleType = handleTypes[index];
+              
+              // Check if mouse is over this handle
+              const mousePos = { x: 0, y: 0 }; // Will be updated in mouse events
+              const isHovered = Math.abs(mousePos.x - handle.x) <= handleSize/2 && 
+                               Math.abs(mousePos.y - handle.y) <= handleSize/2;
+              
+              ctx.fillStyle = isHovered ? '#0056b3' : '#007bff';
+              ctx.fillRect(handle.x - handleSize/2, handle.y - handleSize/2, handleSize, handleSize);
+              ctx.strokeRect(handle.x - handleSize/2, handle.y - handleSize/2, handleSize, handleSize);
+            });
+          }
+        }
+
+        // Draw hover field border
+        if (hoveredField && hoveredField !== activeField) {
+          const hoveredFieldObj = textFields.find(f => f.id === hoveredField);
+          if (hoveredFieldObj) {
+            const containerX = (hoveredFieldObj.x / 100) * containerWidth;
+            const containerY = (hoveredFieldObj.y / 100) * containerHeight;
+            const containerWidth_px = (hoveredFieldObj.width / 100) * containerWidth;
+            const containerHeight_px = (hoveredFieldObj.height / 100) * containerHeight;
+
+            const scale = Math.min(containerWidth / canvas.width, containerHeight / canvas.height);
+            const padding = 16 * scale;
+            
+            const adjustedY = calculateAdjustedBorderYPosition(hoveredFieldObj.y, containerY, containerHeight_px, padding);
+
+            ctx.strokeStyle = '#6b7280';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([5, 5]);
+            ctx.strokeRect(
+              containerX - containerWidth_px / 2,
+              adjustedY,
+              containerWidth_px,
+              containerHeight_px
+            );
+            ctx.setLineDash([]);
+          }
+        }
+      }
     };
     img.src = selectedTemplate.src;
-  }, [selectedTemplate, textFields, wrapText]);
+  }, [selectedTemplate, textFields, activeField, hoveredField, wrapText]);
 
-  const renderOverlays = useCallback(() => {
-    if (!canvasRef.current || !selectedTemplate || (!activeField && !hoveredField)) return;
-
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const container = canvas.parentElement;
-    if (!container) return;
+  const handleMouseDown = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!canvasRef.current) return;
     
-    const containerWidth = container.clientWidth - 40;
-    const containerHeight = container.clientHeight - 40;
+    const rect = canvasRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
 
+    // Check if clicking on a resize handle first
     if (activeField) {
       const selectedField = textFields.find(f => f.id === activeField);
       if (selectedField) {
+        const containerWidth = rect.width;
+        const containerHeight = rect.height;
         const containerX = (selectedField.x / 100) * containerWidth;
         const containerY = (selectedField.y / 100) * containerHeight;
         const containerWidth_px = (selectedField.width / 100) * containerWidth;
         const containerHeight_px = (selectedField.height / 100) * containerHeight;
 
-        // Draw active field border
-        ctx.strokeStyle = '#007bff';
-        ctx.lineWidth = 3;
-        ctx.setLineDash([]);
-        ctx.strokeRect(
-          containerX - containerWidth_px / 2,
-          containerY - containerHeight_px / 2,
-          containerWidth_px,
-          containerHeight_px
-        );
+        const scale = Math.min(containerWidth / (canvasRef.current?.width || 1), containerHeight / (canvasRef.current?.height || 1));
+        const padding = 16 * scale;
+        const adjustedY = calculateAdjustedBorderYPosition(selectedField.y, containerY, containerHeight_px, padding);
         
-        // Debug: Draw corner markers to show exact handle positions
-        ctx.fillStyle = '#ff0000';
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 2;
-        
-        const cornerSize = 6;
-        const corners = [
-          { x: containerX - containerWidth_px / 2, y: containerY - containerHeight_px / 2 }, // NW
-          { x: containerX + containerWidth_px / 2, y: containerY - containerHeight_px / 2 }, // NE
-          { x: containerX - containerWidth_px / 2, y: containerY + containerHeight_px / 2 }, // SW
-          { x: containerX + containerWidth_px / 2, y: containerY + containerHeight_px / 2 }  // SE
+        const handleSize = 12;
+        const handles = [
+          { x: containerX - containerWidth_px / 2, y: adjustedY, type: 'nw' as const },
+          { x: containerX + containerWidth_px / 2, y: adjustedY, type: 'ne' as const },
+          { x: containerX - containerWidth_px / 2, y: adjustedY + containerHeight_px, type: 'sw' as const },
+          { x: containerX + containerWidth_px / 2, y: adjustedY + containerHeight_px, type: 'se' as const }
         ];
         
-        corners.forEach(corner => {
-          ctx.fillRect(corner.x - cornerSize/2, corner.y - cornerSize/2, cornerSize, cornerSize);
-          ctx.strokeRect(corner.x - cornerSize/2, corner.y - cornerSize/2, cornerSize, cornerSize);
-        });
+        // Check if clicking on a resize handle
+        for (const handle of handles) {
+          if (Math.abs(x - handle.x) <= handleSize/2 && Math.abs(y - handle.y) <= handleSize/2) {
+            setIsResizing(true);
+            setResizeHandle(handle.type);
+            setResizeStartState({
+              field: selectedField,
+              mouseX: x,
+              mouseY: y,
+              startWidth: selectedField.width,
+              startHeight: selectedField.height,
+              startX: selectedField.x,
+              startY: selectedField.y
+            });
+            return;
+          }
+        }
       }
     }
 
-    if (hoveredField && hoveredField !== activeField) {
-      const hoveredFieldObj = textFields.find(f => f.id === hoveredField);
-      if (hoveredFieldObj) {
-        const containerX = (hoveredFieldObj.x / 100) * containerWidth;
-        const containerY = (hoveredFieldObj.y / 100) * containerHeight;
-        const containerWidth_px = (hoveredFieldObj.width / 100) * containerWidth;
-        const containerHeight_px = (hoveredFieldObj.height / 100) * containerHeight;
+    // Find if clicking on a text field
+    const clickedField = textFields.find(field => {
+      return isPointInTextField(x, y, field, rect.width, rect.height);
+    });
 
-        ctx.strokeStyle = '#6b7280';
-        ctx.lineWidth = 1;
-        ctx.setLineDash([5, 5]);
-        ctx.strokeRect(
-          containerX - containerWidth_px / 2,
-          containerY - containerHeight_px / 2,
-          containerWidth_px,
-          containerHeight_px
-        );
-        ctx.setLineDash([]);
+    if (clickedField) {
+      onFieldSelect(clickedField.id);
+      
+      // Start dragging
+      setIsDragging(true);
+      e.currentTarget.style.cursor = 'grabbing';
+      
+      const fieldCenterX = (clickedField.x / 100) * rect.width;
+      const fieldCenterY = (clickedField.y / 100) * rect.height;
+      
+      setDragOffset({
+        x: x - fieldCenterX,
+        y: y - fieldCenterY
+      });
+    } else {
+      onFieldSelect(null);
+    }
+  }, [textFields, onFieldSelect, activeField, textFields]);
+
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false);
+    setIsResizing(false);
+    setResizeHandle(null);
+    
+    if (canvasRef.current) {
+      const rect = canvasRef.current.getBoundingClientRect();
+      const activeFieldElement = textFields.find(f => f.id === activeField);
+      
+      if (activeFieldElement) {
+        const mouseX = rect.width / 2;
+        const mouseY = rect.height / 2;
+        
+        if (isPointInTextField(mouseX, mouseY, activeFieldElement, rect.width, rect.height)) {
+          canvasRef.current.style.cursor = 'grab';
+        } else {
+          canvasRef.current.style.cursor = 'default';
+        }
+      } else {
+        canvasRef.current.style.cursor = 'default';
       }
     }
-  }, [selectedTemplate, textFields, activeField, hoveredField]);
+  }, [activeField, textFields]);
+
+  const handleCanvasClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!canvasRef.current || isDragging || isResizing) return;
+    
+    const rect = canvasRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    const clickedField = textFields.find(field => {
+      return isPointInTextField(x, y, field, rect.width, rect.height);
+    });
+
+    if (clickedField) {
+      onFieldSelect(clickedField.id);
+      // Focus the corresponding input field
+      const inputElement = document.querySelector(`input[data-field-id="${clickedField.id}"]`) as HTMLInputElement;
+      if (inputElement) {
+        inputElement.focus();
+      }
+    } else {
+      onFieldSelect(null);
+    }
+  }, [textFields, isDragging, isResizing, onFieldSelect]);
+
+  const handleCanvasDoubleClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!canvasRef.current || isDragging || isResizing) return;
+    
+    const rect = canvasRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    const clickedField = textFields.find(field => {
+      return isPointInTextField(x, y, field, rect.width, rect.height);
+    });
+
+    if (clickedField) {
+      onFieldSelect(clickedField.id);
+      const inputElement = document.querySelector(`input[data-field-id="${clickedField.id}"]`) as HTMLInputElement;
+      if (inputElement) {
+        inputElement.focus();
+        inputElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+  }, [textFields, isDragging, isResizing, onFieldSelect]);
 
   // Simplified resize logic
   const handleResize = useCallback((handle: 'nw' | 'ne' | 'sw' | 'se', deltaX: number, deltaY: number) => {
@@ -391,8 +469,47 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
     });
     onFieldHover(hoveredField?.id || null);
 
+    // Check if mouse is over a resize handle of the active field
+    let isOverResizeHandle = false;
+    let resizeCursor: string | null = null;
+    
+    if (activeField && hoveredField?.id === activeField) {
+      const selectedField = textFields.find(f => f.id === activeField);
+      if (selectedField) {
+        const containerWidth = rect.width;
+        const containerHeight = rect.height;
+        const containerX = (selectedField.x / 100) * containerWidth;
+        const containerY = (selectedField.y / 100) * containerHeight;
+        const containerWidth_px = (selectedField.width / 100) * containerWidth;
+        const containerHeight_px = (selectedField.height / 100) * containerHeight;
+
+        const scale = Math.min(containerWidth / (canvasRef.current?.width || 1), containerHeight / (canvasRef.current?.height || 1));
+        const padding = 16 * scale;
+        const adjustedY = calculateAdjustedBorderYPosition(selectedField.y, containerY, containerHeight_px, padding);
+        
+        const handleSize = 12;
+        const handles = [
+          { x: containerX - containerWidth_px / 2, y: adjustedY, type: 'nw' as const, cursor: 'nw-resize' },
+          { x: containerX + containerWidth_px / 2, y: adjustedY, type: 'ne' as const, cursor: 'ne-resize' },
+          { x: containerX - containerWidth_px / 2, y: adjustedY + containerHeight_px, type: 'sw' as const, cursor: 'sw-resize' },
+          { x: containerX + containerWidth_px / 2, y: adjustedY + containerHeight_px, type: 'se' as const, cursor: 'se-resize' }
+        ];
+        
+        // Check if mouse is over a resize handle
+        for (const handle of handles) {
+          if (Math.abs(x - handle.x) <= handleSize/2 && Math.abs(y - handle.y) <= handleSize/2) {
+            isOverResizeHandle = true;
+            resizeCursor = handle.cursor;
+            break;
+          }
+        }
+      }
+    }
+
     // Update cursor based on what we're hovering over
-    if (hoveredField) {
+    if (isOverResizeHandle && resizeCursor) {
+      e.currentTarget.style.cursor = resizeCursor;
+    } else if (hoveredField) {
       if (hoveredField.id === activeField) {
         e.currentTarget.style.cursor = 'grab';
       } else {
@@ -425,14 +542,6 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
     renderCanvas();
   }, [renderCanvas]);
 
-  useEffect(() => {
-    if (activeField || hoveredField) {
-      requestAnimationFrame(() => {
-        renderOverlays();
-      });
-    }
-  }, [renderOverlays, activeField, hoveredField]);
-
   // Global mouse event listeners for resize operations
   useEffect(() => {
     const handleGlobalMouseMove = (e: MouseEvent) => {
@@ -450,7 +559,6 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
 
     const handleGlobalMouseUp = () => {
       if (isResizing) {
-        console.log('RESIZE END');
         setIsResizing(false);
         setResizeHandle(null);
       }
@@ -470,11 +578,6 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
   useEffect(() => {
     const handleResize = () => {
       renderCanvas();
-      if (activeField || hoveredField) {
-        requestAnimationFrame(() => {
-          renderOverlays();
-        });
-      }
     };
 
     let resizeObserver: ResizeObserver | null = null;
@@ -491,7 +594,7 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
         resizeObserver.disconnect();
       }
     };
-  }, [renderCanvas, renderOverlays, activeField, hoveredField]);
+  }, [renderCanvas]);
 
   if (!selectedTemplate) {
     return (
@@ -521,108 +624,6 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
           handleMouseUp();
         }}
       />
-      
-      {/* HTML Overlay Resize Handles */}
-      {activeField && selectedTemplate && (
-        (() => {
-          const selectedField = textFields.find(f => f.id === activeField);
-          if (!selectedField) return null;
-          
-          const container = canvasRef.current?.parentElement;
-          if (!container) return null;
-          
-                     // Get the actual canvas dimensions and position
-           const canvasRect = canvasRef.current?.getBoundingClientRect();
-           if (!canvasRect) return null;
-           
-           const containerRect = container.getBoundingClientRect();
-           
-           // Calculate the offset between container and canvas
-           const offsetX = canvasRect.left - containerRect.left;
-           const offsetY = canvasRect.top - containerRect.top;
-           
-           // Use the same dimensions that the canvas rendering uses
-           const canvasWidth = container.clientWidth - 40;
-           const canvasHeight = container.clientHeight - 40;
-           
-           const canvasX = (selectedField.x / 100) * canvasWidth;
-           const canvasY = (selectedField.y / 100) * canvasHeight;
-           const canvasWidth_px = (selectedField.width / 100) * canvasWidth;
-           const canvasHeight_px = (selectedField.height / 100) * canvasHeight;
-          
-          const handleSize = 20;
-          
-          // Calculate handle positions relative to the container, accounting for canvas offset
-          const handles = [
-            { 
-              x: offsetX + canvasX - canvasWidth_px / 2, 
-              y: offsetY + canvasY - canvasHeight_px / 2, 
-              type: 'nw',
-              cursor: 'nw-resize'
-            },
-            { 
-              x: offsetX + canvasX + canvasWidth_px / 2, 
-              y: offsetY + canvasY - canvasHeight_px / 2, 
-              type: 'ne',
-              cursor: 'ne-resize'
-            },
-            { 
-              x: offsetX + canvasX - canvasWidth_px / 2, 
-              y: offsetY + canvasY + canvasHeight_px / 2, 
-              type: 'sw',
-              cursor: 'sw-resize'
-            },
-            { 
-              x: offsetX + canvasX + canvasWidth_px / 2, 
-              y: offsetY + canvasY + canvasHeight_px / 2, 
-              type: 'se',
-              cursor: 'se-resize'
-            }
-          ];
-          
-          return handles.map((handle, index) => (
-            <div
-              key={handle.type}
-              className="absolute bg-blue-500 border-2 border-white rounded cursor-pointer hover:bg-blue-600 transition-colors shadow-lg z-50"
-                             style={{
-                 width: handleSize,
-                 height: handleSize,
-                 left: handle.x - handleSize/2,
-                 top: handle.y - handleSize/2,
-                 cursor: handle.cursor
-               }}
-              onMouseDown={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log(`RESIZE START: ${handle.type} for field ${selectedField.id}`);
-                
-                setIsResizing(true);
-                setResizeHandle(handle.type as 'nw' | 'ne' | 'sw' | 'se');
-                
-                // Get canvas coordinates for the resize start
-                const rect = canvasRef.current?.getBoundingClientRect();
-                if (!rect) return;
-                
-                const canvasX = e.clientX - rect.left;
-                const canvasY = e.clientY - rect.top;
-                
-                setResizeStartState({
-                  field: selectedField,
-                  mouseX: canvasX,
-                  mouseY: canvasY,
-                  startWidth: selectedField.width,
-                  startHeight: selectedField.height,
-                  startX: selectedField.x,
-                  startY: selectedField.y
-                });
-              }}
-              title={`Resize ${handle.type.toUpperCase()}`}
-            >
-              
-            </div>
-          ));
-        })()
-      )}
     </div>
   );
 };

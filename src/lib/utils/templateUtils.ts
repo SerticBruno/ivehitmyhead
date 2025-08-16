@@ -182,6 +182,39 @@ export const isPointInTextField = (
 };
 
 /**
+ * Calculate adjusted Y position for text fields based on their location
+ * This ensures consistent padding behavior across the canvas
+ */
+export const calculateAdjustedYPosition = (
+  fieldY: number,
+  textY: number,
+  totalHeight: number,
+  padding: number
+): number => {
+  // Always position text at the top of the textbox with padding
+  // textY represents the center of the textbox, so we go up by half the height
+  // to get to the top edge, then add padding to position text below the top edge
+  // Since we're using 'top' baseline, the text will start at this Y position
+  return textY - (totalHeight / 2) + padding;
+};
+
+/**
+ * Calculate adjusted Y position for borders and overlays
+ * This is similar to text positioning but handles the visual elements differently
+ */
+export const calculateAdjustedBorderYPosition = (
+  fieldY: number,
+  containerY: number,
+  containerHeight: number,
+  padding: number
+): number => {
+  // Always position border at the top of the textbox to match text positioning
+  // containerY represents the center of the textbox, so we go up by half the height
+  // to get to the top edge, then add padding to position border below the top edge
+  return containerY - containerHeight / 2 + padding;
+};
+
+/**
  * Check if a point is near a resize handle
  */
 export const getResizeHandle = (
