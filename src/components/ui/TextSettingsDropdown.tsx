@@ -156,6 +156,36 @@ export const TextSettingsDropdown: React.FC<TextSettingsDropdownProps> = ({
             className="w-full"
           />
         </div>
+
+        {/* Rotation */}
+        <div>
+          <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">
+            Rotation: {field.rotation || 0}°
+          </label>
+          <div className="flex items-center space-x-2">
+            <input
+              type="range"
+              min="-180"
+              max="180"
+              step="1"
+              value={field.rotation || 0}
+              onChange={(e) => 
+                onUpdateProperty(field.id, 'rotation', parseInt(e.target.value))
+              }
+              className="flex-1"
+            />
+            <input
+              type="number"
+              min="-180"
+              max="180"
+              value={field.rotation || 0}
+              onChange={(e) => 
+                onUpdateProperty(field.id, 'rotation', parseInt(e.target.value) || 0)
+              }
+              className="w-16 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+            />
+          </div>
+        </div>
       </div>
     </div>
   );

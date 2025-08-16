@@ -7,6 +7,7 @@ export const initializeTextFields = (template: MemeTemplate): TextField[] => {
   return template.textFields.map(field => ({
     ...field,
     text: '', // Start with empty text
+    rotation: field.rotation || 0, // Ensure rotation is initialized
     isDragging: false,
     isResizing: false
   }));
@@ -294,11 +295,24 @@ export const renderTextOnCanvas = (
     lineX = textX;
   }
   
+  // Save the current context state
+  ctx.save();
+  
+  // Apply rotation if specified
+  if (field.rotation && field.rotation !== 0) {
+    ctx.translate(textX, textY);
+    ctx.rotate((field.rotation * Math.PI) / 180);
+    ctx.translate(-textX, -textY);
+  }
+  
   wrappedLines.forEach((line, index) => {
     const lineY = startY + (index * lineHeight);
     ctx.strokeText(line, lineX, lineY);
     ctx.fillText(line, lineX, lineY);
   });
+  
+  // Restore the context state
+  ctx.restore();
 };
 
 /**

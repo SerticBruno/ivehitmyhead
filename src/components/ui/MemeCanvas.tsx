@@ -17,6 +17,7 @@ interface MemeCanvasProps {
   onFieldHover: (fieldId: string | null) => void;
   onFieldMove: (fieldId: string, x: number, y: number) => void;
   onFieldResize: (fieldId: string, width: number, height: number) => void;
+  onFieldRotate?: (fieldId: string, rotation: number) => void;
 }
 
 export const MemeCanvas: React.FC<MemeCanvasProps> = ({
@@ -27,11 +28,13 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
   onFieldSelect,
   onFieldHover,
   onFieldMove,
-  onFieldResize
+  onFieldResize,
+  onFieldRotate
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
+  const [isRotating, setIsRotating] = useState(false);
   const [resizeHandle, setResizeHandle] = useState<'nw' | 'ne' | 'sw' | 'se' | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [resizeStartState, setResizeStartState] = useState({
@@ -43,6 +46,14 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
     startX: 0,
     startY: 0
   });
+  const [rotationStartState, setRotationStartState] = useState({
+    field: null as TextField | null,
+    mouseX: 0,
+    mouseY: 0,
+    startRotation: 0,
+    centerX: 0,
+    centerY: 0
+  });
 
 
 
@@ -52,11 +63,8 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
     const containerY = (field.y / 100) * canvasHeight;
     const containerWidth_px = (field.width / 100) * canvasWidth;
     const containerHeight_px = (field.height / 100) * canvasHeight;
-
-    const scale = Math.min(canvasWidth / (canvasRef.current?.width || 1), canvasHeight / (canvasRef.current?.height || 1));
-    const padding = 16 * scale;
     
-    // Calculate the actual corners of the text field without padding adjustment
+    // Calculate the actual corners of the text field
     // This ensures resize handles align with the visual text field boundaries
     const leftX = containerX - containerWidth_px / 2;
     const rightX = containerX + containerWidth_px / 2;
@@ -71,6 +79,69 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
     ];
     
     return { handles, handleSize: 12 };
+  }, []);
+
+  // Helper function to check if a point is over the rotation handle
+  const isOverRotationHandle = useCallback((x: number, y: number, field: TextField, canvasWidth: number, canvasHeight: number): boolean => {
+    const containerX = (field.x / 100) * canvasWidth;
+    const containerY = (field.y / 100) * canvasHeight;
+    const containerHeight_px = (field.height / 100) * canvasHeight;
+    
+    const rotationHandleSize = 18; // 12 * 1.5
+    
+    // Calculate the position above the text field, accounting for rotation (same logic as drawing)
+    let rotationHandleX = containerX;
+    let rotationHandleY = containerY - containerHeight_px / 2 - rotationHandleSize - 8;
+    
+    // If the field is rotated, adjust the rotation handle position to follow the rotated text
+    if (field.rotation && field.rotation !== 0) {
+      const angleRad = (field.rotation * Math.PI) / 180;
+      const cos = Math.cos(angleRad);
+      const sin = Math.sin(angleRad);
+      
+      // Calculate the offset from the center to the top of the text field
+      const topOffset = containerHeight_px / 2 + rotationHandleSize + 8;
+      
+      // Apply rotation to the offset (corrected direction)
+      const rotatedOffsetX = topOffset * sin;
+      const rotatedOffsetY = -topOffset * cos;
+      
+      rotationHandleX = containerX + rotatedOffsetX;
+      rotationHandleY = containerY + rotatedOffsetY;
+    }
+    
+    // Simple distance calculation
+    const distance = Math.sqrt((x - rotationHandleX) ** 2 + (y - rotationHandleY) ** 2);
+    return distance <= rotationHandleSize / 2;
+  }, []);
+
+  // Helper function to check if a point is over a rotated resize handle
+  const isOverRotatedResizeHandle = useCallback((x: number, y: number, handle: any, field: TextField, canvasWidth: number, canvasHeight: number): boolean => {
+    if (!field.rotation || field.rotation === 0) {
+      // No rotation, use simple distance calculation
+      return Math.abs(x - handle.x) <= 6 && Math.abs(y - handle.y) <= 6;
+    }
+    
+    // For rotated fields, we need to transform the mouse coordinates to the rotated coordinate system
+    const containerX = (field.x / 100) * canvasWidth;
+    const containerY = (field.y / 100) * canvasHeight;
+    
+    const angleRad = (field.rotation * Math.PI) / 180;
+    const cos = Math.cos(-angleRad); // Negative angle to reverse the rotation
+    const sin = Math.sin(-angleRad);
+    
+    // Translate to origin, rotate, then translate back
+    const translatedX = x - containerX;
+    const translatedY = y - containerY;
+    const rotatedX = translatedX * cos - translatedY * sin;
+    const rotatedY = translatedX * sin + translatedY * cos;
+    
+    // Check distance to the rotated handle position
+    const handleX = handle.x - containerX;
+    const handleY = handle.y - containerY;
+    const distance = Math.sqrt((rotatedX - handleX) ** 2 + (rotatedY - handleY) ** 2);
+    
+    return distance <= 6; // 6 is half of handleSize (12)
   }, []);
 
   // Single render function that handles everything
@@ -137,6 +208,14 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
             ctx.lineWidth = 3;
             ctx.setLineDash([]);
             
+            // If the field is rotated, we need to rotate the border and handles
+            if (selectedField.rotation && selectedField.rotation !== 0) {
+              ctx.save();
+              ctx.translate(containerX, containerY);
+              ctx.rotate((selectedField.rotation * Math.PI) / 180);
+              ctx.translate(-containerX, -containerY);
+            }
+            
             // Calculate border coordinates to match resize handle positioning
             // Remove padding adjustment to align with resize handles
             const borderLeft = containerX - containerWidth_px / 2;
@@ -149,11 +228,24 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
               containerHeight_px
             );
             
-            // Draw resize handles
+            // Restore the context state if we rotated
+            if (selectedField.rotation && selectedField.rotation !== 0) {
+              ctx.restore();
+            }
+            
+            // Draw resize handles - rotate with the text field
             const { handles, handleSize } = getResizeHandleInfo(selectedField, containerWidth, containerHeight);
             
             ctx.strokeStyle = '#ffffff';
             ctx.lineWidth = 2;
+            
+            // If the field is rotated, we need to rotate the resize handles too
+            if (selectedField.rotation && selectedField.rotation !== 0) {
+              ctx.save();
+              ctx.translate(containerX, containerY);
+              ctx.rotate((selectedField.rotation * Math.PI) / 180);
+              ctx.translate(-containerX, -containerY);
+            }
             
             handles.forEach((handle, index) => {
               // Check if mouse is over this handle (we'll update this in mouse events)
@@ -163,6 +255,64 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
               ctx.fillRect(handle.x - handleSize/2, handle.y - handleSize/2, handleSize, handleSize);
               ctx.strokeRect(handle.x - handleSize/2, handle.y - handleSize/2, handleSize, handleSize);
             });
+            
+            // Restore the context state if we rotated
+            if (selectedField.rotation && selectedField.rotation !== 0) {
+              ctx.restore();
+            }
+            
+            // Draw rotation handle (above the text field) - positioned to follow the rotated text field
+            const rotationHandleSize = handleSize * 1.5;
+            
+            // Calculate the position above the text field, accounting for rotation
+            let rotationHandleX = containerX;
+            let rotationHandleY = containerY - containerHeight_px / 2 - rotationHandleSize - 8;
+            
+            // If the field is rotated, adjust the rotation handle position to follow the rotated text
+            if (selectedField.rotation && selectedField.rotation !== 0) {
+              const angleRad = (selectedField.rotation * Math.PI) / 180;
+              const cos = Math.cos(angleRad);
+              const sin = Math.sin(angleRad);
+              
+              // Calculate the offset from the center to the top of the text field
+              const topOffset = containerHeight_px / 2 + rotationHandleSize + 8;
+              
+              // Apply rotation to the offset (corrected direction)
+              const rotatedOffsetX = topOffset * sin;
+              const rotatedOffsetY = -topOffset * cos;
+              
+              rotationHandleX = containerX + rotatedOffsetX;
+              rotationHandleY = containerY + rotatedOffsetY;
+            }
+            
+            // Draw rotation icon
+            ctx.fillStyle = '#007bff';
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            
+            // Draw circular handle
+            ctx.beginPath();
+            ctx.arc(rotationHandleX, rotationHandleY, rotationHandleSize / 2, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.stroke();
+            
+            // Draw rotation arrows
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            // Left arrow
+            ctx.moveTo(rotationHandleX - 4, rotationHandleY - 2);
+            ctx.lineTo(rotationHandleX - 8, rotationHandleY - 2);
+            ctx.lineTo(rotationHandleX - 6, rotationHandleY - 4);
+            ctx.moveTo(rotationHandleX - 8, rotationHandleY - 2);
+            ctx.lineTo(rotationHandleX - 6, rotationHandleY);
+            // Right arrow
+            ctx.moveTo(rotationHandleX + 4, rotationHandleY + 2);
+            ctx.lineTo(rotationHandleX + 8, rotationHandleY + 2);
+            ctx.lineTo(rotationHandleX + 6, rotationHandleY + 4);
+            ctx.moveTo(rotationHandleX + 8, rotationHandleY + 2);
+            ctx.lineTo(rotationHandleX + 6, rotationHandleY);
+            ctx.stroke();
           }
         }
 
@@ -177,6 +327,14 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
 
             const scale = Math.min(containerWidth / canvas.width, containerHeight / canvas.height);
             const padding = 16 * scale;
+            
+            // If the field is rotated, we need to rotate the hover border too
+            if (hoveredFieldObj.rotation && hoveredFieldObj.rotation !== 0) {
+              ctx.save();
+              ctx.translate(containerX, containerY);
+              ctx.rotate((hoveredFieldObj.rotation * Math.PI) / 180);
+              ctx.translate(-containerX, -containerY);
+            }
             
             // Calculate border coordinates to match resize handle positioning
             // Remove padding adjustment to align with resize handles
@@ -194,12 +352,17 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
               containerHeight_px
             );
             ctx.setLineDash([]);
+            
+            // Restore the context state if we rotated
+            if (hoveredFieldObj.rotation && hoveredFieldObj.rotation !== 0) {
+              ctx.restore();
+            }
           }
         }
       }
     };
     img.src = selectedTemplate.src;
-  }, [selectedTemplate, textFields, activeField, hoveredField]);
+  }, [selectedTemplate, textFields, activeField, hoveredField, getResizeHandleInfo, isOverRotationHandle]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!canvasRef.current) return;
@@ -212,11 +375,25 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
     if (activeField) {
       const selectedField = textFields.find(f => f.id === activeField);
       if (selectedField) {
+        // Check if clicking on rotation handle
+        if (isOverRotationHandle(x, y, selectedField, rect.width, rect.height)) {
+          setIsRotating(true);
+          setRotationStartState({
+            field: selectedField,
+            mouseX: x,
+            mouseY: y,
+            startRotation: selectedField.rotation || 0,
+            centerX: (selectedField.x / 100) * rect.width,
+            centerY: (selectedField.y / 100) * rect.height
+          });
+          return;
+        }
+        
         const { handles, handleSize } = getResizeHandleInfo(selectedField, rect.width, rect.height);
         
         // Check if clicking on a resize handle
         for (const handle of handles) {
-          if (Math.abs(x - handle.x) <= handleSize/2 && Math.abs(y - handle.y) <= handleSize/2) {
+          if (isOverRotatedResizeHandle(x, y, handle, selectedField, rect.width, rect.height)) {
             setIsResizing(true);
             setResizeHandle(handle.type);
             setResizeStartState({
@@ -256,11 +433,12 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
     } else {
       onFieldSelect(null);
     }
-  }, [textFields, onFieldSelect, activeField, textFields]);
+  }, [textFields, onFieldSelect, activeField, isOverRotationHandle, isOverRotatedResizeHandle]);
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
     setIsResizing(false);
+    setIsRotating(false);
     setResizeHandle(null);
     
     if (canvasRef.current) {
@@ -280,7 +458,7 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
         canvasRef.current.style.cursor = 'default';
       }
     }
-  }, [activeField, textFields]);
+  }, [activeField, textFields, isOverRotationHandle]);
 
   const handleCanvasClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!canvasRef.current || isDragging || isResizing) return;
@@ -384,18 +562,24 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
     });
     onFieldHover(hoveredField?.id || null);
 
-    // Check if mouse is over a resize handle of the active field
+    // Check if mouse is over a resize handle or rotation handle of the active field
     let isOverResizeHandle = false;
+    let isOverRotationHandleVar = false;
     let resizeCursor: string | null = null;
     
-    if (activeField && hoveredField?.id === activeField) {
+    if (activeField) {
       const selectedField = textFields.find(f => f.id === activeField);
       if (selectedField) {
+        // Check if mouse is over rotation handle
+        if (isOverRotationHandle(x, y, selectedField, rect.width, rect.height)) {
+          isOverRotationHandleVar = true;
+        }
+        
         const { handles, handleSize } = getResizeHandleInfo(selectedField, rect.width, rect.height);
         
         // Check if mouse is over a resize handle
         for (const handle of handles) {
-          if (Math.abs(x - handle.x) <= handleSize/2 && Math.abs(y - handle.y) <= handleSize/2) {
+          if (isOverRotatedResizeHandle(x, y, handle, selectedField, rect.width, rect.height)) {
             isOverResizeHandle = true;
             resizeCursor = handle.cursor;
             break;
@@ -405,7 +589,9 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
     }
 
     // Update cursor based on what we're hovering over
-    if (isOverResizeHandle && resizeCursor) {
+    if (isOverRotationHandleVar) {
+      e.currentTarget.style.cursor = 'grab';
+    } else if (isOverResizeHandle && resizeCursor) {
       e.currentTarget.style.cursor = resizeCursor;
     } else if (hoveredField) {
       if (hoveredField.id === activeField) {
@@ -421,7 +607,31 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
 
     if (!activeField) return;
 
-    if (isResizing && resizeHandle && resizeStartState.field) {
+    if (isRotating && rotationStartState.field && onFieldRotate) {
+      // Handle rotation
+      const centerX = rotationStartState.centerX;
+      const centerY = rotationStartState.centerY;
+      
+      // Calculate angle from center to current mouse position
+      const deltaX = x - centerX;
+      const deltaY = y - centerY;
+      const currentAngle = Math.atan2(deltaY, deltaX) * 180 / Math.PI;
+      
+      // Calculate angle from center to start mouse position
+      const startDeltaX = rotationStartState.mouseX - centerX;
+      const startDeltaY = rotationStartState.mouseY - centerY;
+      const startAngle = Math.atan2(startDeltaY, startDeltaX) * 180 / Math.PI;
+      
+      // Calculate rotation difference
+      let rotationDiff = currentAngle - startAngle;
+      
+      // Normalize to -180 to 180 range
+      while (rotationDiff > 180) rotationDiff -= 360;
+      while (rotationDiff < -180) rotationDiff += 360;
+      
+      const newRotation = rotationStartState.startRotation + rotationDiff;
+      onFieldRotate(activeField, newRotation);
+    } else if (isResizing && resizeHandle && resizeStartState.field) {
       // Handle resizing with simplified logic
       const deltaX = x - resizeStartState.mouseX;
       const deltaY = y - resizeStartState.mouseY;
@@ -433,14 +643,14 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
       
       onFieldMove(activeField, newX, newY);
     }
-  }, [isDragging, isResizing, activeField, resizeHandle, dragOffset, textFields, onFieldHover, onFieldMove, resizeStartState, handleResize]);
+  }, [isDragging, isResizing, isRotating, activeField, resizeHandle, dragOffset, textFields, onFieldHover, onFieldMove, resizeStartState, rotationStartState, onFieldRotate, handleResize, isOverRotatedResizeHandle]);
 
   // Effects
   useEffect(() => {
     renderCanvas();
   }, [renderCanvas]);
 
-  // Global mouse event listeners for resize operations
+  // Global mouse event listeners for resize and rotation operations
   useEffect(() => {
     const handleGlobalMouseMove = (e: MouseEvent) => {
       if (isResizing && resizeHandle && resizeStartState.field && canvasRef.current) {
@@ -452,6 +662,34 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
         const deltaY = y - resizeStartState.mouseY;
         
         handleResize(resizeHandle, deltaX, deltaY);
+      } else if (isRotating && rotationStartState.field && onFieldRotate && canvasRef.current) {
+        const rect = canvasRef.current.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        
+        // Handle rotation
+        const centerX = rotationStartState.centerX;
+        const centerY = rotationStartState.centerY;
+        
+        // Calculate angle from center to current mouse position
+        const deltaX = x - centerX;
+        const deltaY = y - centerY;
+        const currentAngle = Math.atan2(deltaY, deltaX) * 180 / Math.PI;
+        
+        // Calculate angle from center to start mouse position
+        const startDeltaX = rotationStartState.mouseX - centerX;
+        const startDeltaY = rotationStartState.mouseY - centerY;
+        const startAngle = Math.atan2(startDeltaY, startDeltaX) * 180 / Math.PI;
+        
+        // Calculate rotation difference
+        let rotationDiff = currentAngle - startAngle;
+        
+        // Normalize to -180 to 180 range
+        while (rotationDiff > 180) rotationDiff -= 360;
+        while (rotationDiff < -180) rotationDiff += 360;
+        
+        const newRotation = rotationStartState.startRotation + rotationDiff;
+        onFieldRotate(activeField!, newRotation);
       }
     };
 
@@ -460,9 +698,12 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
         setIsResizing(false);
         setResizeHandle(null);
       }
+      if (isRotating) {
+        setIsRotating(false);
+      }
     };
 
-    if (isResizing) {
+    if (isResizing || isRotating) {
       document.addEventListener('mousemove', handleGlobalMouseMove);
       document.addEventListener('mouseup', handleGlobalMouseUp);
     }
@@ -471,7 +712,7 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
       document.removeEventListener('mousemove', handleGlobalMouseMove);
       document.removeEventListener('mouseup', handleGlobalMouseUp);
     };
-  }, [isResizing, resizeHandle, resizeStartState, handleResize]);
+  }, [isResizing, isRotating, resizeHandle, resizeStartState, rotationStartState, onFieldRotate, activeField, handleResize]);
 
   useEffect(() => {
     const handleResize = () => {

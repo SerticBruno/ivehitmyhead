@@ -15,6 +15,7 @@ interface MemePreviewProps {
   onFieldHover: (fieldId: string | null) => void;
   onFieldMove: (fieldId: string, x: number, y: number) => void;
   onFieldResize: (fieldId: string, width: number, height: number) => void;
+  onFieldRotate?: (fieldId: string, rotation: number) => void;
   onDownload: () => void;
 }
 
@@ -27,6 +28,7 @@ export const MemePreview: React.FC<MemePreviewProps> = ({
   onFieldHover,
   onFieldMove,
   onFieldResize,
+  onFieldRotate,
   onDownload
 }) => {
   return (
@@ -49,11 +51,12 @@ export const MemePreview: React.FC<MemePreviewProps> = ({
         onFieldHover={onFieldHover}
         onFieldMove={onFieldMove}
         onFieldResize={onFieldResize}
+        onFieldRotate={onFieldRotate}
       />
       
       {selectedTemplate && (
         <p className="text-sm text-gray-600 dark:text-gray-400 mt-3 text-center">
-          <strong>Click</strong> to select • <strong>Double-click</strong> to edit • <strong>Drag</strong> to move • <strong>Drag corners</strong> to resize • <strong>Escape</strong> to deselect
+          <strong>Click</strong> to select • <strong>Drag</strong> to move • <strong>Drag corners</strong> to resize • <strong>Drag circle</strong> to rotate • <strong>Escape</strong> to deselect
         </p>
       )}
     </Card>

@@ -28,7 +28,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
           variant="outline"
           className="flex-1 h-12 px-6 py-3"
         >
-          Reset to Meme Defaults
+          Reset to Defaults
         </Button>
       </div>
     </Card>

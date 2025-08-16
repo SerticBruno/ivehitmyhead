@@ -40,7 +40,8 @@ export const MemeGenerator: React.FC = () => {
         strokeColor: '#000000',
         strokeWidth: 6,
         textAlign: field.textAlign || 'center',
-        letterSpacing: '0.05em'
+        letterSpacing: '0.05em',
+        rotation: 0
       }))
     );
   }, [selectedTemplate]);
@@ -91,6 +92,14 @@ export const MemeGenerator: React.FC = () => {
     setTextFields(prev => 
       prev.map(field => 
         field.id === fieldId ? { ...field, width, height } : field
+      )
+    );
+  }, []);
+
+  const handleFieldRotate = useCallback((fieldId: string, rotation: number) => {
+    setTextFields(prev => 
+      prev.map(field => 
+        field.id === fieldId ? { ...field, rotation } : field
       )
     );
   }, []);
@@ -200,6 +209,7 @@ export const MemeGenerator: React.FC = () => {
               onFieldHover={handleFieldHover}
               onFieldMove={handleFieldMove}
               onFieldResize={handleFieldResize}
+              onFieldRotate={handleFieldRotate}
               onDownload={downloadMeme}
             />
           </div>
