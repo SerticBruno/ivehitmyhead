@@ -135,7 +135,7 @@ export const calculateTextPosition = (
   const pixelPos = percentageToPixels(field.x, field.y, canvasWidth, canvasHeight);
   
   let textAlign: CanvasTextAlign = 'left';
-  let adjustedX = pixelPos.x;
+  const adjustedX = pixelPos.x;
   
   if (field.textAlign === 'center') {
     textAlign = 'center';

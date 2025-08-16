@@ -2,7 +2,6 @@
 
 import React, { useState, useRef, useCallback } from 'react';
 import { Button } from './Button';
-import { Input } from './Input';
 import { Card } from './Card';
 import { TemplateBrowser } from './TemplateBrowser';
 import { TemplateManager } from './TemplateManager';
@@ -10,9 +9,6 @@ import { MemeTemplate, TextField } from '../../lib/types/meme';
 import { MEME_TEMPLATES } from '../../lib/data/templates';
 import { 
   initializeTextFields, 
-  calculateFontSize, 
-  percentageToPixels, 
-  getTemplateDefaults,
   isPointInTextField,
   getResizeHandle
 } from '../../lib/utils/templateUtils';
@@ -390,18 +386,21 @@ export const MemeGenerator: React.FC = () => {
         // Calculate line height (font size + some padding)
         const lineHeight = (field.fontSize * scale) * 1.2;
         
-        // Calculate starting Y position to center all lines vertically
+        // Calculate starting Y position to center all lines vertically with top padding
         const totalHeight = wrappedLines.length * lineHeight;
-        const startY = textY - (totalHeight / 2) + (lineHeight / 2);
+        const topPadding = 16 * scale; // 16px top padding scaled to canvas for more breathing room
+        const startY = textY - (totalHeight / 2) + topPadding;
         
-        // Calculate X position based on text alignment
+        // Calculate X position based on text alignment with padding
         let lineX = textX;
+        const padding = 16 * scale; // 16px padding scaled to canvas for more breathing room
+        
         if (field.textAlign === 'left') {
-          // For left alignment, start from the left edge of the text box
-          lineX = textX - (textBoxWidth / 2);
+          // For left alignment, start from the left edge of the text box with padding
+          lineX = textX - (textBoxWidth / 2) + padding;
         } else if (field.textAlign === 'right') {
-          // For right alignment, end at the right edge of the text box
-          lineX = textX + (textBoxWidth / 2);
+          // For right alignment, end at the right edge of the text box with padding
+          lineX = textX + (textBoxWidth / 2) - padding;
         } else {
           // For center alignment, center within the text box
           lineX = textX;
@@ -512,7 +511,7 @@ export const MemeGenerator: React.FC = () => {
       }
     };
     img.src = selectedTemplate.src;
-  }, [selectedTemplate, textFields, activeField, hoveredField, isResizing, isDragging, wrapText]);
+  }, [selectedTemplate, textFields, activeField, hoveredField, wrapText]);
 
 
 
@@ -716,18 +715,21 @@ export const MemeGenerator: React.FC = () => {
               <h2 className="text-xl font-semibold mb-4">Add Your Text</h2>
               <div className="space-y-4">
                 {textFields.map((field) => (
-                  <div key={field.id} className={`space-y-3 p-3 rounded-lg border-2 transition-colors ${
-                    activeField === field.id 
-                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
-                      : 'border-gray-200 dark:border-gray-700'
-                  }`}>
-                    <div className="flex items-center justify-between">
-                      <Input
-                        label={`${field.id.charAt(0).toUpperCase() + field.id.slice(1)} Text`}
+                  <div key={field.id} className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                      {field.id.charAt(0).toUpperCase() + field.id.slice(1)} Text
+                    </label>
+                    <div className={`flex items-center justify-between p-3 rounded-lg border-2 transition-colors ${
+                      activeField === field.id 
+                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
+                        : 'border-gray-200 dark:border-gray-700'
+                    }`}>
+                      <input
+                        type="text"
                         value={field.text}
                         onChange={(e) => handleTextChange(field.id, e.target.value)}
                         placeholder={`Enter ${field.id} text...`}
-                        className="flex-1"
+                        className="flex-1 h-10 px-3 py-2 text-sm border-0 bg-transparent focus:outline-none focus:ring-0 placeholder:text-gray-500 dark:placeholder:text-gray-400"
                       />
                       <div className="flex items-center space-x-2 ml-2">
                         <button
@@ -956,17 +958,6 @@ export const MemeGenerator: React.FC = () => {
                   className="w-full"
                 >
                   Clear All Text
-                </Button>
-                <Button 
-                  onClick={() => {
-                    if (selectedTemplate) {
-                      setTextFields(initializeTextFields(selectedTemplate));
-                    }
-                  }}
-                  variant="outline"
-                  className="w-full"
-                >
-                  Reset to Template Default
                 </Button>
                 <Button 
                   onClick={resetToMemeDefaults}

@@ -215,7 +215,7 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({
             <label className="block text-sm font-medium mb-1">Difficulty</label>
             <select
               value={template.difficulty}
-              onChange={(e) => setTemplate({ ...template, difficulty: e.target.value as any })}
+              onChange={(e) => setTemplate({ ...template, difficulty: e.target.value as 'easy' | 'medium' | 'hard' })}
               className="w-full p-2 border border-gray-300 rounded-md"
             >
               <option value="easy">Easy</option>

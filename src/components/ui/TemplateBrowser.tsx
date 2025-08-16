@@ -3,7 +3,7 @@
 import React from 'react';
 import { Card } from './Card';
 import { Button } from './Button';
-import { MemeTemplate, TemplateCategory } from '../../lib/types/meme';
+import { MemeTemplate } from '../../lib/types/meme';
 import { getAllCategories } from '../../lib/data/templates';
 
 interface TemplateBrowserProps {
