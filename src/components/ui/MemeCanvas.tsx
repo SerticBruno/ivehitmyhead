@@ -461,58 +461,7 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
             );
             ctx.setLineDash([]);
             
-            // Draw settings cog for hovered field (beneath the text field)
-            const settingsCogSize = 12 * 1.2;
-            
-            // Calculate the position beneath the text field, accounting for rotation
-            let settingsCogX = containerX;
-            let settingsCogY = containerY + containerHeight_px / 2 + settingsCogSize + 8;
-            
-            // Settings cog always positioned below the text field (no rotation following)
-            
-            // Draw settings cog icon - rotate with the text field
-            if (hoveredFieldObj.rotation && hoveredFieldObj.rotation !== 0) {
-              ctx.save();
-              ctx.translate(containerX, containerY);
-              ctx.rotate((hoveredFieldObj.rotation * Math.PI) / 180);
-              ctx.translate(-containerX, -containerY);
-            }
-            
-            ctx.fillStyle = '#9ca3af';
-            ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 1;
-            
-            // Draw circular background
-            ctx.beginPath();
-            ctx.arc(settingsCogX, settingsCogY, settingsCogSize / 2, 0, 2 * Math.PI);
-            ctx.fill();
-            ctx.stroke();
-            
-            // Draw cog teeth
-            ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            
-            // Draw 6 cog teeth around the circle
-            for (let i = 0; i < 6; i++) {
-              const angle = (i * Math.PI) / 3;
-              const outerRadius = settingsCogSize / 2 + 1;
-              const innerRadius = settingsCogSize / 2 - 1;
-              
-              const outerX = settingsCogX + Math.cos(angle) * outerRadius;
-              const outerY = settingsCogY + Math.sin(angle) * outerRadius;
-              const innerX = settingsCogX + Math.cos(angle) * innerRadius;
-              const innerY = settingsCogY + Math.sin(angle) * innerRadius;
-              
-              ctx.moveTo(outerX, outerY);
-              ctx.lineTo(innerX, innerY);
-            }
-            ctx.stroke();
-            
-            // Restore the context state if we rotated
-            if (hoveredFieldObj.rotation && hoveredFieldObj.rotation !== 0) {
-              ctx.restore();
-            }
+            // No settings cog for hovered fields - only show for selected fields
           }
         }
       }
@@ -554,18 +503,10 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
         let popupY = screenCogY + 20 + window.scrollY;
         let popupX = screenCogX;
         
-        // Check if popup would go below viewport and adjust if needed
-        const popupHeight = 300; // Approximate height of the popup
+        // Check if popup would go off the left or right edges (since we're centering on cog)
         const popupWidth = 320; // Approximate width of the popup (min-w-80 = 320px)
-        const viewportHeight = window.innerHeight;
         const viewportWidth = window.innerWidth;
         
-        if (popupY + popupHeight > viewportHeight + window.scrollY) {
-          // Position popup above the cog instead
-          popupY = screenCogY - popupHeight - 20 + window.scrollY;
-        }
-        
-        // Check if popup would go off the left or right edges (since we're centering on cog)
         if (popupX - popupWidth / 2 < 0) {
           popupX = popupWidth / 2; // Align to left edge
         } else if (popupX + popupWidth / 2 > viewportWidth) {
@@ -710,10 +651,11 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
       if (inputElement) {
         inputElement.focus();
       }
-    } else {
+    } else if (!settingsPopup) {
+      // Only deselect if settings popup is not open
       onFieldSelect(null);
     }
-  }, [textFields, isDragging, isResizing, onFieldSelect]);
+  }, [textFields, isDragging, isResizing, onFieldSelect, settingsPopup]);
 
   const handleCanvasDoubleClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!canvasRef.current || isDragging || isResizing) return;
@@ -772,17 +714,10 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
     let popupY = settingsCogY + 20;
     let popupX = settingsCogX;
     
-    // Check if popup would go below viewport and adjust if needed
-    const popupHeight = 300;
+    // Check if popup would go off the left or right edges
     const popupWidth = 320;
-    const viewportHeight = window.innerHeight;
     const viewportWidth = window.innerWidth;
     
-    if (popupY + popupHeight > viewportHeight + window.scrollY) {
-      popupY = settingsCogY - popupHeight - 20;
-    }
-    
-    // Check if popup would go off the left or right edges
     if (popupX - popupWidth / 2 < 0) {
       popupX = popupWidth / 2;
     } else if (popupX + popupWidth / 2 > viewportWidth) {
@@ -1075,22 +1010,19 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
   useEffect(() => {
     const handleGlobalClick = (e: MouseEvent) => {
       if (settingsPopup) {
+        // Don't close popup if we're actively resizing, dragging, or rotating
+        if (isResizing || isDragging || isRotating) {
+          return;
+        }
+        
         // Check if the click target is inside the settings popup
         const popupElement = document.querySelector('[data-settings-popup]');
         if (popupElement && popupElement.contains(e.target as Node)) {
           return; // Don't close if clicking inside popup
         }
         
-        // Check if click is outside the canvas
-        if (canvasRef.current) {
-          const rect = canvasRef.current.getBoundingClientRect();
-          const x = e.clientX - rect.left;
-          const y = e.clientY - rect.top;
-          
-          if (x < 0 || y < 0 || x > rect.width || y > rect.height) {
-            setSettingsPopup(null);
-          }
-        }
+        // Close popup when clicking anywhere outside of it
+        setSettingsPopup(null);
       }
     };
 
@@ -1105,7 +1037,7 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
         document.removeEventListener('click', handleGlobalClick);
       };
     }
-  }, [settingsPopup]);
+  }, [settingsPopup, isResizing, isDragging, isRotating]);
 
   if (!selectedTemplate) {
     return (
