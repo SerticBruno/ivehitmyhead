@@ -125,12 +125,11 @@ export default function Home() {
             Welcome to <span className="text-blue-600">IVEHITMYHEAD</span>
           </h1>
           <p className="text-xl text-gray-600 dark:text-gray-400 mb-8 max-w-2xl mx-auto">
-            Discover, share, and create the funniest memes on the internet. 
-            Join our community of meme enthusiasts!
+            Discover, share, and create the dullest memes on the internet.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button size="lg" className="text-lg px-8" onClick={() => window.location.href = '/memes'}>
-              🎭 Browse Memes
+              Browse Memes
             </Button>
             <Button variant="outline" size="lg" className="text-lg px-8" onClick={() => window.location.href = '/upload'}>
               📤 Upload Your Own

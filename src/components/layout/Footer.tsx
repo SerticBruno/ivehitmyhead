@@ -12,8 +12,7 @@ const Footer: React.FC = () => {
               <span className="text-xl font-bold">IVEHITMYHEAD</span>
             </div>
             <p className="text-gray-600 dark:text-gray-400 mb-4 max-w-md">
-              The best place to discover, share, and create hilarious memes. 
-              Join our community of meme enthusiasts!
+              The best place to discover, share, and create hilarious memes.
             </p>
             <div className="flex space-x-4">
               <a href="#" className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-pointer">
