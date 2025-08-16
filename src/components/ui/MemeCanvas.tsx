@@ -6,7 +6,8 @@ import {
   isPointInTextField,
   getResizeHandle,
   calculateAdjustedYPosition,
-  calculateAdjustedBorderYPosition
+  calculateAdjustedBorderYPosition,
+  renderTextOnCanvas
 } from '../../lib/utils/templateUtils';
 
 interface MemeCanvasProps {
@@ -45,25 +46,7 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
     startY: 0
   });
 
-  // Helper function to wrap text to fit within a specified width
-  const wrapText = useCallback((ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] => {
-    const words = text.split(' ');
-    const lines: string[] = [];
-    let currentLine = words[0];
 
-    for (let i = 1; i < words.length; i++) {
-      const word = words[i];
-      const width = ctx.measureText(currentLine + ' ' + word).width;
-      if (width < maxWidth) {
-        currentLine += ' ' + word;
-      } else {
-        lines.push(currentLine);
-        currentLine = word;
-      }
-    }
-    lines.push(currentLine);
-    return lines;
-  }, []);
 
   // Helper function to get resize handle information for a field
   const getResizeHandleInfo = useCallback((field: TextField, canvasWidth: number, canvasHeight: number) => {
@@ -74,17 +57,22 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
 
     const scale = Math.min(canvasWidth / (canvasRef.current?.width || 1), canvasHeight / (canvasRef.current?.height || 1));
     const padding = 16 * scale;
-    const adjustedY = calculateAdjustedBorderYPosition(field.y, containerY, containerHeight_px, padding);
     
-    const handleSize = 12;
+    // Calculate the actual corners of the text field without padding adjustment
+    // This ensures resize handles align with the visual text field boundaries
+    const leftX = containerX - containerWidth_px / 2;
+    const rightX = containerX + containerWidth_px / 2;
+    const topY = containerY - containerHeight_px / 2;
+    const bottomY = containerY + containerHeight_px / 2;
+    
     const handles = [
-      { x: containerX - containerWidth_px / 2, y: adjustedY, type: 'nw' as const, cursor: 'nw-resize' },
-      { x: containerX + containerWidth_px / 2, y: adjustedY, type: 'ne' as const, cursor: 'ne-resize' },
-      { x: containerX - containerWidth_px / 2, y: adjustedY + containerHeight_px, type: 'sw' as const, cursor: 'sw-resize' },
-      { x: containerX + containerWidth_px / 2, y: adjustedY + containerHeight_px, type: 'se' as const, cursor: 'se-resize' }
+      { x: leftX, y: topY, type: 'nw' as const, cursor: 'nw-resize' },
+      { x: rightX, y: topY, type: 'ne' as const, cursor: 'ne-resize' },
+      { x: leftX, y: bottomY, type: 'sw' as const, cursor: 'sw-resize' },
+      { x: rightX, y: bottomY, type: 'se' as const, cursor: 'se-resize' }
     ];
     
-    return { handles, handleSize };
+    return { handles, handleSize: 12 };
   }, []);
 
   // Single render function that handles everything
@@ -128,59 +116,9 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
 
       ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
 
-      // Draw text fields
+      // Draw text fields using the shared utility function
       textFields.forEach(field => {
-        if (!field.text.trim()) return;
-
-        const fontFamily = field.fontFamily || 'Impact';
-        const fontWeight = field.fontWeight || 'bold';
-        const letterSpacing = field.letterSpacing || '0.05em';
-        ctx.font = `${fontWeight} ${field.fontSize * scale}px ${fontFamily}, Arial, sans-serif`;
-        
-        if (letterSpacing) {
-          ctx.letterSpacing = letterSpacing;
-        }
-        
-        ctx.fillStyle = field.color;
-        ctx.strokeStyle = field.strokeColor || '#000000';
-        ctx.lineWidth = (field.strokeWidth || 6) * scale;
-        
-        if (field.textAlign === 'left') {
-          ctx.textAlign = 'left';
-        } else if (field.textAlign === 'right') {
-          ctx.textAlign = 'right';
-        } else {
-          ctx.textAlign = 'center';
-        }
-        ctx.textBaseline = 'top';
-
-        const textX = (field.x / 100) * containerWidth;
-        const textY = (field.y / 100) * containerHeight;
-        const textBoxWidth = (field.width / 100) * containerWidth;
-        
-        const wrappedLines = wrapText(ctx, field.text, textBoxWidth);
-        const lineHeight = (field.fontSize * scale) * 1.2;
-        const totalHeight = wrappedLines.length * lineHeight;
-        const padding = 16 * scale;
-        
-        // Calculate Y position based on text field location
-        const startY = calculateAdjustedYPosition(field.y, textY, totalHeight, padding);
-        
-        let lineX = textX;
-        
-        if (field.textAlign === 'left') {
-          lineX = textX - (textBoxWidth / 2) + padding;
-        } else if (field.textAlign === 'right') {
-          lineX = textX + (textBoxWidth / 2) - padding;
-        } else {
-          lineX = textX;
-        }
-        
-        wrappedLines.forEach((line, index) => {
-          const lineY = startY + (index * lineHeight);
-          ctx.strokeText(line, lineX, lineY);
-          ctx.fillText(line, lineX, lineY);
-        });
+        renderTextOnCanvas(ctx, field, containerWidth, containerHeight, scale);
       });
 
       // Draw overlays and interactive elements
@@ -195,40 +133,33 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
             const containerHeight_px = (selectedField.height / 100) * containerHeight;
 
             const padding = 16 * scale;
-            const adjustedY = calculateAdjustedBorderYPosition(selectedField.y, containerY, containerHeight_px, padding);
             
             // Draw border
             ctx.strokeStyle = '#007bff';
             ctx.lineWidth = 3;
             ctx.setLineDash([]);
+            
+            // Calculate border coordinates to match resize handle positioning
+            // Remove padding adjustment to align with resize handles
+            const borderLeft = containerX - containerWidth_px / 2;
+            const borderTop = containerY - containerHeight_px / 2;
+            
             ctx.strokeRect(
-              containerX - containerWidth_px / 2,
-              adjustedY,
+              borderLeft,
+              borderTop,
               containerWidth_px,
               containerHeight_px
             );
             
             // Draw resize handles
-            const handleSize = 12;
-            const handles = [
-              { x: containerX - containerWidth_px / 2, y: adjustedY }, // NW
-              { x: containerX + containerWidth_px / 2, y: adjustedY }, // NE
-              { x: containerX - containerWidth_px / 2, y: adjustedY + containerHeight_px }, // SW
-              { x: containerX + containerWidth_px / 2, y: adjustedY + containerHeight_px }  // SE
-            ];
+            const { handles, handleSize } = getResizeHandleInfo(selectedField, containerWidth, containerHeight);
             
-            ctx.fillStyle = '#007bff';
             ctx.strokeStyle = '#ffffff';
             ctx.lineWidth = 2;
             
             handles.forEach((handle, index) => {
-              const handleTypes = ['nw', 'ne', 'sw', 'se'];
-              const handleType = handleTypes[index];
-              
-              // Check if mouse is over this handle
-              const mousePos = { x: 0, y: 0 }; // Will be updated in mouse events
-              const isHovered = Math.abs(mousePos.x - handle.x) <= handleSize/2 && 
-                               Math.abs(mousePos.y - handle.y) <= handleSize/2;
+              // Check if mouse is over this handle (we'll update this in mouse events)
+              const isHovered = false; // Will be updated in mouse events
               
               ctx.fillStyle = isHovered ? '#0056b3' : '#007bff';
               ctx.fillRect(handle.x - handleSize/2, handle.y - handleSize/2, handleSize, handleSize);
@@ -249,14 +180,18 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
             const scale = Math.min(containerWidth / canvas.width, containerHeight / canvas.height);
             const padding = 16 * scale;
             
-            const adjustedY = calculateAdjustedBorderYPosition(hoveredFieldObj.y, containerY, containerHeight_px, padding);
-
+            // Calculate border coordinates to match resize handle positioning
+            // Remove padding adjustment to align with resize handles
+            const hoverBorderLeft = containerX - containerWidth_px / 2;
+            const hoverBorderTop = containerY - containerHeight_px / 2;
+            
             ctx.strokeStyle = '#6b7280';
             ctx.lineWidth = 1;
             ctx.setLineDash([5, 5]);
+            
             ctx.strokeRect(
-              containerX - containerWidth_px / 2,
-              adjustedY,
+              hoverBorderLeft,
+              hoverBorderTop,
               containerWidth_px,
               containerHeight_px
             );
@@ -266,7 +201,7 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
       }
     };
     img.src = selectedTemplate.src;
-  }, [selectedTemplate, textFields, activeField, hoveredField, wrapText]);
+  }, [selectedTemplate, textFields, activeField, hoveredField]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!canvasRef.current) return;
@@ -279,24 +214,7 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
     if (activeField) {
       const selectedField = textFields.find(f => f.id === activeField);
       if (selectedField) {
-        const containerWidth = rect.width;
-        const containerHeight = rect.height;
-        const containerX = (selectedField.x / 100) * containerWidth;
-        const containerY = (selectedField.y / 100) * containerHeight;
-        const containerWidth_px = (selectedField.width / 100) * containerWidth;
-        const containerHeight_px = (selectedField.height / 100) * containerHeight;
-
-        const scale = Math.min(containerWidth / (canvasRef.current?.width || 1), containerHeight / (canvasRef.current?.height || 1));
-        const padding = 16 * scale;
-        const adjustedY = calculateAdjustedBorderYPosition(selectedField.y, containerY, containerHeight_px, padding);
-        
-        const handleSize = 12;
-        const handles = [
-          { x: containerX - containerWidth_px / 2, y: adjustedY, type: 'nw' as const },
-          { x: containerX + containerWidth_px / 2, y: adjustedY, type: 'ne' as const },
-          { x: containerX - containerWidth_px / 2, y: adjustedY + containerHeight_px, type: 'sw' as const },
-          { x: containerX + containerWidth_px / 2, y: adjustedY + containerHeight_px, type: 'se' as const }
-        ];
+        const { handles, handleSize } = getResizeHandleInfo(selectedField, rect.width, rect.height);
         
         // Check if clicking on a resize handle
         for (const handle of handles) {
@@ -476,24 +394,7 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
     if (activeField && hoveredField?.id === activeField) {
       const selectedField = textFields.find(f => f.id === activeField);
       if (selectedField) {
-        const containerWidth = rect.width;
-        const containerHeight = rect.height;
-        const containerX = (selectedField.x / 100) * containerWidth;
-        const containerY = (selectedField.y / 100) * containerHeight;
-        const containerWidth_px = (selectedField.width / 100) * containerWidth;
-        const containerHeight_px = (selectedField.height / 100) * containerHeight;
-
-        const scale = Math.min(containerWidth / (canvasRef.current?.width || 1), containerHeight / (canvasRef.current?.height || 1));
-        const padding = 16 * scale;
-        const adjustedY = calculateAdjustedBorderYPosition(selectedField.y, containerY, containerHeight_px, padding);
-        
-        const handleSize = 12;
-        const handles = [
-          { x: containerX - containerWidth_px / 2, y: adjustedY, type: 'nw' as const, cursor: 'nw-resize' },
-          { x: containerX + containerWidth_px / 2, y: adjustedY, type: 'ne' as const, cursor: 'ne-resize' },
-          { x: containerX - containerWidth_px / 2, y: adjustedY + containerHeight_px, type: 'sw' as const, cursor: 'sw-resize' },
-          { x: containerX + containerWidth_px / 2, y: adjustedY + containerHeight_px, type: 'se' as const, cursor: 'se-resize' }
-        ];
+        const { handles, handleSize } = getResizeHandleInfo(selectedField, rect.width, rect.height);
         
         // Check if mouse is over a resize handle
         for (const handle of handles) {

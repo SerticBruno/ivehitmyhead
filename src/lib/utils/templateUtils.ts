@@ -169,15 +169,19 @@ export const isPointInTextField = (
   const fieldPixelWidth = (field.width / 100) * canvasWidth;
   const fieldPixelHeight = (field.height / 100) * canvasHeight;
   
-  // Add buffer zone around the field
-  const bufferedWidth = fieldPixelWidth + (bufferZone * 2);
-  const bufferedHeight = fieldPixelHeight + (bufferZone * 2);
+  // Calculate the actual bounds of the text field (center-based coordinates)
+  // This aligns with the border and resize handle positioning
+  const fieldLeft = fieldPixelPos.x - fieldPixelWidth / 2;
+  const fieldTop = fieldPixelPos.y - fieldPixelHeight / 2;
+  const fieldRight = fieldPixelPos.x + fieldPixelWidth / 2;
+  const fieldBottom = fieldPixelPos.y + fieldPixelHeight / 2;
   
+  // Check if point is within the field bounds plus buffer zone
   return (
-    pointX >= fieldPixelPos.x - bufferedWidth / 2 &&
-    pointX <= fieldPixelPos.x + bufferedWidth / 2 &&
-    pointY >= fieldPixelPos.y - bufferedHeight / 2 &&
-    pointY <= fieldPixelPos.y + bufferedHeight / 2
+    pointX >= fieldLeft - bufferZone &&
+    pointX <= fieldRight + bufferZone &&
+    pointY >= fieldTop - bufferZone &&
+    pointY <= fieldBottom + bufferZone
   );
 };
 
@@ -215,6 +219,91 @@ export const calculateAdjustedBorderYPosition = (
 };
 
 /**
+ * Render text on a canvas context with proper positioning and styling
+ * This function can be used for both preview and download rendering
+ */
+export const renderTextOnCanvas = (
+  ctx: CanvasRenderingContext2D,
+  field: TextField,
+  canvasWidth: number,
+  canvasHeight: number,
+  scale: number = 1
+): void => {
+  if (!field.text.trim()) return;
+
+  const fontFamily = field.fontFamily || 'Impact';
+  const fontWeight = field.fontWeight || 'bold';
+  const letterSpacing = field.letterSpacing || '0.05em';
+  ctx.font = `${fontWeight} ${field.fontSize * scale}px ${fontFamily}, Arial, sans-serif`;
+  
+  if (letterSpacing) {
+    ctx.letterSpacing = letterSpacing;
+  }
+  
+  ctx.fillStyle = field.color;
+  ctx.strokeStyle = field.strokeColor || '#000000';
+  ctx.lineWidth = (field.strokeWidth || 6) * scale;
+  
+  if (field.textAlign === 'left') {
+    ctx.textAlign = 'left';
+  } else if (field.textAlign === 'right') {
+    ctx.textAlign = 'right';
+  } else {
+    ctx.textAlign = 'center';
+  }
+  ctx.textBaseline = 'top';
+
+  // Convert percentage coordinates to pixel coordinates
+  const textX = (field.x / 100) * canvasWidth;
+  const textY = (field.y / 100) * canvasHeight;
+  const textBoxWidth = (field.width / 100) * canvasWidth;
+  
+  // Helper function to wrap text
+  const wrapText = (text: string, maxWidth: number): string[] => {
+    const words = text.split(' ');
+    const lines: string[] = [];
+    let currentLine = words[0];
+
+    for (let i = 1; i < words.length; i++) {
+      const word = words[i];
+      const width = ctx.measureText(currentLine + ' ' + word).width;
+      if (width < maxWidth) {
+        currentLine += ' ' + word;
+      } else {
+        lines.push(currentLine);
+        currentLine = word;
+      }
+    }
+    lines.push(currentLine);
+    return lines;
+  };
+  
+  const wrappedLines = wrapText(field.text, textBoxWidth);
+  const lineHeight = (field.fontSize * scale) * 1.2;
+  const totalHeight = wrappedLines.length * lineHeight;
+  const padding = 16 * scale;
+  
+  // Calculate Y position using the same logic as the preview
+  const startY = textY - (totalHeight / 2) + padding;
+  
+  let lineX = textX;
+  
+  if (field.textAlign === 'left') {
+    lineX = textX - (textBoxWidth / 2) + padding;
+  } else if (field.textAlign === 'right') {
+    lineX = textX + (textBoxWidth / 2) - padding;
+  } else {
+    lineX = textX;
+  }
+  
+  wrappedLines.forEach((line, index) => {
+    const lineY = startY + (index * lineHeight);
+    ctx.strokeText(line, lineX, lineY);
+    ctx.fillText(line, lineX, lineY);
+  });
+};
+
+/**
  * Check if a point is near a resize handle
  */
 export const getResizeHandle = (
@@ -231,22 +320,26 @@ export const getResizeHandle = (
   const handleSize = 32; // Increased size for easier grabbing
   const handleOffset = handleSize / 2;
   
+  // Calculate handle positions using top-left corner based positioning
+  const fieldLeft = fieldPixelPos.x - fieldPixelWidth / 2;
+  const fieldTop = fieldPixelPos.y - fieldPixelHeight / 2;
+  
   // Calculate handle positions with bounds checking
   const nw = {
-    x: Math.max(handleOffset, fieldPixelPos.x - fieldPixelWidth / 2),
-    y: Math.max(handleOffset, fieldPixelPos.y - fieldPixelHeight / 2)
+    x: Math.max(handleOffset, fieldLeft),
+    y: Math.max(handleOffset, fieldTop)
   };
   const ne = {
-    x: Math.min(canvasWidth - handleOffset, fieldPixelPos.x + fieldPixelWidth / 2),
-    y: Math.max(handleOffset, fieldPixelPos.y - fieldPixelHeight / 2)
+    x: Math.min(canvasWidth - handleOffset, fieldLeft + fieldPixelWidth),
+    y: Math.max(handleOffset, fieldTop)
   };
   const sw = {
-    x: Math.max(handleOffset, fieldPixelPos.x - fieldPixelWidth / 2),
-    y: Math.min(canvasHeight - handleOffset, fieldPixelPos.y + fieldPixelHeight / 2)
+    x: Math.max(handleOffset, fieldLeft),
+    y: Math.min(canvasHeight - handleOffset, fieldTop + fieldPixelHeight)
   };
   const se = {
-    x: Math.min(canvasWidth - handleOffset, fieldPixelPos.x + fieldPixelWidth / 2),
-    y: Math.min(canvasHeight - handleOffset, fieldPixelPos.y + fieldPixelHeight / 2)
+    x: Math.min(canvasWidth - handleOffset, fieldLeft + fieldPixelWidth),
+    y: Math.min(canvasHeight - handleOffset, fieldTop + fieldPixelHeight)
   };
   
   // Check if point is within handle area with improved detection

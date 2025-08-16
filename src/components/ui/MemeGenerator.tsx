@@ -7,7 +7,7 @@ import { TemplateSelector } from './TemplateSelector';
 import { TextFieldsPanel } from './TextFieldsPanel';
 import { QuickActions } from './QuickActions';
 import { MemeTemplate, TextField } from '../../lib/types/meme';
-import { initializeTextFields } from '../../lib/utils/templateUtils';
+import { initializeTextFields, renderTextOnCanvas } from '../../lib/utils/templateUtils';
 
 export const MemeGenerator: React.FC = () => {
   const [selectedTemplate, setSelectedTemplate] = useState<MemeTemplate | null>(null);
@@ -118,16 +118,19 @@ export const MemeGenerator: React.FC = () => {
       // Draw the template image
       ctx.drawImage(img, 0, 0);
       
-      // Draw text fields (this would need to be implemented similar to the canvas rendering)
-      // For now, just download the template
+      // Draw text fields using the shared utility function
+      textFields.forEach(field => {
+        renderTextOnCanvas(ctx, field, img.width, img.height, 1);
+      });
       
+      // Download the final image with text
       const link = document.createElement('a');
       link.download = `meme-${selectedTemplate.id}.png`;
       link.href = canvas.toDataURL();
       link.click();
     };
     img.src = selectedTemplate.src;
-  }, [selectedTemplate]);
+  }, [selectedTemplate, textFields]);
 
   const clearAllText = useCallback(() => {
     setTextFields(prev => prev.map(f => ({ ...f, text: '' })));
