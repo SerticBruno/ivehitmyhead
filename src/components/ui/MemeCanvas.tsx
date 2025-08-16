@@ -6,7 +6,6 @@ import {
   isPointInTextField,
   getResizeHandle,
   calculateAdjustedYPosition,
-  calculateAdjustedBorderYPosition,
   renderTextOnCanvas
 } from '../../lib/utils/templateUtils';
 

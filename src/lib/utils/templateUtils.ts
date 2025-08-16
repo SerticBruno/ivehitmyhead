@@ -202,21 +202,7 @@ export const calculateAdjustedYPosition = (
   return textY - (totalHeight / 2) + padding;
 };
 
-/**
- * Calculate adjusted Y position for borders and overlays
- * This is similar to text positioning but handles the visual elements differently
- */
-export const calculateAdjustedBorderYPosition = (
-  fieldY: number,
-  containerY: number,
-  containerHeight: number,
-  padding: number
-): number => {
-  // Always position border at the top of the textbox to match text positioning
-  // containerY represents the center of the textbox, so we go up by half the height
-  // to get to the top edge, then add padding to position border below the top edge
-  return containerY - containerHeight / 2 + padding;
-};
+
 
 /**
  * Render text on a canvas context with proper positioning and styling
@@ -320,9 +306,11 @@ export const getResizeHandle = (
   const handleSize = 32; // Increased size for easier grabbing
   const handleOffset = handleSize / 2;
   
-  // Calculate handle positions using top-left corner based positioning
+  // Calculate handle positions using center-based coordinates (consistent with borders)
   const fieldLeft = fieldPixelPos.x - fieldPixelWidth / 2;
   const fieldTop = fieldPixelPos.y - fieldPixelHeight / 2;
+  const fieldRight = fieldPixelPos.x + fieldPixelWidth / 2;
+  const fieldBottom = fieldPixelPos.y + fieldPixelHeight / 2;
   
   // Calculate handle positions with bounds checking
   const nw = {
@@ -330,16 +318,16 @@ export const getResizeHandle = (
     y: Math.max(handleOffset, fieldTop)
   };
   const ne = {
-    x: Math.min(canvasWidth - handleOffset, fieldLeft + fieldPixelWidth),
+    x: Math.min(canvasWidth - handleOffset, fieldRight),
     y: Math.max(handleOffset, fieldTop)
   };
   const sw = {
     x: Math.max(handleOffset, fieldLeft),
-    y: Math.min(canvasHeight - handleOffset, fieldTop + fieldPixelHeight)
+    y: Math.min(canvasHeight - handleOffset, fieldBottom)
   };
   const se = {
-    x: Math.min(canvasWidth - handleOffset, fieldLeft + fieldPixelWidth),
-    y: Math.min(canvasHeight - handleOffset, fieldTop + fieldPixelHeight)
+    x: Math.min(canvasWidth - handleOffset, fieldRight),
+    y: Math.min(canvasHeight - handleOffset, fieldBottom)
   };
   
   // Check if point is within handle area with improved detection
