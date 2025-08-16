@@ -49,7 +49,7 @@ export default function AboutPage() {
 
 
                      {/* Thank You Section */}
-           <div className="bg-gradient-to-r from-gray-600 to-gray-800 rounded-2xl p-8 md:p-12 text-center text-white mb-16">
+           <div className="bg-gray-700 rounded-2xl p-8 md:p-12 text-center text-white mb-16">
              <h2 className="text-3xl md:text-4xl font-bold mb-6">
                Thanks, I guess?
              </h2>
@@ -59,8 +59,7 @@ export default function AboutPage() {
                  new bugs to fix at 2 AM. So... thanks? I think?
              </p>
                             <p className="text-lg opacity-90">
-                 Shoutout to the actual meme creators, the developers who inspired me, and my cat 
-                 who sat on my keyboard during critical moments.
+                 Shoutout to the actual meme creators, the developers who inspired me, my pets and my family who has no idea what I do.
                </p>
            </div>
 
@@ -94,7 +93,7 @@ export default function AboutPage() {
                
                <p className="text-sm text-gray-500 dark:text-gray-400 mt-6">
                  Your support keeps the memes flowing! 🚀<br/>
-                 <span className="text-xs opacity-75">And helps me explain to my mom why I&apos;m &quot;working&quot; at 2 AM</span>
+                 <span className="text-xs opacity-75">And helps me explain to my family why I&apos;m &quot;working&quot; at 2 AM</span>
                </p>
              </div>
            </div>
