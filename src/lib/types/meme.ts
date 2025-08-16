@@ -127,6 +127,8 @@ export interface TextField {
   text: string;
   x: number; // percentage from left (0-100)
   y: number; // percentage from top (0-100)
+  width: number; // percentage of image width
+  height: number; // percentage of image height
   fontSize: number; // percentage of image height
   color: string;
   fontFamily?: string;
@@ -137,6 +139,7 @@ export interface TextField {
   strokeWidth?: number; // outline width
   rotation?: number; // rotation in degrees
   isDragging?: boolean;
+  isResizing?: boolean;
 }
 
 export interface MemeTemplate {

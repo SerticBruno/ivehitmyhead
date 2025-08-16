@@ -16,6 +16,8 @@ export const MEME_TEMPLATES: MemeTemplate[] = [
         id: 'top-left',
         x: 40, // 25% from left
         y: 20, // 20% from top
+        width: 35, // 35% of image width
+        height: 15, // 15% of image height
         fontSize: 40,
         color: '#ffffff',
         fontFamily: 'Impact',
@@ -29,6 +31,8 @@ export const MEME_TEMPLATES: MemeTemplate[] = [
         id: 'top-right',
         x: 75, // 75% from left
         y: 20, // 20% from top
+        width: 35, // 35% of image width
+        height: 15, // 15% of image height
         fontSize: 40,
         color: '#ffffff',
         fontFamily: 'Impact',
@@ -42,6 +46,8 @@ export const MEME_TEMPLATES: MemeTemplate[] = [
         id: 'bottom',
         x: 50, // center horizontally
         y: 80, // 80% from top
+        width: 70, // 70% of image width
+        height: 15, // 15% of image height
         fontSize: 40,
         color: '#ffffff',
         fontFamily: 'Impact',
@@ -71,6 +77,8 @@ export const MEME_TEMPLATES: MemeTemplate[] = [
         id: 'bottom',
         x: 50, // center horizontally
         y: 85, // 85% from top
+        width: 70, // 70% of image width
+        height: 15, // 15% of image height
         fontSize: 40,
         color: '#ffffff',
         fontFamily: 'Impact',
@@ -101,6 +109,8 @@ export const MEME_TEMPLATES: MemeTemplate[] = [
         id: 'title',
         x: 50,
         y: 10,
+        width: 80, // 80% of image width
+        height: 12, // 12% of image height
         fontSize: 40,
         color: '#ffffff',
         fontFamily: 'Impact',
@@ -114,6 +124,8 @@ export const MEME_TEMPLATES: MemeTemplate[] = [
         id: 'left-text',
         x: 20,
         y: 50,
+        width: 30, // 30% of image width
+        height: 20, // 20% of image height
         fontSize: 40,
         color: '#ffffff',
         fontFamily: 'Arial',
@@ -127,6 +139,8 @@ export const MEME_TEMPLATES: MemeTemplate[] = [
         id: 'right-text',
         x: 80,
         y: 50,
+        width: 30, // 30% of image width
+        height: 20, // 20% of image height
         fontSize: 40,
         color: '#ffffff',
         fontFamily: 'Arial',
@@ -140,6 +154,8 @@ export const MEME_TEMPLATES: MemeTemplate[] = [
         id: 'bottom-note',
         x: 50,
         y: 90,
+        width: 50, // 50% of image width
+        height: 10, // 10% of image height
         fontSize: 40,
         color: '#ffff00',
         fontFamily: 'Comic Sans MS',

@@ -8,14 +8,24 @@ import { TemplateBrowser } from './TemplateBrowser';
 import { TemplateManager } from './TemplateManager';
 import { MemeTemplate, TextField } from '../../lib/types/meme';
 import { MEME_TEMPLATES } from '../../lib/data/templates';
-import { initializeTextFields, calculateFontSize, percentageToPixels, getTemplateDefaults } from '../../lib/utils/templateUtils';
+import { 
+  initializeTextFields, 
+  calculateFontSize, 
+  percentageToPixels, 
+  getTemplateDefaults,
+  isPointInTextField,
+  getResizeHandle
+} from '../../lib/utils/templateUtils';
 
 export const MemeGenerator: React.FC = () => {
   const [selectedTemplate, setSelectedTemplate] = useState<MemeTemplate | null>(null);
   const [textFields, setTextFields] = useState<TextField[]>([]);
   const [activeField, setActiveField] = useState<string | null>(null);
+  const [hoveredField, setHoveredField] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
+  const [resizeHandle, setResizeHandle] = useState<'nw' | 'ne' | 'sw' | 'se' | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [showTemplateBrowser, setShowTemplateBrowser] = useState(false);
@@ -66,57 +76,177 @@ export const MemeGenerator: React.FC = () => {
     if (!canvasRef.current) return;
     
     const rect = canvasRef.current.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
 
     // Find if clicking on a text field
     const clickedField = textFields.find(field => {
-      const fieldX = field.x;
-      const fieldY = field.y;
-      const fieldWidth = 20; // Approximate text width
-      const fieldHeight = field.fontSize / 100 * 100; // Convert font size to percentage
-
-      return (
-        x >= fieldX - fieldWidth/2 &&
-        x <= fieldX + fieldWidth/2 &&
-        y >= fieldY - fieldHeight/2 &&
-        y <= fieldY + fieldHeight/2
-      );
+      return isPointInTextField(x, y, field, rect.width, rect.height);
     });
 
     if (clickedField) {
       setActiveField(clickedField.id);
-      setIsDragging(true);
-      setDragOffset({
-        x: x - clickedField.x,
-        y: y - clickedField.y
-      });
+      
+      // Check if clicking on a resize handle
+      const handle = getResizeHandle(x, y, clickedField, rect.width, rect.height);
+      if (handle) {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsResizing(true);
+        setResizeHandle(handle);
+        // For resizing, we don't need drag offset since we calculate position directly
+        setDragOffset({ x: 0, y: 0 });
+        // Set cursor based on resize handle
+        const cursorMap = {
+          'nw': 'nw-resize',
+          'ne': 'ne-resize',
+          'sw': 'sw-resize',
+          'se': 'se-resize'
+        };
+        e.currentTarget.style.cursor = cursorMap[handle];
+      } else {
+        // Regular dragging
+        setIsDragging(true);
+        e.currentTarget.style.cursor = 'grabbing';
+        // Calculate offset from center of the field
+        const fieldCenterX = (clickedField.x / 100) * rect.width;
+        const fieldCenterY = (clickedField.y / 100) * rect.height;
+        setDragOffset({
+          x: x - fieldCenterX,
+          y: y - fieldCenterY
+        });
+      }
     }
   }, [textFields]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!isDragging || !activeField || !canvasRef.current) return;
+    if (!canvasRef.current) return;
 
     const rect = canvasRef.current.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
 
-    setTextFields(prev => 
-      prev.map(field => 
-        field.id === activeField 
-          ? { 
-              ...field, 
-              x: Math.max(0, Math.min(100, x - dragOffset.x)),
-              y: Math.max(0, Math.min(100, y - dragOffset.y))
-            }
-          : field
-      )
-    );
-  }, [isDragging, activeField, dragOffset]);
+    // Check for hover on text fields
+    const hoveredField = textFields.find(field => {
+      return isPointInTextField(x, y, field, rect.width, rect.height);
+    });
+    setHoveredField(hoveredField?.id || null);
+
+    // Update cursor based on what we're hovering over
+    if (hoveredField) {
+      const handle = getResizeHandle(x, y, hoveredField, rect.width, rect.height);
+      if (handle) {
+        // Set cursor based on resize handle
+        const cursorMap = {
+          'nw': 'nw-resize',
+          'ne': 'ne-resize',
+          'sw': 'sw-resize',
+          'se': 'se-resize'
+        };
+        e.currentTarget.style.cursor = cursorMap[handle];
+      } else {
+        e.currentTarget.style.cursor = 'move';
+      }
+    } else {
+      e.currentTarget.style.cursor = 'default';
+    }
+
+    if (!activeField) return;
+
+    if (isResizing && resizeHandle) {
+      // Handle resizing
+      setTextFields(prev => 
+        prev.map(field => {
+          if (field.id !== activeField) return field;
+          
+          const currentField = prev.find(f => f.id === activeField);
+          if (!currentField) return field;
+          
+          // Convert current field dimensions to pixels
+          const currentPixelWidth = (currentField.width / 100) * rect.width;
+          const currentPixelHeight = (currentField.height / 100) * rect.height;
+          const currentPixelX = (currentField.x / 100) * rect.width;
+          const currentPixelY = (currentField.y / 100) * rect.height;
+          
+          // Calculate new dimensions and position based on resize handle
+          let newPixelWidth = currentPixelWidth;
+          let newPixelHeight = currentPixelHeight;
+          let newPixelX = currentPixelX;
+          let newPixelY = currentPixelY;
+          
+          switch (resizeHandle) {
+            case 'nw': // Northwest - resize from top-left, anchor at bottom-right
+              newPixelWidth = Math.max(20, currentPixelX + currentPixelWidth/2 - x);
+              newPixelHeight = Math.max(20, currentPixelY + currentPixelHeight/2 - y);
+              newPixelX = x + newPixelWidth/2;
+              newPixelY = y + newPixelHeight/2;
+              break;
+              
+            case 'ne': // Northeast - resize from top-right, anchor at bottom-left
+              newPixelWidth = Math.max(20, x - (currentPixelX - currentPixelWidth/2));
+              newPixelHeight = Math.max(20, currentPixelY + currentPixelHeight/2 - y);
+              newPixelX = x - newPixelWidth/2;
+              newPixelY = y + newPixelHeight/2;
+              break;
+              
+            case 'sw': // Southwest - resize from bottom-left, anchor at top-right
+              newPixelWidth = Math.max(20, currentPixelX + currentPixelWidth/2 - x);
+              newPixelHeight = Math.max(20, y - (currentPixelY - currentPixelHeight/2));
+              newPixelX = x + newPixelWidth/2;
+              newPixelY = y - newPixelHeight/2;
+              break;
+              
+            case 'se': // Southeast - resize from bottom-right, anchor at top-left
+              newPixelWidth = Math.max(20, x - (currentPixelX - currentPixelWidth/2));
+              newPixelHeight = Math.max(20, y - (currentPixelY - currentPixelHeight/2));
+              newPixelX = x - newPixelWidth/2;
+              newPixelY = y - newPixelHeight/2;
+              break;
+          }
+          
+          // Convert back to percentages
+          const newWidth = Math.min(90, (newPixelWidth / rect.width) * 100);
+          const newHeight = Math.min(40, (newPixelHeight / rect.height) * 100);
+          const newX = Math.max(newWidth/2, Math.min(100 - newWidth/2, (newPixelX / rect.width) * 100));
+          const newY = Math.max(newHeight/2, Math.min(100 - newHeight/2, (newPixelY / rect.height) * 100));
+          
+          return {
+            ...field,
+            width: newWidth,
+            height: newHeight,
+            x: newX,
+            y: newY
+          };
+        })
+      );
+    } else if (isDragging) {
+      // Handle dragging
+      const newX = Math.max(0, Math.min(100, ((x - dragOffset.x) / rect.width) * 100));
+      const newY = Math.max(0, Math.min(100, ((y - dragOffset.y) / rect.height) * 100));
+      
+      setTextFields(prev => 
+        prev.map(field => 
+          field.id === activeField 
+            ? { 
+                ...field, 
+                x: newX,
+                y: newY
+              }
+            : field
+        )
+      );
+    }
+  }, [isDragging, isResizing, activeField, resizeHandle, dragOffset, textFields]);
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
+    setIsResizing(false);
     setActiveField(null);
+    setResizeHandle(null);
+    // Reset cursor
+    if (canvasRef.current) {
+      canvasRef.current.style.cursor = 'default';
+    }
   }, []);
 
   const downloadMeme = useCallback(() => {
@@ -199,9 +329,112 @@ export const MemeGenerator: React.FC = () => {
         // Draw fill
         ctx.fillText(field.text, textX, textY);
       });
+
+      // Draw text containers and resize handles for selected field or hovered field
+      const fieldToShow = activeField || hoveredField;
+      if (fieldToShow) {
+        const selectedField = textFields.find(f => f.id === fieldToShow);
+        if (selectedField) {
+          const containerX = (selectedField.x / 100) * containerWidth;
+          const containerY = (selectedField.y / 100) * containerHeight;
+          const containerWidth_px = (selectedField.width / 100) * containerWidth;
+          const containerHeight_px = (selectedField.height / 100) * containerHeight;
+
+          // Draw container border
+          const borderColor = activeField === fieldToShow ? '#007bff' : '#6b7280';
+          const borderWidth = activeField === fieldToShow ? 2 : 1;
+          ctx.strokeStyle = borderColor;
+          ctx.lineWidth = borderWidth;
+          ctx.setLineDash([5, 5]);
+          ctx.strokeRect(
+            containerX - containerWidth_px / 2,
+            containerY - containerHeight_px / 2,
+            containerWidth_px,
+            containerHeight_px
+          );
+          ctx.setLineDash([]);
+
+          // Draw resize handles
+          const handleSize = 12; // Increased size for easier grabbing
+          ctx.fillStyle = borderColor;
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 2;
+
+          // Add visual indicator for resize mode
+          if (isResizing) {
+            ctx.fillStyle = '#ff6b6b';
+            ctx.font = `${12 * scale}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.fillText('Resizing...', containerX, containerY - containerHeight_px / 2 - 20);
+            ctx.fillStyle = borderColor; // Reset fill color
+          } else if (isDragging) {
+            ctx.fillStyle = '#4ecdc4';
+            ctx.font = `${12 * scale}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.fillText('Dragging...', containerX, containerY - containerHeight_px / 2 - 20);
+            ctx.fillStyle = borderColor; // Reset fill color
+          }
+
+          // Northwest handle
+          ctx.fillRect(
+            containerX - containerWidth_px / 2 - handleSize / 2,
+            containerY - containerHeight_px / 2 - handleSize / 2,
+            handleSize,
+            handleSize
+          );
+          ctx.strokeRect(
+            containerX - containerWidth_px / 2 - handleSize / 2,
+            containerY - containerHeight_px / 2 - handleSize / 2,
+            handleSize,
+            handleSize
+          );
+
+          // Northeast handle
+          ctx.fillRect(
+            containerX + containerWidth_px / 2 - handleSize / 2,
+            containerY - containerHeight_px / 2 - handleSize / 2,
+            handleSize,
+            handleSize
+          );
+          ctx.strokeRect(
+            containerX + containerWidth_px / 2 - handleSize / 2,
+            containerY - containerHeight_px / 2 - handleSize / 2,
+            handleSize,
+            handleSize
+          );
+
+          // Southwest handle
+          ctx.fillRect(
+            containerX - containerWidth_px / 2 - handleSize / 2,
+            containerY + containerHeight_px / 2 - handleSize / 2,
+            handleSize,
+            handleSize
+          );
+          ctx.strokeRect(
+            containerX - containerWidth_px / 2 - handleSize / 2,
+            containerY + containerHeight_px / 2 - handleSize / 2,
+            handleSize,
+            handleSize
+          );
+
+          // Southeast handle
+          ctx.fillRect(
+            containerX + containerWidth_px / 2 - handleSize / 2,
+            containerY + containerHeight_px / 2 - handleSize / 2,
+            handleSize,
+            handleSize
+          );
+          ctx.strokeRect(
+            containerX + containerWidth_px / 2 - handleSize / 2,
+            containerY + containerHeight_px / 2 - handleSize / 2,
+            handleSize,
+            handleSize
+          );
+        }
+      }
     };
     img.src = selectedTemplate.src;
-  }, [selectedTemplate, textFields]);
+  }, [selectedTemplate, textFields, activeField, hoveredField, isResizing, isDragging]);
 
 
 
@@ -306,7 +539,13 @@ export const MemeGenerator: React.FC = () => {
                     onMouseDown={handleMouseDown}
                     onMouseMove={handleMouseMove}
                     onMouseUp={handleMouseUp}
-                    onMouseLeave={handleMouseUp}
+                    onMouseLeave={() => {
+                      setHoveredField(null);
+                      if (canvasRef.current) {
+                        canvasRef.current.style.cursor = 'default';
+                      }
+                      handleMouseUp();
+                    }}
                   />
                 </div>
               ) : (
@@ -320,7 +559,7 @@ export const MemeGenerator: React.FC = () => {
              
              {selectedTemplate && (
                <p className="text-sm text-gray-600 dark:text-gray-400 mt-3 text-center">
-                 Click and drag text to reposition it on the meme
+                 Hover over text to see handles • Drag text to move • Drag corner handles to resize • Use Select button to activate fields
                </p>
              )}
            </Card>
@@ -391,13 +630,30 @@ export const MemeGenerator: React.FC = () => {
               <h2 className="text-xl font-semibold mb-4">Add Your Text</h2>
               <div className="space-y-4">
                 {textFields.map((field) => (
-                  <div key={field.id} className="space-y-3">
-                    <Input
-                      label={`${field.id.charAt(0).toUpperCase() + field.id.slice(1)} Text`}
-                      value={field.text}
-                      onChange={(e) => handleTextChange(field.id, e.target.value)}
-                      placeholder={`Enter ${field.id} text...`}
-                    />
+                  <div key={field.id} className={`space-y-3 p-3 rounded-lg border-2 transition-colors ${
+                    activeField === field.id 
+                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
+                      : 'border-gray-200 dark:border-gray-700'
+                  }`}>
+                    <div className="flex items-center justify-between">
+                      <Input
+                        label={`${field.id.charAt(0).toUpperCase() + field.id.slice(1)} Text`}
+                        value={field.text}
+                        onChange={(e) => handleTextChange(field.id, e.target.value)}
+                        placeholder={`Enter ${field.id} text...`}
+                        className="flex-1"
+                      />
+                      <button
+                        onClick={() => setActiveField(field.id)}
+                        className={`ml-2 px-3 py-2 text-xs rounded transition-colors ${
+                          activeField === field.id
+                            ? 'bg-blue-500 text-white'
+                            : 'bg-gray-200 text-gray-600 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                        }`}
+                      >
+                        {activeField === field.id ? 'Active' : 'Select'}
+                      </button>
+                    </div>
                     
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
@@ -414,6 +670,52 @@ export const MemeGenerator: React.FC = () => {
                               prev.map(f => 
                                 f.id === field.id 
                                   ? { ...f, fontSize: parseInt(e.target.value) }
+                                  : f
+                              )
+                            )
+                          }
+                          className="w-24"
+                        />
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <label className="text-sm text-gray-600 dark:text-gray-400">
+                          Container Width: {field.width.toFixed(1)}%
+                        </label>
+                        <input
+                          type="range"
+                          min="10"
+                          max="90"
+                          step="0.5"
+                          value={field.width}
+                          onChange={(e) => 
+                            setTextFields(prev => 
+                              prev.map(f => 
+                                f.id === field.id 
+                                  ? { ...f, width: parseFloat(e.target.value) }
+                                  : f
+                              )
+                            )
+                          }
+                          className="w-24"
+                        />
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <label className="text-sm text-gray-600 dark:text-gray-400">
+                          Container Height: {field.height.toFixed(1)}%
+                        </label>
+                        <input
+                          type="range"
+                          min="5"
+                          max="40"
+                          step="0.5"
+                          value={field.height}
+                          onChange={(e) => 
+                            setTextFields(prev => 
+                              prev.map(f => 
+                                f.id === field.id 
+                                  ? { ...f, height: parseFloat(e.target.value) }
                                   : f
                               )
                             )
@@ -461,7 +763,11 @@ export const MemeGenerator: React.FC = () => {
                   Clear All Text
                 </Button>
                 <Button 
-                  onClick={() => setTextFields(prev => prev.map(f => ({ ...f, fontSize: 48, color: '#ffffff' })))}
+                  onClick={() => {
+                    if (selectedTemplate) {
+                      setTextFields(initializeTextFields(selectedTemplate));
+                    }
+                  }}
                   variant="outline"
                   className="w-full"
                 >

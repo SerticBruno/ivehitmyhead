@@ -7,7 +7,8 @@ export const initializeTextFields = (template: MemeTemplate): TextField[] => {
   return template.textFields.map(field => ({
     ...field,
     text: '', // Start with empty text
-    isDragging: false
+    isDragging: false,
+    isResizing: false
   }));
 };
 
@@ -151,4 +152,68 @@ export const calculateTextPosition = (
     y: pixelPos.y,
     textAlign
   };
+};
+
+/**
+ * Check if a point is within a text field's bounds
+ */
+export const isPointInTextField = (
+  pointX: number,
+  pointY: number,
+  field: TextField,
+  canvasWidth: number,
+  canvasHeight: number
+): boolean => {
+  const fieldPixelPos = percentageToPixels(field.x, field.y, canvasWidth, canvasHeight);
+  const fieldPixelWidth = (field.width / 100) * canvasWidth;
+  const fieldPixelHeight = (field.height / 100) * canvasHeight;
+  
+  return (
+    pointX >= fieldPixelPos.x - fieldPixelWidth / 2 &&
+    pointX <= fieldPixelPos.x + fieldPixelWidth / 2 &&
+    pointY >= fieldPixelPos.y - fieldPixelHeight / 2 &&
+    pointY <= fieldPixelPos.y + fieldPixelHeight / 2
+  );
+};
+
+/**
+ * Check if a point is near a resize handle
+ */
+export const getResizeHandle = (
+  pointX: number,
+  pointY: number,
+  field: TextField,
+  canvasWidth: number,
+  canvasHeight: number
+): 'nw' | 'ne' | 'sw' | 'se' | null => {
+  const fieldPixelPos = percentageToPixels(field.x, field.y, canvasWidth, canvasHeight);
+  const fieldPixelWidth = (field.width / 100) * canvasWidth;
+  const fieldPixelHeight = (field.height / 100) * canvasHeight;
+  
+  const handleSize = 12; // Size of resize handle in pixels for easier grabbing
+  
+  // Check each corner
+  const nw = {
+    x: fieldPixelPos.x - fieldPixelWidth / 2,
+    y: fieldPixelPos.y - fieldPixelHeight / 2
+  };
+  const ne = {
+    x: fieldPixelPos.x + fieldPixelWidth / 2,
+    y: fieldPixelPos.y - fieldPixelHeight / 2
+  };
+  const sw = {
+    x: fieldPixelPos.x - fieldPixelWidth / 2,
+    y: fieldPixelPos.y + fieldPixelHeight / 2
+  };
+  const se = {
+    x: fieldPixelPos.x + fieldPixelWidth / 2,
+    y: fieldPixelPos.y + fieldPixelHeight / 2
+  };
+  
+  if (Math.abs(pointX - nw.x) <= handleSize && Math.abs(pointY - nw.y) <= handleSize) return 'nw';
+  if (Math.abs(pointX - ne.x) <= handleSize && Math.abs(pointY - ne.y) <= handleSize) return 'ne';
+  if (Math.abs(pointX - sw.x) <= handleSize && Math.abs(pointY - sw.y) <= handleSize) return 'sw';
+  if (Math.abs(pointX - se.x) <= handleSize && Math.abs(pointY - se.y) <= handleSize) return 'se';
+  
+  return null;
 };
