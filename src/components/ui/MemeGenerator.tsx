@@ -128,7 +128,7 @@ export const MemeGenerator: React.FC = () => {
 
     // Check for hover on text fields
     const hoveredField = textFields.find(field => {
-      return isPointInTextField(x, y, field, rect.width, rect.height);
+      return isPointInTextField(x, y, field, rect.width, rect.height, 20); // 20px buffer zone
     });
     setHoveredField(hoveredField?.id || null);
 
@@ -340,8 +340,10 @@ export const MemeGenerator: React.FC = () => {
           const containerWidth_px = (selectedField.width / 100) * containerWidth;
           const containerHeight_px = (selectedField.height / 100) * containerHeight;
 
-          // Draw container border
+          // Define border color for handles
           const borderColor = activeField === fieldToShow ? '#007bff' : '#6b7280';
+
+          // Draw container border
           const borderWidth = activeField === fieldToShow ? 2 : 1;
           ctx.strokeStyle = borderColor;
           ctx.lineWidth = borderWidth;
@@ -354,82 +356,70 @@ export const MemeGenerator: React.FC = () => {
           );
           ctx.setLineDash([]);
 
-          // Draw resize handles
-          const handleSize = 12; // Increased size for easier grabbing
-          ctx.fillStyle = borderColor;
-          ctx.strokeStyle = '#ffffff';
-          ctx.lineWidth = 2;
+          // Always show resize handles for selected field, or when hovering
+          if (activeField === fieldToShow || hoveredField === fieldToShow) {
+            // Draw resize handles
+            const handleSize = 16; // Increased size for easier grabbing
+            ctx.fillStyle = borderColor;
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
 
-          // Add visual indicator for resize mode
-          if (isResizing) {
-            ctx.fillStyle = '#ff6b6b';
-            ctx.font = `${12 * scale}px Arial`;
-            ctx.textAlign = 'center';
-            ctx.fillText('Resizing...', containerX, containerY - containerHeight_px / 2 - 20);
-            ctx.fillStyle = borderColor; // Reset fill color
-          } else if (isDragging) {
-            ctx.fillStyle = '#4ecdc4';
-            ctx.font = `${12 * scale}px Arial`;
-            ctx.textAlign = 'center';
-            ctx.fillText('Dragging...', containerX, containerY - containerHeight_px / 2 - 20);
-            ctx.fillStyle = borderColor; // Reset fill color
+            // Northwest handle
+            ctx.fillRect(
+              containerX - containerWidth_px / 2 - handleSize / 2,
+              containerY - containerHeight_px / 2 - handleSize / 2,
+              handleSize,
+              handleSize
+            );
+            ctx.strokeRect(
+              containerX - containerWidth_px / 2 - handleSize / 2,
+              containerY - containerHeight_px / 2 - handleSize / 2,
+              handleSize,
+              handleSize
+            );
+
+            // Northeast handle
+            ctx.fillRect(
+              containerX + containerWidth_px / 2 - handleSize / 2,
+              containerY - containerHeight_px / 2 - handleSize / 2,
+              handleSize,
+              handleSize
+            );
+            ctx.strokeRect(
+              containerX + containerWidth_px / 2 - handleSize / 2,
+              containerY - containerHeight_px / 2 - handleSize / 2,
+              handleSize,
+              handleSize
+            );
+
+            // Southwest handle
+            ctx.fillRect(
+              containerX - containerWidth_px / 2 - handleSize / 2,
+              containerY + containerHeight_px / 2 - handleSize / 2,
+              handleSize,
+              handleSize
+            );
+            ctx.strokeRect(
+              containerX - containerWidth_px / 2 - handleSize / 2,
+              containerY + containerHeight_px / 2 - handleSize / 2,
+              handleSize,
+              handleSize
+            );
+
+            // Southeast handle
+            ctx.fillRect(
+              containerX + containerWidth_px / 2 - handleSize / 2,
+              containerY + containerHeight_px / 2 - handleSize / 2,
+              handleSize,
+              handleSize
+            );
+            ctx.strokeRect(
+              containerX + containerWidth_px / 2 - handleSize / 2,
+              containerY + containerHeight_px / 2 - handleSize / 2,
+              handleSize,
+              handleSize
+            );
           }
-
-          // Northwest handle
-          ctx.fillRect(
-            containerX - containerWidth_px / 2 - handleSize / 2,
-            containerY - containerHeight_px / 2 - handleSize / 2,
-            handleSize,
-            handleSize
-          );
-          ctx.strokeRect(
-            containerX - containerWidth_px / 2 - handleSize / 2,
-            containerY - containerHeight_px / 2 - handleSize / 2,
-            handleSize,
-            handleSize
-          );
-
-          // Northeast handle
-          ctx.fillRect(
-            containerX + containerWidth_px / 2 - handleSize / 2,
-            containerY - containerHeight_px / 2 - handleSize / 2,
-            handleSize,
-            handleSize
-          );
-          ctx.strokeRect(
-            containerX + containerWidth_px / 2 - handleSize / 2,
-            containerY - containerHeight_px / 2 - handleSize / 2,
-            handleSize,
-            handleSize
-          );
-
-          // Southwest handle
-          ctx.fillRect(
-            containerX - containerWidth_px / 2 - handleSize / 2,
-            containerY + containerHeight_px / 2 - handleSize / 2,
-            handleSize,
-            handleSize
-          );
-          ctx.strokeRect(
-            containerX - containerWidth_px / 2 - handleSize / 2,
-            containerY + containerHeight_px / 2 - handleSize / 2,
-            handleSize,
-            handleSize
-          );
-
-          // Southeast handle
-          ctx.fillRect(
-            containerX + containerWidth_px / 2 - handleSize / 2,
-            containerY + containerHeight_px / 2 - handleSize / 2,
-            handleSize,
-            handleSize
-          );
-          ctx.strokeRect(
-            containerX + containerWidth_px / 2 - handleSize / 2,
-            containerY + containerHeight_px / 2 - handleSize / 2,
-            handleSize,
-            handleSize
-          );
         }
       }
     };
@@ -559,7 +549,7 @@ export const MemeGenerator: React.FC = () => {
              
              {selectedTemplate && (
                <p className="text-sm text-gray-600 dark:text-gray-400 mt-3 text-center">
-                 Hover over text to see handles • Drag text to move • Drag corner handles to resize • Use Select button to activate fields
+                 Hover near text to see handles • Extended clickable area around text boxes • Drag text to move • Drag corner handles to resize
                </p>
              )}
            </Card>

@@ -155,24 +155,29 @@ export const calculateTextPosition = (
 };
 
 /**
- * Check if a point is within a text field's bounds
+ * Check if a point is within a text field's bounds (including buffer zone)
  */
 export const isPointInTextField = (
   pointX: number,
   pointY: number,
   field: TextField,
   canvasWidth: number,
-  canvasHeight: number
+  canvasHeight: number,
+  bufferZone: number = 20 // Buffer zone in pixels around the field
 ): boolean => {
   const fieldPixelPos = percentageToPixels(field.x, field.y, canvasWidth, canvasHeight);
   const fieldPixelWidth = (field.width / 100) * canvasWidth;
   const fieldPixelHeight = (field.height / 100) * canvasHeight;
   
+  // Add buffer zone around the field
+  const bufferedWidth = fieldPixelWidth + (bufferZone * 2);
+  const bufferedHeight = fieldPixelHeight + (bufferZone * 2);
+  
   return (
-    pointX >= fieldPixelPos.x - fieldPixelWidth / 2 &&
-    pointX <= fieldPixelPos.x + fieldPixelWidth / 2 &&
-    pointY >= fieldPixelPos.y - fieldPixelHeight / 2 &&
-    pointY <= fieldPixelPos.y + fieldPixelHeight / 2
+    pointX >= fieldPixelPos.x - bufferedWidth / 2 &&
+    pointX <= fieldPixelPos.x + bufferedWidth / 2 &&
+    pointY >= fieldPixelPos.y - bufferedHeight / 2 &&
+    pointY <= fieldPixelPos.y + bufferedHeight / 2
   );
 };
 
@@ -190,9 +195,9 @@ export const getResizeHandle = (
   const fieldPixelWidth = (field.width / 100) * canvasWidth;
   const fieldPixelHeight = (field.height / 100) * canvasHeight;
   
-  const handleSize = 12; // Size of resize handle in pixels for easier grabbing
+  const handleSize = 16; // Increased size for easier grabbing
   
-  // Check each corner
+  // Check each corner with extended handle areas
   const nw = {
     x: fieldPixelPos.x - fieldPixelWidth / 2,
     y: fieldPixelPos.y - fieldPixelHeight / 2
@@ -210,6 +215,7 @@ export const getResizeHandle = (
     y: fieldPixelPos.y + fieldPixelHeight / 2
   };
   
+  // Check if point is within handle area (extended for easier grabbing)
   if (Math.abs(pointX - nw.x) <= handleSize && Math.abs(pointY - nw.y) <= handleSize) return 'nw';
   if (Math.abs(pointX - ne.x) <= handleSize && Math.abs(pointY - ne.y) <= handleSize) return 'ne';
   if (Math.abs(pointX - sw.x) <= handleSize && Math.abs(pointY - sw.y) <= handleSize) return 'sw';
