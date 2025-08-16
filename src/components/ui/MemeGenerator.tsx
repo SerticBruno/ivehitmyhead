@@ -31,6 +31,7 @@ export const MemeGenerator: React.FC = () => {
   const [showTemplateBrowser, setShowTemplateBrowser] = useState(false);
   const [showTemplateManager, setShowTemplateManager] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<MemeTemplate | null>(null);
+  const [openSettingsDropdown, setOpenSettingsDropdown] = useState<string | null>(null);
 
 
 
@@ -71,6 +72,10 @@ export const MemeGenerator: React.FC = () => {
     setShowTemplateManager(false);
     setEditingTemplate(null);
   }, []);
+
+  const toggleSettingsDropdown = useCallback((fieldId: string) => {
+    setOpenSettingsDropdown(openSettingsDropdown === fieldId ? null : fieldId);
+  }, [openSettingsDropdown]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!canvasRef.current) return;
@@ -313,11 +318,13 @@ export const MemeGenerator: React.FC = () => {
       textFields.forEach(field => {
         if (!field.text.trim()) return;
 
-        ctx.font = `${field.fontSize * scale}px Impact, Arial, sans-serif`;
+        const fontFamily = field.fontFamily || 'Impact';
+        const fontWeight = field.fontWeight || 'bold';
+        ctx.font = `${fontWeight} ${field.fontSize * scale}px ${fontFamily}, Arial, sans-serif`;
         ctx.fillStyle = field.color;
-        ctx.strokeStyle = '#000000';
-        ctx.lineWidth = 3 * scale;
-        ctx.textAlign = 'center';
+        ctx.strokeStyle = field.strokeColor || '#000000';
+        ctx.lineWidth = (field.strokeWidth || 2) * scale;
+        ctx.textAlign = field.textAlign || 'center';
         ctx.textBaseline = 'middle';
 
         // Convert percentage positions to actual canvas coordinates
@@ -465,11 +472,19 @@ export const MemeGenerator: React.FC = () => {
           setIsDropdownOpen(false);
         }
       }
+      
+      // Close settings dropdown when clicking outside
+      if (openSettingsDropdown && event.target instanceof Element) {
+        const settingsContainer = document.querySelector(`[data-settings-container="${openSettingsDropdown}"]`);
+        if (settingsContainer && !settingsContainer.contains(event.target)) {
+          setOpenSettingsDropdown(null);
+        }
+      }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isDropdownOpen]);
+  }, [isDropdownOpen, openSettingsDropdown]);
 
   return (
     <div className="max-w-7xl mx-auto p-6">
@@ -633,105 +648,121 @@ export const MemeGenerator: React.FC = () => {
                         placeholder={`Enter ${field.id} text...`}
                         className="flex-1"
                       />
-                      <button
-                        onClick={() => setActiveField(field.id)}
-                        className={`ml-2 px-3 py-2 text-xs rounded transition-colors ${
-                          activeField === field.id
-                            ? 'bg-blue-500 text-white'
-                            : 'bg-gray-200 text-gray-600 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
-                        }`}
-                      >
-                        {activeField === field.id ? 'Active' : 'Select'}
-                      </button>
-                    </div>
-                    
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <label className="text-sm text-gray-600 dark:text-gray-400">
-                          Font Size: {field.fontSize}px
-                        </label>
-                        <input
-                          type="range"
-                          min="20"
-                          max="80"
-                          value={field.fontSize}
-                          onChange={(e) => 
-                            setTextFields(prev => 
-                              prev.map(f => 
-                                f.id === field.id 
-                                  ? { ...f, fontSize: parseInt(e.target.value) }
-                                  : f
-                              )
-                            )
-                          }
-                          className="w-24"
-                        />
-                      </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <label className="text-sm text-gray-600 dark:text-gray-400">
-                          Container Width: {field.width.toFixed(1)}%
-                        </label>
-                        <input
-                          type="range"
-                          min="10"
-                          max="90"
-                          step="0.5"
-                          value={field.width}
-                          onChange={(e) => 
-                            setTextFields(prev => 
-                              prev.map(f => 
-                                f.id === field.id 
-                                  ? { ...f, width: parseFloat(e.target.value) }
-                                  : f
-                              )
-                            )
-                          }
-                          className="w-24"
-                        />
-                      </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <label className="text-sm text-gray-600 dark:text-gray-400">
-                          Container Height: {field.height.toFixed(1)}%
-                        </label>
-                        <input
-                          type="range"
-                          min="5"
-                          max="40"
-                          step="0.5"
-                          value={field.height}
-                          onChange={(e) => 
-                            setTextFields(prev => 
-                              prev.map(f => 
-                                f.id === field.id 
-                                  ? { ...f, height: parseFloat(e.target.value) }
-                                  : f
-                              )
-                            )
-                          }
-                          className="w-24"
-                        />
-                      </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <label className="text-sm text-gray-600 dark:text-gray-400">
-                          Color:
-                        </label>
-                        <input
-                          type="color"
-                          value={field.color}
-                          onChange={(e) => 
-                            setTextFields(prev => 
-                              prev.map(f => 
-                                f.id === field.id 
-                                  ? { ...f, color: e.target.value }
-                                  : f
-                              )
-                            )
-                          }
-                          className="w-10 h-10 rounded border cursor-pointer"
-                        />
+                      <div className="flex items-center space-x-2 ml-2">
+                        <button
+                          onClick={() => setActiveField(field.id)}
+                          className={`px-3 py-2 text-xs rounded transition-colors ${
+                            activeField === field.id
+                              ? 'bg-blue-500 text-white'
+                              : 'bg-gray-200 text-gray-600 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                          }`}
+                        >
+                          {activeField === field.id ? 'Active' : 'Select'}
+                        </button>
+                        <div className="relative" data-settings-container={field.id}>
+                          <button
+                            onClick={() => toggleSettingsDropdown(field.id)}
+                            className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-700"
+                            title="Settings"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                          </button>
+                          
+                          {/* Settings Dropdown */}
+                          {openSettingsDropdown === field.id && (
+                            <div className="absolute top-full right-0 mt-2 z-50 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg p-4 min-w-64">
+                              <div className="flex items-center justify-between mb-3">
+                                <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+                                  Text Settings
+                                </h4>
+                                <button
+                                  onClick={() => setOpenSettingsDropdown(null)}
+                                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                  </svg>
+                                </button>
+                              </div>
+
+                              <div className="space-y-3">
+                                {/* Font Family */}
+                                <div>
+                                  <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">Font</label>
+                                  <select
+                                    value={field.fontFamily || 'Impact'}
+                                    onChange={(e) => 
+                                      setTextFields(prev => 
+                                        prev.map(f => 
+                                          f.id === field.id 
+                                            ? { ...f, fontFamily: e.target.value }
+                                            : f
+                                        )
+                                      )
+                                    }
+                                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                  >
+                                    <option value="Impact">Impact</option>
+                                    <option value="Arial">Arial</option>
+                                    <option value="Helvetica">Helvetica</option>
+                                    <option value="Comic Sans MS">Comic Sans MS</option>
+                                    <option value="Times New Roman">Times New Roman</option>
+                                  </select>
+                                </div>
+
+                                {/* Font Size */}
+                                <div>
+                                  <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">
+                                    Size: {field.fontSize}px
+                                  </label>
+                                  <input
+                                    type="range"
+                                    min="20"
+                                    max="80"
+                                    value={field.fontSize}
+                                    onChange={(e) => 
+                                      setTextFields(prev => 
+                                        prev.map(f => 
+                                          f.id === field.id 
+                                            ? { ...f, fontSize: parseInt(e.target.value) }
+                                            : f
+                                        )
+                                      )
+                                    }
+                                    className="w-full"
+                                  />
+                                </div>
+
+                                {/* Text Color */}
+                                <div>
+                                  <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">Color</label>
+                                  <div className="flex items-center space-x-2">
+                                    <input
+                                      type="color"
+                                      value={field.color}
+                                      onChange={(e) => 
+                                        setTextFields(prev => 
+                                          prev.map(f => 
+                                            f.id === field.id 
+                                              ? { ...f, color: e.target.value }
+                                              : f
+                                          )
+                                        )
+                                      }
+                                      className="w-10 h-10 rounded border cursor-pointer"
+                                    />
+                                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                                      {field.color}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -769,6 +800,8 @@ export const MemeGenerator: React.FC = () => {
         </div>
       </div>
       )}
+
+
     </div>
   );
 };
