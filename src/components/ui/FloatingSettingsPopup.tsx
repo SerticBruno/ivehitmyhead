@@ -21,9 +21,17 @@ export const FloatingSettingsPopup: React.FC<FloatingSettingsPopupProps> = ({
   onClose,
   onUpdateProperty
 }) => {
-  if (!isOpen) return null;
+  const [mounted, setMounted] = useState(false);
 
-  return (
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
+
+  if (!isOpen || !mounted) return null;
+
+  // Create portal to render outside canvas container
+  return createPortal(
     <div 
       data-settings-popup
       className="absolute z-[9999] bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg p-4 min-w-80 pointer-events-auto"
@@ -220,7 +228,8 @@ export const FloatingSettingsPopup: React.FC<FloatingSettingsPopupProps> = ({
             </div>
           </div>
         </div>
-      </div>
-    </div>
-  );
-};
+             </div>
+     </div>,
+     document.body
+   );
+ };

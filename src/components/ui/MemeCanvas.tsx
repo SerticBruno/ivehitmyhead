@@ -557,11 +557,16 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
           settingsCogY = fieldCenterY + rotatedOffsetY;
         }
         
+        // Convert canvas coordinates to screen coordinates for fixed positioning
+        const canvasRect = canvasRef.current!.getBoundingClientRect();
+        const screenX = canvasRect.left + settingsCogX;
+        const screenY = canvasRect.top + settingsCogY;
+        
         setSettingsPopup({
           isOpen: true,
           fieldId: field.id,
-          x: settingsCogX,
-          y: settingsCogY
+          x: screenX,
+          y: screenY
         });
         return;
       }
@@ -1019,19 +1024,17 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
         }}
       />
       
-      {/* Settings Popup */}
-      {settingsPopup && (
-        <div className="absolute inset-0 pointer-events-none">
-          <FloatingSettingsPopup
-            field={textFields.find(f => f.id === settingsPopup.fieldId)!}
-            isOpen={settingsPopup.isOpen}
-            x={settingsPopup.x}
-            y={settingsPopup.y}
-            onClose={closeSettingsPopup}
-            onUpdateProperty={handlePropertyUpdate}
-          />
-        </div>
-      )}
+             {/* Settings Popup - rendered via portal outside canvas container */}
+       {settingsPopup && (
+         <FloatingSettingsPopup
+           field={textFields.find(f => f.id === settingsPopup.fieldId)!}
+           isOpen={settingsPopup.isOpen}
+           x={settingsPopup.x}
+           y={settingsPopup.y}
+           onClose={closeSettingsPopup}
+           onUpdateProperty={handlePropertyUpdate}
+         />
+       )}
     </div>
   );
 };
