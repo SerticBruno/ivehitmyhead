@@ -179,10 +179,10 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
       let newY = resizeStartState.startY;
       
       switch (resizeHandle) {
-        case 'nw': // Northwest handle - anchor at southeast corner
-          // Resize based on delta movement
-          newWidth = Math.max(20, resizeStartState.startWidth - deltaXPercent);
-          newHeight = Math.max(20, resizeStartState.startHeight - deltaYPercent);
+                 case 'nw': // Northwest handle - anchor at southeast corner
+           // Resize based on delta movement
+           newWidth = Math.max(8, resizeStartState.startWidth - deltaXPercent);
+           newHeight = Math.max(8, resizeStartState.startHeight - deltaYPercent);
           
           // Calculate new center position to keep southeast corner fixed
           const nwRightEdge = (resizeStartState.startX + resizeStartState.startWidth / 2) / 100 * rect.width;
@@ -191,10 +191,10 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
           newY = ((nwBottomEdge - (newHeight / 100 * rect.height / 2)) / rect.height) * 100;
           break;
           
-        case 'ne': // Northeast handle - anchor at southwest corner
-          // Resize based on delta movement
-          newWidth = Math.max(20, resizeStartState.startWidth + deltaXPercent);
-          newHeight = Math.max(20, resizeStartState.startHeight - deltaYPercent);
+                 case 'ne': // Northeast handle - anchor at southwest corner
+           // Resize based on delta movement
+           newWidth = Math.max(8, resizeStartState.startWidth + deltaXPercent);
+           newHeight = Math.max(8, resizeStartState.startHeight - deltaYPercent);
           
           // Calculate new center position to keep southwest corner fixed
           const neLeftEdge = (resizeStartState.startX - resizeStartState.startWidth / 2) / 100 * rect.width;
@@ -203,10 +203,10 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
           newY = ((neBottomEdge - (newHeight / 100 * rect.height / 2)) / rect.height) * 100;
           break;
           
-        case 'sw': // Southwest handle - anchor at northeast corner
-          // Resize based on delta movement
-          newWidth = Math.max(20, resizeStartState.startWidth - deltaXPercent);
-          newHeight = Math.max(20, resizeStartState.startHeight + deltaYPercent);
+                 case 'sw': // Southwest handle - anchor at northeast corner
+           // Resize based on delta movement
+           newWidth = Math.max(8, resizeStartState.startWidth - deltaXPercent);
+           newHeight = Math.max(8, resizeStartState.startHeight + deltaYPercent);
           
           // Calculate new center position to keep northeast corner fixed
           const swRightEdge = (resizeStartState.startX + resizeStartState.startWidth / 2) / 100 * rect.width;
@@ -215,10 +215,10 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
           newY = ((swTopEdge + (newHeight / 100 * rect.height / 2)) / rect.height) * 100;
           break;
           
-        case 'se': // Southeast handle - anchor at northwest corner
-          // Resize based on delta movement
-          newWidth = Math.max(20, resizeStartState.startWidth + deltaXPercent);
-          newHeight = Math.max(20, resizeStartState.startHeight + deltaYPercent);
+                 case 'se': // Southeast handle - anchor at northwest corner
+           // Resize based on delta movement
+           newWidth = Math.max(8, resizeStartState.startWidth + deltaXPercent);
+           newHeight = Math.max(8, resizeStartState.startHeight + deltaYPercent);
           
           // Calculate new center position to keep northwest corner fixed
           const seLeftEdge = (resizeStartState.startX - resizeStartState.startWidth / 2) / 100 * rect.width;
@@ -440,9 +440,9 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
           containerHeight_px
         );
 
-        // Draw resize handles with higher z-index (drawn on top)
-        // This ensures handles are always clickable above the text field content
-        const handleSize = 16;
+                 // Draw resize handles with higher z-index (drawn on top)
+         // This ensures handles are always clickable above the text field content
+         const handleSize = 24; // Increased from 16 to 24 for better clickability
         const handles = [
           { x: containerX - containerWidth_px / 2, y: containerY - containerHeight_px / 2, type: 'nw' }, // nw
           { x: containerX + containerWidth_px / 2, y: containerY - containerHeight_px / 2, type: 'ne' }, // ne
@@ -450,31 +450,44 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
           { x: containerX + containerWidth_px / 2, y: containerY + containerHeight_px / 2, type: 'se' }  // se
         ];
 
-        handles.forEach(handle => {
-          // Highlight the active resize handle
-          if (isResizing && resizeHandle === handle.type) {
-            ctx.fillStyle = '#ff6b6b'; // Red for active handle
-            ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 3;
-          } else {
-            ctx.fillStyle = '#007bff'; // Blue for inactive handles
-            ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 2;
-          }
-          
-          ctx.fillRect(
-            handle.x - handleSize / 2,
-            handle.y - handleSize / 2,
-            handleSize,
-            handleSize
-          );
-          ctx.strokeRect(
-            handle.x - handleSize / 2,
-            handle.y - handleSize / 2,
-            handleSize,
-            handleSize
-          );
-        });
+                 handles.forEach(handle => {
+           // Highlight the active resize handle
+           if (isResizing && resizeHandle === handle.type) {
+             ctx.fillStyle = '#ff6b6b'; // Red for active handle
+             ctx.strokeStyle = '#ffffff';
+             ctx.lineWidth = 3;
+           } else {
+             ctx.fillStyle = '#007bff'; // Blue for inactive handles
+             ctx.strokeStyle = '#ffffff';
+             ctx.lineWidth = 2;
+           }
+           
+           // Draw a subtle shadow/glow effect for better visibility
+           ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+           ctx.shadowBlur = 4;
+           ctx.shadowOffsetX = 1;
+           ctx.shadowOffsetY = 1;
+           
+           ctx.fillRect(
+             handle.x - handleSize / 2,
+             handle.y - handleSize / 2,
+             handleSize,
+             handleSize
+           );
+           
+           // Reset shadow for stroke
+           ctx.shadowColor = 'transparent';
+           ctx.shadowBlur = 0;
+           ctx.shadowOffsetX = 0;
+           ctx.shadowOffsetY = 0;
+           
+           ctx.strokeRect(
+             handle.x - handleSize / 2,
+             handle.y - handleSize / 2,
+             handleSize,
+             handleSize
+           );
+         });
       }
     }
 
