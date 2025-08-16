@@ -6,6 +6,7 @@ export { CategoryCard } from './CategoryCard';
 export { FeaturedCreator } from './FeaturedCreator';
 export { Input } from './Input';
 export { MemeUpload } from './MemeUpload';
+export { MemeGenerator } from './MemeGenerator';
 export { Newsletter } from './Newsletter';
 export { Stats } from './Stats';
 export { TrendingTags } from './TrendingTags'; 
