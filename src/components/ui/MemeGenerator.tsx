@@ -202,6 +202,7 @@ export const MemeGenerator: React.FC = () => {
               onFieldMove={handleFieldMove}
               onFieldResize={handleFieldResize}
               onFieldRotate={handleFieldRotate}
+              onUpdateProperty={updateTextFieldProperty}
               onDownload={downloadMeme}
             />
           </div>

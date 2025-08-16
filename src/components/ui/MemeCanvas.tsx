@@ -6,6 +6,7 @@ import {
   isPointInTextField,
   renderTextOnCanvas
 } from '../../lib/utils/templateUtils';
+import { FloatingSettingsPopup } from './FloatingSettingsPopup';
 
 interface MemeCanvasProps {
   selectedTemplate: MemeTemplate | null;
@@ -17,6 +18,7 @@ interface MemeCanvasProps {
   onFieldMove: (fieldId: string, x: number, y: number) => void;
   onFieldResize: (fieldId: string, width: number, height: number) => void;
   onFieldRotate?: (fieldId: string, rotation: number) => void;
+  onUpdateProperty?: (fieldId: string, property: string, value: string | number | boolean) => void;
 }
 
 export const MemeCanvas: React.FC<MemeCanvasProps> = ({
@@ -28,7 +30,8 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
   onFieldHover,
   onFieldMove,
   onFieldResize,
-  onFieldRotate
+  onFieldRotate,
+  onUpdateProperty
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -53,6 +56,14 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
     centerX: 0,
     centerY: 0
   });
+
+  // Settings popup state
+  const [settingsPopup, setSettingsPopup] = useState<{
+    isOpen: boolean;
+    fieldId: string;
+    x: number;
+    y: number;
+  } | null>(null);
 
 
 
@@ -141,6 +152,40 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
     const distance = Math.sqrt((rotatedX - handleX) ** 2 + (rotatedY - handleY) ** 2);
     
     return distance <= 6; // 6 is half of handleSize (12)
+  }, []);
+
+  // Helper function to check if a point is over the settings cog
+  const isOverSettingsCog = useCallback((x: number, y: number, field: TextField, canvasWidth: number, canvasHeight: number): boolean => {
+    const containerX = (field.x / 100) * canvasWidth;
+    const containerY = (field.y / 100) * canvasHeight;
+    const containerHeight_px = (field.height / 100) * canvasHeight;
+    
+    const settingsCogSize = 14; // 12 * 1.2
+    
+    // Calculate the position beneath the text field, accounting for rotation (same logic as drawing)
+    let settingsCogX = containerX;
+    let settingsCogY = containerY + containerHeight_px / 2 + settingsCogSize + 8;
+    
+    // If the field is rotated, adjust the settings cog position to follow the rotated text
+    if (field.rotation && field.rotation !== 0) {
+      const angleRad = (field.rotation * Math.PI) / 180;
+      const cos = Math.cos(angleRad);
+      const sin = Math.sin(angleRad);
+      
+      // Calculate the offset from the center to the bottom of the text field
+      const bottomOffset = containerHeight_px / 2 + settingsCogSize + 8;
+      
+      // Apply rotation to the offset
+      const rotatedOffsetX = bottomOffset * sin;
+      const rotatedOffsetY = bottomOffset * cos;
+      
+      settingsCogX = containerX + rotatedOffsetX;
+      settingsCogY = containerY + rotatedOffsetY;
+    }
+    
+    // Simple distance calculation
+    const distance = Math.sqrt((x - settingsCogX) ** 2 + (y - settingsCogY) ** 2);
+    return distance <= settingsCogSize / 2;
   }, []);
 
   // Single render function that handles everything
@@ -312,6 +357,62 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
             ctx.moveTo(rotationHandleX + 8, rotationHandleY + 2);
             ctx.lineTo(rotationHandleX + 6, rotationHandleY);
             ctx.stroke();
+            
+            // Draw settings cog (beneath the text field) - positioned to follow the rotated text field
+            const settingsCogSize = handleSize * 1.2;
+            
+            // Calculate the position beneath the text field, accounting for rotation
+            let settingsCogX = containerX;
+            let settingsCogY = containerY + containerHeight_px / 2 + settingsCogSize + 8;
+            
+            // If the field is rotated, adjust the settings cog position to follow the rotated text
+            if (selectedField.rotation && selectedField.rotation !== 0) {
+              const angleRad = (selectedField.rotation * Math.PI) / 180;
+              const cos = Math.cos(angleRad);
+              const sin = Math.sin(angleRad);
+              
+              // Calculate the offset from the center to the bottom of the text field
+              const bottomOffset = containerHeight_px / 2 + settingsCogSize + 8;
+              
+              // Apply rotation to the offset
+              const rotatedOffsetX = bottomOffset * sin;
+              const rotatedOffsetY = bottomOffset * cos;
+              
+              settingsCogX = containerX + rotatedOffsetX;
+              settingsCogY = containerY + rotatedOffsetY;
+            }
+            
+            // Draw settings cog icon
+            ctx.fillStyle = '#6b7280';
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            
+            // Draw circular background
+            ctx.beginPath();
+            ctx.arc(settingsCogX, settingsCogY, settingsCogSize / 2, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.stroke();
+            
+            // Draw cog teeth
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            
+            // Draw 6 cog teeth around the circle
+            for (let i = 0; i < 6; i++) {
+              const angle = (i * Math.PI) / 3;
+              const outerRadius = settingsCogSize / 2 + 2;
+              const innerRadius = settingsCogSize / 2 - 2;
+              
+              const outerX = settingsCogX + Math.cos(angle) * outerRadius;
+              const outerY = settingsCogY + Math.sin(angle) * outerRadius;
+              const innerX = settingsCogX + Math.cos(angle) * innerRadius;
+              const innerY = settingsCogY + Math.sin(angle) * innerRadius;
+              
+              ctx.moveTo(outerX, outerY);
+              ctx.lineTo(innerX, innerY);
+            }
+            ctx.stroke();
           }
         }
 
@@ -351,6 +452,62 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
             );
             ctx.setLineDash([]);
             
+            // Draw settings cog for hovered field (beneath the text field)
+            const settingsCogSize = 12 * 1.2;
+            
+            // Calculate the position beneath the text field, accounting for rotation
+            let settingsCogX = containerX;
+            let settingsCogY = containerY + containerHeight_px / 2 + settingsCogSize + 8;
+            
+            // If the field is rotated, adjust the settings cog position to follow the rotated text
+            if (hoveredFieldObj.rotation && hoveredFieldObj.rotation !== 0) {
+              const angleRad = (hoveredFieldObj.rotation * Math.PI) / 180;
+              const cos = Math.cos(angleRad);
+              const sin = Math.sin(angleRad);
+              
+              // Calculate the offset from the center to the bottom of the text field
+              const bottomOffset = containerHeight_px / 2 + settingsCogSize + 8;
+              
+              // Apply rotation to the offset
+              const rotatedOffsetX = bottomOffset * sin;
+              const rotatedOffsetY = bottomOffset * cos;
+              
+              settingsCogX = containerX + rotatedOffsetX;
+              settingsCogY = containerY + rotatedOffsetY;
+            }
+            
+            // Draw settings cog icon
+            ctx.fillStyle = '#9ca3af';
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 1;
+            
+            // Draw circular background
+            ctx.beginPath();
+            ctx.arc(settingsCogX, settingsCogY, settingsCogSize / 2, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.stroke();
+            
+            // Draw cog teeth
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            
+            // Draw 6 cog teeth around the circle
+            for (let i = 0; i < 6; i++) {
+              const angle = (i * Math.PI) / 3;
+              const outerRadius = settingsCogSize / 2 + 1;
+              const innerRadius = settingsCogSize / 2 - 1;
+              
+              const outerX = settingsCogX + Math.cos(angle) * outerRadius;
+              const outerY = settingsCogY + Math.sin(angle) * outerRadius;
+              const innerX = settingsCogX + Math.cos(angle) * innerRadius;
+              const innerY = settingsCogY + Math.sin(angle) * innerRadius;
+              
+              ctx.moveTo(outerX, outerY);
+              ctx.lineTo(innerX, innerY);
+            }
+            ctx.stroke();
+            
             // Restore the context state if we rotated
             if (hoveredFieldObj.rotation && hoveredFieldObj.rotation !== 0) {
               ctx.restore();
@@ -369,7 +526,48 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    // Check if clicking on a resize handle first
+    // Check if clicking on a settings cog first (for any field)
+    for (const field of textFields) {
+      if (isOverSettingsCog(x, y, field, rect.width, rect.height)) {
+        // Open settings popup for this field
+        // Use canvas-relative coordinates for absolute positioning
+        const fieldCenterX = (field.x / 100) * rect.width;
+        const fieldCenterY = (field.y / 100) * rect.height;
+        
+        // Calculate position beneath the cog (same logic as drawing the cog)
+        const containerHeight_px = (field.height / 100) * rect.height;
+        const settingsCogSize = 12 * 1.2;
+        let settingsCogX = fieldCenterX;
+        let settingsCogY = fieldCenterY + containerHeight_px / 2 + settingsCogSize + 8;
+        
+        // If the field is rotated, adjust the settings cog position to follow the rotated text
+        if (field.rotation && field.rotation !== 0) {
+          const angleRad = (field.rotation * Math.PI) / 180;
+          const cos = Math.cos(angleRad);
+          const sin = Math.sin(angleRad);
+          
+          // Calculate the offset from the center to the bottom of the text field
+          const bottomOffset = containerHeight_px / 2 + settingsCogSize + 8;
+          
+          // Apply rotation to the offset
+          const rotatedOffsetX = bottomOffset * sin;
+          const rotatedOffsetY = bottomOffset * cos;
+          
+          settingsCogX = fieldCenterX + rotatedOffsetX;
+          settingsCogY = fieldCenterY + rotatedOffsetY;
+        }
+        
+        setSettingsPopup({
+          isOpen: true,
+          fieldId: field.id,
+          x: settingsCogX,
+          y: settingsCogY
+        });
+        return;
+      }
+    }
+    
+    // Check if clicking on a resize handle or rotation handle of the active field
     if (activeField) {
       const selectedField = textFields.find(f => f.id === activeField);
       if (selectedField) {
@@ -431,7 +629,7 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
     } else {
       onFieldSelect(null);
     }
-  }, [textFields, onFieldSelect, activeField, isOverRotatedResizeHandle, isOverRotationHandle, getResizeHandleInfo]);
+  }, [textFields, onFieldSelect, activeField, isOverRotatedResizeHandle, isOverRotationHandle, getResizeHandleInfo, isOverSettingsCog]);
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
@@ -501,6 +699,18 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
     }
   }, [textFields, isDragging, isResizing, onFieldSelect]);
 
+  // Function to close settings popup
+  const closeSettingsPopup = useCallback(() => {
+    setSettingsPopup(null);
+  }, []);
+
+  // Function to handle property updates
+  const handlePropertyUpdate = useCallback((fieldId: string, property: string, value: string | number | boolean) => {
+    if (onUpdateProperty) {
+      onUpdateProperty(fieldId, property, value);
+    }
+  }, [onUpdateProperty]);
+
   // Simplified resize logic
   const handleResize = useCallback((handle: 'nw' | 'ne' | 'sw' | 'se', deltaX: number, deltaY: number) => {
     if (!activeField || !resizeStartState.field) return;
@@ -560,10 +770,19 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
     });
     onFieldHover(hoveredField?.id || null);
 
-    // Check if mouse is over a resize handle or rotation handle of the active field
+    // Check if mouse is over a resize handle, rotation handle, or settings cog of any field
     let isOverResizeHandle = false;
     let isOverRotationHandleVar = false;
+    let isOverSettingsCogVar = false;
     let resizeCursor: string | null = null;
+    
+    // Check all fields for settings cog hover
+    for (const field of textFields) {
+      if (isOverSettingsCog(x, y, field, rect.width, rect.height)) {
+        isOverSettingsCogVar = true;
+        break;
+      }
+    }
     
     if (activeField) {
       const selectedField = textFields.find(f => f.id === activeField);
@@ -589,6 +808,8 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
     // Update cursor based on what we're hovering over
     if (isOverRotationHandleVar) {
       e.currentTarget.style.cursor = 'grab';
+    } else if (isOverSettingsCogVar) {
+      e.currentTarget.style.cursor = 'pointer';
     } else if (isOverResizeHandle && resizeCursor) {
       e.currentTarget.style.cursor = resizeCursor;
     } else if (hoveredField) {
@@ -641,7 +862,7 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
       
       onFieldMove(activeField, newX, newY);
     }
-  }, [isDragging, isResizing, isRotating, activeField, resizeHandle, dragOffset, textFields, onFieldHover, onFieldMove, resizeStartState, rotationStartState, onFieldRotate, handleResize, isOverRotatedResizeHandle, getResizeHandleInfo, isOverRotationHandle]);
+  }, [isDragging, isResizing, isRotating, activeField, resizeHandle, dragOffset, textFields, onFieldHover, onFieldMove, resizeStartState, rotationStartState, onFieldRotate, handleResize, isOverRotatedResizeHandle, getResizeHandleInfo, isOverRotationHandle, isOverSettingsCog]);
 
   // Effects
   useEffect(() => {
@@ -733,6 +954,42 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
     };
   }, [renderCanvas]);
 
+  // Global click handler to close settings popup when clicking outside
+  useEffect(() => {
+    const handleGlobalClick = (e: MouseEvent) => {
+      if (settingsPopup) {
+        // Check if the click target is inside the settings popup
+        const popupElement = document.querySelector('[data-settings-popup]');
+        if (popupElement && popupElement.contains(e.target as Node)) {
+          return; // Don't close if clicking inside popup
+        }
+        
+        // Check if click is outside the canvas
+        if (canvasRef.current) {
+          const rect = canvasRef.current.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+          
+          if (x < 0 || y < 0 || x > rect.width || y > rect.height) {
+            setSettingsPopup(null);
+          }
+        }
+      }
+    };
+
+    if (settingsPopup) {
+      // Use a small delay to prevent immediate closing
+      const timeoutId = setTimeout(() => {
+        document.addEventListener('click', handleGlobalClick);
+      }, 100);
+
+      return () => {
+        clearTimeout(timeoutId);
+        document.removeEventListener('click', handleGlobalClick);
+      };
+    }
+  }, [settingsPopup]);
+
   if (!selectedTemplate) {
     return (
       <div className="border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center flex-1 bg-gray-50" style={{ minHeight: '300px' }}>
@@ -761,6 +1018,20 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
           handleMouseUp();
         }}
       />
+      
+      {/* Settings Popup */}
+      {settingsPopup && (
+        <div className="absolute inset-0 pointer-events-none">
+          <FloatingSettingsPopup
+            field={textFields.find(f => f.id === settingsPopup.fieldId)!}
+            isOpen={settingsPopup.isOpen}
+            x={settingsPopup.x}
+            y={settingsPopup.y}
+            onClose={closeSettingsPopup}
+            onUpdateProperty={handlePropertyUpdate}
+          />
+        </div>
+      )}
     </div>
   );
 };

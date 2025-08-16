@@ -16,6 +16,7 @@ interface MemePreviewProps {
   onFieldMove: (fieldId: string, x: number, y: number) => void;
   onFieldResize: (fieldId: string, width: number, height: number) => void;
   onFieldRotate?: (fieldId: string, rotation: number) => void;
+  onUpdateProperty?: (fieldId: string, property: string, value: string | number | boolean) => void;
   onDownload: () => void;
 }
 
@@ -29,6 +30,7 @@ export const MemePreview: React.FC<MemePreviewProps> = ({
   onFieldMove,
   onFieldResize,
   onFieldRotate,
+  onUpdateProperty,
   onDownload
 }) => {
   return (
@@ -52,6 +54,7 @@ export const MemePreview: React.FC<MemePreviewProps> = ({
         onFieldMove={onFieldMove}
         onFieldResize={onFieldResize}
         onFieldRotate={onFieldRotate}
+        onUpdateProperty={onUpdateProperty}
       />
       
       {selectedTemplate && (
