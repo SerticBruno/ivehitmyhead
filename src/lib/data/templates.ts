@@ -45,7 +45,7 @@ export const MEME_TEMPLATES: MemeTemplate[] = [
       {
         id: 'bottom',
         x: 50, // center horizontally
-        y: 80, // 80% from top
+        y: 85, // 80% from top
         width: 30, // 70% of image width
         height: 10, // 15% of image height
         fontSize: 46,

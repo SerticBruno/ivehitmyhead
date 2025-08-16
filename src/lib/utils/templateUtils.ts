@@ -192,14 +192,14 @@ export const isPointInTextField = (
 export const calculateAdjustedYPosition = (
   fieldY: number,
   textY: number,
-  totalHeight: number,
+  fieldHeight: number,
   padding: number
 ): number => {
-  // Always position text at the top of the textbox with padding
-  // textY represents the center of the textbox, so we go up by half the height
+  // Position text at the top of the textbox with top padding
+  // textY represents the center of the textbox, so we go up by half the field height
   // to get to the top edge, then add padding to position text below the top edge
-  // Since we're using 'top' baseline, the text will start at this Y position
-  return textY - (totalHeight / 2) + padding;
+  // Bottom padding is handled in the main rendering logic
+  return textY - (fieldHeight / 2) + padding;
 };
 
 
@@ -269,8 +269,20 @@ export const renderTextOnCanvas = (
   const totalHeight = wrappedLines.length * lineHeight;
   const padding = 16 * scale;
   
-  // Calculate Y position using the same logic as the preview
-  const startY = textY - (totalHeight / 2) + padding;
+  // Calculate Y position with smart vertical centering
+  const textBoxHeight = (field.height / 100) * canvasHeight;
+  const totalTextHeight = wrappedLines.length * lineHeight;
+  const availableHeight = textBoxHeight - (padding * 2); // Account for both top and bottom padding
+  
+  let startY: number;
+  
+  if (totalTextHeight <= availableHeight) {
+    // If text fits within available height, center it vertically
+    startY = textY - (totalTextHeight / 2);
+  } else {
+    // If text is too long, start from top with padding
+    startY = textY - (textBoxHeight / 2) + padding;
+  }
   
   let lineX = textX;
   

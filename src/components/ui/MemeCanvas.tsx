@@ -5,7 +5,6 @@ import { MemeTemplate, TextField } from '../../lib/types/meme';
 import { 
   isPointInTextField,
   getResizeHandle,
-  calculateAdjustedYPosition,
   renderTextOnCanvas
 } from '../../lib/utils/templateUtils';
 
