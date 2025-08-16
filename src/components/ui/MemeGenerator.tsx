@@ -164,7 +164,7 @@ export const MemeGenerator: React.FC = () => {
         };
         e.currentTarget.style.cursor = cursorMap[handle];
       } else {
-        e.currentTarget.style.cursor = 'move';
+        e.currentTarget.style.cursor = 'text';
       }
     } else {
       e.currentTarget.style.cursor = 'default';
@@ -267,6 +267,28 @@ export const MemeGenerator: React.FC = () => {
       canvasRef.current.style.cursor = 'default';
     }
   }, []);
+
+  const handleCanvasClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!canvasRef.current || isDragging || isResizing) return;
+    
+    const rect = canvasRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    // Find if clicking on a text field
+    const clickedField = textFields.find(field => {
+      return isPointInTextField(x, y, field, rect.width, rect.height);
+    });
+
+    if (clickedField) {
+      setActiveField(clickedField.id);
+      // Focus the corresponding input field
+      const inputElement = document.querySelector(`input[data-field-id="${clickedField.id}"]`) as HTMLInputElement;
+      if (inputElement) {
+        inputElement.focus();
+      }
+    }
+  }, [textFields, isDragging, isResizing]);
 
   // Helper function to wrap text to fit within a specified width
   const wrapText = useCallback((ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] => {
@@ -431,17 +453,30 @@ export const MemeGenerator: React.FC = () => {
           const borderColor = activeField === fieldToShow ? '#007bff' : '#6b7280';
 
           // Draw container border
-          const borderWidth = activeField === fieldToShow ? 2 : 1;
+          const borderWidth = activeField === fieldToShow ? 3 : 1;
           ctx.strokeStyle = borderColor;
           ctx.lineWidth = borderWidth;
-          ctx.setLineDash([5, 5]);
-          ctx.strokeRect(
-            containerX - containerWidth_px / 2,
-            containerY - containerHeight_px / 2,
-            containerWidth_px,
-            containerHeight_px
-          );
-          ctx.setLineDash([]);
+          
+          if (activeField === fieldToShow) {
+            // Solid border for active field
+            ctx.setLineDash([]);
+            ctx.strokeRect(
+              containerX - containerWidth_px / 2,
+              containerY - containerHeight_px / 2,
+              containerWidth_px,
+              containerHeight_px
+            );
+          } else {
+            // Dashed border for hovered field
+            ctx.setLineDash([5, 5]);
+            ctx.strokeRect(
+              containerX - containerWidth_px / 2,
+              containerY - containerHeight_px / 2,
+              containerWidth_px,
+              containerHeight_px
+            );
+            ctx.setLineDash([]);
+          }
 
           // Always show resize handles for selected field, or when hovering
           if (activeField === fieldToShow || hoveredField === fieldToShow) {
@@ -624,6 +659,7 @@ export const MemeGenerator: React.FC = () => {
                     onMouseDown={handleMouseDown}
                     onMouseMove={handleMouseMove}
                     onMouseUp={handleMouseUp}
+                    onClick={handleCanvasClick}
                     onMouseLeave={() => {
                       setHoveredField(null);
                       if (canvasRef.current) {
@@ -644,7 +680,7 @@ export const MemeGenerator: React.FC = () => {
              
              {selectedTemplate && (
                <p className="text-sm text-gray-600 dark:text-gray-400 mt-3 text-center">
-                 Hover near text to see handles • Extended clickable area around text boxes • Drag text to move • Drag corner handles to resize
+                 Click on text boxes to edit • Hover to see handles • Drag text to move • Drag corner handles to resize
                </p>
              )}
            </Card>
@@ -719,16 +755,31 @@ export const MemeGenerator: React.FC = () => {
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                       {field.id.charAt(0).toUpperCase() + field.id.slice(1)} Text
                     </label>
-                    <div className={`flex items-center justify-between p-3 rounded-lg border-2 transition-colors ${
-                      activeField === field.id 
-                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
-                        : 'border-gray-200 dark:border-gray-700'
-                    }`}>
+                    <div 
+                      className={`flex items-center justify-between p-3 rounded-lg border-2 transition-all duration-200 cursor-text hover:border-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 ${
+                        activeField === field.id 
+                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 shadow-sm' 
+                          : 'border-gray-200 dark:border-gray-700'
+                      }`}
+                      onClick={(e) => {
+                        // Don't trigger if clicking directly on the input
+                        if (e.target === e.currentTarget || (e.target as Element).closest('button')) {
+                          return;
+                        }
+                        setActiveField(field.id);
+                        // Focus the input field immediately
+                        const inputElement = document.querySelector(`input[data-field-id="${field.id}"]`) as HTMLInputElement;
+                        if (inputElement) {
+                          inputElement.focus();
+                        }
+                      }}
+                    >
                       <input
                         type="text"
                         value={field.text}
                         onChange={(e) => handleTextChange(field.id, e.target.value)}
                         placeholder={`Enter ${field.id} text...`}
+                        data-field-id={field.id}
                         className="flex-1 h-10 px-3 py-2 text-sm border-0 bg-transparent focus:outline-none focus:ring-0 placeholder:text-gray-500 dark:placeholder:text-gray-400"
                       />
                       <div className="flex items-center space-x-2 ml-2">
