@@ -1064,7 +1064,11 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
           if (canvasRef.current) {
             canvasRef.current.style.cursor = 'default';
           }
-          handleMouseUp();
+          // Only call handleMouseUp if we're not actively dragging, resizing, or rotating
+          // This prevents losing focus when dragging outside the canvas
+          if (!isDragging && !isResizing && !isRotating) {
+            handleMouseUp();
+          }
         }}
       />
       
