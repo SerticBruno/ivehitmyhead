@@ -16,8 +16,8 @@ const Footer: React.FC = () => {
             </p>
             <div className="flex space-x-4">
               <a href="#" className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-pointer">
-                <span className="sr-only">Twitter</span>
-                🐦
+                <span className="sr-only">X</span>
+                X
               </a>
               <a href="#" className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-pointer">
                 <span className="sr-only">Discord</span>
