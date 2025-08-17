@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { TemplateManager } from './TemplateManager';
 import { MemePreview } from './MemePreview';
 import { TemplateSelector } from './TemplateSelector';
@@ -8,6 +8,7 @@ import { TextFieldsPanel } from './TextFieldsPanel';
 import { QuickActions } from './QuickActions';
 import { MemeTemplate, TextField } from '../../lib/types/meme';
 import { initializeTextFields, renderTextOnCanvas } from '../../lib/utils/templateUtils';
+import { useNavigationWarning } from '../../lib/contexts/NavigationWarningContext';
 
 export const MemeGenerator: React.FC = () => {
   const [selectedTemplate, setSelectedTemplate] = useState<MemeTemplate | null>(null);
@@ -16,6 +17,56 @@ export const MemeGenerator: React.FC = () => {
   const [hoveredField, setHoveredField] = useState<string | null>(null);
   const [showTemplateManager, setShowTemplateManager] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<MemeTemplate | null>(null);
+  
+  // Track initial state for dirty checking
+  const initialTextFieldsRef = useRef<TextField[]>([]);
+  const initialTemplateRef = useRef<MemeTemplate | null>(null);
+  
+  // Check if meme has been modified from initial state
+  const isDirty = useCallback(() => {
+    if (!selectedTemplate || !initialTemplateRef.current) {
+      return false;
+    }
+    
+    // Check if template changed
+    if (selectedTemplate.id !== initialTemplateRef.current.id) {
+      return true;
+    }
+    
+    // Check if any text fields have been modified
+    const hasTextChanges = textFields.some((field, index) => {
+      const initialField = initialTextFieldsRef.current[index];
+      if (!initialField) return true;
+      
+      return (
+        field.text !== initialField.text ||
+        field.x !== initialField.x ||
+        field.y !== initialField.y ||
+        field.width !== initialField.width ||
+        field.height !== initialField.height ||
+        field.rotation !== initialField.rotation ||
+        field.fontSize !== initialField.fontSize ||
+        field.fontFamily !== initialField.fontFamily ||
+        field.fontWeight !== initialField.fontWeight ||
+        field.color !== initialField.color ||
+        field.strokeColor !== initialField.strokeColor ||
+        field.strokeWidth !== initialField.strokeWidth ||
+        field.textAlign !== initialField.textAlign ||
+        field.letterSpacing !== initialField.letterSpacing
+      );
+    });
+    
+    return hasTextChanges;
+  }, [selectedTemplate, textFields]);
+  
+  // Use navigation warning context
+  const { setDirty, setMessage } = useNavigationWarning();
+  
+  // Update the context when dirty state changes
+  React.useEffect(() => {
+    setDirty(isDirty());
+    setMessage('You have unsaved changes to your meme. Are you sure you want to leave?');
+  }, [isDirty, setDirty, setMessage]);
 
 
 
@@ -30,26 +81,42 @@ export const MemeGenerator: React.FC = () => {
   const resetToMemeDefaults = useCallback(() => {
     if (!selectedTemplate) return;
     
-    setTextFields(prev => 
-      prev.map(field => ({
-        ...field,
-        fontFamily: 'Impact',
-        fontWeight: 'bold',
-        fontSize: 46,
-        color: '#ffffff',
-        strokeColor: '#000000',
-        strokeWidth: 6,
+    const defaultFields = textFields.map(field => ({
+      ...field,
+      fontFamily: 'Impact',
+      fontWeight: 'bold',
+      fontSize: 46,
+      color: '#ffffff',
+      strokeColor: '#000000',
+      strokeWidth: 6,
         textAlign: field.textAlign || 'center',
         letterSpacing: '0.05em',
         rotation: 0
-      }))
-    );
-  }, [selectedTemplate]);
+      }));
+    
+    setTextFields(defaultFields);
+    
+    // Update initial state to reflect reset
+    initialTextFieldsRef.current = JSON.parse(JSON.stringify(defaultFields));
+  }, [selectedTemplate, textFields]);
 
   const handleTemplateSelect = useCallback((template: MemeTemplate) => {
+    // Check if current template has unsaved changes
+    if (selectedTemplate && isDirty()) {
+      const confirmed = window.confirm('You have unsaved changes to your current meme. Are you sure you want to change templates? This will discard your current work.');
+      if (!confirmed) {
+        return; // Don't change template if user cancels
+      }
+    }
+    
     setSelectedTemplate(template);
-    setTextFields(initializeTextFields(template));
-  }, []);
+    const initialFields = initializeTextFields(template);
+    setTextFields(initialFields);
+    
+    // Store initial state for dirty checking
+    initialTemplateRef.current = template;
+    initialTextFieldsRef.current = JSON.parse(JSON.stringify(initialFields));
+  }, [selectedTemplate, isDirty]);
 
 
 
@@ -133,7 +200,6 @@ export const MemeGenerator: React.FC = () => {
       // Download the final image with text
       const link = document.createElement('a');
       link.download = `meme-${selectedTemplate.id}.png`;
-      link.href = canvas.toDataURL();
       link.click();
     };
     img.src = selectedTemplate.src;
@@ -141,6 +207,11 @@ export const MemeGenerator: React.FC = () => {
 
   const clearAllText = useCallback(() => {
     setTextFields(prev => prev.map(f => ({ ...f, text: '' })));
+    
+    // Update initial state to reflect cleared text
+    if (initialTextFieldsRef.current.length > 0) {
+      initialTextFieldsRef.current = initialTextFieldsRef.current.map(f => ({ ...f, text: '' }));
+    }
   }, []);
 
   // Handle click outside dropdown
@@ -172,9 +243,11 @@ export const MemeGenerator: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto p-6 pb-16">
       <div className="text-center mb-8">
-        <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
-          Meme Generator
-        </h1>
+        <div className="flex items-center justify-center gap-3 mb-2">
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-white">
+            Meme Generator
+          </h1>
+        </div>
         <p className="text-gray-600 dark:text-gray-400">
           Choose a template, add your text, and create dullest memes
         </p>
@@ -212,6 +285,7 @@ export const MemeGenerator: React.FC = () => {
             <TemplateSelector
               selectedTemplate={selectedTemplate}
               onTemplateSelect={handleTemplateSelect}
+              isDirty={isDirty()}
             />
 
             {selectedTemplate && (

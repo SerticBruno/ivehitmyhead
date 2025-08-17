@@ -9,17 +9,20 @@ import { MEME_TEMPLATES } from '../../lib/data/templates';
 interface TemplateSelectorProps {
   selectedTemplate: MemeTemplate | null;
   onTemplateSelect: (template: MemeTemplate) => void;
+  isDirty?: boolean;
 }
 
 export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
   selectedTemplate,
-  onTemplateSelect
+  onTemplateSelect,
+  isDirty = false
 }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   return (
     <Card className="p-6">
       <h2 className="text-xl font-semibold mb-4">Choose Template</h2>
+      
       <div className="space-y-4">
         <div className="relative" data-dropdown>
           <button
@@ -60,14 +63,14 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                     setIsDropdownOpen(false);
                   }}
                 >
-                  <Image
-                    src={template.src}
-                    alt={template.name}
-                    width={32}
-                    height={32}
-                    className="w-8 h-8 object-cover rounded"
-                  />
-                  <span className="text-gray-900">{template.name}</span>
+                                     <Image
+                     src={template.src}
+                     alt={template.name}
+                     width={32}
+                     height={32}
+                     className="w-8 h-8 object-cover rounded"
+                   />
+                   <span className="text-gray-900">{template.name}</span>
                 </div>
               ))}
             </div>
