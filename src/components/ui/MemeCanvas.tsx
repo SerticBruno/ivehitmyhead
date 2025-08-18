@@ -37,6 +37,8 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
   const [isRotating, setIsRotating] = useState(false);
+  const [justFinishedRotating, setJustFinishedRotating] = useState(false);
+  const [isOpeningPopup, setIsOpeningPopup] = useState(false);
   const [resizeHandle, setResizeHandle] = useState<'nw' | 'ne' | 'sw' | 'se' | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [resizeStartState, setResizeStartState] = useState({
@@ -524,6 +526,13 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
           x: popupX,
           y: popupY
         });
+        setIsOpeningPopup(true); // Set flag to prevent click handler from interfering
+        
+        // Clear the flag after a short delay to allow popup to be fully set
+        setTimeout(() => {
+          setIsOpeningPopup(false);
+        }, 100);
+        
         return;
       }
     }
@@ -610,9 +619,17 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
     setIsDragging(false);
     setIsResizing(false);
     setIsRotating(false);
+    if (isRotating) {
+      setJustFinishedRotating(true);
+      // Clear the flag after a short delay to allow for interaction
+      setTimeout(() => {
+        setJustFinishedRotating(false);
+      }, 300);
+    }
     setResizeHandle(null);
     setInitialDragState(null); // Reset initial drag state
     setPreviousMousePos(null); // Reset previous mouse position
+    setIsOpeningPopup(false); // Reset popup opening flag
     
     if (canvasRef.current) {
       const rect = canvasRef.current.getBoundingClientRect();
@@ -631,14 +648,22 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
         canvasRef.current.style.cursor = 'default';
       }
     }
-  }, [activeField, textFields]);
+  }, [activeField, textFields, isRotating]);
 
   const handleCanvasClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!canvasRef.current || isDragging || isResizing) return;
+    if (!canvasRef.current || isDragging || isResizing || isOpeningPopup) return;
     
     const rect = canvasRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
+
+    // Check if clicking on a settings cog first (for any field)
+    for (const field of textFields) {
+      if (isOverSettingsCog(x, y, field, rect.width, rect.height)) {
+        // Don't do anything here - the mousedown handler already opened the popup
+        return;
+      }
+    }
 
     const clickedField = textFields.find(field => {
       return isPointInTextField(x, y, field, rect.width, rect.height);
@@ -651,11 +676,12 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
       if (inputElement) {
         inputElement.focus();
       }
-    } else if (!settingsPopup) {
-      // Only deselect if settings popup is not open
+    } else if (!settingsPopup && !justFinishedRotating) {
+      // Only deselect if settings popup is not open AND we haven't just finished rotating
+      // This prevents deselection when clicking outside after rotation
       onFieldSelect(null);
     }
-  }, [textFields, isDragging, isResizing, onFieldSelect, settingsPopup]);
+  }, [textFields, isDragging, isResizing, isOpeningPopup, onFieldSelect, settingsPopup, justFinishedRotating, isOverSettingsCog]);
 
   const handleCanvasDoubleClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!canvasRef.current || isDragging || isResizing) return;
@@ -966,6 +992,11 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
       }
       if (isRotating) {
         setIsRotating(false);
+        setJustFinishedRotating(true);
+        // Clear the flag after a short delay to allow for interaction
+        setTimeout(() => {
+          setJustFinishedRotating(false);
+        }, 300);
       }
       if (isDragging) {
         setIsDragging(false);

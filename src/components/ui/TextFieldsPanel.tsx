@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card } from './Card';
 import { TextField } from '../../lib/types/meme';
 import { TextSettingsDropdown } from './TextSettingsDropdown';
@@ -21,6 +21,48 @@ export const TextFieldsPanel: React.FC<TextFieldsPanelProps> = ({
   onUpdateProperty
 }) => {
   const [openSettingsDropdown, setOpenSettingsDropdown] = useState<string | null>(null);
+  const lastActiveFieldRef = useRef<string | null>(null);
+  const inputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
+
+  // Preserve focus on the active input field after re-renders
+  useEffect(() => {
+    if (activeField && activeField !== lastActiveFieldRef.current) {
+      // Field selection changed, focus the new field
+      lastActiveFieldRef.current = activeField;
+      const inputElement = inputRefs.current[activeField];
+      if (inputElement) {
+        // Small delay to ensure DOM is updated
+        setTimeout(() => {
+          inputElement.focus();
+        }, 0);
+      }
+    } else if (activeField && activeField === lastActiveFieldRef.current) {
+      // Same field is still active, preserve focus after re-render (e.g., after rotation)
+      const inputElement = inputRefs.current[activeField];
+      if (inputElement && document.activeElement !== inputElement) {
+        // Small delay to ensure DOM is updated
+        setTimeout(() => {
+          inputElement.focus();
+        }, 0);
+      }
+    }
+  }, [activeField, textFields]);
+
+  // Additional effect to handle focus preservation during property updates (like rotation)
+  useEffect(() => {
+    if (activeField && lastActiveFieldRef.current === activeField) {
+      // If we have an active field and it's the same one, ensure it keeps focus
+      const inputElement = inputRefs.current[activeField];
+      if (inputElement && document.activeElement !== inputElement) {
+        // Use a longer delay for property updates to ensure they're complete
+        setTimeout(() => {
+          if (document.activeElement !== inputElement) {
+            inputElement.focus();
+          }
+        }, 50);
+      }
+    }
+  }, [textFields]); // This will trigger on any text field change, including rotation
 
   const toggleSettingsDropdown = (fieldId: string) => {
     setOpenSettingsDropdown(openSettingsDropdown === fieldId ? null : fieldId);
@@ -29,10 +71,17 @@ export const TextFieldsPanel: React.FC<TextFieldsPanelProps> = ({
   const handleFieldClick = (fieldId: string) => {
     onFieldSelect(fieldId);
     // Focus the input field immediately
-    const inputElement = document.querySelector(`input[data-field-id="${fieldId}"]`) as HTMLInputElement;
+    const inputElement = inputRefs.current[fieldId];
     if (inputElement) {
-      inputElement.focus();
+      // Small delay to ensure DOM is updated
+      setTimeout(() => {
+        inputElement.focus();
+      }, 0);
     }
+  };
+
+  const setInputRef = (fieldId: string) => (element: HTMLInputElement | null) => {
+    inputRefs.current[fieldId] = element;
   };
 
   return (
@@ -68,6 +117,7 @@ export const TextFieldsPanel: React.FC<TextFieldsPanelProps> = ({
                 data-field-id={field.id}
                 className="flex-1 h-10 px-3 py-2 text-sm border-0 bg-transparent focus:outline-none focus:ring-0 placeholder:text-gray-500 dark:placeholder:text-gray-400"
                 onFocus={() => onFieldSelect(field.id)}
+                ref={setInputRef(field.id)}
               />
               <div className="flex items-center space-x-2 ml-2">
                 <div className="relative" data-settings-container={field.id}>
