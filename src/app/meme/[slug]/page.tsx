@@ -93,10 +93,55 @@ export default function MemeDetailPage() {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="text-center py-20">
-            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600 dark:text-gray-400">Loading meme...</p>
-          </div>
+          {/* Skeleton Loading State */}
+          <section className="max-w-4xl mx-auto">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
+              {/* Header Skeleton */}
+              <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex-1">
+                    <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded mb-2 w-3/4"></div>
+                    <div className="flex items-center space-x-4">
+                      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-32"></div>
+                      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24"></div>
+                      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-20"></div>
+                    </div>
+                  </div>
+                  <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-24"></div>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {Array.from({ length: 3 }).map((_, index) => (
+                    <div key={index} className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-16"></div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Image Skeleton */}
+              <div className="relative w-full bg-gray-100 dark:bg-gray-900">
+                <div className="relative w-full bg-gray-200 dark:bg-gray-700" style={{ height: '70vh', maxHeight: '70vh' }}>
+                  <div className="flex items-center justify-center h-full">
+                    <div className="animate-pulse">
+                      <div className="w-16 h-16 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Actions Skeleton */}
+              <div className="p-6 border-t border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-6">
+                    <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded-lg w-20"></div>
+                    <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded-lg w-20"></div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-12"></div>
+                    <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-48"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
         </main>
       </div>
     );
@@ -183,7 +228,7 @@ export default function MemeDetailPage() {
 
             {/* Image */}
             <div className="relative w-full bg-gray-100 dark:bg-gray-900">
-              <div className="relative w-full" style={{ minHeight: '400px' }}>
+              <div className="relative w-full" style={{ height: '70vh', maxHeight: '70vh' }}>
                 <Image
                   src={meme.image_url}
                   alt={meme.title}
