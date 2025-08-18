@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
       .select(`
         *,
         author:profiles(username, display_name, avatar_url),
-        category:categories(name, emoji)
+        category:categories(id, name, emoji)
       `);
 
     // Apply filters

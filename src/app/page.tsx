@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 
 import { FeaturedMemes } from '@/components/meme';
 import { Button } from '@/components/ui';
+import { ICONS } from '@/lib/utils/categoryIcons';
 
 import { useMemes } from '@/lib/hooks/useMemes';
 import { useCategories } from '@/lib/hooks/useCategories';
@@ -78,7 +79,9 @@ export default function Home() {
       <div className="bg-gray-50 dark:bg-gray-900">
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center py-20">
-            <div className="text-4xl mb-4">⏳</div>
+            <div className="text-4xl mb-4 flex justify-center">
+              <ICONS.Clock className="w-16 h-16 text-gray-400 animate-spin" />
+            </div>
             <h2 className="text-2xl font-bold mb-2">Loading...</h2>
             <p className="text-gray-600 dark:text-gray-400">Fetching the most viewed memes</p>
           </div>
@@ -93,7 +96,9 @@ export default function Home() {
       <div className="bg-gray-50 dark:bg-gray-900">
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center py-20">
-            <div className="text-4xl mb-4">😢</div>
+            <div className="text-4xl mb-4 flex justify-center">
+              <ICONS.Star className="w-16 h-16 text-gray-400" />
+            </div>
             <h2 className="text-2xl font-bold mb-2">Something went wrong</h2>
             <p className="text-gray-600 dark:text-gray-400 mb-4">
               {memesError || categoriesError}
@@ -123,7 +128,8 @@ export default function Home() {
               Browse Memes
             </Button>
             <Button variant="outline" size="lg" className="text-lg px-8" onClick={() => window.location.href = '/upload'}>
-              📤 Upload Your Own
+              <ICONS.Upload className="w-5 h-5 mr-2" />
+              Upload Your Own
             </Button>
           </div>
         </section>
@@ -138,7 +144,8 @@ export default function Home() {
               </p>
             </div>
             <Button variant="ghost" onClick={() => window.location.href = '/memes'}>
-              View All →
+              <ICONS.ArrowRight className="w-4 h-4 mr-1" />
+              View All
             </Button>
           </div>
           
@@ -151,7 +158,9 @@ export default function Home() {
             />
           ) : (
             <div className="text-center py-12">
-              <div className="text-6xl mb-4">😢</div>
+              <div className="text-6xl mb-4 flex justify-center">
+                <ICONS.Star className="w-16 h-16 text-gray-400" />
+              </div>
               <h3 className="text-xl font-semibold mb-2">No memes yet</h3>
               <p className="text-gray-500 dark:text-gray-400 mb-4">
                 Be the first to upload a meme!

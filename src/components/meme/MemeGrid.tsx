@@ -2,6 +2,7 @@ import React from 'react';
 import { MemeCard } from './MemeCard';
 import { Meme } from '@/lib/types/meme';
 import { useInfiniteScroll } from '@/lib/hooks/useInfiniteScroll';
+import { ICONS } from '@/lib/utils/categoryIcons';
 
 interface MemeGridProps {
   memes: Meme[];
@@ -70,7 +71,9 @@ const MemeGrid: React.FC<MemeGridProps> = ({
   if (memes.length === 0) {
     return (
       <div className={`flex flex-col items-center justify-center py-12 ${className}`}>
-        <div className="text-6xl mb-4">😢</div>
+        <div className="text-6xl mb-4 flex justify-center">
+          <ICONS.Star className="w-16 h-16 text-gray-400" />
+        </div>
         <h3 className="text-xl font-semibold mb-2">No memes found</h3>
         <p className="text-gray-500 dark:text-gray-400 text-center max-w-md">
           Looks like there are no memes here yet. Be the first to upload something hilarious!

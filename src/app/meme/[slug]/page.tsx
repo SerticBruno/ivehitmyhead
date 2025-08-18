@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { formatRelativeTime, formatTime } from '@/lib/utils';
 import { Meme } from '@/lib/types/meme';
 import { useMemeInteractions } from '@/lib/hooks/useMemeInteractions';
+import { ICONS, getCategoryIconOrEmoji } from '@/lib/utils/categoryIcons';
 
 export default function MemeDetailPage() {
   const params = useParams();
@@ -104,9 +105,12 @@ export default function MemeDetailPage() {
   if (error || !meme) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <Header />
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center py-20">
-            <div className="text-4xl mb-4">😢</div>
+            <div className="text-4xl mb-4 flex justify-center">
+              <ICONS.Star className="w-16 h-16 text-gray-400" />
+            </div>
             <h1 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">
               {error || 'Meme not found'}
             </h1>
@@ -115,6 +119,7 @@ export default function MemeDetailPage() {
             </Button>
           </div>
         </main>
+        <Footer />
       </div>
     );
   }
@@ -135,18 +140,27 @@ export default function MemeDetailPage() {
                     {meme.title}
                   </h1>
                   <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
-                    <span>by {meme.author?.display_name || meme.author?.username || 'Unknown'}</span>
+                    <div className="flex items-center space-x-1">
+                      <ICONS.User className="w-4 h-4" />
+                      <span>by {meme.author?.display_name || meme.author?.username || 'Unknown'}</span>
+                    </div>
                     <span>•</span>
-                    <span>{formatRelativeTime(meme.created_at)} ({formatTime(meme.created_at)})</span>
+                    <div className="flex items-center space-x-1">
+                      <ICONS.Calendar className="w-4 h-4" />
+                      <span>{formatRelativeTime(meme.created_at)} ({formatTime(meme.created_at)})</span>
+                    </div>
                     <span>•</span>
-                    <span>{meme.views.toLocaleString()} views</span>
+                    <div className="flex items-center space-x-1">
+                      <ICONS.Eye className="w-4 h-4" />
+                      <span>{meme.views.toLocaleString()} views</span>
+                    </div>
                   </div>
                 </div>
                 
                 {/* Category Badge */}
                 {meme.category && (
                   <div className="flex items-center space-x-2 px-3 py-1 bg-purple-100 dark:bg-purple-900/20 text-purple-800 dark:text-purple-200 rounded-full">
-                    <span>{meme.category.emoji}</span>
+                    {getCategoryIconOrEmoji(meme.category.name, meme.category.emoji)}
                     <span className="text-sm font-medium">{meme.category.name}</span>
                   </div>
                 )}
@@ -191,7 +205,11 @@ export default function MemeDetailPage() {
                       isLiked ? 'text-red-500' : ''
                     }`}
                   >
-                    <span className="text-2xl">{isLiked ? '❤️' : '👍'}</span>
+                    {isLiked ? (
+                      <ICONS.Heart className="w-6 h-6 fill-current" />
+                    ) : (
+                      <ICONS.ThumbsUp className="w-6 h-6" />
+                    )}
                     <span className="font-medium">{likesCount.toLocaleString()}</span>
                   </button>
                   
@@ -199,7 +217,7 @@ export default function MemeDetailPage() {
                     onClick={handleShare}
                     className="flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                   >
-                    <span className="text-2xl">📤</span>
+                    <ICONS.Share2 className="w-6 h-6" />
                     <span className="font-medium">{meme.shares_count.toLocaleString()}</span>
                   </button>
                 </div>

@@ -4,6 +4,7 @@ import React from 'react';
 import { Header, Footer } from '@/components/layout';
 import { CategoryCard } from '@/components/ui';
 import { useCategories } from '@/lib/hooks/useCategories';
+import { ICONS } from '@/lib/utils/categoryIcons';
 
 export default function CategoriesPage() {
   const { categories, loading, error } = useCategories({ limit: 100 });
@@ -29,7 +30,9 @@ export default function CategoriesPage() {
         <Header />
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center py-20">
-            <div className="text-4xl mb-4">😢</div>
+            <div className="text-4xl mb-4 flex justify-center">
+              <ICONS.Star className="w-16 h-16 text-gray-400" />
+            </div>
             <h1 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">
               Failed to load categories
             </h1>
@@ -49,7 +52,10 @@ export default function CategoriesPage() {
         {/* Page Header */}
         <section className="mb-8">
           <div className="text-center">
-            <h1 className="text-3xl font-bold mb-2">📁 Meme Categories</h1>
+            <h1 className="text-3xl font-bold mb-2 flex items-center justify-center">
+              <ICONS.FolderOpen className="w-8 h-8 mr-2" />
+              Meme Categories
+            </h1>
             <p className="text-gray-600 dark:text-gray-400">
               Browse memes by category and discover content that matches your interests
             </p>

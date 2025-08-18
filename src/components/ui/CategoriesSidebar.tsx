@@ -1,5 +1,6 @@
 import React from 'react';
 import { useCategories } from '@/lib/hooks/useCategories';
+import { getCategoryIconOrEmoji, ICONS } from '@/lib/utils/categoryIcons';
 
 interface FiltersAndSortingProps {
   className?: string;
@@ -215,7 +216,9 @@ export const FiltersAndSorting: React.FC<FiltersAndSortingProps> = ({
                   : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 hover:shadow-sm border-transparent"
               }`}
             >
-              <span className="text-lg mr-3 flex-shrink-0">🌟</span>
+              <span className="mr-3 flex-shrink-0">
+                <ICONS.Star className="w-5 h-5" />
+              </span>
               <div className="flex-1 text-left">
                 <div className="font-medium">All Categories</div>
               </div>
@@ -238,7 +241,9 @@ export const FiltersAndSorting: React.FC<FiltersAndSortingProps> = ({
                       : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 hover:shadow-sm border-transparent"
                   }`}
                 >
-                  <span className="text-lg mr-3 flex-shrink-0">📁</span>
+                  <span className="mr-3 flex-shrink-0">
+                    {getCategoryIconOrEmoji(category.name, category.emoji)}
+                  </span>
                   <div className="flex-1 text-left">
                     <div className="font-medium">{category.name}</div>
                   </div>

@@ -9,6 +9,7 @@ import { Category } from '@/lib/types/meme';
 import { useMemes } from '@/lib/hooks/useMemes';
 import { useCategories } from '@/lib/hooks/useCategories';
 import { useMemeInteractions } from '@/lib/hooks/useMemeInteractions';
+import { ICONS } from '@/lib/utils/categoryIcons';
 
 export default function CategoryPage() {
   const params = useParams();
@@ -84,7 +85,9 @@ export default function CategoryPage() {
         <Header />
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center">
-            <div className="text-6xl mb-4">😢</div>
+            <div className="text-6xl mb-4 flex justify-center">
+              <ICONS.Star className="w-16 h-16 text-gray-400" />
+            </div>
             <h1 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">
               {error}
             </h1>
@@ -179,7 +182,9 @@ export default function CategoryPage() {
           </div>
         ) : (
           <div className="text-center">
-            <div className="text-6xl mb-4">😢</div>
+            <div className="text-6xl mb-4 flex justify-center">
+              <ICONS.Star className="w-16 h-16 text-gray-400" />
+            </div>
             <h2 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">
               No memes found in this category
             </h2>

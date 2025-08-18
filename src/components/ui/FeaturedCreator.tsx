@@ -2,6 +2,7 @@ import React from 'react';
 import Image from 'next/image';
 import { Button } from './Button';
 import { cn } from '@/lib/utils';
+import { ICONS } from '@/lib/utils/categoryIcons';
 
 interface Creator {
   id: string;
@@ -98,7 +99,8 @@ const FeaturedCreator: React.FC<FeaturedCreatorProps> = ({
           {creator.bestMeme.title}
         </p>
         <div className="flex items-center space-x-2 text-sm text-gray-500 mt-1">
-          <span>❤️ {creator.bestMeme.likes.toLocaleString()}</span>
+          <ICONS.Heart className="w-4 h-4 inline mr-1" />
+          <span>{creator.bestMeme.likes.toLocaleString()}</span>
         </div>
       </div>
 

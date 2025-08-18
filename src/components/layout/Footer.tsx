@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import { ICONS } from '@/lib/utils/categoryIcons';
 
 const Footer: React.FC = () => {
   return (
@@ -21,11 +22,11 @@ const Footer: React.FC = () => {
               </a>
               <a href="#" className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-pointer">
                 <span className="sr-only">Discord</span>
-                💬
+                <ICONS.MessageSquare className="w-5 h-5" />
               </a>
               <a href="#" className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-pointer">
                 <span className="sr-only">GitHub</span>
-                📚
+                <ICONS.GitHub className="w-5 h-5" />
               </a>
             </div>
           </div>
@@ -86,8 +87,8 @@ const Footer: React.FC = () => {
         </div>
 
         <div className="border-t border-gray-200 dark:border-gray-800 mt-8 pt-8 text-center">
-          <p className="text-gray-500 dark:text-gray-400">
-            © 2024 IVEHITMYHEAD. All rights reserved. Made with ❤️ for meme lovers.
+          <p className="text-gray-500 dark:text-gray-400 flex items-center justify-center">
+            © 2024 IVEHITMYHEAD. All rights reserved. Made with <ICONS.Heart className="w-4 h-4 mx-1 text-red-500" /> for meme lovers.
           </p>
         </div>
       </div>

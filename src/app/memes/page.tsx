@@ -7,6 +7,7 @@ import { useMemes } from '@/lib/hooks/useMemes';
 import { useCategories } from '@/lib/hooks/useCategories';
 import { useMemeInteractions } from '@/lib/hooks/useMemeInteractions';
 import { Meme } from '@/lib/types/meme';
+import { ICONS, getCategoryIconOrEmoji } from '@/lib/utils/categoryIcons';
 
 export default function MemesPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('');
@@ -243,10 +244,10 @@ export default function MemesPage() {
                 <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Time Period</h4>
                 <div className="grid grid-cols-4 gap-2">
                   {[
-                    { value: 'today', label: 'Today', icon: '🌙' },
-                    { value: 'week', label: 'This Week', icon: '📅' },
-                    { value: 'month', label: 'This Month', icon: '📅' },
-                    { value: 'all', label: 'All Time', icon: '📅' }
+                    { value: 'today', label: 'Today', icon: <ICONS.Moon className="w-5 h-5" /> },
+                    { value: 'week', label: 'This Week', icon: <ICONS.Calendar className="w-5 h-5" /> },
+                    { value: 'month', label: 'This Month', icon: <ICONS.Calendar className="w-5 h-5" /> },
+                    { value: 'all', label: 'All Time', icon: <ICONS.Calendar className="w-5 h-5" /> }
                   ].map((period) => (
                     <button
                       key={period.value}
@@ -257,7 +258,7 @@ export default function MemesPage() {
                           : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
                       }`}
                     >
-                      <span className="text-lg mb-1">{period.icon}</span>
+                      <span className="mb-1">{period.icon}</span>
                       <span className="text-xs font-medium">{period.label}</span>
                     </button>
                   ))}
@@ -271,9 +272,9 @@ export default function MemesPage() {
                 <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Sort By</h4>
                 <div className="grid grid-cols-3 gap-2">
                   {[
-                    { value: 'hottest', label: 'Hottest', icon: '❤️' },
-                    { value: 'trending', label: 'Trending', icon: '🔥' },
-                    { value: 'newest', label: 'Newest', icon: '🆕' }
+                    { value: 'hottest', label: 'Hottest', icon: <ICONS.Heart className="w-5 h-5" /> },
+                    { value: 'trending', label: 'Trending', icon: <ICONS.Flame className="w-5 h-5" /> },
+                    { value: 'newest', label: 'Newest', icon: <ICONS.Star className="w-5 h-5" /> }
                   ].map((filter) => (
                     <button
                       key={filter.value}
@@ -284,7 +285,7 @@ export default function MemesPage() {
                           : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
                       }`}
                     >
-                      <span className="text-lg mb-1">{filter.icon}</span>
+                      <span className="mb-1">{filter.icon}</span>
                       <span className="text-xs font-medium">{filter.label}</span>
                     </button>
                   ))}
@@ -305,7 +306,8 @@ export default function MemesPage() {
                         : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
                     }`}
                   >
-                    🌟 All Categories
+                    <ICONS.Star className="w-4 h-4 inline mr-1" />
+                    All Categories
                   </button>
                   {categories?.map((category) => (
                     <button
@@ -317,7 +319,8 @@ export default function MemesPage() {
                           : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
                       }`}
                     >
-                      {category.emoji} {category.name}
+                      {getCategoryIconOrEmoji(category.name, category.emoji)}
+                      <span className="ml-1">{category.name}</span>
                     </button>
                   ))}
                 </div>
@@ -326,7 +329,9 @@ export default function MemesPage() {
 
             {memesError ? (
               <div className="text-center py-12">
-                <div className="text-4xl mb-4">😢</div>
+                <div className="text-4xl mb-4 flex justify-center">
+                  <ICONS.Star className="w-16 h-16 text-gray-400" />
+                </div>
                 <h3 className="text-xl font-semibold mb-2">Failed to load memes</h3>
                 <p className="text-gray-500 dark:text-gray-400 mb-4">{memesError}</p>
                 {/* <Button onClick={refresh}>Try Again</Button> */}
@@ -354,7 +359,9 @@ export default function MemesPage() {
         {/* No memes found */}
         {!memesLoading && displayMemes.length === 0 && !memesError && (
           <section className="text-center py-12">
-            <div className="text-6xl mb-4">😢</div>
+            <div className="text-6xl mb-4 flex justify-center">
+              <ICONS.Star className="w-16 h-16 text-gray-400" />
+            </div>
             <h3 className="text-xl font-semibold mb-2">No memes found</h3>
             <p className="text-gray-500 dark:text-gray-400 text-center max-w-md">
               {selectedCategory 
