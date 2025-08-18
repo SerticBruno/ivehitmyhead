@@ -91,14 +91,12 @@ export default function MemeDetailPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <Header />
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center py-20">
             <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
             <p className="mt-4 text-gray-600 dark:text-gray-400">Loading meme...</p>
           </div>
         </main>
-        <Footer />
       </div>
     );
   }
@@ -106,7 +104,6 @@ export default function MemeDetailPage() {
   if (error || !meme) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <Header />
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center py-20">
             <div className="text-4xl mb-4">😢</div>
@@ -118,14 +115,12 @@ export default function MemeDetailPage() {
             </Button>
           </div>
         </main>
-        <Footer />
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <Header />
       
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
@@ -226,7 +221,6 @@ export default function MemeDetailPage() {
         </section>
       </main>
 
-      <Footer />
     </div>
   );
 }
