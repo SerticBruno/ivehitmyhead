@@ -103,6 +103,7 @@ export const FloatingSettingsPopup: React.FC<FloatingSettingsPopupProps> = ({
   return createPortal(
     <div 
       data-settings-popup
+      data-field-id={field.id}
       className="absolute z-[9999] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-4 min-w-80 pointer-events-auto"
       style={{
         left: x,

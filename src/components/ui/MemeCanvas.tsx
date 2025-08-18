@@ -39,6 +39,7 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
   const [isRotating, setIsRotating] = useState(false);
   const [justFinishedRotating, setJustFinishedRotating] = useState(false);
   const [justOpenedPopup, setJustOpenedPopup] = useState(false);
+  const [isOperationActive, setIsOperationActive] = useState(false);
   const [resizeHandle, setResizeHandle] = useState<'nw' | 'ne' | 'sw' | 'se' | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [resizeStartState, setResizeStartState] = useState({
@@ -540,6 +541,7 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
         // Check if clicking on rotation handle
         if (isOverRotationHandle(x, y, selectedField, rect.width, rect.height)) {
           setIsRotating(true);
+          setIsOperationActive(true);
           setRotationStartState({
             field: selectedField,
             mouseX: x,
@@ -557,6 +559,7 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
         for (const handle of handles) {
           if (isOverRotatedResizeHandle(x, y, handle, selectedField, rect.width, rect.height)) {
             setIsResizing(true);
+            setIsOperationActive(true);
             setResizeHandle(handle.type);
             setResizeStartState({
               field: selectedField,
@@ -583,6 +586,7 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
       
       // Start dragging
       setIsDragging(true);
+      setIsOperationActive(true);
       e.currentTarget.style.cursor = 'grabbing';
       
       const fieldCenterX = (clickedField.x / 100) * rect.width;
@@ -615,6 +619,7 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
     setIsDragging(false);
     setIsResizing(false);
     setIsRotating(false);
+    setIsOperationActive(false);
     if (isRotating) {
       setJustFinishedRotating(true);
       // Clear the flag after a short delay to allow for interaction
@@ -700,8 +705,12 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
 
   // Function to close settings popup
   const closeSettingsPopup = useCallback(() => {
+    // Don't close popup if we're actively performing operations
+    if (isResizing || isDragging || isRotating || isOperationActive) {
+      return;
+    }
     setSettingsPopup(null);
-  }, []);
+  }, [isResizing, isDragging, isRotating, isOperationActive]);
 
   // Function to update popup position using delta (simpler approach)
   const updatePopupPositionByDelta = useCallback((deltaX: number, deltaY: number) => {
@@ -745,11 +754,12 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
       popupX = viewportWidth - popupWidth / 2;
     }
     
-    // Update popup position
+    // Update popup position with proper screen coordinates
+    const canvasRect = canvasRef.current.getBoundingClientRect();
     setSettingsPopup(prev => prev ? {
       ...prev,
-      x: popupX + window.scrollX,
-      y: popupY + window.scrollY
+      x: canvasRect.left + popupX,
+      y: canvasRect.top + popupY + window.scrollY
     } : null);
   }, [settingsPopup, textFields]);
 
@@ -807,7 +817,10 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
     
     // Update popup position if it's open for this field
     if (settingsPopup && settingsPopup.fieldId === activeField) {
-      recalculatePopupPosition();
+      // Use a small delay to ensure the resize operation is complete
+      setTimeout(() => {
+        recalculatePopupPosition();
+      }, 10);
     }
   }, [activeField, resizeStartState, onFieldResize, onFieldMove, settingsPopup, recalculatePopupPosition]);
 
@@ -998,6 +1011,7 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
         setInitialDragState(null);
         setPreviousMousePos(null);
       }
+      setIsOperationActive(false);
     };
 
     if (isResizing || isRotating || isDragging) {
@@ -1038,7 +1052,7 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
       if (!settingsPopup || justOpenedPopup) return;
       
       // Don't close popup if we're actively resizing, dragging, or rotating
-      if (isResizing || isDragging || isRotating) {
+      if (isResizing || isDragging || isRotating || isOperationActive) {
         return;
       }
       
@@ -1048,9 +1062,16 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
         return; // Don't close if clicking inside popup
       }
       
+      // Check if the click target is on the canvas (which might be a legitimate interaction)
+      const canvasElement = canvasRef.current;
+      if (canvasElement && canvasElement.contains(e.target as Node)) {
+        // Don't close if clicking on the canvas - this could be a legitimate interaction
+        return;
+      }
+      
       // Add a small delay to ensure we're not in the middle of opening the popup
       setTimeout(() => {
-        if (settingsPopup && !justOpenedPopup) {
+        if (settingsPopup && !justOpenedPopup && !isResizing && !isDragging && !isRotating && !isOperationActive) {
           setSettingsPopup(null);
         }
       }, 50);
@@ -1064,7 +1085,7 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
         document.removeEventListener('click', handleGlobalClick);
       };
     }
-  }, [settingsPopup, isResizing, isDragging, isRotating, justOpenedPopup]);
+  }, [settingsPopup, isResizing, isDragging, isRotating, isOperationActive, justOpenedPopup]);
 
   if (!selectedTemplate) {
     return (
