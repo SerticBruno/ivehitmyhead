@@ -78,13 +78,69 @@ export default function Home() {
     return (
       <div className="bg-gray-50 dark:bg-gray-900">
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="text-center py-20">
-            <div className="text-4xl mb-4 flex justify-center">
-              <ICONS.Clock className="w-16 h-16 text-gray-400 animate-spin" />
+          {/* Hero Section */}
+          <section className="text-center mb-12">
+            <h1 className="text-4xl md:text-6xl font-bold mb-4">
+              Welcome to <span className="text-blue-600">IVEHITMYHEAD</span>
+            </h1>
+            <p className="text-xl text-gray-600 dark:text-gray-400 mb-8 max-w-2xl mx-auto">
+              Discover, share, and create the dullest memes on the internet.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button size="lg" className="text-lg px-8" onClick={() => window.location.href = '/memes'}>
+                Browse Memes
+              </Button>
+              <Button variant="outline" size="lg" className="text-lg px-8" onClick={() => window.location.href = '/upload'}>
+                <ICONS.Upload className="w-5 h-5 mr-2" />
+                Upload Your Own
+              </Button>
             </div>
-            <h2 className="text-2xl font-bold mb-2">Loading...</h2>
-            <p className="text-gray-600 dark:text-gray-400">Fetching the most viewed memes</p>
-          </div>
+          </section>
+
+          {/* Most Viewed Memes Section - Loading State */}
+          <section className="mb-12">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-2xl font-bold">Most Viewed Memes</h2>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  Some of the memes that people are watching or smth
+                </p>
+              </div>
+              <Button variant="ghost" onClick={() => window.location.href = '/memes'}>
+                <ICONS.ArrowRight className="w-4 h-4 mr-1" />
+                View All
+              </Button>
+            </div>
+            
+            {/* Skeleton Loading Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {Array.from({ length: 8 }).map((_, index) => (
+                <div key={index} className="animate-pulse">
+                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
+                    <div className="p-4 pb-3">
+                      <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded mb-2"></div>
+                      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded mb-2"></div>
+                      <div className="flex items-center gap-2 mt-2">
+                        <div className="w-4 h-4 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                        <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-20"></div>
+                      </div>
+                    </div>
+                    <div className="h-64 bg-gray-200 dark:bg-gray-700"></div>
+                    <div className="p-4 pt-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-12"></div>
+                          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-12"></div>
+                          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-12"></div>
+                        </div>
+                        <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-16"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
         </main>
       </div>
     );
