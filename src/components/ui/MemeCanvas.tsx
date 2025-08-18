@@ -38,7 +38,7 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
   const [isResizing, setIsResizing] = useState(false);
   const [isRotating, setIsRotating] = useState(false);
   const [justFinishedRotating, setJustFinishedRotating] = useState(false);
-  const [isOpeningPopup, setIsOpeningPopup] = useState(false);
+  const [justOpenedPopup, setJustOpenedPopup] = useState(false);
   const [resizeHandle, setResizeHandle] = useState<'nw' | 'ne' | 'sw' | 'se' | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [resizeStartState, setResizeStartState] = useState({
@@ -481,57 +481,53 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
     // Check if clicking on a settings cog first (for any field)
     for (const field of textFields) {
       if (isOverSettingsCog(x, y, field, rect.width, rect.height)) {
-        // Open settings popup for this field
-        // Use canvas-relative coordinates for absolute positioning
-        const fieldCenterX = (field.x / 100) * rect.width;
-        const fieldCenterY = (field.y / 100) * rect.height;
-        
-        // Calculate position beneath the cog (same logic as drawing the cog)
-        const containerHeight_px = (field.height / 100) * rect.height;
-        const settingsCogSize = 12 * 1.2;
-        let settingsCogX = fieldCenterX;
-        let settingsCogY = fieldCenterY + containerHeight_px / 2 + settingsCogSize + 8;
-        
-        // Settings cog always positioned below the text field (no rotation following)
-        
-        // Position popup below the cog (at the bottom of the text area)
-        const canvasRect = canvasRef.current!.getBoundingClientRect();
-        
-        // Calculate cog position in screen coordinates
-        const screenCogX = canvasRect.left + settingsCogX;
-        const screenCogY = canvasRect.top + settingsCogY;
-        
-        // Calculate popup position below the cog
-        let popupY = screenCogY + 20 + window.scrollY;
-        let popupX = screenCogX;
-        
-        // Check if popup would go off the left or right edges (since we're centering on cog)
-        const popupWidth = 320; // Approximate width of the popup (min-w-80 = 320px)
-        const viewportWidth = window.innerWidth;
-        
-        if (popupX - popupWidth / 2 < 0) {
-          popupX = popupWidth / 2; // Align to left edge
-        } else if (popupX + popupWidth / 2 > viewportWidth) {
-          popupX = viewportWidth - popupWidth / 2; // Align to right edge
+        // Close any existing popup first
+        if (settingsPopup) {
+          setSettingsPopup(null);
+          return;
         }
         
         // Ensure the field is selected when opening settings
         onFieldSelect(field.id);
         
-        // Position popup below the cog so it's at the bottom of the text area
-        // Add scroll offset to ensure correct positioning
+        // Calculate popup position
+        const fieldCenterX = (field.x / 100) * rect.width;
+        const fieldCenterY = (field.y / 100) * rect.height;
+        const containerHeight_px = (field.height / 100) * rect.height;
+        const settingsCogSize = 12 * 1.2;
+        
+        // Calculate cog position in screen coordinates
+        const canvasRect = canvasRef.current.getBoundingClientRect();
+        const screenCogX = canvasRect.left + fieldCenterX;
+        const screenCogY = canvasRect.top + fieldCenterY + containerHeight_px / 2 + settingsCogSize + 8;
+        
+        // Calculate popup position below the cog
+        let popupY = screenCogY + 20 + window.scrollY;
+        let popupX = screenCogX;
+        
+        // Check if popup would go off the edges
+        const popupWidth = 320;
+        const viewportWidth = window.innerWidth;
+        
+        if (popupX - popupWidth / 2 < 0) {
+          popupX = popupWidth / 2;
+        } else if (popupX + popupWidth / 2 > viewportWidth) {
+          popupX = viewportWidth - popupWidth / 2;
+        }
+        
+        // Open the popup
         setSettingsPopup({
           isOpen: true,
           fieldId: field.id,
           x: popupX,
           y: popupY
         });
-        setIsOpeningPopup(true); // Set flag to prevent click handler from interfering
         
-        // Clear the flag after a short delay to allow popup to be fully set
+        // Set flag to prevent immediate closure
+        setJustOpenedPopup(true);
         setTimeout(() => {
-          setIsOpeningPopup(false);
-        }, 100);
+          setJustOpenedPopup(false);
+        }, 300);
         
         return;
       }
@@ -629,7 +625,6 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
     setResizeHandle(null);
     setInitialDragState(null); // Reset initial drag state
     setPreviousMousePos(null); // Reset previous mouse position
-    setIsOpeningPopup(false); // Reset popup opening flag
     
     if (canvasRef.current) {
       const rect = canvasRef.current.getBoundingClientRect();
@@ -651,7 +646,7 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
   }, [activeField, textFields, isRotating]);
 
   const handleCanvasClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!canvasRef.current || isDragging || isResizing || isOpeningPopup) return;
+    if (!canvasRef.current || isDragging || isResizing || settingsPopup || justOpenedPopup) return;
     
     const rect = canvasRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
@@ -676,12 +671,12 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
       if (inputElement) {
         inputElement.focus();
       }
-    } else if (!settingsPopup && !justFinishedRotating) {
-      // Only deselect if settings popup is not open AND we haven't just finished rotating
+    } else if (!justFinishedRotating) {
+      // Only deselect if we haven't just finished rotating
       // This prevents deselection when clicking outside after rotation
       onFieldSelect(null);
     }
-  }, [textFields, isDragging, isResizing, isOpeningPopup, onFieldSelect, settingsPopup, justFinishedRotating, isOverSettingsCog]);
+  }, [textFields, isDragging, isResizing, settingsPopup, justFinishedRotating, justOpenedPopup, onFieldSelect, isOverSettingsCog]);
 
   const handleCanvasDoubleClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!canvasRef.current || isDragging || isResizing) return;
@@ -1040,35 +1035,36 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
   // Global click handler to close settings popup when clicking outside
   useEffect(() => {
     const handleGlobalClick = (e: MouseEvent) => {
-      if (settingsPopup) {
-        // Don't close popup if we're actively resizing, dragging, or rotating
-        if (isResizing || isDragging || isRotating) {
-          return;
-        }
-        
-        // Check if the click target is inside the settings popup
-        const popupElement = document.querySelector('[data-settings-popup]');
-        if (popupElement && popupElement.contains(e.target as Node)) {
-          return; // Don't close if clicking inside popup
-        }
-        
-        // Close popup when clicking anywhere outside of it
-        setSettingsPopup(null);
+      if (!settingsPopup || justOpenedPopup) return;
+      
+      // Don't close popup if we're actively resizing, dragging, or rotating
+      if (isResizing || isDragging || isRotating) {
+        return;
       }
+      
+      // Check if the click target is inside the settings popup
+      const popupElement = document.querySelector('[data-settings-popup]');
+      if (popupElement && popupElement.contains(e.target as Node)) {
+        return; // Don't close if clicking inside popup
+      }
+      
+      // Add a small delay to ensure we're not in the middle of opening the popup
+      setTimeout(() => {
+        if (settingsPopup && !justOpenedPopup) {
+          setSettingsPopup(null);
+        }
+      }, 50);
     };
 
     if (settingsPopup) {
-      // Use a small delay to prevent immediate closing
-      const timeoutId = setTimeout(() => {
-        document.addEventListener('click', handleGlobalClick);
-      }, 100);
-
+      // Add the event listener immediately
+      document.addEventListener('click', handleGlobalClick);
+      
       return () => {
-        clearTimeout(timeoutId);
         document.removeEventListener('click', handleGlobalClick);
       };
     }
-  }, [settingsPopup, isResizing, isDragging, isRotating]);
+  }, [settingsPopup, isResizing, isDragging, isRotating, justOpenedPopup]);
 
   if (!selectedTemplate) {
     return (
