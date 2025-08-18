@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { Header, Footer } from '@/components/layout';
+import { useParams, useRouter } from 'next/navigation';     
 import { MemeGrid } from '@/components/meme';
 import { Button } from '@/components/ui/Button';
 import { Category } from '@/lib/types/meme';
@@ -82,7 +81,6 @@ export default function CategoryPage() {
   if (error) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <Header />
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center">
             <div className="text-6xl mb-4 flex justify-center">
@@ -96,7 +94,6 @@ export default function CategoryPage() {
             </Button>
           </div>
         </main>
-        <Footer />
       </div>
     );
   }
@@ -104,21 +101,18 @@ export default function CategoryPage() {
   if (categoriesLoading || !category) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <Header />
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center">
             <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
             <p className="mt-4 text-gray-600 dark:text-gray-400">Loading category...</p>
           </div>
         </main>
-        <Footer />
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <Header />
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Category Header */}
         <div className="mb-8">
@@ -197,7 +191,6 @@ export default function CategoryPage() {
           </div>
         )}
       </main>
-      <Footer />
     </div>
   );
 }

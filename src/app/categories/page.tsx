@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { Header, Footer } from '@/components/layout';
 import { CategoryCard } from '@/components/ui';
 import { useCategories } from '@/lib/hooks/useCategories';
 import { ICONS } from '@/lib/utils/categoryIcons';
@@ -12,14 +11,12 @@ export default function CategoriesPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <Header />
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center py-20">
             <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
             <p className="mt-4 text-gray-600 dark:text-gray-400">Loading categories...</p>
           </div>
         </main>
-        <Footer />
       </div>
     );
   }
@@ -27,7 +24,6 @@ export default function CategoriesPage() {
   if (error) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <Header />
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center py-20">
             <div className="text-4xl mb-4 flex justify-center">
@@ -39,15 +35,12 @@ export default function CategoriesPage() {
             <p className="text-gray-600 dark:text-gray-400 mb-4">{error}</p>
           </div>
         </main>
-        <Footer />
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <Header />
-      
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Page Header */}
         <section className="mb-8">
@@ -71,8 +64,6 @@ export default function CategoriesPage() {
           </div>
         </section>
       </main>
-
-      <Footer />
     </div>
   );
 }
