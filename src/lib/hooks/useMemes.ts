@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Meme } from '@/lib/types/meme';
+import { useMemesState } from '@/lib/contexts';
 
 interface UseMemesOptions {
   category_id?: string;
@@ -20,12 +21,18 @@ interface UseMemesReturn {
 }
 
 export const useMemes = (options: UseMemesOptions = {}): UseMemesReturn => {
-  const [memes, setMemes] = useState<Meme[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-
+  
+  const {
+    state,
+    setMemes,
+    appendMemes,
+    setHasMore,
+    setCurrentPage,
+    setFilters,
+    isSameFilters
+  } = useMemesState();
 
   const {
     category_id,
@@ -35,6 +42,16 @@ export const useMemes = (options: UseMemesOptions = {}): UseMemesReturn => {
     time_period,
     limit = 20
   } = options;
+
+  // Check if current filters match saved filters
+  const currentFilters = {
+    category_id: category_id || '',
+    filter: sort_by === 'likes' ? 'hottest' as const : 
+            sort_by === 'views' ? 'trending' as const : 'newest' as const,
+    time_period: time_period || 'all'
+  };
+
+  const filtersChanged = !isSameFilters(currentFilters);
 
   const fetchMemes = useCallback(async (pageNum: number, append: boolean = false) => {
     try {
@@ -69,47 +86,55 @@ export const useMemes = (options: UseMemesOptions = {}): UseMemesReturn => {
       const data = await response.json();
       
       if (append) {
-        setMemes(prev => [...prev, ...data.memes]);
+        appendMemes(data.memes);
       } else {
         setMemes(data.memes);
       }
       
-
       setHasMore(data.pagination.has_more);
-      setPage(pageNum);
+      setCurrentPage(pageNum);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch memes');
     } finally {
       setLoading(false);
     }
-  }, [category_id, search, sort_by, sort_order, time_period, limit]);
+  }, [category_id, search, sort_by, sort_order, time_period, limit, setMemes, appendMemes, setHasMore, setCurrentPage]);
 
   const loadMore = useCallback(() => {
-    if (!loading && hasMore) {
-      fetchMemes(page + 1, true);
+    if (!loading && state.hasMore) {
+      fetchMemes(state.currentPage + 1, true);
     }
-  }, [loading, hasMore, page, fetchMemes]);
+  }, [loading, state.hasMore, state.currentPage, fetchMemes]);
 
   const refresh = useCallback(() => {
-    setPage(1);
+    setCurrentPage(1);
     setMemes([]);
     setHasMore(true);
     fetchMemes(1, false);
-  }, [fetchMemes]);
+  }, [fetchMemes, setCurrentPage, setMemes, setHasMore]);
 
-  // Fetch memes when options change
+  // Update filters in context when options change
   useEffect(() => {
-    setPage(1);
-    setMemes([]);
-    setHasMore(true);
-    fetchMemes(1, false);
-  }, [fetchMemes]);
+    if (filtersChanged) {
+      setFilters(currentFilters);
+    }
+  }, [filtersChanged, currentFilters, setFilters]);
+
+  // Fetch memes when options change or when filters don't match saved state
+  useEffect(() => {
+    if (filtersChanged || !state.isInitialized) {
+      setCurrentPage(1);
+      setMemes([]);
+      setHasMore(true);
+      fetchMemes(1, false);
+    }
+  }, [filtersChanged, state.isInitialized, setCurrentPage, setMemes, setHasMore, fetchMemes]);
 
   return {
-    memes,
+    memes: state.memes,
     loading,
     error,
-    hasMore,
+    hasMore: state.hasMore,
     loadMore,
     refresh
   };

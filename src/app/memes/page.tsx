@@ -6,6 +6,7 @@ import { FiltersAndSorting } from '@/components/ui';
 import { useMemes } from '@/lib/hooks/useMemes';
 import { useCategories } from '@/lib/hooks/useCategories';
 import { useMemeInteractions } from '@/lib/hooks/useMemeInteractions';
+import { useMemesState } from '@/lib/contexts';
 import { Meme } from '@/lib/types/meme';
 import { ICONS, getCategoryIconOrEmoji } from '@/lib/utils/categoryIcons';
 
@@ -16,6 +17,9 @@ export default function MemesPage() {
   const [localMemes, setLocalMemes] = useState<Meme[]>([]);
   const [likedMemes, setLikedMemes] = useState<Set<string>>(new Set());
   const [userInitiated, setUserInitiated] = useState(false);
+  
+  // Get memes state context
+  const { state: memesState, setScrollPosition } = useMemesState();
   
   // Ref for scrolling to meme grid
   const memeGridRef = useRef<HTMLDivElement>(null);
@@ -66,6 +70,43 @@ export default function MemesPage() {
       });
     }
   };
+
+  // Restore scroll position when returning to the page
+  useEffect(() => {
+    if (memesState.isInitialized && memesState.scrollPosition > 0) {
+      // Use setTimeout to ensure the DOM is fully rendered
+      const timer = setTimeout(() => {
+        window.scrollTo({
+          top: memesState.scrollPosition,
+          behavior: 'instant' // Use instant to avoid animation when restoring position
+        });
+      }, 100);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [memesState.isInitialized, memesState.scrollPosition]);
+
+  // Save scroll position when scrolling
+  useEffect(() => {
+    const handleScroll = () => {
+      if (typeof window !== 'undefined') {
+        setScrollPosition(window.scrollY);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [setScrollPosition]);
+
+  // Initialize local state from context when available
+  useEffect(() => {
+    if (memesState.isInitialized) {
+      setSelectedCategory(memesState.filters.category_id);
+      setSelectedFilter(memesState.filters.filter);
+      setSelectedTimePeriod(memesState.filters.time_period);
+      setLocalMemes(memesState.memes);
+    }
+  }, [memesState.isInitialized, memesState.filters, memesState.memes]);
 
   // Reset local memes when filter or category changes
   useEffect(() => {
