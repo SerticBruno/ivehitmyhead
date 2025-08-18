@@ -46,38 +46,45 @@ const FeaturedMemeCard: React.FC<FeaturedMemeCardProps> = ({
   };
 
   return (
-    <Link href={`/meme/${meme.slug}`} className="block">
+    <Link href={`/meme/${meme.slug}`} className="block h-full">
       <Card 
-        className={cn("overflow-hidden cursor-pointer", className)}
+        className={cn("overflow-hidden cursor-pointer h-full flex flex-col", className)}
       >
-        <CardHeader className="pb-3">
+        <CardHeader className="pb-3 flex-shrink-0">
           <div>
             <h3 className="font-semibold text-lg line-clamp-2">{meme.title}</h3>
             <p className="text-sm text-gray-500">
               by {meme.author?.display_name || meme.author?.username || 'Unknown'}
             </p>
-            {meme.category && (
-              <div className="flex items-center gap-2 mt-2">
-                {getCategoryIconOrEmoji(meme.category.name, meme.category.emoji)}
-                <span className="text-xs text-gray-500">{meme.category.name}</span>
-              </div>
-            )}
+            <div className="flex items-center gap-2 mt-2">
+              {meme.category ? (
+                <>
+                  {getCategoryIconOrEmoji(meme.category.name, meme.category.emoji)}
+                  <span className="text-xs text-gray-500">{meme.category.name}</span>
+                </>
+              ) : (
+                <>
+                  <span className="text-xs text-gray-400">📁</span>
+                  <span className="text-xs text-gray-400">Uncategorized</span>
+                </>
+              )}
+            </div>
           </div>
         </CardHeader>
         
-        <CardContent className="p-0">
+        <CardContent className="p-0 flex-grow">
           <div className="relative w-full h-64">
             <Image
               src={meme.image_url}
               alt={meme.title}
               fill
               className="object-cover"
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw, 25vw"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             />
           </div>
         </CardContent>
         
-        <div className="p-4 pt-2">
+        <div className="p-4 pt-2 flex-shrink-0">
           <div className="flex items-center justify-between text-sm text-gray-500">
             <div className="flex items-center gap-4">
               <button

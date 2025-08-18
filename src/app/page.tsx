@@ -15,7 +15,7 @@ import { useMemeInteractions } from '@/lib/hooks/useMemeInteractions';
 export default function Home() {
   // Fetch real memes and categories - sorted by views for featured section
   const { memes, loading: memesLoading, error: memesError } = useMemes({ 
-    limit: 6, 
+    limit: 8, 
     sort_by: 'views', 
     sort_order: 'desc'
   });
@@ -140,7 +140,7 @@ export default function Home() {
             <div>
               <h2 className="text-2xl font-bold">Most Viewed Memes</h2>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                The memes that everyone is talking about
+                Some of the memes that people are watching or smth
               </p>
             </div>
             <Button variant="ghost" onClick={() => window.location.href = '/memes'}>

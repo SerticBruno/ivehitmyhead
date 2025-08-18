@@ -18,8 +18,8 @@ export const FeaturedMemes: React.FC<FeaturedMemesProps> = ({
   className = '',
   likedMemes
 }) => {
-  // Take only the first 3 memes for featured section
-  const featuredMemes = memes.slice(0, 3);
+  // Take only the first 6 memes for featured section
+  const featuredMemes = memes.slice(0, 8);
 
   if (featuredMemes.length === 0) {
     return (
@@ -36,7 +36,7 @@ export const FeaturedMemes: React.FC<FeaturedMemesProps> = ({
   }
 
   return (
-    <div className={`grid grid-cols-1 sm:grid-cols-3 gap-6 ${className}`}>
+    <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 ${className}`}>
       {featuredMemes.map((meme) => (
         <div key={meme.id} className="relative">
           <FeaturedMemeCard
