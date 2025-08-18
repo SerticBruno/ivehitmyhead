@@ -68,6 +68,9 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
     y: number;
   } | null>(null);
 
+  // Track if we just closed the popup to handle two-step deselection
+  const [justClosedPopup, setJustClosedPopup] = useState(false);
+
   // Track initial positions for popup delta calculation
   const [initialDragState, setInitialDragState] = useState<{
     fieldX: number;
@@ -706,11 +709,17 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
   // Function to close settings popup
   const closeSettingsPopup = useCallback(() => {
     // Don't close popup if we're actively performing operations
-    if (isResizing || isDragging || isRotating || isOperationActive) {
+    // Also don't close if we just finished rotating to prevent popup from disappearing
+    if (isResizing || isDragging || isRotating || isOperationActive || justFinishedRotating) {
       return;
     }
     setSettingsPopup(null);
-  }, [isResizing, isDragging, isRotating, isOperationActive]);
+    // Mark that we just closed the popup to handle two-step deselection
+    setJustClosedPopup(true);
+    setTimeout(() => {
+      setJustClosedPopup(false);
+    }, 300);
+  }, [isResizing, isDragging, isRotating, isOperationActive, justFinishedRotating]);
 
   // Function to update popup position using delta (simpler approach)
   const updatePopupPositionByDelta = useCallback((deltaX: number, deltaY: number) => {
@@ -1046,85 +1055,138 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
     };
   }, [renderCanvas]);
 
-  // Global click handler to close settings popup when clicking outside
+  // Global click handler to close settings popup and deselect text field when clicking outside
   useEffect(() => {
     const handleGlobalClick = (e: MouseEvent) => {
-      if (!settingsPopup || justOpenedPopup) return;
-      
-      // Don't close popup if we're actively resizing, dragging, or rotating
-      if (isResizing || isDragging || isRotating || isOperationActive) {
+      // Don't handle clicks if we're actively performing operations
+      if (isResizing || isDragging || isRotating || isOperationActive || justFinishedRotating) {
         return;
       }
       
-      // Check if the click target is inside the settings popup
-      const popupElement = document.querySelector('[data-settings-popup]');
-      if (popupElement && popupElement.contains(e.target as Node)) {
-        return; // Don't close if clicking inside popup
-      }
-      
-      // Check if the click target is on the canvas
-      const canvasElement = canvasRef.current;
-      if (canvasElement && canvasElement.contains(e.target as Node)) {
-        // If clicking on the canvas, check if it's on a text field or empty area
-        const rect = canvasElement.getBoundingClientRect();
-        const clickX = e.clientX - rect.left;
-        const clickY = e.clientY - rect.top;
+      // If popup is open, handle popup-specific logic
+      if (settingsPopup && !justOpenedPopup) {
+        // Check if the click target is inside the settings popup
+        const popupElement = document.querySelector('[data-settings-popup]');
+        if (popupElement && popupElement.contains(e.target as Node)) {
+          return; // Don't close if clicking inside popup
+        }
         
-        // Check if the click is on any text field, resize handle, rotation handle, or settings cog
-        const isOnTextField = textFields.some(field => {
-          // Check if clicking on the text field itself
-          if (isPointInTextField(clickX, clickY, field, rect.width, rect.height)) {
-            return true;
-          }
+        // Check if the click target is on the canvas
+        const canvasElement = canvasRef.current;
+        if (canvasElement && canvasElement.contains(e.target as Node)) {
+          // If clicking on the canvas, check if it's on a text field or empty area
+          const rect = canvasElement.getBoundingClientRect();
+          const clickX = e.clientX - rect.left;
+          const clickY = e.clientY - rect.top;
           
-          // Check if clicking on resize handles
-          const { handles } = getResizeHandleInfo(field, rect.width, rect.height);
-          for (const handle of handles) {
-            if (isOverRotatedResizeHandle(clickX, clickY, handle, field, rect.width, rect.height)) {
+          // Check if the click is on any text field, resize handle, rotation handle, or settings cog
+          const isOnTextField = textFields.some(field => {
+            // Check if clicking on the text field itself
+            if (isPointInTextField(clickX, clickY, field, rect.width, rect.height)) {
               return true;
             }
+            
+            // Check if clicking on resize handles
+            const { handles } = getResizeHandleInfo(field, rect.width, rect.height);
+            for (const handle of handles) {
+              if (isOverRotatedResizeHandle(clickX, clickY, handle, field, rect.width, rect.height)) {
+                return true;
+              }
+            }
+            
+            // Check if clicking on rotation handle
+            if (isOverRotationHandle(clickX, clickY, field, rect.width, rect.height)) {
+              return true;
+            }
+            
+            // Check if clicking on settings cog
+            if (isOverSettingsCog(clickX, clickY, field, rect.width, rect.height)) {
+              return true;
+            }
+            
+            return false;
+          });
+          
+          // If clicking on empty canvas area, close the popup
+          if (!isOnTextField) {
+            setSettingsPopup(null);
+            return;
           }
           
-          // Check if clicking on rotation handle
-          if (isOverRotationHandle(clickX, clickY, field, rect.width, rect.height)) {
-            return true;
-          }
-          
-          // Check if clicking on settings cog
-          if (isOverSettingsCog(clickX, clickY, field, rect.width, rect.height)) {
-            return true;
-          }
-          
-          return false;
-        });
-        
-        // If clicking on empty canvas area, close the popup
-        if (!isOnTextField) {
-          setSettingsPopup(null);
+          // If clicking on a text field or its controls, don't close the popup
           return;
         }
         
-        // If clicking on a text field or its controls, don't close the popup
+        // Click is outside the canvas with popup open
+        // First click outside: close the popup and mark that we just closed it
+        setSettingsPopup(null);
+        setJustClosedPopup(true);
+        // Clear the flag after a short delay to allow for the next click
+        setTimeout(() => {
+          setJustClosedPopup(false);
+        }, 300);
         return;
       }
       
-      // Add a small delay to ensure we're not in the middle of opening the popup
-      setTimeout(() => {
-        if (settingsPopup && !justOpenedPopup && !isResizing && !isDragging && !isRotating && !isOperationActive) {
-          setSettingsPopup(null);
+      // Handle text field deselection when no popup is open
+      if (!settingsPopup && activeField) {
+        // Check if the click target is on the canvas
+        const canvasElement = canvasRef.current;
+        if (canvasElement && canvasElement.contains(e.target as Node)) {
+          // If clicking on the canvas, check if it's on a text field or its controls
+          const rect = canvasElement.getBoundingClientRect();
+          const clickX = e.clientX - rect.left;
+          const clickY = e.clientY - rect.top;
+          
+          const isOnTextField = textFields.some(field => {
+            // Check if clicking on the text field itself
+            if (isPointInTextField(clickX, clickY, field, rect.width, rect.height)) {
+              return true;
+            }
+            
+            // Check if clicking on resize handles
+            const { handles } = getResizeHandleInfo(field, rect.width, rect.height);
+            for (const handle of handles) {
+              if (isOverRotatedResizeHandle(clickX, clickY, handle, field, rect.width, rect.height)) {
+                return true;
+              }
+            }
+            
+            // Check if clicking on rotation handle
+            if (isOverRotationHandle(clickX, clickY, field, rect.width, rect.height)) {
+              return true;
+            }
+            
+            // Check if clicking on settings cog
+            if (isOverSettingsCog(clickX, clickY, field, rect.width, rect.height)) {
+              return true;
+            }
+            
+            return false;
+          });
+          
+          // If clicking on empty canvas area, deselect the text field
+          if (!isOnTextField) {
+            onFieldSelect(null);
+            return;
+          }
+          
+          // If clicking on a text field or its controls, don't deselect
+          return;
         }
-      }, 50);
+        
+        // Click is outside the canvas with no popup - deselect the text field immediately
+        onFieldSelect(null);
+      }
     };
 
-    if (settingsPopup) {
-      // Add the event listener immediately
-      document.addEventListener('click', handleGlobalClick);
-      
-      return () => {
-        document.removeEventListener('click', handleGlobalClick);
-      };
-    }
-  }, [settingsPopup, isResizing, isDragging, isRotating, isOperationActive, justOpenedPopup, textFields, getResizeHandleInfo, isOverRotatedResizeHandle, isOverRotationHandle, isOverSettingsCog]);
+    // Always add the event listener to handle both popup closing and field deselection
+    document.addEventListener('click', handleGlobalClick);
+    
+    return () => {
+      document.removeEventListener('click', handleGlobalClick);
+    };
+  }, [settingsPopup, activeField, onFieldSelect, justClosedPopup, isResizing, isDragging, isRotating, isOperationActive, justOpenedPopup, textFields, getResizeHandleInfo, isOverRotatedResizeHandle, isOverRotationHandle, isOverSettingsCog]);
 
   if (!selectedTemplate) {
     return (
