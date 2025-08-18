@@ -1062,10 +1062,49 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
         return; // Don't close if clicking inside popup
       }
       
-      // Check if the click target is on the canvas (which might be a legitimate interaction)
+      // Check if the click target is on the canvas
       const canvasElement = canvasRef.current;
       if (canvasElement && canvasElement.contains(e.target as Node)) {
-        // Don't close if clicking on the canvas - this could be a legitimate interaction
+        // If clicking on the canvas, check if it's on a text field or empty area
+        const rect = canvasElement.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        const clickY = e.clientY - rect.top;
+        
+        // Check if the click is on any text field, resize handle, rotation handle, or settings cog
+        const isOnTextField = textFields.some(field => {
+          // Check if clicking on the text field itself
+          if (isPointInTextField(clickX, clickY, field, rect.width, rect.height)) {
+            return true;
+          }
+          
+          // Check if clicking on resize handles
+          const { handles } = getResizeHandleInfo(field, rect.width, rect.height);
+          for (const handle of handles) {
+            if (isOverRotatedResizeHandle(clickX, clickY, handle, field, rect.width, rect.height)) {
+              return true;
+            }
+          }
+          
+          // Check if clicking on rotation handle
+          if (isOverRotationHandle(clickX, clickY, field, rect.width, rect.height)) {
+            return true;
+          }
+          
+          // Check if clicking on settings cog
+          if (isOverSettingsCog(clickX, clickY, field, rect.width, rect.height)) {
+            return true;
+          }
+          
+          return false;
+        });
+        
+        // If clicking on empty canvas area, close the popup
+        if (!isOnTextField) {
+          setSettingsPopup(null);
+          return;
+        }
+        
+        // If clicking on a text field or its controls, don't close the popup
         return;
       }
       
@@ -1085,7 +1124,7 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
         document.removeEventListener('click', handleGlobalClick);
       };
     }
-  }, [settingsPopup, isResizing, isDragging, isRotating, isOperationActive, justOpenedPopup]);
+  }, [settingsPopup, isResizing, isDragging, isRotating, isOperationActive, justOpenedPopup, textFields, getResizeHandleInfo, isOverRotatedResizeHandle, isOverRotationHandle, isOverSettingsCog]);
 
   if (!selectedTemplate) {
     return (
