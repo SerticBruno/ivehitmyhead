@@ -15,8 +15,6 @@ export async function GET(
       );
     }
 
-    console.log('Fetching meme by slug:', slug);
-
     // Fetch meme by slug with related data
     const { data: meme, error } = await supabaseAdmin
       .from('memes')

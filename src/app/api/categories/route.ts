@@ -9,8 +9,6 @@ export async function GET(request: NextRequest) {
     const category_id = searchParams.get('category_id');
     const limit = parseInt(searchParams.get('limit') || '50');
 
-    console.log('Fetching categories with sort:', { sort_by, sort_order, category_id, limit });
-    
     let query = supabaseAdmin
       .from('categories')
       .select('*');
@@ -56,8 +54,6 @@ export async function GET(request: NextRequest) {
         details: error.message
       }, { status: 500 });
     }
-    
-    console.log('Categories fetched successfully:', categories?.length || 0);
     
     return NextResponse.json({
       success: true,

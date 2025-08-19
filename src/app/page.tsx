@@ -37,8 +37,6 @@ export default function Home() {
           time_period: 'month'
         });
         
-        console.log('Homepage: Fetching hottest memes this month');
-        
         const response = await fetch(`/api/memes?${params}`);
         
         if (!response.ok) {
@@ -46,7 +44,6 @@ export default function Home() {
         }
         
         const data = await response.json();
-        console.log('Homepage: Received memes:', data.memes?.length || 0);
         
         setMemes(data.memes || []);
       } catch (err) {

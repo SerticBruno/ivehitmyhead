@@ -316,6 +316,121 @@ export const renderTextOnCanvas = (
 };
 
 /**
+ * Render text on a canvas context specifically for downloading
+ * This function ensures 1:1 fidelity with the preview by using the same
+ * percentage-based calculations but at full resolution
+ */
+export const renderTextForDownload = (
+  ctx: CanvasRenderingContext2D,
+  field: TextField,
+  canvasWidth: number,
+  canvasHeight: number
+): void => {
+  if (!field.text.trim()) return;
+
+  const fontFamily = field.fontFamily || 'Impact';
+  const fontWeight = field.fontWeight || 'bold';
+  const letterSpacing = field.letterSpacing || '0.05em';
+  
+  // For download, we want to maintain the same relative font size as the preview
+  // The fontSize field represents a percentage of the image height
+  const fontSizeInPixels = (field.fontSize / 100) * canvasHeight;
+  
+  ctx.font = `${fontWeight} ${fontSizeInPixels}px ${fontFamily}, Arial, sans-serif`;
+  
+  if (letterSpacing) {
+    ctx.letterSpacing = letterSpacing;
+  }
+  
+  ctx.fillStyle = field.color;
+  ctx.strokeStyle = field.strokeColor || '#000000';
+  ctx.lineWidth = field.strokeWidth || 6;
+  
+  if (field.textAlign === 'left') {
+    ctx.textAlign = 'left';
+  } else if (field.textAlign === 'right') {
+    ctx.textAlign = 'right';
+  } else {
+    ctx.textAlign = 'center';
+  }
+  ctx.textBaseline = 'top';
+
+  // Convert percentage coordinates to pixel coordinates
+  const textX = (field.x / 100) * canvasWidth;
+  const textY = (field.y / 100) * canvasHeight;
+  const textBoxWidth = (field.width / 100) * canvasWidth;
+  
+  // Helper function to wrap text
+  const wrapText = (text: string, maxWidth: number): string[] => {
+    const words = text.split(' ');
+    const lines: string[] = [];
+    let currentLine = words[0];
+
+    for (let i = 1; i < words.length; i++) {
+      const word = words[i];
+      const width = ctx.measureText(currentLine + ' ' + word).width;
+      if (width < maxWidth) {
+        currentLine += ' ' + word;
+      } else {
+        lines.push(currentLine);
+        currentLine = word;
+      }
+    }
+    lines.push(currentLine);
+    return lines;
+  };
+  
+  const wrappedLines = wrapText(field.text, textBoxWidth);
+  const lineHeight = fontSizeInPixels * 1.2;
+
+  const padding = 16; // Fixed padding for download (no scaling)
+  
+  // Calculate Y position with smart vertical centering
+  const textBoxHeight = (field.height / 100) * canvasHeight;
+  const totalTextHeight = wrappedLines.length * lineHeight;
+  const availableHeight = textBoxHeight - (padding * 2);
+  
+  let startY: number;
+  
+  if (totalTextHeight <= availableHeight) {
+    // If text fits within available height, center it vertically
+    startY = textY - (totalTextHeight / 2);
+  } else {
+    // If text is too long, start from top with padding
+    startY = textY - (textBoxHeight / 2) + padding;
+  }
+  
+  let lineX = textX;
+  
+  if (field.textAlign === 'left') {
+    lineX = textX - (textBoxWidth / 2) + padding;
+  } else if (field.textAlign === 'right') {
+    lineX = textX + (textBoxWidth / 2) - padding;
+  } else {
+    lineX = textX;
+  }
+  
+  // Save the current context state
+  ctx.save();
+  
+  // Apply rotation if specified
+  if (field.rotation && field.rotation !== 0) {
+    ctx.translate(textX, textY);
+    ctx.rotate((field.rotation * Math.PI) / 180);
+    ctx.translate(-textX, -textY);
+  }
+  
+  wrappedLines.forEach((line, index) => {
+    const lineY = startY + (index * lineHeight);
+    ctx.strokeText(line, lineX, lineY);
+    ctx.fillText(line, lineX, lineY);
+  });
+  
+  // Restore the context state
+  ctx.restore();
+};
+
+/**
  * Check if a point is near a resize handle
  */
 export const getResizeHandle = (

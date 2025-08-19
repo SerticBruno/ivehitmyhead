@@ -7,7 +7,7 @@ import { TemplateSelector } from './TemplateSelector';
 import { TextFieldsPanel } from './TextFieldsPanel';
 import { QuickActions } from './QuickActions';
 import { MemeTemplate, TextField } from '../../lib/types/meme';
-import { initializeTextFields, renderTextOnCanvas } from '../../lib/utils/templateUtils';
+import { initializeTextFields, renderTextOnCanvas, renderTextForDownload } from '../../lib/utils/templateUtils';
 import { useNavigationWarning } from '../../lib/contexts/NavigationWarningContext';
 
 export const MemeGenerator: React.FC = () => {
@@ -185,21 +185,24 @@ export const MemeGenerator: React.FC = () => {
 
     const img = new window.Image();
     img.onload = () => {
-      // Set canvas size to match the template dimensions
-      canvas.width = img.width;
-      canvas.height = img.height;
+      // Set canvas size to match the ORIGINAL template dimensions
+      canvas.width = selectedTemplate.width;
+      canvas.height = selectedTemplate.height;
       
-      // Draw the template image
-      ctx.drawImage(img, 0, 0);
+      // Draw the template image at full size
+      ctx.drawImage(img, 0, 0, selectedTemplate.width, selectedTemplate.height);
       
-      // Draw text fields using the shared utility function
+      // Draw text fields using the download-specific rendering function
+      // This ensures 1:1 fidelity with the preview by using the same
+      // percentage-based calculations but at full resolution
       textFields.forEach(field => {
-        renderTextOnCanvas(ctx, field, img.width, img.height, 1);
+        renderTextForDownload(ctx, field, selectedTemplate.width, selectedTemplate.height);
       });
       
       // Download the final image with text
       const link = document.createElement('a');
       link.download = `meme-${selectedTemplate.id}.png`;
+      link.href = canvas.toDataURL('image/png');
       link.click();
     };
     img.src = selectedTemplate.src;

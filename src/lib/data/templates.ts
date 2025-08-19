@@ -92,6 +92,82 @@ export const MEME_TEMPLATES: MemeTemplate[] = [
     tags: ['bernie', 'politics', 'single-text'],
     category: 'politics',
     difficulty: 'easy'
+  },
+  {
+    id: 'transcendenace',
+    name: 'Transcendenace Template',
+    description: 'Template with four text areas for complex meme creation',
+    src: '/images/templates/transcendenace.png',
+    width: 800,
+    height: 600,
+    defaultFont: 'Impact',
+    defaultFontSize: 36,
+    defaultColor: '#ffffff',
+    textFields: [
+      {
+        id: 'top',
+        x: 37, // center horizontally
+        y: 12, // 15% from top
+        width: 24, // 70% of image width
+        height: 15, // 12% of image height
+        fontSize: 36,
+        color: '#ffffff',
+        fontFamily: 'Impact',
+        fontWeight: 'bold',
+        textAlign: 'center',
+        maxWidth: 70, // 70% of image width
+        strokeColor: '#000000',
+        strokeWidth: 5
+      },
+      {
+        id: 'middle-left',
+        x: 37, // 20% from left
+        y: 38, // 45% from top
+        width: 24, // 25% of image width
+        height: 15, // 15% of image height
+        fontSize: 32,
+        color: '#ffffff',
+        fontFamily: 'Impact',
+        fontWeight: 'bold',
+        textAlign: 'left',
+        maxWidth: 70, // 25% of image width
+        strokeColor: '#000000',
+        strokeWidth: 4
+      },
+      {
+        id: 'middle-right',
+        x: 37, // 65% from left
+        y: 63, // 45% from top
+        width: 24, // 25% of image width
+        height: 15, // 15% of image height
+        fontSize: 32,
+        color: '#ffffff',
+        fontFamily: 'Impact',
+        fontWeight: 'bold',
+        textAlign: 'right',
+        maxWidth: 70, // 25% of image width
+        strokeColor: '#000000',
+        strokeWidth: 4
+      },
+      {
+        id: 'bottom',
+        x: 37, // center horizontally
+        y: 87, // 80% from top
+        width: 24, // 80% of image width
+        height: 15, // 15% of image height
+        fontSize: 36,
+        color: '#ffffff',
+        fontFamily: 'Impact',
+        fontWeight: 'bold',
+        textAlign: 'center',
+        maxWidth: 70, // 80% of image width
+        strokeColor: '#000000',
+        strokeWidth: 5
+      }
+    ],
+    tags: ['complex', 'four-text', 'advanced'],
+    category: 'advanced',
+    difficulty: 'hard'
   }
 ];
 

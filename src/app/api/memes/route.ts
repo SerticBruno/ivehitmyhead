@@ -87,16 +87,6 @@ export async function GET(request: NextRequest) {
     if (error) {
       throw error;
     }
-
-    console.log('API debug:', {
-      page,
-      limit,
-      offset,
-      memesCount: memes?.length || 0,
-      countFromQuery: count,
-      hasFilters: !!(category_id || search || time_period)
-    });
-
     // Get total count for pagination
     let totalCount = 0;
     if (count === null) {

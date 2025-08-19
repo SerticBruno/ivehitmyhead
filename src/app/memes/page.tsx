@@ -189,21 +189,11 @@ export default function MemesPage() {
 
   // Simplified effect to handle returning from single meme page
   useEffect(() => {
-    console.log('Returning to memes page - context state:', {
-      memesLength: memes.length,
-      hasMore,
-      memesLoading,
-      filters: memesState.filters,
-      isInitialized: memesState.isInitialized,
-      currentPage: memesState.currentPage
-    });
-    
+
     // Only trigger load more if we have memes, have more to load, and are not currently loading
     if (memes.length > 0 && hasMore && !memesLoading) {
       // Check if we're on a page > 1 (meaning we've loaded more than initial memes)
       const currentPage = Math.ceil(memes.length / 7); // Assuming 7 memes per page
-      
-      console.log('Calculated current page:', currentPage);
       
       if (currentPage > 1) {
         console.log('Returned to memes page with existing memes, checking if we need to load more');
@@ -486,34 +476,6 @@ export default function MemesPage() {
               </div>
             ) : (
               <>
-                {/* Debug info */}
-                <div className="mb-4 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg text-sm">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div>
-                      <strong>Memes loaded:</strong> {memes.length}
-                    </div>
-                    <div>
-                      <strong>Has more:</strong> {hasMore ? 'Yes' : 'No'}
-                    </div>
-                    <div>
-                      <strong>Loading:</strong> {memesLoading ? 'Yes' : 'No'}
-                    </div>
-                    <div>
-                      <strong>Current page:</strong> {memesState.currentPage}
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => {
-                      console.log('Manual load more clicked');
-                      loadMore();
-                    }}
-                    disabled={memesLoading || !hasMore}
-                    className="mt-2 px-4 py-2 bg-blue-500 text-white rounded disabled:bg-gray-400"
-                  >
-                    {memesLoading ? 'Loading...' : 'Manual Load More'}
-                  </button>
-                </div>
-                
                 {/* Scroll anchor positioned exactly at the top of the meme grid */}
                 <div ref={memeGridRef}></div>
                 <MemeGrid

@@ -64,18 +64,10 @@ export const MemesStateProvider: React.FC<MemesStateProviderProps> = ({ children
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const savedState = sessionStorage.getItem('memesState');
-      console.log('Loading state from sessionStorage:', savedState ? 'Found saved state' : 'No saved state');
       
       if (savedState) {
         try {
           const parsedState = JSON.parse(savedState);
-          console.log('Restored context state:', {
-            memesCount: parsedState.memes?.length || 0,
-            hasMore: parsedState.hasMore,
-            currentPage: parsedState.currentPage,
-            isInitialized: parsedState.isInitialized,
-            filters: parsedState.filters
-          });
           
           setState(parsedState);
           lastSavedState.current = savedState;
@@ -129,12 +121,6 @@ export const MemesStateProvider: React.FC<MemesStateProviderProps> = ({ children
 
   const setMemes = useCallback((memes: Meme[]) => {
     setState(prev => {
-      console.log('setMemes called:', {
-        memeCount: memes.length,
-        currentFilters: prev.filters,
-        isInitialized: prev.isInitialized
-      });
-      
       // Remove duplicates from the new memes array
       const uniqueMemes = memes.filter((meme, index, self) => 
         index === self.findIndex(m => m.id === meme.id)
