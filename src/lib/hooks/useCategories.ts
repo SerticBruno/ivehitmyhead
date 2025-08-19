@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useEffect, useCallback, useMemo } from 'react';
+import { useCategoriesState } from '@/lib/contexts';
 import { Category } from '@/lib/types/meme';
 
 interface UseCategoriesOptions {
@@ -13,9 +14,7 @@ interface UseCategoriesReturn {
 }
 
 export const useCategories = (options: UseCategoriesOptions = {}): UseCategoriesReturn => {
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { state, setCategories, setLoading, setError, refetch: refetchState } = useCategoriesState();
   
   // Memoize the limit to prevent unnecessary re-renders
   const limit = useMemo(() => options.limit || 50, [options.limit]);
@@ -47,24 +46,25 @@ export const useCategories = (options: UseCategoriesOptions = {}): UseCategories
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
       console.error('Error fetching categories:', err);
-    } finally {
-      setLoading(false);
     }
-  }, [limit]);
+  }, [limit, setCategories, setLoading, setError]);
 
-  // Only fetch categories once on mount
+  // Only fetch categories if they haven't been loaded yet
   useEffect(() => {
-    fetchCategories();
-  }, [fetchCategories]);
+    if (!state.isInitialized) {
+      fetchCategories();
+    }
+  }, [fetchCategories, state.isInitialized]);
 
   const refetch = useCallback(() => {
+    refetchState();
     fetchCategories();
-  }, [fetchCategories]);
+  }, [refetchState, fetchCategories]);
 
   return {
-    categories,
-    loading,
-    error,
+    categories: state.categories,
+    loading: state.loading,
+    error: state.error,
     refetch
   };
 };
