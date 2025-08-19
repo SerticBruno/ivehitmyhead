@@ -14,8 +14,7 @@ interface TemplateSelectorProps {
 
 export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
   selectedTemplate,
-  onTemplateSelect,
-  isDirty = false
+  onTemplateSelect
 }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 

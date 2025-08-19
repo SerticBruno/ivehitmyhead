@@ -15,21 +15,25 @@ export const useInfiniteScroll = ({
   hasMore,
   loading,
   threshold = 0.1,
-  rootMargin = '500px', // Increased from 300px to 500px to trigger much sooner
-  batchSize = 5,
+  rootMargin = '800px', // Increased to 800px to trigger much sooner
   itemCount
 }: UseInfiniteScrollOptions) => {
   const [observerTarget, setObserverTarget] = useState<HTMLDivElement | null>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
   const hasCheckedInitialPosition = useRef(false);
+  const lastLoadMoreTime = useRef(0);
 
   const handleObserver = useCallback(
     (entries: IntersectionObserverEntry[]) => {
       const target = entries[0];
       if (target.isIntersecting && hasMore && !loading) {
-        // Simplified logic: trigger load more when the observer target is visible
-        // and we're not currently loading and there are more items
-        onLoadMore();
+        // Prevent rapid firing of load more
+        const now = Date.now();
+        if (now - lastLoadMoreTime.current > 1000) { // Minimum 1 second between loads
+          lastLoadMoreTime.current = now;
+          console.log('Intersection observer triggered load more');
+          onLoadMore();
+        }
       }
     },
     [onLoadMore, hasMore, loading]
@@ -58,11 +62,16 @@ export const useInfiniteScroll = ({
     if (!hasMore || loading) return;
 
     const handleScroll = () => {
-      const isNearBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 500;
+      const isNearBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 800;
       
       if (isNearBottom && hasMore && !loading) {
-        console.log('Scrolled near bottom, triggering load more');
-        onLoadMore();
+        // Prevent rapid firing of load more
+        const now = Date.now();
+        if (now - lastLoadMoreTime.current > 1000) { // Minimum 1 second between loads
+          lastLoadMoreTime.current = now;
+          console.log('Scrolled near bottom, triggering load more');
+          onLoadMore();
+        }
       }
     };
 
@@ -72,6 +81,26 @@ export const useInfiniteScroll = ({
       window.removeEventListener('scroll', handleScroll);
     };
   }, [hasMore, loading, onLoadMore]);
+
+  // Additional check for when items are added (useful for scroll restoration scenarios)
+  useEffect(() => {
+    if (hasMore && !loading && itemCount > 0) {
+      // Check if we're near the bottom after items are added
+      const isNearBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 800;
+      
+      if (isNearBottom) {
+        console.log('Items added, checking if we need to load more');
+        // Small delay to ensure the DOM is updated
+        setTimeout(() => {
+          const newIsNearBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 800;
+          if (newIsNearBottom && hasMore && !loading) {
+            console.log('Still near bottom after items added, triggering load more');
+            onLoadMore();
+          }
+        }, 200);
+      }
+    }
+  }, [itemCount, hasMore, loading, onLoadMore]);
 
   useEffect(() => {
     if (!observerTarget) return;

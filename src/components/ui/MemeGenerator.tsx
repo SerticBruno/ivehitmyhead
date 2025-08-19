@@ -7,7 +7,7 @@ import { TemplateSelector } from './TemplateSelector';
 import { TextFieldsPanel } from './TextFieldsPanel';
 import { QuickActions } from './QuickActions';
 import { MemeTemplate, TextField } from '../../lib/types/meme';
-import { initializeTextFields, renderTextOnCanvas, renderTextForDownload } from '../../lib/utils/templateUtils';
+import { initializeTextFields, renderTextForDownload } from '../../lib/utils/templateUtils';
 import { useNavigationWarning } from '../../lib/contexts/NavigationWarningContext';
 
 export const MemeGenerator: React.FC = () => {

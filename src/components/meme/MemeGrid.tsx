@@ -1,146 +1,94 @@
 import React from 'react';
 import { MemeCard } from './MemeCard';
-import { Meme } from '@/lib/types/meme';
-import { useInfiniteScroll } from '@/lib/hooks/useInfiniteScroll';
+import { MemeGridProps } from '@/lib/types/meme';
 import { ICONS } from '@/lib/utils/categoryIcons';
+import { imagePreloader } from '@/lib/utils/imagePreloader';
+import { useInfiniteScroll } from '@/lib/hooks/useInfiniteScroll';
 
-interface MemeGridProps {
-  memes: Meme[];
-  onLike: (slug: string) => void;
-  onShare: (id: string) => void;
-  className?: string;
-  loading?: boolean;
-  showLoadMore?: boolean;
-  onLoadMore?: () => void;
-  hasMore?: boolean;
-  layout?: 'grid' | 'vertical';
-  likedMemes?: Set<string>;
-}
-
-const MemeGrid: React.FC<MemeGridProps> = ({
+export const MemeGrid: React.FC<MemeGridProps> = ({
   memes,
   onLike,
   onShare,
+  onComment,
   className = '',
   loading = false,
   showLoadMore = false,
   onLoadMore,
   hasMore = false,
-  layout = 'grid',
+  layout = 'vertical',
   likedMemes
 }) => {
+  // Preload images for better performance when navigating back
+  React.useEffect(() => {
+    if (memes.length > 0) {
+      const imageUrls = memes.map(meme => meme.image_url);
+      imagePreloader.preloadImages(imageUrls, { priority: 'high' });
+    }
+  }, [memes]);
+
+  // Set up infinite scroll
   const { setObserverTarget } = useInfiniteScroll({
     onLoadMore: onLoadMore || (() => {}),
     hasMore: hasMore && showLoadMore,
     loading,
-    batchSize: 5, // 5 memes per batch
-    itemCount: memes.length
+    batchSize: 5,
+    itemCount: memes.length,
+    rootMargin: '800px' // Trigger loading when 800px from bottom
   });
 
   if (loading && memes.length === 0) {
-    if (layout === 'vertical') {
-      return (
-        <div className={`space-y-8 ${className}`}>
-          {Array.from({ length: 5 }).map((_, index) => (
-            <div key={index} className="animate-pulse">
-              <div 
-                className="bg-gray-200 dark:bg-gray-800 rounded-lg" 
-                style={{ 
-                  height: 'calc(100vh - 300px)',
-                  minHeight: '400px',
-                  maxHeight: '800px'
-                }}
-              ></div>
-            </div>
-          ))}
-        </div>
-      );
-    }
-    
     return (
-      <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 ${className}`}>
-        {Array.from({ length: 8 }).map((_, index) => (
-          <div key={index} className="animate-pulse">
-            <div className="bg-gray-200 dark:bg-gray-800 rounded-lg h-80"></div>
+      <div className={`grid gap-6 ${className}`}>
+        {[...Array(6)].map((_, i) => (
+          <div key={i} className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div className="p-6">
+              <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse mb-4"></div>
+              <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse mb-2"></div>
+              <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse w-3/4"></div>
+            </div>
+            <div className="h-96 bg-gray-200 dark:bg-gray-700 animate-pulse"></div>
+            <div className="p-6">
+              <div className="flex justify-between items-center">
+                <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse w-20"></div>
+                <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse w-20"></div>
+              </div>
+            </div>
           </div>
         ))}
       </div>
     );
   }
 
-  if (memes.length === 0) {
+  if (memes.length === 0 && !loading) {
     return (
-      <div className={`flex flex-col items-center justify-center py-12 ${className}`}>
+      <div className={`text-center py-12 ${className}`}>
         <div className="text-6xl mb-4 flex justify-center">
           <ICONS.Star className="w-16 h-16 text-gray-400" />
         </div>
         <h3 className="text-xl font-semibold mb-2">No memes found</h3>
-        <p className="text-gray-500 dark:text-gray-400 text-center max-w-md">
-          Looks like there are no memes here yet. Be the first to upload something hilarious!
-        </p>
+        <p className="text-gray-500 dark:text-gray-400">Try adjusting your filters or check back later.</p>
       </div>
     );
   }
 
-  if (layout === 'vertical') {
-    return (
-      <>
-        <div className={`space-y-8 ${className}`}>
-          {memes.map((meme) => (
-            <div key={meme.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-              <MemeCard
-                meme={meme}
-                onLike={onLike}
-                onShare={onShare}
-                className="shadow-none border-0"
-                isLiked={likedMemes?.has(meme.slug)}
-              />
-            </div>
-          ))}
-        </div>
-        
-        {/* Intersection Observer Target - positioned after every 5th item for better infinite scroll */}
-        {showLoadMore && hasMore && (
-          <div 
-            ref={setObserverTarget}
-            className="h-20 w-full flex items-center justify-center"
-          >
-            {loading && (
-              <div className="flex items-center space-x-2">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                <span className="text-gray-600 dark:text-gray-400">Loading 5 more memes...</span>
-              </div>
-            )}
-          </div>
-        )}
-        
-        {/* End of content indicator */}
-        {!hasMore && memes.length > 0 && (
-          <div className="text-center py-8">
-            <div className="text-gray-500 dark:text-gray-400 text-sm">
-              You&apos;ve reached the end! No more memes in this category.
-            </div>
-          </div>
-        )}
-      </>
-    );
-  }
-
   return (
-    <>
-      <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 ${className}`}>
+    <div className={`space-y-6 ${className}`}>
+      {/* Memes Grid */}
+      <div className="grid gap-6">
         {memes.map((meme) => (
           <MemeCard
             key={meme.id}
             meme={meme}
             onLike={onLike}
             onShare={onShare}
-            isLiked={likedMemes?.has(meme.slug)}
+            onComment={onComment}
+            isLiked={likedMemes?.has(meme.slug) || false}
+            className={layout === 'grid' ? 'lg:col-span-1' : ''}
           />
         ))}
       </div>
-      
-      {/* Infinite scroll observer - positioned after the grid */}
+
+      {/* Intersection Observer Target for Infinite Scroll */}
       {showLoadMore && hasMore && (
         <div 
           ref={setObserverTarget}
@@ -149,12 +97,24 @@ const MemeGrid: React.FC<MemeGridProps> = ({
           {loading && (
             <div className="flex items-center space-x-2">
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-              <span className="text-gray-600 dark:text-gray-400">Loading 3 more memes...</span>
+              <span className="text-gray-600 dark:text-gray-400">Loading more memes...</span>
             </div>
           )}
         </div>
       )}
-      
+
+      {/* Fallback Load More Button (for cases where intersection observer might not work) */}
+      {showLoadMore && hasMore && !loading && (
+        <div className="text-center pt-6">
+          <button
+            onClick={onLoadMore}
+            className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors duration-200"
+          >
+            Load More
+          </button>
+        </div>
+      )}
+
       {/* End of content indicator */}
       {!hasMore && memes.length > 0 && (
         <div className="text-center py-8">
@@ -163,9 +123,6 @@ const MemeGrid: React.FC<MemeGridProps> = ({
           </div>
         </div>
       )}
-    </>
+    </div>
   );
-};
-
-export { MemeGrid };
-export type { MemeGridProps }; 
+}; 

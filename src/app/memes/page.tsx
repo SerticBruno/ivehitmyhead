@@ -7,12 +7,10 @@ import { useMemes } from '@/lib/hooks/useMemes';
 import { useCategories } from '@/lib/hooks/useCategories';
 import { useMemeInteractions } from '@/lib/hooks/useMemeInteractions';
 import { useMemesState } from '@/lib/contexts';
-import { Meme } from '@/lib/types/meme';
 import { ICONS, getCategoryIconOrEmoji } from '@/lib/utils/categoryIcons';
 
 export default function MemesPage() {
   const [likedMemes, setLikedMemes] = useState<Set<string>>(new Set());
-  const [userInitiated, setUserInitiated] = useState(false);
   
   // Get memes state context
   const { state: memesState, setScrollPosition } = useMemesState();
@@ -48,45 +46,34 @@ export default function MemesPage() {
   // Get categories for mobile selector
   const { categories, loading: categoriesLoading } = useCategories({ limit: 50 });
 
-  // Function to scroll to top of meme grid
-  const scrollToMemeGrid = useCallback(() => {
-    if (memeGridRef.current) {
-      // Get the navbar height dynamically
-      const header = document.querySelector('header');
-      const navbarHeight = header ? header.offsetHeight : 80;
-      
-      // Calculate the position to scroll to (accounting for navbar)
-      const elementTop = memeGridRef.current.offsetTop;
-      const offsetPosition = elementTop - navbarHeight - 20; // Extra 20px for breathing room
-      
-      // Scroll to the calculated position
-      window.scrollTo({
-        top: Math.max(0, offsetPosition), // Ensure we don't scroll to negative values
-        behavior: 'smooth'
-      });
-    }
-  }, []);
-
   // Restore scroll position when returning to the page
   useEffect(() => {
-    if (memesState.isInitialized && memesState.scrollPosition > 0) {
-      // Use setTimeout to ensure the DOM is fully rendered
+    // Check if we have a saved scroll position and we're not at the top
+    if (memesState.scrollPosition > 0 && window.scrollY === 0) {
+      console.log('Restoring scroll position:', memesState.scrollPosition);
+      
+      // Use a longer delay to ensure the page is fully rendered and memes are displayed
       const timer = setTimeout(() => {
         window.scrollTo({
           top: memesState.scrollPosition,
           behavior: 'instant' // Use instant to avoid animation when restoring position
         });
-      }, 100);
+        console.log('Scroll position restored to:', memesState.scrollPosition);
+      }, 300); // Increased delay to ensure proper rendering
       
       return () => clearTimeout(timer);
     }
-  }, [memesState.isInitialized, memesState.scrollPosition]);
+  }, [memesState.scrollPosition, memesState.isInitialized]);
 
   // Save scroll position when scrolling
   useEffect(() => {
     const handleScroll = () => {
       if (typeof window !== 'undefined') {
-        setScrollPosition(window.scrollY);
+        const currentScrollY = window.scrollY;
+        // Only save if we've scrolled down significantly (not just tiny movements)
+        if (currentScrollY > 10) {
+          setScrollPosition(currentScrollY);
+        }
       }
     };
 
@@ -129,14 +116,12 @@ export default function MemesPage() {
 
   const handleFilterChange = useCallback((filter: string) => {
     if (filter === 'newest' || filter === 'trending' || filter === 'hottest') {
-      setUserInitiated(true);
       // The useMemes hook will handle updating the context filters
     }
   }, []);
 
   const handleTimePeriodChange = useCallback((period: string) => {
     if (period === 'all' || period === 'today' || period === 'week' || period === 'month') {
-      setUserInitiated(true);
       // The useMemes hook will handle updating the context filters
     }
   }, []);
@@ -148,6 +133,106 @@ export default function MemesPage() {
     time_period: memesState.filters.time_period,
     ...getSortParams
   });
+  
+  // Additional effect to restore scroll when memes are loaded and we have a saved position
+  useEffect(() => {
+    if (memes.length > 0 && memesState.scrollPosition > 0 && window.scrollY === 0) {
+      console.log('Memes loaded, restoring scroll position:', memesState.scrollPosition);
+      
+      const timer = setTimeout(() => {
+        window.scrollTo({
+          top: memesState.scrollPosition,
+          behavior: 'instant'
+        });
+        console.log('Scroll position restored after memes loaded:', memesState.scrollPosition);
+      }, 200);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [memes.length, memesState.scrollPosition]);
+
+  // Listen for page visibility changes to restore scroll when returning to the page
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && 
+          memesState.scrollPosition > 0 && 
+          window.scrollY === 0) {
+        console.log('Page became visible, restoring scroll position:', memesState.scrollPosition);
+        
+        // Use a longer delay to ensure everything is rendered
+        setTimeout(() => {
+          window.scrollTo({
+            top: memesState.scrollPosition,
+            behavior: 'instant'
+          });
+          console.log('Scroll position restored on visibility change:', memesState.scrollPosition);
+        }, 500);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [memesState.scrollPosition]);
+
+  // Additional scroll restoration on window focus (when returning from another tab/window)
+  useEffect(() => {
+    const handleFocus = () => {
+      if (memesState.scrollPosition > 0 && window.scrollY === 0) {
+        console.log('Window focused, restoring scroll position:', memesState.scrollPosition);
+        
+        setTimeout(() => {
+          window.scrollTo({
+            top: memesState.scrollPosition,
+            behavior: 'instant'
+          });
+          console.log('Scroll position restored on window focus:', memesState.scrollPosition);
+        }, 300);
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [memesState.scrollPosition]);
+
+  // Force scroll restoration after a delay when the component mounts
+  useEffect(() => {
+    if (memesState.scrollPosition > 0) {
+      console.log('Component mounted, scheduling scroll restoration:', memesState.scrollPosition);
+      
+      // Try multiple times with increasing delays to ensure it works
+      const timers = [
+        setTimeout(() => {
+          if (window.scrollY === 0) {
+            window.scrollTo({
+              top: memesState.scrollPosition,
+              behavior: 'instant'
+            });
+            console.log('Scroll restored on first attempt:', memesState.scrollPosition);
+          }
+        }, 100),
+        setTimeout(() => {
+          if (window.scrollY === 0) {
+            window.scrollTo({
+              top: memesState.scrollPosition,
+              behavior: 'instant'
+            });
+            console.log('Scroll restored on second attempt:', memesState.scrollPosition);
+          }
+        }, 500),
+        setTimeout(() => {
+          if (window.scrollY === 0) {
+            window.scrollTo({
+              top: memesState.scrollPosition,
+              behavior: 'instant'
+            });
+            console.log('Scroll restored on third attempt:', memesState.scrollPosition);
+          }
+        }, 1000)
+      ];
+      
+      return () => timers.forEach(timer => clearTimeout(timer));
+    }
+  }, [memesState.scrollPosition]);
   
   const { likeMeme, recordView } = useMemeInteractions();
 
@@ -187,9 +272,8 @@ export default function MemesPage() {
     }
   }, [hasMore, memesLoading, memes.length, loadMore]);
 
-  // Simplified effect to handle returning from single meme page
+  // Enhanced effect to handle returning from single meme page and auto-load more memes
   useEffect(() => {
-
     // Only trigger load more if we have memes, have more to load, and are not currently loading
     if (memes.length > 0 && hasMore && !memesLoading) {
       // Check if we're on a page > 1 (meaning we've loaded more than initial memes)
@@ -219,6 +303,71 @@ export default function MemesPage() {
     }
   }, [memes.length, hasMore, memesLoading, loadMore, memesState.filters, memesState.isInitialized, memesState.currentPage]);
 
+  // New effect specifically for handling scroll restoration and auto-loading
+  useEffect(() => {
+    // This effect runs after scroll restoration to check if we need to load more
+    if (memesState.scrollPosition > 0 && memes.length > 0 && hasMore && !memesLoading) {
+      console.log('Scroll restored, checking if we need to load more memes');
+      
+      // Wait a bit for the scroll to settle, then check position
+      const timer = setTimeout(() => {
+        const currentScrollY = window.scrollY;
+        const documentHeight = document.documentElement.scrollHeight;
+        const windowHeight = window.innerHeight;
+        
+        // Check if we're near the bottom after scroll restoration
+        const isNearBottom = currentScrollY + windowHeight >= documentHeight - 800;
+        
+        console.log('Post-scroll restoration check:', {
+          currentScrollY,
+          documentHeight,
+          windowHeight,
+          isNearBottom,
+          savedPosition: memesState.scrollPosition
+        });
+        
+        if (isNearBottom) {
+          console.log('Near bottom after scroll restoration, triggering load more');
+          loadMore();
+        }
+      }, 500); // Wait 500ms for scroll to settle
+      
+      return () => clearTimeout(timer);
+    }
+  }, [memesState.scrollPosition, memes.length, hasMore, memesLoading, loadMore]);
+
+  // Aggressive check for loading more memes when returning to the page
+  useEffect(() => {
+    // This effect specifically handles the case when returning from a single meme page
+    if (memesState.scrollPosition > 0 && memes.length > 0 && hasMore && !memesLoading) {
+      console.log('Checking if we need to aggressively load more memes after returning to page');
+      
+      // Check multiple times with increasing delays to catch edge cases
+      const timers = [
+        setTimeout(() => {
+          if (window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 800) {
+            console.log('Aggressive check 1: Near bottom, loading more');
+            loadMore();
+          }
+        }, 300),
+        setTimeout(() => {
+          if (window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 800) {
+            console.log('Aggressive check 2: Near bottom, loading more');
+            loadMore();
+          }
+        }, 800),
+        setTimeout(() => {
+          if (window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 800) {
+            console.log('Aggressive check 3: Near bottom, loading more');
+            loadMore();
+          }
+        }, 1500)
+      ];
+      
+      return () => timers.forEach(timer => clearTimeout(timer));
+    }
+  }, [memesState.scrollPosition, memes.length, hasMore, memesLoading, loadMore]);
+  
   // Memoize the display memes to prevent unnecessary re-renders
   const displayMemes = useMemo(() => memes, [memes]);
 
@@ -234,8 +383,8 @@ export default function MemesPage() {
   }, [memesState.filters]);
 
   const handleCategorySelect = useCallback((categoryId: string) => {
-    setUserInitiated(true);
     // The useMemes hook will handle updating the context filters
+    console.log('Category selected:', categoryId);
   }, []);
 
   const handleLike = useCallback(async (slug: string) => {
@@ -254,16 +403,6 @@ export default function MemesPage() {
       });
 
       // Update the meme's likes count locally without refreshing the page
-      const updatedMemes = memes.map(meme => {
-        if (meme.slug === slug) {
-          return {
-            ...meme,
-            likes_count: isLiked ? meme.likes_count + 1 : Math.max(0, meme.likes_count - 1)
-          };
-        }
-        return meme;
-      });
-      
       // Since we can't directly modify the hook's state, we'll need to refresh
       // But we can optimize this by only updating the specific meme's like count
       // For now, let's use a local state to override the memes
@@ -271,7 +410,7 @@ export default function MemesPage() {
     } catch (error) {
       console.error('Failed to like meme:', error);
     }
-  }, [memes, likeMeme]);
+  }, [likeMeme]);
 
   const handleShare = useCallback((id: string) => {
     console.log('Sharing meme:', id);

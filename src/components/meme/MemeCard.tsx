@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/Card';
@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { cn, formatRelativeTime, formatTime } from '@/lib/utils';
 import { MemeCardProps } from '@/lib/types/meme';
 import { ICONS, getCategoryIconOrEmoji } from '@/lib/utils/categoryIcons';
+import { imagePreloader } from '@/lib/utils/imagePreloader';
 
 const MemeCard: React.FC<MemeCardProps> = ({
   meme,
@@ -14,6 +15,16 @@ const MemeCard: React.FC<MemeCardProps> = ({
   className,
   isLiked = false
 }) => {
+  const [imageLoading, setImageLoading] = useState(true);
+  const [imageError, setImageError] = useState(false);
+
+  // Check if image is already preloaded
+  useEffect(() => {
+    if (imagePreloader.isPreloaded(meme.image_url)) {
+      setImageLoading(false);
+    }
+  }, [meme.image_url]);
+
   const handleLike = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -33,6 +44,16 @@ const MemeCard: React.FC<MemeCardProps> = ({
     if (onShare) {
       onShare(meme.id);
     }
+  };
+
+  const handleImageLoad = () => {
+    setImageLoading(false);
+    setImageError(false);
+  };
+
+  const handleImageError = () => {
+    setImageLoading(false);
+    setImageError(true);
   };
 
   return (
@@ -70,7 +91,7 @@ const MemeCard: React.FC<MemeCardProps> = ({
             {meme.tags && meme.tags.length > 0 && meme.tags.slice(0, 3).map((tag, index) => (
               <span
                 key={index}
-                className="inline-flex items-center px-2.5 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full dark:bg-blue-900/30 dark:text-blue-200 border border-blue-200 dark:border-blue-700 hover:bg-blue-200 dark:hover:bg-blue-800/50 transition-colors duration-200"
+                className="inline-flex items-center px-2.5 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full dark:bg-blue-900/30 dark:text-blue-200 border border-blue-200 dark:border-blue-700 hover:bg-blue-100 dark:hover:bg-blue-800/50 transition-colors duration-200"
               >
                 #{tag}
               </span>
@@ -92,12 +113,40 @@ const MemeCard: React.FC<MemeCardProps> = ({
               maxHeight: '800px'
             }}
           >
+            {/* Loading skeleton */}
+            {imageLoading && (
+              <div className="absolute inset-0 bg-gray-200 dark:bg-gray-700 animate-pulse flex items-center justify-center">
+                <div className="text-gray-400 dark:text-gray-500">
+                  <ICONS.Image className="w-12 h-12" />
+                </div>
+              </div>
+            )}
+
+            {/* Error state */}
+            {imageError && (
+              <div className="absolute inset-0 bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                <div className="text-center text-gray-500 dark:text-gray-400">
+                  <ICONS.AlertCircle className="w-12 h-12 mx-auto mb-2" />
+                  <p className="text-sm">Failed to load image</p>
+                </div>
+              </div>
+            )}
+
             <Image
               src={meme.image_url}
               alt={meme.title}
               fill
-              className="object-contain"
+              className={cn(
+                "object-contain transition-opacity duration-300",
+                imageLoading ? "opacity-0" : "opacity-100"
+              )}
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              priority={false}
+              loading="lazy"
+              placeholder="blur"
+              blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
+              onLoad={handleImageLoad}
+              onError={handleImageError}
             />
           </div>
         </CardContent>

@@ -62,7 +62,7 @@ export const TextFieldsPanel: React.FC<TextFieldsPanelProps> = ({
         }, 50);
       }
     }
-  }, [textFields]); // This will trigger on any text field change, including rotation
+  }, [textFields, activeField]); // This will trigger on any text field change, including rotation
 
   const toggleSettingsDropdown = (fieldId: string) => {
     setOpenSettingsDropdown(openSettingsDropdown === fieldId ? null : fieldId);

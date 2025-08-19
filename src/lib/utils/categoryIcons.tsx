@@ -25,11 +25,13 @@ import {
   BookOpen as GitHub,
   ArrowRight,
   Upload,
-  Moon
+  Moon,
+  Image,
+  AlertCircle
 } from 'lucide-react';
 
 // Map category names to Lucide React icons
-export const CATEGORY_ICONS: Record<string, React.ComponentType<any>> = {
+export const CATEGORY_ICONS: Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>>> = {
   'Funny': Laugh,
   'Gaming': Gamepad2,
   'Tech': Monitor,
@@ -50,7 +52,7 @@ export const CATEGORY_ICONS: Record<string, React.ComponentType<any>> = {
 export const DEFAULT_CATEGORY_ICON = Star;
 
 // Function to get icon for a category
-export const getCategoryIcon = (categoryName: string): React.ComponentType<any> => {
+export const getCategoryIcon = (categoryName: string): React.ComponentType<React.SVGProps<SVGSVGElement>> => {
   return CATEGORY_ICONS[categoryName] || DEFAULT_CATEGORY_ICON;
 };
 
@@ -96,5 +98,7 @@ export const ICONS = {
   GitHub,
   ArrowRight,
   Upload,
-  Moon
+  Moon,
+  Image,
+  AlertCircle
 };

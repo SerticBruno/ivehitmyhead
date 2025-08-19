@@ -179,8 +179,8 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
     const settingsCogSize = 14; // 12 * 1.2
     
     // Calculate the position beneath the text field
-    let settingsCogX = containerX;
-    let settingsCogY = containerY + containerHeight_px / 2 + settingsCogSize + 8;
+    const settingsCogX = containerX;
+    const settingsCogY = containerY + containerHeight_px / 2 + settingsCogSize + 8;
     
     if (!field.rotation || field.rotation === 0) {
       // No rotation, use simple distance calculation
@@ -381,8 +381,8 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
             const settingsCogSize = handleSize * 1.2;
             
             // Calculate the position beneath the text field, accounting for rotation
-            let settingsCogX = containerX;
-            let settingsCogY = containerY + containerHeight_px / 2 + settingsCogSize + 8;
+            const settingsCogX = containerX;
+            const settingsCogY = containerY + containerHeight_px / 2 + settingsCogSize + 8;
             
             // Settings cog always positioned below the text field (no rotation following)
             
@@ -506,7 +506,7 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
         const screenCogY = canvasRect.top + fieldCenterY + containerHeight_px / 2 + settingsCogSize + 8;
         
         // Calculate popup position below the cog
-        let popupY = screenCogY + 20 + window.scrollY;
+        const popupY = screenCogY + 20 + window.scrollY;
         let popupX = screenCogX;
         
         // Check if popup would go off the edges
@@ -746,11 +746,11 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
     // Calculate cog position
     const containerHeight_px = (field.height / 100) * rect.height;
     const settingsCogSize = 12 * 1.2;
-    let settingsCogX = fieldCenterX;
-    let settingsCogY = fieldCenterY + containerHeight_px / 2 + settingsCogSize + 8;
+    const settingsCogX = fieldCenterX;
+    const settingsCogY = fieldCenterY + containerHeight_px / 2 + settingsCogSize + 8;
     
     // Calculate popup position below the cog
-    let popupY = settingsCogY + 20;
+    const popupY = settingsCogY + 20;
     let popupX = settingsCogX;
     
     // Check if popup would go off the left or right edges
@@ -950,7 +950,7 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
       // Store current mouse position for next frame
       setPreviousMousePos({ x, y });
     }
-  }, [isDragging, isResizing, isRotating, activeField, resizeHandle, dragOffset, textFields, onFieldHover, onFieldMove, resizeStartState, rotationStartState, onFieldRotate, handleResize, isOverRotatedResizeHandle, getResizeHandleInfo, isOverRotationHandle, isOverSettingsCog, updatePopupPositionByDelta, initialDragState, recalculatePopupPosition, previousMousePos]);
+  }, [isDragging, isResizing, isRotating, activeField, resizeHandle, dragOffset, textFields, onFieldHover, onFieldMove, resizeStartState, rotationStartState, onFieldRotate, handleResize, isOverRotatedResizeHandle, getResizeHandleInfo, isOverRotationHandle, isOverSettingsCog, updatePopupPositionByDelta, previousMousePos, settingsPopup]);
 
   // Effects
   useEffect(() => {
@@ -1186,7 +1186,7 @@ export const MemeCanvas: React.FC<MemeCanvasProps> = ({
     return () => {
       document.removeEventListener('click', handleGlobalClick);
     };
-  }, [settingsPopup, activeField, onFieldSelect, justClosedPopup, isResizing, isDragging, isRotating, isOperationActive, justOpenedPopup, textFields, getResizeHandleInfo, isOverRotatedResizeHandle, isOverRotationHandle, isOverSettingsCog]);
+  }, [settingsPopup, activeField, onFieldSelect, justClosedPopup, isResizing, isDragging, isRotating, isOperationActive, justOpenedPopup, textFields, getResizeHandleInfo, isOverRotatedResizeHandle, isOverRotationHandle, isOverSettingsCog, justFinishedRotating]);
 
   if (!selectedTemplate) {
     return (

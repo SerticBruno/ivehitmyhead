@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Meme } from '@/lib/types/meme';
 import { useMemesState } from '@/lib/contexts';
 
@@ -95,7 +95,7 @@ export const useMemes = (options: UseMemesOptions = {}): UseMemesReturn => {
     } finally {
       setLoading(false);
     }
-  }, [category_id, search, sort_by, sort_order, time_period, limit, setMemes, appendMemes, setHasMore, setCurrentPage, state.memes, state.hasMore, state.currentPage]);
+  }, [category_id, search, sort_by, sort_order, time_period, limit, setMemes, appendMemes, setHasMore, setCurrentPage]);
 
   const loadMore = useCallback(() => {
     // Check if we can actually load more
@@ -103,7 +103,7 @@ export const useMemes = (options: UseMemesOptions = {}): UseMemesReturn => {
       const nextPage = state.currentPage + 1;
       fetchMemes(nextPage, true);
     }
-  }, [loading, state.hasMore, state.currentPage, state.memes.length, fetchMemes, currentFilters, state.filters]);
+  }, [loading, state.hasMore, state.currentPage, state.memes.length, fetchMemes]);
 
   const refresh = useCallback(() => {
     setCurrentPage(1);
