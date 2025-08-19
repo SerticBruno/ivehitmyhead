@@ -88,16 +88,72 @@ export async function GET(request: NextRequest) {
       throw error;
     }
 
+    console.log('API debug:', {
+      page,
+      limit,
+      offset,
+      memesCount: memes?.length || 0,
+      countFromQuery: count,
+      hasFilters: !!(category_id || search || time_period)
+    });
+
     // Get total count for pagination
     let totalCount = 0;
     if (count === null) {
-      const { count: total } = await supabaseAdmin
+      console.log('Count is null, fetching total count separately');
+      
+      // Build count query with same filters
+      let countQuery = supabaseAdmin
         .from('memes')
         .select('*', { count: 'exact', head: true });
+
+      // Apply same filters to count query
+      if (category_id) {
+        countQuery = countQuery.eq('category_id', category_id);
+      }
+
+      if (search) {
+        countQuery = countQuery.or(`title.ilike.%${search}%,tags.cs.{${search}}`);
+      }
+
+      if (time_period && time_period !== 'all') {
+        const now = new Date();
+        let startDate: Date;
+
+        switch (time_period) {
+          case 'today':
+            startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            break;
+          case 'week':
+            const dayOfWeek = now.getDay();
+            const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+            startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysToSubtract);
+            break;
+          case 'month':
+            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+            break;
+          default:
+            startDate = new Date(0);
+        }
+
+        countQuery = countQuery.gte('created_at', startDate.toISOString());
+      }
+
+      const { count: total } = await countQuery;
       totalCount = total || 0;
+      console.log('Total count from separate query with filters:', totalCount);
     } else {
       totalCount = count;
+      console.log('Using count from query:', totalCount);
     }
+
+    const hasMore = page * limit < totalCount;
+    console.log('Pagination calculation:', {
+      page,
+      limit,
+      totalCount,
+      hasMore
+    });
 
     return NextResponse.json({
       memes: memes || [],
@@ -106,7 +162,7 @@ export async function GET(request: NextRequest) {
         limit,
         total: totalCount,
         total_pages: Math.ceil(totalCount / limit),
-        has_more: page * limit < totalCount
+        has_more: hasMore
       }
     });
   } catch (error) {

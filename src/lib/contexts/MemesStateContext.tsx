@@ -64,14 +64,26 @@ export const MemesStateProvider: React.FC<MemesStateProviderProps> = ({ children
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const savedState = sessionStorage.getItem('memesState');
+      console.log('Loading state from sessionStorage:', savedState ? 'Found saved state' : 'No saved state');
+      
       if (savedState) {
         try {
           const parsedState = JSON.parse(savedState);
+          console.log('Restored context state:', {
+            memesCount: parsedState.memes?.length || 0,
+            hasMore: parsedState.hasMore,
+            currentPage: parsedState.currentPage,
+            isInitialized: parsedState.isInitialized,
+            filters: parsedState.filters
+          });
+          
           setState(parsedState);
           lastSavedState.current = savedState;
         } catch (error) {
           console.error('Failed to parse saved memes state:', error);
         }
+      } else {
+        console.log('No saved state found, using initial state');
       }
     }
   }, []);
@@ -142,45 +154,42 @@ export const MemesStateProvider: React.FC<MemesStateProviderProps> = ({ children
         newMemeCount: memes.length,
         existingMemeCount: prev.memes.length,
         currentFilters: prev.filters,
-        isInitialized: prev.isInitialized
+        isInitialized: prev.isInitialized,
+        currentHasMore: prev.hasMore,
+        currentPage: prev.currentPage
       });
       
-      // Only deduplicate if we're appending to the same filter set
-      // If filters have changed, we should allow all memes through
-      if (prev.memes.length > 0 && prev.isInitialized) {
-        // Create a Set of existing meme IDs to check for duplicates
-        const existingMemeIds = new Set(prev.memes.map(meme => meme.id));
-        
-        // Filter out any duplicate memes based on ID
-        const uniqueNewMemes = memes.filter(meme => !existingMemeIds.has(meme.id));
-        
-        // Debug logging to help identify duplicate sources
-        if (uniqueNewMemes.length !== memes.length) {
-          console.warn(`Filtered out ${memes.length - uniqueNewMemes.length} duplicate memes when appending`);
-          const duplicateIds = memes.filter(meme => existingMemeIds.has(meme.id)).map(meme => meme.id);
-          console.warn('Duplicate meme IDs:', duplicateIds);
-        }
-        
-        // If no new unique memes, return the previous state unchanged
-        if (uniqueNewMemes.length === 0) {
-          console.warn('No new unique memes to append - all were duplicates');
-          return prev;
-        }
-        
-        return { 
-          ...prev, 
-          memes: [...prev.memes, ...uniqueNewMemes],
-          isInitialized: true 
-        };
-      } else {
-        // If no existing memes or not initialized, just add all new memes without deduplication
-        console.log('No existing memes or not initialized, adding all memes without deduplication');
-        return { 
-          ...prev, 
-          memes: memes,
-          isInitialized: true 
-        };
+      // Always deduplicate when appending to prevent duplicates
+      const existingMemeIds = new Set(prev.memes.map(meme => meme.id));
+      const uniqueNewMemes = memes.filter(meme => !existingMemeIds.has(meme.id));
+      
+      console.log('Deduplication result:', {
+        originalCount: memes.length,
+        uniqueCount: uniqueNewMemes.length,
+        filteredOut: memes.length - uniqueNewMemes.length,
+        existingIds: Array.from(existingMemeIds).slice(0, 5) // Show first 5 IDs for debugging
+      });
+      
+      // If no new unique memes, return the previous state unchanged
+      if (uniqueNewMemes.length === 0) {
+        console.warn('No new unique memes to append - all were duplicates');
+        return prev;
       }
+      
+      const newState = { 
+        ...prev, 
+        memes: [...prev.memes, ...uniqueNewMemes],
+        isInitialized: true 
+      };
+      
+      console.log('New state after append:', {
+        totalMemes: newState.memes.length,
+        hasMore: newState.hasMore,
+        currentPage: newState.currentPage,
+        newMemeIds: uniqueNewMemes.map(m => m.id).slice(0, 5) // Show first 5 new IDs
+      });
+      
+      return newState;
     });
   }, []);
 

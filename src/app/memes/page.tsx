@@ -171,6 +171,78 @@ export default function MemesPage() {
     }
   }, [memes, addViewedMeme, recordView, getViewedMemes]);
 
+  // Check if we need to load more when returning to the page
+  useEffect(() => {
+    if (hasMore && !memesLoading && memes.length > 0) {
+      // Check if we're already near the bottom of the page (e.g., from restored scroll position)
+      const isNearBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 800;
+      
+      if (isNearBottom) {
+        console.log('Already near bottom of page, triggering load more');
+        // Small delay to ensure the page is fully rendered
+        setTimeout(() => {
+          loadMore();
+        }, 100);
+      }
+    }
+  }, [hasMore, memesLoading, memes.length, loadMore]);
+
+  // Simplified effect to handle returning from single meme page
+  useEffect(() => {
+    console.log('Returning to memes page - context state:', {
+      memesLength: memes.length,
+      hasMore,
+      memesLoading,
+      filters: memesState.filters,
+      isInitialized: memesState.isInitialized,
+      currentPage: memesState.currentPage
+    });
+    
+    // Only trigger load more if we have memes, have more to load, and are not currently loading
+    if (memes.length > 0 && hasMore && !memesLoading) {
+      // Check if we're on a page > 1 (meaning we've loaded more than initial memes)
+      const currentPage = Math.ceil(memes.length / 7); // Assuming 7 memes per page
+      
+      console.log('Calculated current page:', currentPage);
+      
+      if (currentPage > 1) {
+        console.log('Returned to memes page with existing memes, checking if we need to load more');
+        
+        // Check if we're near the bottom
+        const isNearBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 800;
+        
+        console.log('Scroll position check:', {
+          windowHeight: window.innerHeight,
+          scrollY: window.scrollY,
+          documentHeight: document.documentElement.scrollHeight,
+          isNearBottom
+        });
+        
+        if (isNearBottom) {
+          console.log('Near bottom with existing memes, triggering load more');
+          // Just trigger one load more - let the infinite scroll handle the rest
+          setTimeout(() => {
+            loadMore();
+          }, 200);
+        }
+      }
+    }
+  }, [memes.length, hasMore, memesLoading, loadMore, memesState.filters, memesState.isInitialized, memesState.currentPage]);
+
+  // Memoize the display memes to prevent unnecessary re-renders
+  const displayMemes = useMemo(() => memes, [memes]);
+
+  // Memoize the hero section content to prevent unnecessary re-renders
+  const heroContent = useMemo(() => {
+    const { category_id, filter, time_period } = memesState.filters;
+    const categoryText = category_id ? 'Category Memes' : 'All Memes';
+    const description = category_id 
+      ? `Discover ${filter} memes from this category${time_period !== 'all' ? ` in the last ${time_period === 'today' ? '24 hours' : time_period === 'week' ? '7 days' : '30 days'}` : ''}`
+      : `Discover ${filter} memes from all categories${time_period !== 'all' ? ` in the last ${time_period === 'today' ? '24 hours' : time_period === 'week' ? '7 days' : '30 days'}` : ''}.`;
+    
+    return { categoryText, description };
+  }, [memesState.filters]);
+
   const handleCategorySelect = useCallback((categoryId: string) => {
     setUserInitiated(true);
     // The useMemes hook will handle updating the context filters
@@ -215,20 +287,6 @@ export default function MemesPage() {
     console.log('Sharing meme:', id);
     // Implement share functionality here
   }, []);
-
-  // Memoize the display memes to prevent unnecessary re-renders
-  const displayMemes = useMemo(() => memes, [memes]);
-
-  // Memoize the hero section content to prevent unnecessary re-renders
-  const heroContent = useMemo(() => {
-    const { category_id, filter, time_period } = memesState.filters;
-    const categoryText = category_id ? 'Category Memes' : 'All Memes';
-    const description = category_id 
-      ? `Discover ${filter} memes from this category${time_period !== 'all' ? ` in the last ${time_period === 'today' ? '24 hours' : time_period === 'week' ? '7 days' : '30 days'}` : ''}`
-      : `Discover ${filter} memes from all categories${time_period !== 'all' ? ` in the last ${time_period === 'today' ? '24 hours' : time_period === 'week' ? '7 days' : '30 days'}` : ''}.`;
-    
-    return { categoryText, description };
-  }, [memesState.filters]);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -428,6 +486,34 @@ export default function MemesPage() {
               </div>
             ) : (
               <>
+                {/* Debug info */}
+                <div className="mb-4 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg text-sm">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div>
+                      <strong>Memes loaded:</strong> {memes.length}
+                    </div>
+                    <div>
+                      <strong>Has more:</strong> {hasMore ? 'Yes' : 'No'}
+                    </div>
+                    <div>
+                      <strong>Loading:</strong> {memesLoading ? 'Yes' : 'No'}
+                    </div>
+                    <div>
+                      <strong>Current page:</strong> {memesState.currentPage}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      console.log('Manual load more clicked');
+                      loadMore();
+                    }}
+                    disabled={memesLoading || !hasMore}
+                    className="mt-2 px-4 py-2 bg-blue-500 text-white rounded disabled:bg-gray-400"
+                  >
+                    {memesLoading ? 'Loading...' : 'Manual Load More'}
+                  </button>
+                </div>
+                
                 {/* Scroll anchor positioned exactly at the top of the meme grid */}
                 <div ref={memeGridRef}></div>
                 <MemeGrid
