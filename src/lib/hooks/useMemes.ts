@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Meme } from '@/lib/types/meme';
 import { useMemesState } from '@/lib/contexts';
 
@@ -30,8 +30,7 @@ export const useMemes = (options: UseMemesOptions = {}): UseMemesReturn => {
     appendMemes,
     setHasMore,
     setCurrentPage,
-    setFilters,
-    isSameFilters
+    setFilters
   } = useMemesState();
 
   const {
@@ -43,18 +42,27 @@ export const useMemes = (options: UseMemesOptions = {}): UseMemesReturn => {
     limit = 20
   } = options;
 
-  // Check if current filters match saved filters
-  const currentFilters = {
+  // Memoize current filters to prevent unnecessary re-renders
+  const currentFilters = useMemo(() => ({
     category_id: category_id || '',
     filter: sort_by === 'likes' ? 'hottest' as const : 
             sort_by === 'views' ? 'trending' as const : 'newest' as const,
     time_period: time_period || 'all'
-  };
-
-  const filtersChanged = !isSameFilters(currentFilters);
+  }), [category_id, sort_by, time_period]);
 
   const fetchMemes = useCallback(async (pageNum: number, append: boolean = false) => {
     try {
+      console.log('fetchMemes called:', {
+        pageNum,
+        append,
+        category_id,
+        search,
+        sort_by,
+        sort_order,
+        time_period,
+        limit
+      });
+      
       setLoading(true);
       setError(null);
 
@@ -77,6 +85,8 @@ export const useMemes = (options: UseMemesOptions = {}): UseMemesReturn => {
         params.append('time_period', time_period);
       }
 
+      console.log('API request params:', params.toString());
+
       const response = await fetch(`/api/memes?${params}`);
       
       if (!response.ok) {
@@ -84,6 +94,12 @@ export const useMemes = (options: UseMemesOptions = {}): UseMemesReturn => {
       }
 
       const data = await response.json();
+      
+      console.log('API response:', {
+        memeCount: data.memes?.length || 0,
+        hasMore: data.pagination?.has_more,
+        append
+      });
       
       if (append) {
         appendMemes(data.memes);
@@ -115,20 +131,28 @@ export const useMemes = (options: UseMemesOptions = {}): UseMemesReturn => {
 
   // Update filters in context when options change
   useEffect(() => {
-    if (filtersChanged) {
-      setFilters(currentFilters);
-    }
-  }, [filtersChanged, currentFilters, setFilters]);
+    console.log('useMemes: Updating filters in context:', currentFilters);
+    // Always update filters when they change
+    setFilters(currentFilters);
+  }, [currentFilters, setFilters]);
 
-  // Fetch memes when options change or when filters don't match saved state
+  // Fetch memes when context state changes
   useEffect(() => {
-    if (filtersChanged || !state.isInitialized) {
+    console.log('useMemes: Context state changed:', {
+      isInitialized: state.isInitialized,
+      currentFilters,
+      contextFilters: state.filters
+    });
+    
+    // If we're not initialized, fetch memes
+    if (!state.isInitialized) {
+      console.log('useMemes: Context not initialized, fetching memes with filters:', currentFilters);
       setCurrentPage(1);
       setMemes([]);
       setHasMore(true);
       fetchMemes(1, false);
     }
-  }, [filtersChanged, state.isInitialized, setCurrentPage, setMemes, setHasMore, fetchMemes]);
+  }, [state.isInitialized, currentFilters, setCurrentPage, setMemes, setHasMore, fetchMemes]);
 
   return {
     memes: state.memes,

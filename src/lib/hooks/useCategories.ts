@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Category } from '@/lib/types/meme';
 
 interface UseCategoriesOptions {
@@ -16,7 +16,9 @@ export const useCategories = (options: UseCategoriesOptions = {}): UseCategories
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [limit] = useState(options.limit || 50);
+  
+  // Memoize the limit to prevent unnecessary re-renders
+  const limit = useMemo(() => options.limit || 50, [options.limit]);
 
   const fetchCategories = useCallback(async () => {
     try {
@@ -50,13 +52,14 @@ export const useCategories = (options: UseCategoriesOptions = {}): UseCategories
     }
   }, [limit]);
 
+  // Only fetch categories once on mount
   useEffect(() => {
     fetchCategories();
-  }, [limit, fetchCategories]);
+  }, [fetchCategories]);
 
-  const refetch = () => {
+  const refetch = useCallback(() => {
     fetchCategories();
-  };
+  }, [fetchCategories]);
 
   return {
     categories,

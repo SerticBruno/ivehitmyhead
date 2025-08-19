@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useRef, useEffect } from 'react';
+import React, { createContext, useContext, useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Meme } from '@/lib/types/meme';
 
 interface MemesState {
@@ -58,6 +58,7 @@ interface MemesStateProviderProps {
 export const MemesStateProvider: React.FC<MemesStateProviderProps> = ({ children }) => {
   const [state, setState] = useState<MemesState>(initialState);
   const isInitialMount = useRef(true);
+  const lastSavedState = useRef<string>('');
 
   // Load state from sessionStorage on mount
   useEffect(() => {
@@ -67,6 +68,7 @@ export const MemesStateProvider: React.FC<MemesStateProviderProps> = ({ children
         try {
           const parsedState = JSON.parse(savedState);
           setState(parsedState);
+          lastSavedState.current = savedState;
         } catch (error) {
           console.error('Failed to parse saved memes state:', error);
         }
@@ -74,10 +76,14 @@ export const MemesStateProvider: React.FC<MemesStateProviderProps> = ({ children
     }
   }, []);
 
-  // Save state to sessionStorage whenever it changes
+  // Save state to sessionStorage whenever it changes - with debouncing
   useEffect(() => {
     if (typeof window !== 'undefined' && !isInitialMount.current) {
-      sessionStorage.setItem('memesState', JSON.stringify(state));
+      const currentState = JSON.stringify(state);
+      if (currentState !== lastSavedState.current) {
+        lastSavedState.current = currentState;
+        sessionStorage.setItem('memesState', currentState);
+      }
     }
     isInitialMount.current = false;
   }, [state]);
@@ -86,10 +92,11 @@ export const MemesStateProvider: React.FC<MemesStateProviderProps> = ({ children
   useEffect(() => {
     const handleBeforeUnload = () => {
       if (typeof window !== 'undefined') {
-        sessionStorage.setItem('memesState', JSON.stringify({
+        const stateToSave = {
           ...state,
           scrollPosition: window.scrollY
-        }));
+        };
+        sessionStorage.setItem('memesState', JSON.stringify(stateToSave));
       }
     };
 
@@ -108,56 +115,136 @@ export const MemesStateProvider: React.FC<MemesStateProviderProps> = ({ children
     };
   }, [state]);
 
-  const setMemes = (memes: Meme[]) => {
-    setState(prev => ({ ...prev, memes, isInitialized: true }));
-  };
+  const setMemes = useCallback((memes: Meme[]) => {
+    setState(prev => {
+      console.log('setMemes called:', {
+        memeCount: memes.length,
+        currentFilters: prev.filters,
+        isInitialized: prev.isInitialized
+      });
+      
+      // Remove duplicates from the new memes array
+      const uniqueMemes = memes.filter((meme, index, self) => 
+        index === self.findIndex(m => m.id === meme.id)
+      );
+      
+      if (uniqueMemes.length !== memes.length) {
+        console.warn(`setMemes: Filtered out ${memes.length - uniqueMemes.length} duplicate memes`);
+      }
+      
+      return { ...prev, memes: uniqueMemes, isInitialized: true };
+    });
+  }, []);
 
-  const appendMemes = (memes: Meme[]) => {
-    setState(prev => ({ 
-      ...prev, 
-      memes: [...prev.memes, ...memes],
-      isInitialized: true 
-    }));
-  };
+  const appendMemes = useCallback((memes: Meme[]) => {
+    setState(prev => {
+      console.log('appendMemes called:', {
+        newMemeCount: memes.length,
+        existingMemeCount: prev.memes.length,
+        currentFilters: prev.filters,
+        isInitialized: prev.isInitialized
+      });
+      
+      // Only deduplicate if we're appending to the same filter set
+      // If filters have changed, we should allow all memes through
+      if (prev.memes.length > 0 && prev.isInitialized) {
+        // Create a Set of existing meme IDs to check for duplicates
+        const existingMemeIds = new Set(prev.memes.map(meme => meme.id));
+        
+        // Filter out any duplicate memes based on ID
+        const uniqueNewMemes = memes.filter(meme => !existingMemeIds.has(meme.id));
+        
+        // Debug logging to help identify duplicate sources
+        if (uniqueNewMemes.length !== memes.length) {
+          console.warn(`Filtered out ${memes.length - uniqueNewMemes.length} duplicate memes when appending`);
+          const duplicateIds = memes.filter(meme => existingMemeIds.has(meme.id)).map(meme => meme.id);
+          console.warn('Duplicate meme IDs:', duplicateIds);
+        }
+        
+        // If no new unique memes, return the previous state unchanged
+        if (uniqueNewMemes.length === 0) {
+          console.warn('No new unique memes to append - all were duplicates');
+          return prev;
+        }
+        
+        return { 
+          ...prev, 
+          memes: [...prev.memes, ...uniqueNewMemes],
+          isInitialized: true 
+        };
+      } else {
+        // If no existing memes or not initialized, just add all new memes without deduplication
+        console.log('No existing memes or not initialized, adding all memes without deduplication');
+        return { 
+          ...prev, 
+          memes: memes,
+          isInitialized: true 
+        };
+      }
+    });
+  }, []);
 
-  const setHasMore = (hasMore: boolean) => {
+  const setHasMore = useCallback((hasMore: boolean) => {
     setState(prev => ({ ...prev, hasMore }));
-  };
+  }, []);
 
-  const setCurrentPage = (page: number) => {
+  const setCurrentPage = useCallback((page: number) => {
     setState(prev => ({ ...prev, currentPage: page }));
-  };
+  }, []);
 
-  const setScrollPosition = (position: number) => {
+  const setScrollPosition = useCallback((position: number) => {
     setState(prev => ({ ...prev, scrollPosition: position }));
-  };
+  }, []);
 
-  const setFilters = (filters: Partial<MemesState['filters']>) => {
-    setState(prev => ({ 
-      ...prev, 
-      filters: { ...prev.filters, ...filters },
-      // Reset memes when filters change
-      memes: [],
-      currentPage: 1,
-      hasMore: true,
-      isInitialized: false
-    }));
-  };
+  const setFilters = useCallback((filters: Partial<MemesState['filters']>) => {
+    setState(prev => {
+      const newFilters = { ...prev.filters, ...filters };
+      // Only reset if filters actually changed
+      if (JSON.stringify(prev.filters) !== JSON.stringify(newFilters)) {
+        console.log('Filters changed, clearing memes:', {
+          oldFilters: prev.filters,
+          newFilters: newFilters,
+          currentMemeCount: prev.memes.length
+        });
+        
+        return { 
+          ...prev, 
+          filters: newFilters,
+          // Reset memes when filters change
+          memes: [],
+          currentPage: 1,
+          hasMore: true,
+          isInitialized: false
+        };
+      }
+      return prev;
+    });
+  }, []);
 
-  const resetState = () => {
+  const resetState = useCallback(() => {
     setState(initialState);
     if (typeof window !== 'undefined') {
       sessionStorage.removeItem('memesState');
+      lastSavedState.current = '';
     }
-  };
+  }, []);
 
-  const isSameFilters = (filters: Partial<MemesState['filters']>) => {
-    return Object.entries(filters).every(([key, value]) => 
+  const isSameFilters = useCallback((filters: Partial<MemesState['filters']>) => {
+    const result = Object.entries(filters).every(([key, value]) => 
       state.filters[key as keyof MemesState['filters']] === value
     );
-  };
+    
+    console.log('isSameFilters check:', {
+      incomingFilters: filters,
+      currentContextFilters: state.filters,
+      result
+    });
+    
+    return result;
+  }, [state.filters]);
 
-  const value: MemesStateContextType = {
+  // Memoize the context value to prevent unnecessary re-renders
+  const value = useMemo<MemesStateContextType>(() => ({
     state,
     setMemes,
     appendMemes,
@@ -167,7 +254,7 @@ export const MemesStateProvider: React.FC<MemesStateProviderProps> = ({ children
     setFilters,
     resetState,
     isSameFilters
-  };
+  }), [state, setMemes, appendMemes, setHasMore, setCurrentPage, setScrollPosition, setFilters, resetState, isSameFilters]);
 
   return (
     <MemesStateContext.Provider value={value}>

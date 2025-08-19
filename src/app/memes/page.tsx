@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { MemeGrid } from '@/components/meme';
 import { FiltersAndSorting } from '@/components/ui';
 import { useMemes } from '@/lib/hooks/useMemes';
@@ -11,10 +11,6 @@ import { Meme } from '@/lib/types/meme';
 import { ICONS, getCategoryIconOrEmoji } from '@/lib/utils/categoryIcons';
 
 export default function MemesPage() {
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
-  const [selectedFilter, setSelectedFilter] = useState<'newest' | 'trending' | 'hottest'>('newest');
-  const [selectedTimePeriod, setSelectedTimePeriod] = useState<'all' | 'today' | 'week' | 'month'>('all');
-  const [localMemes, setLocalMemes] = useState<Meme[]>([]);
   const [likedMemes, setLikedMemes] = useState<Set<string>>(new Set());
   const [userInitiated, setUserInitiated] = useState(false);
   
@@ -31,7 +27,7 @@ export default function MemesPage() {
   // Ref to track which memes have been processed in the current render cycle
   const processedMemesRef = useRef<Set<string>>(new Set());
   
-  const getViewedMemes = () => {
+  const getViewedMemes = useCallback(() => {
     if (viewedMemesRef.current.size === 0 && typeof window !== 'undefined') {
       const stored = sessionStorage.getItem('viewedMemes');
       if (stored) {
@@ -39,21 +35,21 @@ export default function MemesPage() {
       }
     }
     return viewedMemesRef.current;
-  };
+  }, []);
 
-  const addViewedMeme = React.useCallback((slug: string) => {
+  const addViewedMeme = useCallback((slug: string) => {
     const viewedMemes = getViewedMemes();
     viewedMemes.add(slug);
     if (typeof window !== 'undefined') {
       sessionStorage.setItem('viewedMemes', JSON.stringify([...viewedMemes]));
     }
-  }, []);
+  }, [getViewedMemes]);
 
   // Get categories for mobile selector
-  const { categories } = useCategories({ limit: 50 });
+  const { categories, loading: categoriesLoading } = useCategories({ limit: 50 });
 
   // Function to scroll to top of meme grid
-  const scrollToMemeGrid = () => {
+  const scrollToMemeGrid = useCallback(() => {
     if (memeGridRef.current) {
       // Get the navbar height dynamically
       const header = document.querySelector('header');
@@ -69,7 +65,7 @@ export default function MemesPage() {
         behavior: 'smooth'
       });
     }
-  };
+  }, []);
 
   // Restore scroll position when returning to the page
   useEffect(() => {
@@ -98,25 +94,6 @@ export default function MemesPage() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [setScrollPosition]);
 
-  // Initialize local state from context when available
-  useEffect(() => {
-    if (memesState.isInitialized) {
-      setSelectedCategory(memesState.filters.category_id);
-      setSelectedFilter(memesState.filters.filter);
-      setSelectedTimePeriod(memesState.filters.time_period);
-      setLocalMemes(memesState.memes);
-    }
-  }, [memesState.isInitialized, memesState.filters, memesState.memes]);
-
-  // Reset local memes when filter or category changes
-  useEffect(() => {
-    setLocalMemes([]);
-    // Only scroll to top if this is triggered by a user action
-    if (userInitiated) {
-      scrollToMemeGrid();
-    }
-  }, [selectedFilter, selectedCategory, selectedTimePeriod, userInitiated]);
-
   // Reset viewed memes tracking when major filters change to ensure fresh tracking
   useEffect(() => {
     // Clear viewed memes tracking when filters change significantly
@@ -126,11 +103,11 @@ export default function MemesPage() {
       viewedMemesRef.current.clear();
       processedMemesRef.current.clear();
     }
-  }, [selectedFilter, selectedCategory, selectedTimePeriod]);
+  }, [memesState.filters.filter, memesState.filters.category_id, memesState.filters.time_period]);
 
   // Map filter values to API sort parameters
-  const getSortParams = React.useMemo(() => {
-    switch (selectedFilter) {
+  const getSortParams = useMemo(() => {
+    switch (memesState.filters.filter) {
       case 'hottest':
         return { 
           sort_by: 'likes' as const, 
@@ -148,38 +125,34 @@ export default function MemesPage() {
           sort_order: 'desc' as const
         };
     }
-  }, [selectedFilter]);
+  }, [memesState.filters.filter]);
 
-  const handleFilterChange = (filter: string) => {
+  const handleFilterChange = useCallback((filter: string) => {
     if (filter === 'newest' || filter === 'trending' || filter === 'hottest') {
       setUserInitiated(true);
-      setSelectedFilter(filter as 'newest' | 'trending' | 'hottest');
+      // The useMemes hook will handle updating the context filters
     }
-  };
+  }, []);
 
-  const handleTimePeriodChange = (period: string) => {
+  const handleTimePeriodChange = useCallback((period: string) => {
     if (period === 'all' || period === 'today' || period === 'week' || period === 'month') {
       setUserInitiated(true);
-      setSelectedTimePeriod(period as 'all' | 'today' | 'week' | 'month');
+      // The useMemes hook will handle updating the context filters
     }
-  };
+  }, []);
 
-  // Fetch real data
+  // Fetch real data using the global context state
   const { memes, loading: memesLoading, error: memesError, hasMore, loadMore } = useMemes({
-    category_id: selectedCategory || undefined,
+    category_id: memesState.filters.category_id || undefined,
     limit: 7, // Changed from 2 to 7 for initial load
-    time_period: selectedTimePeriod,
+    time_period: memesState.filters.time_period,
     ...getSortParams
   });
+  
   const { likeMeme, recordView } = useMemeInteractions();
 
-  // Initialize local memes when memes change from the hook
-  React.useEffect(() => {
-    setLocalMemes(memes);
-  }, [memes]);
-
   // Track views for memes when they are displayed
-  React.useEffect(() => {
+  useEffect(() => {
     if (memes.length > 0) {
       const viewedMemes = getViewedMemes();
       const newMemes = memes.filter(meme => 
@@ -196,17 +169,14 @@ export default function MemesPage() {
         });
       });
     }
-  }, [memes, addViewedMeme, recordView]);
+  }, [memes, addViewedMeme, recordView, getViewedMemes]);
 
-  // Use local memes if available, otherwise use memes from the hook
-  const displayMemes = localMemes.length > 0 ? localMemes : memes;
-
-  const handleCategorySelect = (categoryId: string) => {
+  const handleCategorySelect = useCallback((categoryId: string) => {
     setUserInitiated(true);
-    setSelectedCategory(categoryId);
-  };
+    // The useMemes hook will handle updating the context filters
+  }, []);
 
-  const handleLike = async (slug: string) => {
+  const handleLike = useCallback(async (slug: string) => {
     try {
       const isLiked = await likeMeme(slug);
       
@@ -232,20 +202,33 @@ export default function MemesPage() {
         return meme;
       });
       
-      // We need to update the memes in the useMemes hook
       // Since we can't directly modify the hook's state, we'll need to refresh
       // But we can optimize this by only updating the specific meme's like count
       // For now, let's use a local state to override the memes
-      setLocalMemes(updatedMemes);
+      // This will be handled by the context state management
     } catch (error) {
       console.error('Failed to like meme:', error);
     }
-  };
+  }, [memes, likeMeme]);
 
-  const handleShare = (id: string) => {
+  const handleShare = useCallback((id: string) => {
     console.log('Sharing meme:', id);
     // Implement share functionality here
-  };
+  }, []);
+
+  // Memoize the display memes to prevent unnecessary re-renders
+  const displayMemes = useMemo(() => memes, [memes]);
+
+  // Memoize the hero section content to prevent unnecessary re-renders
+  const heroContent = useMemo(() => {
+    const { category_id, filter, time_period } = memesState.filters;
+    const categoryText = category_id ? 'Category Memes' : 'All Memes';
+    const description = category_id 
+      ? `Discover ${filter} memes from this category${time_period !== 'all' ? ` in the last ${time_period === 'today' ? '24 hours' : time_period === 'week' ? '7 days' : '30 days'}` : ''}`
+      : `Discover ${filter} memes from all categories${time_period !== 'all' ? ` in the last ${time_period === 'today' ? '24 hours' : time_period === 'week' ? '7 days' : '30 days'}` : ''}.`;
+    
+    return { categoryText, description };
+  }, [memesState.filters]);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -253,28 +236,72 @@ export default function MemesPage() {
         {/* Hero Section */}
         <section className="text-center mb-12">
           <h1 className="text-4xl md:text-6xl font-bold mb-4">
-            {selectedCategory ? 'Category Memes' : 'All Memes'}
+            {memesLoading && !memesState.isInitialized ? (
+              <div className="h-16 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse mx-auto max-w-md"></div>
+            ) : (
+              heroContent.categoryText
+            )}
           </h1>
-          <p className="text-xl text-gray-600 dark:text-gray-400 mb-8 max-w-2xl mx-auto">
-            {selectedCategory 
-              ? `Discover ${selectedFilter} memes from this category${selectedTimePeriod !== 'all' ? ` in the last ${selectedTimePeriod === 'today' ? '24 hours' : selectedTimePeriod === 'week' ? '7 days' : '30 days'}` : ''}`
-              : `Discover ${selectedFilter} memes from all categories${selectedTimePeriod !== 'all' ? ` in the last ${selectedTimePeriod === 'today' ? '24 hours' : selectedTimePeriod === 'week' ? '7 days' : '30 days'}` : ''}.`
-            }
-          </p>
+          {memesLoading && !memesState.isInitialized ? (
+            <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse mx-auto max-w-lg mb-8"></div>
+          ) : (
+            <p className="text-xl text-gray-600 dark:text-gray-400 mb-8 max-w-2xl mx-auto">
+              {heroContent.description}
+            </p>
+          )}
         </section>
 
         {/* Main Content with Sidebar */}
         <div className="flex flex-col lg:flex-row gap-8 max-w-7xl mx-auto">
           {/* Categories Sidebar */}
           <aside className="hidden lg:block lg:w-80 flex-shrink-0">
-            <FiltersAndSorting
-              selectedCategory={selectedCategory}
-              onCategorySelect={handleCategorySelect}
-              selectedFilter={selectedFilter}
-              onFilterChange={handleFilterChange}
-              selectedTimePeriod={selectedTimePeriod}
-              onTimePeriodChange={handleTimePeriodChange}
-            />
+            {memesLoading && !memesState.isInitialized ? (
+              <div className="sticky top-20 h-[calc(100vh-6rem)] bg-white dark:bg-gray-800 rounded-b-xl shadow-lg border border-gray-200 dark:border-gray-700 flex flex-col">
+                {/* Header */}
+                <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Meme Filters</h3>
+                </div>
+
+                {/* Time Period Filter */}
+                <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Time Period</h4>
+                  <div className="flex justify-between gap-2">
+                    {[...Array(4)].map((_, i) => (
+                      <div key={i} className="h-12 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"></div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Filter Options */}
+                <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Sort By</h4>
+                  <div className="flex justify-between gap-2">
+                    {[...Array(3)].map((_, i) => (
+                      <div key={i} className="h-12 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse flex-1"></div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Categories */}
+                <div className="p-4 flex-1 flex flex-col min-h-0">
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Categories</h4>
+                  <div className="space-y-2">
+                    {[...Array(8)].map((_, i) => (
+                      <div key={i} className="h-12 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"></div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <FiltersAndSorting
+                selectedCategory={memesState.filters.category_id}
+                onCategorySelect={handleCategorySelect}
+                selectedFilter={memesState.filters.filter}
+                onFilterChange={handleFilterChange}
+                selectedTimePeriod={memesState.filters.time_period}
+                onTimePeriodChange={handleTimePeriodChange}
+              />
+            )}
           </aside>
 
           {/* Memes Grid */}
@@ -283,27 +310,35 @@ export default function MemesPage() {
             <div className="lg:hidden mb-6 bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
               <div className="flex flex-col gap-3">
                 <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Time Period</h4>
-                <div className="grid grid-cols-4 gap-2">
-                  {[
-                    { value: 'today', label: 'Today', icon: <ICONS.Moon className="w-5 h-5" /> },
-                    { value: 'week', label: 'This Week', icon: <ICONS.Calendar className="w-5 h-5" /> },
-                    { value: 'month', label: 'This Month', icon: <ICONS.Calendar className="w-5 h-5" /> },
-                    { value: 'all', label: 'All Time', icon: <ICONS.Calendar className="w-5 h-5" /> }
-                  ].map((period) => (
-                    <button
-                      key={period.value}
-                      onClick={() => handleTimePeriodChange(period.value)}
-                      className={`flex flex-col items-center p-3 rounded-md transition-colors duration-150 ${
-                        selectedTimePeriod === period.value
-                          ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300"
-                          : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
-                      }`}
-                    >
-                      <span className="mb-1">{period.icon}</span>
-                      <span className="text-xs font-medium">{period.label}</span>
-                    </button>
-                  ))}
-                </div>
+                {memesLoading && !memesState.isInitialized ? (
+                  <div className="grid grid-cols-4 gap-2">
+                    {[...Array(4)].map((_, i) => (
+                      <div key={i} className="h-16 bg-gray-200 dark:bg-gray-700 rounded-md animate-pulse"></div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-4 gap-2">
+                    {[
+                      { value: 'today', label: 'Today', icon: <ICONS.Moon className="w-5 h-5" /> },
+                      { value: 'week', label: 'This Week', icon: <ICONS.Calendar className="w-5 h-5" /> },
+                      { value: 'month', label: 'This Month', icon: <ICONS.Calendar className="w-5 h-5" /> },
+                      { value: 'all', label: 'All Time', icon: <ICONS.Calendar className="w-5 h-5" /> }
+                    ].map((period) => (
+                      <button
+                        key={period.value}
+                        onClick={() => handleTimePeriodChange(period.value)}
+                        className={`flex flex-col items-center p-3 rounded-md transition-colors duration-150 ${
+                          memesState.filters.time_period === period.value
+                            ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300"
+                            : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
+                        }`}
+                      >
+                        <span className="mb-1">{period.icon}</span>
+                        <span className="text-xs font-medium">{period.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -311,26 +346,34 @@ export default function MemesPage() {
             <div className="lg:hidden mb-6 bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
               <div className="flex flex-col gap-3">
                 <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Sort By</h4>
-                <div className="grid grid-cols-3 gap-2">
-                  {[
-                    { value: 'hottest', label: 'Hottest', icon: <ICONS.Heart className="w-5 h-5" /> },
-                    { value: 'trending', label: 'Trending', icon: <ICONS.Flame className="w-5 h-5" /> },
-                    { value: 'newest', label: 'Newest', icon: <ICONS.Star className="w-5 h-5" /> }
-                  ].map((filter) => (
-                    <button
-                      key={filter.value}
-                      onClick={() => handleFilterChange(filter.value)}
-                      className={`flex flex-col items-center p-3 rounded-md transition-colors duration-150 ${
-                        selectedFilter === filter.value
-                          ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300"
-                          : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
-                      }`}
-                    >
-                      <span className="mb-1">{filter.icon}</span>
-                      <span className="text-xs font-medium">{filter.label}</span>
-                    </button>
-                  ))}
-                </div>
+                {memesLoading && !memesState.isInitialized ? (
+                  <div className="grid grid-cols-3 gap-2">
+                    {[...Array(3)].map((_, i) => (
+                      <div key={i} className="h-16 bg-gray-200 dark:bg-gray-700 rounded-md animate-pulse"></div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { value: 'hottest', label: 'Hottest', icon: <ICONS.Heart className="w-5 h-5" /> },
+                      { value: 'trending', label: 'Trending', icon: <ICONS.Flame className="w-5 h-5" /> },
+                      { value: 'newest', label: 'Newest', icon: <ICONS.Star className="w-5 h-5" /> }
+                    ].map((filter) => (
+                      <button
+                        key={filter.value}
+                        onClick={() => handleFilterChange(filter.value)}
+                        className={`flex flex-col items-center p-3 rounded-md transition-colors duration-150 ${
+                          memesState.filters.filter === filter.value
+                            ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300"
+                            : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
+                        }`}
+                      >
+                        <span className="mb-1">{filter.icon}</span>
+                        <span className="text-xs font-medium">{filter.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -342,7 +385,7 @@ export default function MemesPage() {
                   <button
                     onClick={() => handleCategorySelect('')}
                     className={`px-3 py-2 text-sm font-medium rounded-md transition-colors duration-150 ${
-                      !selectedCategory 
+                      !memesState.filters.category_id 
                         ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300"
                         : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
                     }`}
@@ -350,20 +393,27 @@ export default function MemesPage() {
                     <ICONS.Star className="w-4 h-4 inline mr-1" />
                     All Categories
                   </button>
-                  {categories?.map((category) => (
-                    <button
-                      key={category.id}
-                      onClick={() => handleCategorySelect(category.id)}
-                      className={`px-3 py-2 text-sm font-medium rounded-md transition-colors duration-150 ${
-                        selectedCategory === category.id 
-                          ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300"
-                          : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
-                      }`}
-                    >
-                      {getCategoryIconOrEmoji(category.name, category.emoji)}
-                      <span className="ml-1">{category.name}</span>
-                    </button>
-                  ))}
+                  {categoriesLoading ? (
+                    // Show loading skeleton for categories
+                    [...Array(6)].map((_, i) => (
+                      <div key={i} className="h-8 w-20 bg-gray-200 dark:bg-gray-700 rounded-md animate-pulse"></div>
+                    ))
+                  ) : (
+                    categories?.map((category) => (
+                      <button
+                        key={category.id}
+                        onClick={() => handleCategorySelect(category.id)}
+                        className={`px-3 py-2 text-sm font-medium rounded-md transition-colors duration-150 ${
+                          memesState.filters.category_id === category.id 
+                            ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300"
+                            : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
+                        }`}
+                      >
+                        {getCategoryIconOrEmoji(category.name, category.emoji)}
+                        <span className="ml-1">{category.name}</span>
+                      </button>
+                    ))
+                  )}
                 </div>
               </div>
             </div>
@@ -375,7 +425,6 @@ export default function MemesPage() {
                 </div>
                 <h3 className="text-xl font-semibold mb-2">Failed to load memes</h3>
                 <p className="text-gray-500 dark:text-gray-400 mb-4">{memesError}</p>
-                {/* <Button onClick={refresh}>Try Again</Button> */}
               </div>
             ) : (
               <>
@@ -405,14 +454,11 @@ export default function MemesPage() {
             </div>
             <h3 className="text-xl font-semibold mb-2">No memes found</h3>
             <p className="text-gray-500 dark:text-gray-400 text-center max-w-md">
-              {selectedCategory 
-                ? `No ${selectedFilter} memes found in this category${selectedTimePeriod !== 'all' ? ` in the last ${selectedTimePeriod === 'today' ? '24 hours' : selectedTimePeriod === 'week' ? '7 days' : '30 days'}` : ''} yet.`
-                : `No ${selectedFilter} memes found${selectedTimePeriod !== 'all' ? ` in the last ${selectedTimePeriod === 'today' ? '24 hours' : selectedTimePeriod === 'week' ? '7 days' : '30 days'}` : ''} yet. Be the first to upload something hilarious!`
+              {memesState.filters.category_id 
+                ? `No ${memesState.filters.filter} memes found in this category${memesState.filters.time_period !== 'all' ? ` in the last ${memesState.filters.time_period === 'today' ? '24 hours' : memesState.filters.time_period === 'week' ? '7 days' : '30 days'}` : ''} yet.`
+                : `No ${memesState.filters.filter} memes found${memesState.filters.time_period !== 'all' ? ` in the last ${memesState.filters.time_period === 'today' ? '24 hours' : memesState.filters.time_period === 'week' ? '7 days' : '30 days'}` : ''} yet. Be the first to upload something hilarious!`
               }
             </p>
-            {/* <Button onClick={() => window.location.href = '/upload'} className="mt-4">
-              Upload First Meme
-            </Button> */}
           </section>
         )}
       </main>
