@@ -1,31 +1,67 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 import { FeaturedMemes } from '@/components/meme';
 import { Button } from '@/components/ui';
 import { ICONS } from '@/lib/utils/categoryIcons';
 
-import { useMemes } from '@/lib/hooks/useMemes';
 import { useCategories } from '@/lib/hooks/useCategories';
 import { useMemeInteractions } from '@/lib/hooks/useMemeInteractions';
-
-
+import { Meme } from '@/lib/types/meme';
 
 export default function Home() {
-  // Fetch real memes and categories - sorted by views for featured section
-  const { memes, loading: memesLoading, error: memesError } = useMemes({ 
-    limit: 8, 
-    sort_by: 'views', 
-    sort_order: 'desc'
-  });
+  // Homepage-specific state - always fetch hottest this week
+  const [memes, setMemes] = useState<Meme[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
   const { loading: categoriesLoading, error: categoriesError } = useCategories();
   const { likeMeme } = useMemeInteractions();
   const [likedMemes, setLikedMemes] = useState<Set<string>>(new Set());
-  const [localMemes, setLocalMemes] = useState<typeof memes>([]);
+  const [localMemes, setLocalMemes] = useState<Meme[]>([]);
+
+  // Fetch homepage memes - always hottest this week
+  useEffect(() => {
+    const fetchHomepageMemes = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // Always fetch hottest memes from this month
+        const params = new URLSearchParams({
+          page: '1',
+          limit: '8',
+          sort_by: 'likes',
+          sort_order: 'desc',
+          time_period: 'month'
+        });
+        
+        console.log('Homepage: Fetching hottest memes this month');
+        
+        const response = await fetch(`/api/memes?${params}`);
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch memes: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        console.log('Homepage: Received memes:', data.memes?.length || 0);
+        
+        setMemes(data.memes || []);
+      } catch (err) {
+        console.error('Homepage: Failed to fetch memes:', err);
+        setError(err instanceof Error ? err.message : 'Failed to fetch memes');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchHomepageMemes();
+  }, []); // Empty dependency array - only run once on mount
 
   // Initialize local memes when memes change from the hook
-  React.useEffect(() => {
+  useEffect(() => {
     setLocalMemes(memes);
   }, [memes]);
 
@@ -74,7 +110,7 @@ export default function Home() {
 
 
   // Show loading state while fetching data
-  if (memesLoading || categoriesLoading) {
+  if (loading || categoriesLoading) {
     return (
       <div className="bg-gray-50 dark:bg-gray-900">
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -97,13 +133,13 @@ export default function Home() {
             </div>
           </section>
 
-          {/* Most Viewed Memes Section - Loading State */}
+          {/* Hottest Memes This Month Section - Loading State */}
           <section className="mb-12">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h2 className="text-2xl font-bold">Most Viewed Memes</h2>
+                <h2 className="text-2xl font-bold">Hottest Memes This Month</h2>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  Some of the memes that people are watching or smth
+                  The most liked memes from the current month
                 </p>
               </div>
               <Button variant="ghost" onClick={() => window.location.href = '/memes'}>
@@ -147,7 +183,7 @@ export default function Home() {
   }
 
   // Show error state if there's an issue
-  if (memesError || categoriesError) {
+  if (error || categoriesError) {
     return (
       <div className="bg-gray-50 dark:bg-gray-900">
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -157,7 +193,7 @@ export default function Home() {
             </div>
             <h2 className="text-2xl font-bold mb-2">Something went wrong</h2>
             <p className="text-gray-600 dark:text-gray-400 mb-4">
-              {memesError || categoriesError}
+              {error || categoriesError}
             </p>
             <Button onClick={() => window.location.reload()}>
               Try Again
@@ -190,13 +226,13 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Most Viewed Memes Section */}
+        {/* Hottest Memes This Month Section */}
         <section className="mb-12">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-2xl font-bold">Most Viewed Memes</h2>
+              <h2 className="text-2xl font-bold">Hottest Memes This Month</h2>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                Some of the memes that people are watching or smth
+                The most liked memes from the current month
               </p>
             </div>
             <Button variant="ghost" onClick={() => window.location.href = '/memes'}>
