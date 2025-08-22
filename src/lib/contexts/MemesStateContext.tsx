@@ -30,7 +30,7 @@ interface MemesStateContextType {
 
 const initialState: MemesState = {
   memes: [],
-  hasMore: true,
+  hasMore: false,
   currentPage: 1,
   scrollPosition: 0,
   filters: {
