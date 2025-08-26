@@ -8,6 +8,7 @@ import { formatRelativeTime, formatTime } from '@/lib/utils';
 import { Meme } from '@/lib/types/meme';
 import { useMemeInteractions } from '@/lib/hooks/useMemeInteractions';
 import { ICONS, getCategoryIconOrEmoji } from '@/lib/utils/categoryIcons';
+import { shareMemeWithFallback } from '@/lib/utils/shareUtils';
 
 export default function MemeDetailPage() {
   const params = useParams();
@@ -19,6 +20,7 @@ export default function MemeDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [isLiked, setIsLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(0);
+  const [sharesCount, setSharesCount] = useState(0);
 
   const { likeMeme, recordView } = useMemeInteractions();
   const hasRecordedView = useRef(false);
@@ -43,6 +45,7 @@ export default function MemeDetailPage() {
         const data = await response.json();
         setMeme(data.meme);
         setLikesCount(data.meme.likes_count || 0);
+        setSharesCount(data.meme.shares_count || 0);
         
         // Record view after successful fetch, but only once per meme load
         if (!hasRecordedView.current) {
@@ -83,9 +86,13 @@ export default function MemeDetailPage() {
     }
   };
 
-  const handleShare = () => {
-    console.log('Sharing meme:', meme?.id);
-    // Implement share functionality here
+  const handleShare = async () => {
+    if (!meme) return;
+    
+    await shareMemeWithFallback(meme.title, meme.slug);
+    
+    // Update local shares count immediately for better UX
+    setSharesCount(prev => prev + 1);
   };
 
   if (loading) {
@@ -231,7 +238,7 @@ export default function MemeDetailPage() {
                     className="flex items-center space-x-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                   >
                     <ICONS.Share2 className="w-5 h-5" />
-                    <span className="font-medium">{meme.shares_count.toLocaleString()}</span>
+                    <span className="font-medium">{sharesCount.toLocaleString()}</span>
                   </button>
                 </div>
 

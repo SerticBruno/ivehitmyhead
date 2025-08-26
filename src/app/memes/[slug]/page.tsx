@@ -9,6 +9,7 @@ import { useMemes } from '@/lib/hooks/useMemes';
 import { useCategories } from '@/lib/hooks/useCategories';
 import { useMemeInteractions } from '@/lib/hooks/useMemeInteractions';
 import { ICONS } from '@/lib/utils/categoryIcons';
+import { shareMemeWithFallback } from '@/lib/utils/shareUtils';
 
 export default function CategoryPage() {
   const params = useParams();
@@ -73,9 +74,15 @@ export default function CategoryPage() {
     }
   };
 
-  const handleShare = (id: string) => {
-    console.log('Sharing meme:', id);
-    // Implement share functionality here
+  const handleShare = async (id: string) => {
+    // Find the meme by ID to get its slug
+    const meme = memes.find(m => m.id === id);
+    if (!meme) {
+      console.error('Meme not found for sharing:', id);
+      return;
+    }
+    
+    await shareMemeWithFallback(meme.title, meme.slug);
   };
 
   if (error) {

@@ -9,6 +9,7 @@ import { ICONS } from '@/lib/utils/categoryIcons';
 import { useCategories } from '@/lib/hooks/useCategories';
 import { useMemeInteractions } from '@/lib/hooks/useMemeInteractions';
 import { Meme } from '@/lib/types/meme';
+import { shareMemeWithFallback } from '@/lib/utils/shareUtils';
 
 export default function Home() {
   // Homepage-specific state - always fetch hottest this week
@@ -99,9 +100,15 @@ export default function Home() {
     }
   };
 
-  const handleShare = (id: string) => {
-    console.log('Sharing meme:', id);
-    // Implement share functionality here
+  const handleShare = async (id: string) => {
+    // Find the meme by ID to get its slug
+    const meme = displayMemes.find(m => m.id === id);
+    if (!meme) {
+      console.error('Meme not found for sharing:', id);
+      return;
+    }
+    
+    await shareMemeWithFallback(meme.title, meme.slug);
   };
 
 

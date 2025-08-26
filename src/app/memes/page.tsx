@@ -8,6 +8,7 @@ import { useCategories } from '@/lib/hooks/useCategories';
 import { useMemeInteractions } from '@/lib/hooks/useMemeInteractions';
 import { useMemesState } from '@/lib/contexts';
 import { ICONS, getCategoryIconOrEmoji } from '@/lib/utils/categoryIcons';
+import { shareMemeWithFallback } from '@/lib/utils/shareUtils';
 
 export default function MemesPage() {
   const [likedMemes, setLikedMemes] = useState<Set<string>>(new Set());
@@ -428,10 +429,16 @@ export default function MemesPage() {
     }
   }, [likeMeme, memesState.memes, updateMemeLikeCount]);
 
-  const handleShare = useCallback((id: string) => {
-    console.log('Sharing meme:', id);
-    // Implement share functionality here
-  }, []);
+  const handleShare = useCallback(async (id: string) => {
+    // Find the meme by ID to get its slug
+    const meme = memesState.memes.find(m => m.id === id);
+    if (!meme) {
+      console.error('Meme not found for sharing:', id);
+      return;
+    }
+    
+    await shareMemeWithFallback(meme.title, meme.slug);
+  }, [memesState.memes]);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
