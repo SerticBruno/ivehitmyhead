@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { formatRelativeTime, formatTime } from '@/lib/utils';
 import { Meme } from '@/lib/types/meme';
 import { useMemeInteractions } from '@/lib/hooks/useMemeInteractions';
+import { useMemesState } from '@/lib/contexts';
 import { ICONS, getCategoryIconOrEmoji } from '@/lib/utils/categoryIcons';
 import { shareMemeWithFallback } from '@/lib/utils/shareUtils';
 
@@ -21,9 +22,34 @@ export default function MemeDetailPage() {
   const [isLiked, setIsLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(0);
   const [sharesCount, setSharesCount] = useState(0);
+  const [isCheckingLikeStatus, setIsCheckingLikeStatus] = useState(true);
+  const [isLiking, setIsLiking] = useState(false);
 
   const { likeMeme, recordView } = useMemeInteractions();
+  const { state: memesState, updateMemeLikeCount, updateMemeShareCount } = useMemesState();
   const hasRecordedView = useRef(false);
+
+  // Check if the current meme is liked by the user
+  const checkLikeStatus = async () => {
+    try {
+      const response = await fetch('/api/memes/liked');
+      if (response.ok) {
+        const data = await response.json();
+        const likedMemes = data.likedMemes || [];
+        const isCurrentlyLiked = likedMemes.includes(slug);
+        setIsLiked(isCurrentlyLiked);
+        console.log('Like status checked:', { slug, isLiked: isCurrentlyLiked });
+      } else {
+        console.warn('Failed to check like status, assuming not liked');
+        setIsLiked(false);
+      }
+    } catch (error) {
+      console.error('Error checking like status:', error);
+      setIsLiked(false);
+    } finally {
+      setIsCheckingLikeStatus(false);
+    }
+  };
 
   useEffect(() => {
     const fetchMeme = async () => {
@@ -44,8 +70,28 @@ export default function MemeDetailPage() {
 
         const data = await response.json();
         setMeme(data.meme);
-        setLikesCount(data.meme.likes_count || 0);
-        setSharesCount(data.meme.shares_count || 0);
+        
+        // Check if this meme is already in the context state (from all memes page)
+        const contextMeme = memesState.memes.find(m => m.slug === slug);
+        if (contextMeme) {
+          // Use the context data which might be more up-to-date
+          console.log('Using context data for meme:', { 
+            slug, 
+            contextLikes: contextMeme.likes_count, 
+            apiLikes: data.meme.likes_count,
+            contextShares: contextMeme.shares_count,
+            apiShares: data.meme.shares_count
+          });
+          setLikesCount(contextMeme.likes_count || 0);
+          setSharesCount(contextMeme.shares_count || 0);
+        } else {
+          // Use API data if not in context
+          setLikesCount(data.meme.likes_count || 0);
+          setSharesCount(data.meme.shares_count || 0);
+        }
+        
+        // Check if this meme is liked by the user
+        await checkLikeStatus();
         
         // Record view after successful fetch, but only once per meme load
         if (!hasRecordedView.current) {
@@ -66,23 +112,39 @@ export default function MemeDetailPage() {
   }, [slug, recordView]);
 
   const handleLike = async () => {
-    if (!meme) return;
+    if (!meme || isLiking) return;
     
     try {
+      setIsLiking(true);
       const liked = await likeMeme(slug);
       setIsLiked(liked);
       
-      // Update local likes count
+      // Calculate the new like count
+      let newLikeCount: number;
       if (liked) {
-        setLikesCount(prev => prev + 1);
+        // User just liked the meme
+        newLikeCount = likesCount + 1;
       } else {
-        setLikesCount(prev => Math.max(0, prev - 1));
+        // User just unliked the meme
+        newLikeCount = Math.max(0, likesCount - 1);
       }
       
-      // No need to refresh meme data - we're managing counts locally
-      // This prevents unnecessary view increments
+      // Update local state
+      setLikesCount(newLikeCount);
+      
+      // Update the context state so other pages stay in sync
+      updateMemeLikeCount(slug, newLikeCount);
+      
+      console.log('Like action completed:', { 
+        slug, 
+        isLiked: liked, 
+        newCount: newLikeCount,
+        contextUpdated: true
+      });
     } catch (error) {
       console.error('Failed to like meme:', error);
+    } finally {
+      setIsLiking(false);
     }
   };
 
@@ -93,7 +155,17 @@ export default function MemeDetailPage() {
     const wasShared = await shareMemeWithFallback(meme.title, meme.slug);
     
     if (wasShared) {
-      setSharesCount(prev => prev + 1);
+      const newShareCount = sharesCount + 1;
+      setSharesCount(newShareCount);
+      
+      // Update the context state so other pages stay in sync
+      updateMemeShareCount(slug, newShareCount);
+      
+      console.log('Share action completed:', { 
+        slug, 
+        newShareCount,
+        contextUpdated: true
+      });
     }
   };
 
@@ -220,13 +292,18 @@ export default function MemeDetailPage() {
                   {/* Like Button */}
                   <button
                     onClick={handleLike}
+                    disabled={isCheckingLikeStatus || isLiking}
                     className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-200 ${
                       isLiked 
                         ? 'bg-red-500 text-white' 
                         : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                    }`}
+                    } ${(isCheckingLikeStatus || isLiking) ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
-                    {isLiked ? (
+                    {isCheckingLikeStatus ? (
+                      <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                    ) : isLiking ? (
+                      <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                    ) : isLiked ? (
                       <ICONS.Heart className="w-5 h-5 fill-current" />
                     ) : (
                       <ICONS.ThumbsUp className="w-5 h-5" />
