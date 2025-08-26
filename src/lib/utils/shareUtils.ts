@@ -13,12 +13,13 @@ export interface ShareData {
  * @param shareData - The data to share (title, text, url)
  * @param fallbackAction - Optional custom fallback action for desktop/unsupported browsers
  * @param onShareSuccess - Optional callback when sharing is successful
+ * @returns Promise<boolean> - true if share was successful, false otherwise
  */
 export const shareMeme = async (
   shareData: ShareData,
   fallbackAction?: () => void,
   onShareSuccess?: () => void
-): Promise<void> => {
+): Promise<boolean> => {
   console.log('shareMeme called with:', { shareData, hasFallback: !!fallbackAction, hasSuccessCallback: !!onShareSuccess });
   
   // Check if Web Share API is supported (mobile devices)
@@ -32,6 +33,7 @@ export const shareMeme = async (
         console.log('Calling success callback');
         onShareSuccess();
       }
+      return true; // Web Share API succeeded
     } catch (error) {
       // User cancelled sharing or there was an error
       if (error instanceof Error && error.name !== 'AbortError') {
@@ -39,6 +41,7 @@ export const shareMeme = async (
       } else {
         console.log('User cancelled sharing via Web Share API');
       }
+      return false; // Web Share API failed or was cancelled
     }
   } else {
     console.log('Web Share API not supported, using fallback');
@@ -46,6 +49,7 @@ export const shareMeme = async (
     if (fallbackAction) {
       console.log('Using custom fallback action');
       fallbackAction();
+      return true; // Custom fallback executed
     } else {
       // Default fallback: copy URL to clipboard
       console.log('Using default fallback: copy to clipboard');
@@ -57,16 +61,17 @@ export const shareMeme = async (
           console.log('Calling success callback for clipboard copy');
           onShareSuccess();
         }
-        // You could show a toast notification here
+        return true; // Clipboard copy succeeded
       } catch (error) {
         console.error('Failed to copy URL to clipboard:', error);
         // Final fallback: open in new window
         console.log('Final fallback: opening in new window');
         window.open(shareData.url, '_blank');
+        return true; // Opening in new window succeeded
       }
     }
   }
-};
+}
 
 /**
  * Create share data for a meme
@@ -121,12 +126,13 @@ export const recordShare = async (memeSlug: string): Promise<void> => {
  * @param memeTitle - The title of the meme
  * @param memeSlug - The slug of the meme
  * @param baseUrl - The base URL of the site (optional)
+ * @returns Promise<boolean> - true if share was successful, false otherwise
  */
 export const shareMemeWithFallback = async (
   memeTitle: string,
   memeSlug: string,
   baseUrl?: string
-): Promise<void> => {
+): Promise<boolean> => {
   console.log('Sharing meme:', { title: memeTitle, slug: memeSlug, baseUrl });
   
   const shareData = createMemeShareData(memeTitle, memeSlug, baseUrl);
@@ -138,5 +144,5 @@ export const shareMemeWithFallback = async (
     recordShare(memeSlug);
   };
   
-  await shareMeme(shareData, undefined, onShareSuccess);
+  return await shareMeme(shareData, undefined, onShareSuccess);
 };

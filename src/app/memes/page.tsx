@@ -14,7 +14,7 @@ export default function MemesPage() {
   const [likedMemes, setLikedMemes] = useState<Set<string>>(new Set());
   
   // Get memes state context
-  const { state: memesState, setScrollPosition, updateMemeLikeCount } = useMemesState();
+  const { state: memesState, setScrollPosition, updateMemeLikeCount, updateMemeShareCount } = useMemesState();
   
   // Ref for scrolling to meme grid
   const memeGridRef = useRef<HTMLDivElement>(null);
@@ -174,6 +174,25 @@ export default function MemesPage() {
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [memesState.scrollPosition]);
+
+  // Refresh meme data when returning to the page to get updated counts
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        console.log('Page became visible, refreshing meme data to get updated counts');
+        // Small delay to ensure the page is fully loaded
+        setTimeout(() => {
+          if (typeof window !== 'undefined' && window.location.pathname === '/memes') {
+            // Trigger a refresh of the meme data to get updated share/like counts
+            window.dispatchEvent(new CustomEvent('refreshMemes'));
+          }
+        }, 100);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
 
   // Additional scroll restoration on window focus (when returning from another tab/window)
   useEffect(() => {
@@ -437,8 +456,15 @@ export default function MemesPage() {
       return;
     }
     
-    await shareMemeWithFallback(meme.title, meme.slug);
-  }, [memesState.memes]);
+    // Share the meme first
+    const wasShared = await shareMemeWithFallback(meme.title, meme.slug);
+    
+    if (wasShared) {
+      // Update the local share count immediately for better UX
+      const newShareCount = (meme.shares_count || 0) + 1;
+      updateMemeShareCount(meme.slug, newShareCount);
+    }
+  }, [memesState.memes, updateMemeShareCount]);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">

@@ -82,6 +82,8 @@ export default function CategoryPage() {
       return;
     }
     
+    // Note: We don't update local state here since this is just a preview
+    // The actual share count will be updated when viewing the full meme
     await shareMemeWithFallback(meme.title, meme.slug);
   };
 

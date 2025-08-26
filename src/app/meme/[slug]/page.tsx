@@ -89,10 +89,12 @@ export default function MemeDetailPage() {
   const handleShare = async () => {
     if (!meme) return;
     
-    await shareMemeWithFallback(meme.title, meme.slug);
+    // Only update the counter if the share was actually successful
+    const wasShared = await shareMemeWithFallback(meme.title, meme.slug);
     
-    // Update local shares count immediately for better UX
-    setSharesCount(prev => prev + 1);
+    if (wasShared) {
+      setSharesCount(prev => prev + 1);
+    }
   };
 
   if (loading) {

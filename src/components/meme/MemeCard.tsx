@@ -161,7 +161,7 @@ const MemeCard: React.FC<MemeCardProps> = ({
               variant="ghost"
               size="sm"
               onClick={handleLike}
-              className={`flex items-center space-x-1 ${isLiked ? 'text-red-500' : ''} border border-gray-300`}
+              className={`flex items-center space-x-1 ${isLiked ? 'text-red-500' : ''}`}
               onMouseDown={() => console.log('MemeCard: Like button mouse down')}
               onMouseUp={() => console.log('MemeCard: Like button mouse up')}
               style={{ zIndex: 10, position: 'relative' }}
