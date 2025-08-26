@@ -17,6 +17,7 @@ const MemeCard: React.FC<MemeCardProps> = ({
 }) => {
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
+  const [isLiking, setIsLiking] = useState(false);
 
   // Check if image is already preloaded
   useEffect(() => {
@@ -25,9 +26,15 @@ const MemeCard: React.FC<MemeCardProps> = ({
     }
   }, [meme.image_url]);
 
-  const handleLike = (e: React.MouseEvent) => {
+  const handleLike = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    
+    if (isLiking) {
+      console.log('MemeCard: Like action already in progress, ignoring click');
+      return;
+    }
+    
     console.log('MemeCard: handleLike called with slug:', meme.slug);
     console.log('MemeCard: onLike function exists?', !!onLike);
     console.log('MemeCard: current meme data:', {
@@ -35,8 +42,14 @@ const MemeCard: React.FC<MemeCardProps> = ({
       likes_count: meme.likes_count,
       isLiked: isLiked
     });
+    
     if (onLike) {
-      onLike(meme.slug);
+      setIsLiking(true);
+      try {
+        await onLike(meme.slug);
+      } finally {
+        setIsLiking(false);
+      }
     } else {
       console.error('MemeCard: onLike function is undefined!');
     }
@@ -161,13 +174,16 @@ const MemeCard: React.FC<MemeCardProps> = ({
               variant="ghost"
               size="sm"
               onClick={handleLike}
-              className={`flex items-center space-x-1 ${isLiked ? 'text-red-500' : ''}`}
+              disabled={isLiking}
+              className={`flex items-center space-x-1 ${isLiked ? 'text-red-500' : ''} ${isLiking ? 'opacity-50 cursor-not-allowed' : ''}`}
               onMouseDown={() => console.log('MemeCard: Like button mouse down')}
               onMouseUp={() => console.log('MemeCard: Like button mouse up')}
               style={{ zIndex: 10, position: 'relative' }}
             >
               <span>
-                {isLiked ? (
+                {isLiking ? (
+                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                ) : isLiked ? (
                   <ICONS.Heart className="w-4 h-4 fill-current" />
                 ) : (
                   <ICONS.ThumbsUp className="w-4 h-4" />

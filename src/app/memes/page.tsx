@@ -16,6 +16,35 @@ export default function MemesPage() {
   // Get memes state context
   const { state: memesState, setScrollPosition, updateMemeLikeCount, updateMemeShareCount } = useMemesState();
   
+  // Initialize likedMemes state by fetching user's liked memes from API
+  useEffect(() => {
+    const fetchLikedMemes = async () => {
+      try {
+        console.log('Fetching user\'s liked memes...');
+        const response = await fetch('/api/memes/liked');
+        
+        if (response.ok) {
+          const data = await response.json();
+          const likedSlugs = data.likedMemes || [];
+          
+          console.log('Fetched liked memes:', likedSlugs);
+          setLikedMemes(new Set(likedSlugs));
+        } else {
+          console.warn('Failed to fetch liked memes, using empty set');
+          setLikedMemes(new Set());
+        }
+      } catch (error) {
+        console.error('Error fetching liked memes:', error);
+        setLikedMemes(new Set());
+      }
+    };
+
+    // Only fetch once when the component mounts
+    if (likedMemes.size === 0) {
+      fetchLikedMemes();
+    }
+  }, []); // Empty dependency array - only run once on mount
+  
   // Ref for scrolling to meme grid
   const memeGridRef = useRef<HTMLDivElement>(null);
   
@@ -25,6 +54,9 @@ export default function MemesPage() {
   
   // Ref to track which memes have been processed in the current render cycle
   const processedMemesRef = useRef<Set<string>>(new Set());
+  
+  // Track which memes are currently being processed to prevent double-clicks
+  const processingMemesRef = useRef<Set<string>>(new Set());
   
   const getViewedMemes = useCallback(() => {
     if (viewedMemesRef.current.size === 0 && typeof window !== 'undefined') {
@@ -408,45 +440,102 @@ export default function MemesPage() {
   }, []);
 
   const handleLike = useCallback(async (slug: string) => {
+    // Prevent double-clicks by checking if this meme is already being processed
+    if (processingMemesRef.current.has(slug)) {
+      console.log('Meme is already being processed, ignoring click:', slug);
+      return;
+    }
+    
     try {
       console.log('handleLike called with slug:', slug);
       
-      const isLiked = await likeMeme(slug);
-      console.log('API returned isLiked:', isLiked);
+      // Mark this meme as being processed
+      processingMemesRef.current.add(slug);
       
-      // Update local state to reflect the like change
+      // Store the original like count before making the API call
+      const originalMeme = memesState.memes.find(meme => meme.slug === slug);
+      if (!originalMeme) {
+        console.warn('Meme not found in current state:', slug);
+        return;
+      }
+      
+      const originalLikeCount = Math.max(0, originalMeme.likes_count || 0);
+      
+      // Log warning if we found a negative like count in the database
+      if (originalMeme.likes_count < 0) {
+        console.warn('Found negative like count in database, clamping to 0:', {
+          slug,
+          databaseCount: originalMeme.likes_count,
+          clampedCount: originalLikeCount
+        });
+      }
+      
+      const wasLikedBefore = likedMemes.has(slug);
+      
+      // Make the API call first to get the actual result
+      const actualIsLiked = await likeMeme(slug);
+      console.log('API returned isLiked:', actualIsLiked);
+      
+      // Now update the UI based on the actual API result
+      let finalLikeCount: number;
+      
+      if (actualIsLiked) {
+        // User just liked the meme
+        finalLikeCount = originalLikeCount + 1;
+      } else {
+        // User just unliked the meme
+        finalLikeCount = Math.max(0, originalLikeCount - 1);
+      }
+      
+      // Additional safety check to prevent negative counts
+      if (finalLikeCount < 0) {
+        console.warn('Calculated negative like count, clamping to 0:', {
+          slug,
+          originalCount: originalLikeCount,
+          finalCount: finalLikeCount
+        });
+        finalLikeCount = 0;
+      }
+      
+      console.log('Calculated final like count:', {
+        slug,
+        originalCount: originalLikeCount,
+        actualIsLiked,
+        finalCount: finalLikeCount
+      });
+      
+      // Update the like count to match the API result
+      updateMemeLikeCount(slug, finalLikeCount);
+      
+      // Update the liked state to match the API result
       setLikedMemes(prev => {
         const newSet = new Set(prev);
-        if (isLiked) {
+        if (actualIsLiked) {
           newSet.add(slug);
         } else {
           newSet.delete(slug);
         }
-        console.log('Updated likedMemes state:', Array.from(newSet));
+        console.log('Final likedMemes state after API call:', Array.from(newSet));
         return newSet;
       });
-
-      // Find the meme in the current state to get its current like count
-      const currentMeme = memesState.memes.find(meme => meme.slug === slug);
-      if (currentMeme) {
-        // Calculate the new like count based on whether we liked or unliked
-        const newLikeCount = isLiked ? currentMeme.likes_count + 1 : currentMeme.likes_count - 1;
-        console.log('Updating meme like count:', {
-          slug,
-          currentCount: currentMeme.likes_count,
-          newCount: newLikeCount,
-          isLiked
-        });
-        
-        // Update the meme's like count in the context state
-        updateMemeLikeCount(slug, newLikeCount);
-      } else {
-        console.warn('Meme not found in current state:', slug);
-      }
+      
+      console.log('Like operation completed successfully:', {
+        slug,
+        originalCount: originalLikeCount,
+        finalCount: finalLikeCount,
+        isLiked: actualIsLiked
+      });
+      
     } catch (error) {
       console.error('Failed to like meme:', error);
+      
+      // On error, we don't need to revert anything since we didn't make optimistic updates
+      // Just log the error and let the user try again
+    } finally {
+      // Always remove the processing flag, even if there was an error
+      processingMemesRef.current.delete(slug);
     }
-  }, [likeMeme, memesState.memes, updateMemeLikeCount]);
+  }, [likeMeme, memesState.memes, updateMemeLikeCount, likedMemes]);
 
   const handleShare = useCallback(async (id: string) => {
     // Find the meme by ID to get its slug

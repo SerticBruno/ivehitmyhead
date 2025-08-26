@@ -241,10 +241,21 @@ export const MemesStateProvider: React.FC<MemesStateProviderProps> = ({ children
   }, [state.filters]);
 
   const updateMemeLikeCount = useCallback((memeSlug: string, newLikeCount: number) => {
-    console.log('updateMemeLikeCount called:', { memeSlug, newLikeCount });
+    // Ensure like count is never negative
+    const safeLikeCount = Math.max(0, newLikeCount);
+    
+    if (newLikeCount !== safeLikeCount) {
+      console.warn('Preventing negative like count:', {
+        memeSlug,
+        requested: newLikeCount,
+        clamped: safeLikeCount
+      });
+    }
+    
+    console.log('updateMemeLikeCount called:', { memeSlug, newLikeCount, safeLikeCount });
     setState(prev => {
       const updatedMemes = prev.memes.map(meme =>
-        meme.slug === memeSlug ? { ...meme, likes_count: newLikeCount } : meme
+        meme.slug === memeSlug ? { ...meme, likes_count: safeLikeCount } : meme
       );
       console.log('Updated memes state:', {
         before: prev.memes.find(m => m.slug === memeSlug)?.likes_count,
@@ -258,10 +269,21 @@ export const MemesStateProvider: React.FC<MemesStateProviderProps> = ({ children
   }, []);
 
   const updateMemeShareCount = useCallback((memeSlug: string, newShareCount: number) => {
-    console.log('updateMemeShareCount called:', { memeSlug, newShareCount });
+    // Ensure share count is never negative
+    const safeShareCount = Math.max(0, newShareCount);
+    
+    if (newShareCount !== safeShareCount) {
+      console.warn('Preventing negative share count:', {
+        memeSlug,
+        requested: newShareCount,
+        clamped: safeShareCount
+      });
+    }
+    
+    console.log('updateMemeShareCount called:', { memeSlug, newShareCount, safeShareCount });
     setState(prev => {
       const updatedMemes = prev.memes.map(meme =>
-        meme.slug === memeSlug ? { ...meme, shares_count: newShareCount } : meme
+        meme.slug === memeSlug ? { ...meme, shares_count: safeShareCount } : meme
       );
       console.log('Updated memes state:', {
         before: prev.memes.find(m => m.slug === memeSlug)?.shares_count,
