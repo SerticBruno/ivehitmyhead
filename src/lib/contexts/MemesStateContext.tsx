@@ -26,6 +26,7 @@ interface MemesStateContextType {
   setFilters: (filters: Partial<MemesState['filters']>) => void;
   resetState: () => void;
   isSameFilters: (filters: Partial<MemesState['filters']>) => boolean;
+  updateMemeLikeCount: (memeSlug: string, newLikeCount: number) => void;
 }
 
 const initialState: MemesState = {
@@ -238,6 +239,23 @@ export const MemesStateProvider: React.FC<MemesStateProviderProps> = ({ children
     return result;
   }, [state.filters]);
 
+  const updateMemeLikeCount = useCallback((memeSlug: string, newLikeCount: number) => {
+    console.log('updateMemeLikeCount called:', { memeSlug, newLikeCount });
+    setState(prev => {
+      const updatedMemes = prev.memes.map(meme =>
+        meme.slug === memeSlug ? { ...meme, likes_count: newLikeCount } : meme
+      );
+      console.log('Updated memes state:', {
+        before: prev.memes.find(m => m.slug === memeSlug)?.likes_count,
+        after: updatedMemes.find(m => m.slug === memeSlug)?.likes_count
+      });
+      return {
+        ...prev,
+        memes: updatedMemes
+      };
+    });
+  }, []);
+
   // Memoize the context value to prevent unnecessary re-renders
   const value = useMemo<MemesStateContextType>(() => ({
     state,
@@ -248,8 +266,9 @@ export const MemesStateProvider: React.FC<MemesStateProviderProps> = ({ children
     setScrollPosition,
     setFilters,
     resetState,
-    isSameFilters
-  }), [state, setMemes, appendMemes, setHasMore, setCurrentPage, setScrollPosition, setFilters, resetState, isSameFilters]);
+    isSameFilters,
+    updateMemeLikeCount
+  }), [state, setMemes, appendMemes, setHasMore, setCurrentPage, setScrollPosition, setFilters, resetState, isSameFilters, updateMemeLikeCount]);
 
   return (
     <MemesStateContext.Provider value={value}>

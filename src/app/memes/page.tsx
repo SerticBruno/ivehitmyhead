@@ -13,7 +13,7 @@ export default function MemesPage() {
   const [likedMemes, setLikedMemes] = useState<Set<string>>(new Set());
   
   // Get memes state context
-  const { state: memesState, setScrollPosition } = useMemesState();
+  const { state: memesState, setScrollPosition, updateMemeLikeCount } = useMemesState();
   
   // Ref for scrolling to meme grid
   const memeGridRef = useRef<HTMLDivElement>(null);
@@ -389,7 +389,10 @@ export default function MemesPage() {
 
   const handleLike = useCallback(async (slug: string) => {
     try {
+      console.log('handleLike called with slug:', slug);
+      
       const isLiked = await likeMeme(slug);
+      console.log('API returned isLiked:', isLiked);
       
       // Update local state to reflect the like change
       setLikedMemes(prev => {
@@ -399,18 +402,31 @@ export default function MemesPage() {
         } else {
           newSet.delete(slug);
         }
+        console.log('Updated likedMemes state:', Array.from(newSet));
         return newSet;
       });
 
-      // Update the meme's likes count locally without refreshing the page
-      // Since we can't directly modify the hook's state, we'll need to refresh
-      // But we can optimize this by only updating the specific meme's like count
-      // For now, let's use a local state to override the memes
-      // This will be handled by the context state management
+      // Find the meme in the current state to get its current like count
+      const currentMeme = memesState.memes.find(meme => meme.slug === slug);
+      if (currentMeme) {
+        // Calculate the new like count based on whether we liked or unliked
+        const newLikeCount = isLiked ? currentMeme.likes_count + 1 : currentMeme.likes_count - 1;
+        console.log('Updating meme like count:', {
+          slug,
+          currentCount: currentMeme.likes_count,
+          newCount: newLikeCount,
+          isLiked
+        });
+        
+        // Update the meme's like count in the context state
+        updateMemeLikeCount(slug, newLikeCount);
+      } else {
+        console.warn('Meme not found in current state:', slug);
+      }
     } catch (error) {
       console.error('Failed to like meme:', error);
     }
-  }, [likeMeme]);
+  }, [likeMeme, memesState.memes, updateMemeLikeCount]);
 
   const handleShare = useCallback((id: string) => {
     console.log('Sharing meme:', id);

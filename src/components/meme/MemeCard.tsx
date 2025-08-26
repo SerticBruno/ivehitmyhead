@@ -30,7 +30,11 @@ const MemeCard: React.FC<MemeCardProps> = ({
     e.stopPropagation();
     console.log('MemeCard: handleLike called with slug:', meme.slug);
     console.log('MemeCard: onLike function exists?', !!onLike);
-    console.log('MemeCard: onLike function:', onLike);
+    console.log('MemeCard: current meme data:', {
+      slug: meme.slug,
+      likes_count: meme.likes_count,
+      isLiked: isLiked
+    });
     if (onLike) {
       onLike(meme.slug);
     } else {
