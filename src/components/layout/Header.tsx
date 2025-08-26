@@ -1,10 +1,11 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { Menu, X } from 'lucide-react';
 
 interface HeaderProps {
   showSearch?: boolean;
@@ -12,6 +13,7 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ showSearch = true }) => {
   const router = useRouter();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -23,20 +25,36 @@ const Header: React.FC<HeaderProps> = ({ showSearch = true }) => {
     }
   };
 
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+  const closeMobileMenu = () => {
+    setIsMobileMenuOpen(false);
+  };
+
+  const navigationItems = [
+    { href: '/memes', label: 'Memes' },
+    { href: '/meme-generator', label: 'Generator' },
+    { href: '/upload', label: 'Upload' },
+    { href: '/about', label: 'About' },
+    { href: '/profile', label: 'Profile' },
+  ];
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-gray-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:border-gray-800 dark:bg-gray-950/95">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           {/* Logo and Brand */}
           <div className="flex items-center space-x-4">
-            <Link href="/" className="flex items-center space-x-2 cursor-pointer">
+            <Link href="/" className="flex items-center space-x-2 cursor-pointer" onClick={closeMobileMenu}>
               <span className="text-xl font-bold">IVEHITMYHEAD</span>
             </Link>
           </div>
 
-          {/* Search Bar */}
+          {/* Search Bar - Hidden on mobile when menu is open */}
           {showSearch && (
-            <div className="flex-1 max-w-md mx-4">
+            <div className={`flex-1 max-w-md mx-4 ${isMobileMenuOpen ? 'hidden' : 'block'}`}>
               <form onSubmit={handleSearch} className="relative">
                 <Input
                   name="search"
@@ -55,35 +73,70 @@ const Header: React.FC<HeaderProps> = ({ showSearch = true }) => {
             </div>
           )}
 
-          {/* Navigation */}
-          <nav className="flex items-center space-x-4">
-            <Link href="/memes" className="cursor-pointer">
-              <Button variant="ghost" size="sm">
-                Memes
-              </Button>
-            </Link>
-            <Link href="/meme-generator" className="cursor-pointer">
-              <Button variant="ghost" size="sm">
-                Generator
-              </Button>
-            </Link>
-            <Link href="/upload" className="cursor-pointer">
-              <Button variant="ghost" size="sm">
-                Upload
-              </Button>
-            </Link>
-            <Link href="/about" className="cursor-pointer">
-              <Button variant="ghost" size="sm">
-                About
-              </Button>
-            </Link>
-            <Link href="/profile" className="cursor-pointer">
-              <Button variant="ghost" size="sm">
-                  Profile
-              </Button>
-            </Link>
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex items-center space-x-4">
+            {navigationItems.map((item) => (
+              <Link key={item.href} href={item.href} className="cursor-pointer">
+                <Button variant="ghost" size="sm">
+                  {item.label}
+                </Button>
+              </Link>
+            ))}
           </nav>
+
+          {/* Mobile Menu Button */}
+          <button
+            onClick={toggleMobileMenu}
+            className="md:hidden p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-100 dark:hover:bg-gray-800"
+            aria-label="Toggle mobile menu"
+          >
+            {isMobileMenuOpen ? (
+              <X className="h-6 w-6" />
+            ) : (
+              <Menu className="h-6 w-6" />
+            )}
+          </button>
         </div>
+
+        {/* Mobile Navigation Menu */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden">
+            <div className="px-2 pt-2 pb-3 space-y-1 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-950">
+              {/* Mobile Search Bar */}
+              {showSearch && (
+                <div className="px-3 py-2">
+                  <form onSubmit={handleSearch} className="relative">
+                    <Input
+                      name="search"
+                      placeholder="Search memes..."
+                      className="pr-10"
+                    />
+                    <Button
+                      type="submit"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0"
+                    >
+                      🔍
+                    </Button>
+                  </form>
+                </div>
+              )}
+              
+              {/* Mobile Navigation Items */}
+              {navigationItems.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors duration-150"
+                  onClick={closeMobileMenu}
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </header>
   );
