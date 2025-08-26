@@ -26,7 +26,7 @@ export default function MemeDetailPage() {
   const [isLiking, setIsLiking] = useState(false);
 
   const { likeMeme, recordView } = useMemeInteractions();
-  const { state: memesState, updateMemeLikeCount, updateMemeShareCount } = useMemesState();
+  const { state: memesState, updateMemeLikeCount, updateMemeShareCount, updateMemeLikedState } = useMemesState();
   const hasRecordedView = useRef(false);
 
   // Check if the current meme is liked by the user
@@ -134,12 +134,14 @@ export default function MemeDetailPage() {
       
       // Update the context state so other pages stay in sync
       updateMemeLikeCount(slug, newLikeCount);
+      updateMemeLikedState(slug, liked);
       
       console.log('Like action completed:', { 
         slug, 
         isLiked: liked, 
         newCount: newLikeCount,
-        contextUpdated: true
+        contextUpdated: true,
+        likedStateUpdated: true
       });
     } catch (error) {
       console.error('Failed to like meme:', error);

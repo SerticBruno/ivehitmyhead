@@ -15,8 +15,7 @@ export const MemeGrid: React.FC<MemeGridProps> = ({
   showLoadMore = false,
   onLoadMore,
   hasMore = false,
-  layout = 'vertical',
-  likedMemes
+  layout = 'vertical'
 }) => {
   // Preload images for better performance when navigating back
   React.useEffect(() => {
@@ -82,7 +81,6 @@ export const MemeGrid: React.FC<MemeGridProps> = ({
             onLike={onLike}
             onShare={onShare}
             onComment={onComment}
-            isLiked={likedMemes?.has(meme.slug) || false}
             className={layout === 'grid' ? 'lg:col-span-1' : ''}
           />
         ))}

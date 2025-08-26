@@ -13,8 +13,10 @@ const MemeCard: React.FC<MemeCardProps> = ({
   onLike,
   onShare,
   className,
-  isLiked = false
+  isLiked
 }) => {
+  // Use the meme's is_liked field if available, otherwise fall back to the prop
+  const isActuallyLiked = meme.is_liked !== undefined ? meme.is_liked : (isLiked || false);
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
   const [isLiking, setIsLiking] = useState(false);
@@ -40,7 +42,7 @@ const MemeCard: React.FC<MemeCardProps> = ({
     console.log('MemeCard: current meme data:', {
       slug: meme.slug,
       likes_count: meme.likes_count,
-      isLiked: isLiked
+      isLiked: isActuallyLiked
     });
     
     if (onLike) {
@@ -175,7 +177,7 @@ const MemeCard: React.FC<MemeCardProps> = ({
               size="sm"
               onClick={handleLike}
               disabled={isLiking}
-              className={`flex items-center space-x-1 ${isLiked ? 'text-red-500' : ''} ${isLiking ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`flex items-center space-x-1 ${isActuallyLiked ? 'text-red-500' : ''} ${isLiking ? 'opacity-50 cursor-not-allowed' : ''}`}
               onMouseDown={() => console.log('MemeCard: Like button mouse down')}
               onMouseUp={() => console.log('MemeCard: Like button mouse up')}
               style={{ zIndex: 10, position: 'relative' }}
@@ -183,7 +185,7 @@ const MemeCard: React.FC<MemeCardProps> = ({
               <span>
                 {isLiking ? (
                   <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                ) : isLiked ? (
+                ) : isActuallyLiked ? (
                   <ICONS.Heart className="w-4 h-4 fill-current" />
                 ) : (
                   <ICONS.ThumbsUp className="w-4 h-4" />

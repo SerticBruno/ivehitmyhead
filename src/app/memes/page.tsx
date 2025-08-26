@@ -14,7 +14,7 @@ export default function MemesPage() {
   const [likedMemes, setLikedMemes] = useState<Set<string>>(new Set());
   
   // Get memes state context
-  const { state: memesState, setScrollPosition, updateMemeLikeCount, updateMemeShareCount } = useMemesState();
+  const { state: memesState, setScrollPosition, updateMemeLikeCount, updateMemeShareCount, updateMemeLikedState } = useMemesState();
   
   // Initialize likedMemes state by fetching user's liked memes from API
   useEffect(() => {
@@ -29,6 +29,17 @@ export default function MemesPage() {
           
           console.log('Fetched liked memes:', likedSlugs);
           setLikedMemes(new Set(likedSlugs));
+          
+          // Update the memes in context with their liked state
+          if (memesState.memes.length > 0) {
+            console.log('Updating memes in context with liked state...');
+            memesState.memes.forEach(meme => {
+              const isLiked = likedSlugs.includes(meme.slug);
+              if (meme.is_liked !== isLiked) {
+                updateMemeLikedState(meme.slug, isLiked);
+              }
+            });
+          }
         } else {
           console.warn('Failed to fetch liked memes, using empty set');
           setLikedMemes(new Set());
@@ -43,7 +54,20 @@ export default function MemesPage() {
     if (likedMemes.size === 0) {
       fetchLikedMemes();
     }
-  }, []); // Empty dependency array - only run once on mount
+  }, []); // Remove dependencies to avoid infinite loops
+
+  // Update memes with liked state whenever memes change in context
+  useEffect(() => {
+    if (likedMemes.size > 0 && memesState.memes.length > 0) {
+      console.log('Updating memes in context with liked state...');
+      memesState.memes.forEach(meme => {
+        const isLiked = likedMemes.has(meme.slug);
+        if (meme.is_liked !== isLiked) {
+          updateMemeLikedState(meme.slug, isLiked);
+        }
+      });
+    }
+  }, [memesState.memes, likedMemes, updateMemeLikedState]);
   
   // Ref for scrolling to meme grid
   const memeGridRef = useRef<HTMLDivElement>(null);
@@ -507,6 +531,9 @@ export default function MemesPage() {
       // Update the like count to match the API result
       updateMemeLikeCount(slug, finalLikeCount);
       
+      // Update the liked state in the context to match the API result
+      updateMemeLikedState(slug, actualIsLiked);
+      
       // Update the liked state to match the API result
       setLikedMemes(prev => {
         const newSet = new Set(prev);
@@ -535,7 +562,7 @@ export default function MemesPage() {
       // Always remove the processing flag, even if there was an error
       processingMemesRef.current.delete(slug);
     }
-  }, [likeMeme, memesState.memes, updateMemeLikeCount, likedMemes]);
+  }, [likeMeme, memesState.memes, updateMemeLikeCount, updateMemeLikedState, likedMemes]);
 
   const handleShare = useCallback(async (id: string) => {
     // Find the meme by ID to get its slug
@@ -765,7 +792,6 @@ export default function MemesPage() {
                    onLoadMore={loadMore}
                    hasMore={hasMore}
                    layout="vertical"
-                   likedMemes={likedMemes}
                  />
                </>
              )}

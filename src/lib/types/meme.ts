@@ -72,7 +72,7 @@ export interface MemeCardProps {
   onShare?: (id: string) => void;
   onComment?: (id: string) => void;
   className?: string;
-  isLiked?: boolean;
+  isLiked?: boolean; // Optional for backward compatibility, but MemeCard now uses meme.is_liked
 }
 
 export interface MemeDetailProps {
@@ -96,7 +96,6 @@ export interface MemeGridProps {
   onLoadMore?: () => void;
   hasMore?: boolean;
   layout?: 'grid' | 'vertical';
-  likedMemes?: Set<string>;
 }
 
 // API Types
