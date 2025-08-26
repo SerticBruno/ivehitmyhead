@@ -11,6 +11,7 @@ interface FiltersAndSortingProps {
   selectedFilter?: string;
   onTimePeriodChange?: (period: string) => void;
   selectedTimePeriod?: string;
+  memeGridRef?: React.RefObject<HTMLDivElement | null>;
 }
 
 export const FiltersAndSorting: React.FC<FiltersAndSortingProps> = ({
@@ -20,7 +21,8 @@ export const FiltersAndSorting: React.FC<FiltersAndSortingProps> = ({
   onFilterChange,
   selectedFilter = 'newest',
   onTimePeriodChange,
-  selectedTimePeriod = 'all'
+  selectedTimePeriod = 'all',
+  memeGridRef
 }) => {
   const [showBlurOverlay, setShowBlurOverlay] = React.useState(true);
   const [userInitiated, setUserInitiated] = React.useState(false);
@@ -45,13 +47,11 @@ export const FiltersAndSorting: React.FC<FiltersAndSortingProps> = ({
   const scrollToTop = () => {
     // Only scroll if this is triggered by a user action
     if (userInitiated) {
-      // Find the meme grid/list container
-      const memeGrid = document.querySelector('.meme-grid, .memes-grid, [data-meme-grid], .grid, .memes-container') || 
-                       document.querySelector('main > div:has(img), main > div:has(.meme-card)');
-      
-      if (memeGrid) {
-        // Scroll to the start of the meme list
-        memeGrid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // Use the memeGridRef if provided, otherwise fall back to the old method
+      if (memeGridRef?.current) {
+        const rect = memeGridRef.current.getBoundingClientRect();
+        const scrollTop = window.pageYOffset + rect.top - 100; // 100px offset from top
+        window.scrollTo({ top: scrollTop, behavior: 'smooth' });
       } else {
         // Fallback: scroll to just below the navbar where memes typically start
         window.scrollTo({ top: 80, behavior: 'smooth' });

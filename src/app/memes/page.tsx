@@ -487,6 +487,7 @@ export default function MemesPage() {
                 onFilterChange={handleFilterChange}
                 selectedTimePeriod={memesState.filters.time_period}
                 onTimePeriodChange={handleTimePeriodChange}
+                memeGridRef={memeGridRef}
               />
             )}
           </aside>
@@ -605,31 +606,31 @@ export default function MemesPage() {
               </div>
             </div>
 
-            {memesError ? (
-              <div className="text-center py-12">
-                <div className="text-4xl mb-4 flex justify-center">
-                  <ICONS.Star className="w-16 h-16 text-gray-400" />
-                </div>
-                <h3 className="text-xl font-semibold mb-2">Failed to load memes</h3>
-                <p className="text-gray-500 dark:text-gray-400 mb-4">{memesError}</p>
-              </div>
-            ) : (
-              <>
-                {/* Scroll anchor positioned exactly at the top of the meme grid */}
-                <div ref={memeGridRef}></div>
-                <MemeGrid
-                  memes={displayMemes}
-                  onLike={handleLike}
-                  onShare={handleShare}
-                  loading={memesLoading}
-                  showLoadMore={true}
-                  onLoadMore={loadMore}
-                  hasMore={hasMore}
-                  layout="vertical"
-                  likedMemes={likedMemes}
-                />
-              </>
-            )}
+                         {memesError ? (
+               <div className="text-center py-12">
+                 <div className="text-4xl mb-4 flex justify-center">
+                   <ICONS.Star className="w-16 h-16 text-gray-400" />
+                 </div>
+                 <h3 className="text-xl font-semibold mb-2">Failed to load memes</h3>
+                 <p className="text-gray-500 dark:text-gray-400 mb-4">{memesError}</p>
+               </div>
+             ) : (
+               <>
+                 {/* Scroll anchor positioned exactly at the top of the meme grid */}
+                 <div ref={memeGridRef} className="scroll-anchor" style={{ height: '1px', marginTop: '-1px' }}></div>
+                 <MemeGrid
+                   memes={displayMemes}
+                   onLike={handleLike}
+                   onShare={handleShare}
+                   loading={memesLoading}
+                   showLoadMore={true}
+                   onLoadMore={loadMore}
+                   hasMore={hasMore}
+                   layout="vertical"
+                   likedMemes={likedMemes}
+                 />
+               </>
+             )}
           </section>
         </div>
 
