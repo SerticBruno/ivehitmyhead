@@ -32,20 +32,55 @@ import {
 
 // Map category names to Lucide React icons
 export const CATEGORY_ICONS: Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>>> = {
+  // Common categories
   'Funny': Laugh,
   'Gaming': Gamepad2,
   'Tech': Monitor,
+  'Technology': Monitor,
   'Animals': Dog,
   'Movies': Film,
+  'Film': Film,
   'Sports': Trophy,
   'Food': Pizza,
   'School': BookOpen,
+  'Education': BookOpen,
   'Work': Briefcase,
+  'Business': Briefcase,
   'Random': Dice5,
-  // Add more mappings as needed
+  'Misc': Dice5,
+  
+  // Specific categories
   'classic': Star,
   'politics': Flame,
+  'Political': Flame,
   'advanced': TrendingUp,
+  'Trending': TrendingUp,
+  'Popular': Heart,
+  'Viral': TrendingUp,
+  'New': Clock,
+  'Recent': Clock,
+  'Old': Calendar,
+  'Vintage': Calendar,
+  'Modern': TrendingUp,
+  'Traditional': BookOpen,
+  'Contemporary': TrendingUp,
+  
+  // Fallback mappings for common variations
+  'funny': Laugh,
+  'gaming': Gamepad2,
+  'tech': Monitor,
+  'technology': Monitor,
+  'animals': Dog,
+  'movies': Film,
+  'film': Film,
+  'sports': Trophy,
+  'food': Pizza,
+  'school': BookOpen,
+  'education': BookOpen,
+  'work': Briefcase,
+  'business': Briefcase,
+  'random': Dice5,
+  'misc': Dice5,
 };
 
 // Fallback icon for unknown categories

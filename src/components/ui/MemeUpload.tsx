@@ -5,6 +5,7 @@ import { useDropzone } from 'react-dropzone';
 import { Button } from './Button';
 import { Input } from './Input';
 import { Category } from '@/lib/types/meme';
+import { getCategoryIconOrEmoji } from '@/lib/utils/categoryIcons';
 
 interface MemeUploadProps {
   categories: Category[];
@@ -161,19 +162,36 @@ export const MemeUpload: React.FC<MemeUploadProps> = ({
           <label htmlFor="category" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Category (Optional)
           </label>
-          <select
-            id="category"
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-          >
-            <option value="">Select a category</option>
-            {categories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.emoji} {category.name}
-              </option>
-            ))}
-          </select>
+          <div className="relative">
+            <select
+              id="category"
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="w-full px-3 py-2 pl-10 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white appearance-none"
+            >
+              <option value="">Select a category</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+            {/* Show icon for selected category */}
+            {selectedCategory && (
+              <div className="absolute left-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                {(() => {
+                  const selectedCat = categories.find(cat => cat.id === selectedCategory);
+                  return selectedCat ? getCategoryIconOrEmoji(selectedCat.name, selectedCat.emoji) : null;
+                })()}
+              </div>
+            )}
+            {/* Dropdown arrow */}
+            <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+              <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </div>
         </div>
 
         {/* Tags Input */}

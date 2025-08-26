@@ -1,5 +1,7 @@
 import React from 'react';
 import { useCategories } from '@/lib/hooks/useCategories';
+import { getCategoryIconOrEmoji } from '@/lib/utils/categoryIcons';
+import { Star } from 'lucide-react';
 
 interface CategorySortingProps {
   className?: string;
@@ -65,7 +67,9 @@ export const CategorySorting: React.FC<CategorySortingProps> = ({
                 : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white"
             }`}
           >
-            <span className="text-lg mr-3 flex-shrink-0">🌟</span>
+            <span className="text-lg mr-3 flex-shrink-0">
+              <Star className="w-5 h-5" />
+            </span>
             <div className="flex-1 text-left">
               <div className="font-medium">All Categories</div>
               <div className="text-xs text-gray-500 dark:text-gray-400">
@@ -87,7 +91,9 @@ export const CategorySorting: React.FC<CategorySortingProps> = ({
                     : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white"
                 }`}
               >
-                <span className="text-lg mr-3 flex-shrink-0">{category.emoji}</span>
+                <span className="text-lg mr-3 flex-shrink-0">
+                  {getCategoryIconOrEmoji(category.name, category.emoji)}
+                </span>
                 <div className="flex-1 text-left">
                   <div className="font-medium">{category.name}</div>
                 </div>
