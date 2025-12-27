@@ -91,9 +91,9 @@ export const MEME_TEMPLATES: MemeTemplate[] = [
     textFields: [
       {
         id: 'bottom',
-        x: 40, // center horizontally
-        y: 90, // 85% from top
-        width: 40, // 70% of image width
+        x: 35, // center horizontally
+        y: 85, // 85% from top
+        width: 25, // 70% of image width
         height: 15, // 15% of image height
         fontSize: 42,
         color: '#ffffff',
@@ -122,9 +122,9 @@ export const MEME_TEMPLATES: MemeTemplate[] = [
     textFields: [
       {
         id: 'top',
-        x: 15, // center horizontally
-        y: 10, // 15% from top
-        width: 24, // 70% of image width
+        x: 2, // center horizontally
+        y: 9, // 15% from top
+        width: 45, // 70% of image width
         height: 15, // 12% of image height
         fontSize: 36,
         color: '#ffffff',
@@ -137,39 +137,39 @@ export const MEME_TEMPLATES: MemeTemplate[] = [
       },
       {
         id: 'middle-left',
-        x: 15, // 20% from left
-        y: 35, // 45% from top
-        width: 24, // 25% of image width
+        x: 2, // 20% from left
+        y: 33, // 45% from top
+        width: 45, // 25% of image width
         height: 15, // 15% of image height
         fontSize: 36,
         color: '#ffffff',
         fontFamily: 'Impact',
         fontWeight: 'bold',
-        textAlign: 'left',
+        textAlign: 'center',
         maxWidth: 70, // 25% of image width
         strokeColor: '#000000',
         strokeWidth: 4
       },
       {
         id: 'middle-right',
-        x: 15, // 65% from left
-        y: 60, // 45% from top
-        width: 24, // 25% of image width
+        x: 2, // 65% from left
+        y: 57, // 45% from top
+        width: 45, // 25% of image width
         height: 15, // 15% of image height
         fontSize: 36,
         color: '#ffffff',
         fontFamily: 'Impact',
         fontWeight: 'bold',
-        textAlign: 'right',
+        textAlign: 'center',
         maxWidth: 70, // 25% of image width
         strokeColor: '#000000',
         strokeWidth: 4
       },
       {
         id: 'bottom',
-        x: 15, // center horizontally
-        y: 85, // 80% from top
-        width: 24, // 80% of image width
+        x: 2, // center horizontally
+        y: 82, // 80% from top
+        width: 45, // 80% of image width
         height: 15, // 15% of image height
         fontSize: 36,
         color: '#ffffff',
