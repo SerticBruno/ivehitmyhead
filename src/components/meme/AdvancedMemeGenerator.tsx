@@ -254,8 +254,8 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
   }, [textInput, selectedElement, showTextInput, updateText]);
 
   return (
-    <div className="max-w-7xl mx-auto p-4 md:p-6" style={{ maxHeight: '100vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-      <div className="text-center mb-4 md:mb-6 flex-shrink-0">
+    <div className="max-w-7xl mx-auto p-4" style={{ maxHeight: '100vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+      <div className="text-center mb-4 flex-shrink-0">
         <h1 className="text-2xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2">
           Advanced Meme Generator
         </h1>
@@ -264,20 +264,37 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 flex-1 min-h-0">
+      <div className="flex flex-col lg:flex-row gap-4 flex-1 min-h-0" style={{ height: '100%', overflow: 'hidden' }}>
         {/* Left side - Canvas */}
-        <div className="lg:col-span-2 flex flex-col min-h-0">
-          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-2 md:p-4 border border-gray-200 dark:border-gray-800 flex-1 flex flex-col min-h-0">
-            <div className="flex justify-center items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-2 md:p-4 overflow-auto flex-1 min-h-0" style={{ maxHeight: '100%' }}>
+        <div className="flex flex-col min-h-0 flex-[2]" style={{ height: '100%', overflow: 'hidden', minWidth: 0 }}>
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-4 border border-gray-200 dark:border-gray-800 flex-1 flex flex-col min-h-0" style={{ height: '100%', overflow: 'hidden' }}>
+            <div 
+              className="flex justify-center items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-4 overflow-auto flex-1 min-h-0" 
+              style={{ 
+                height: '100%', 
+                width: '100%',
+                position: 'relative',
+                flexShrink: 0
+              }}
+            >
               <canvas
                 ref={canvasRef}
-                className="max-w-full h-auto border border-gray-300 dark:border-gray-700 rounded"
-                style={{ display: 'block', maxHeight: '100%' }}
+                className="border border-gray-300 dark:border-gray-700 rounded"
+                style={{ 
+                  display: 'block', 
+                  maxWidth: 'calc(100% - 0px)', 
+                  maxHeight: 'calc(100% - 0px)', 
+                  height: 'auto',
+                  width: 'auto',
+                  margin: '0 auto',
+                  objectFit: 'contain',
+                  flexShrink: 0
+                }}
               />
             </div>
 
             {/* Canvas controls */}
-            <div className="mt-2 md:mt-4 flex gap-2 flex-wrap flex-shrink-0">
+            <div className="mt-4 flex gap-2 flex-wrap flex-shrink-0">
               <Button onClick={addText} variant="outline" size="sm">
                 <Plus className="w-4 h-4 mr-2" />
                 Add Text
@@ -306,7 +323,8 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
         </div>
 
         {/* Right side - Controls */}
-        <div className="space-y-4 md:space-y-6 overflow-y-auto" style={{ maxHeight: '100%' }}>
+        <div className="flex flex-col min-h-0 flex-1" style={{ height: '100%', overflow: 'hidden', minWidth: 0, maxWidth: '100%' }}>
+          <div className="space-y-4 overflow-y-auto flex-1 min-h-0" style={{ height: '100%', overflowY: 'auto' }}>
           {/* Template selection */}
           <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-4 border border-gray-200 dark:border-gray-800">
             <h2 className="text-lg font-semibold mb-4">Templates</h2>
@@ -799,6 +817,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
             </div>
           )}
 
+          </div>
         </div>
       </div>
     </div>
