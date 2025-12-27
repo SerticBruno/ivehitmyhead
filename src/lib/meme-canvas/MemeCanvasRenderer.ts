@@ -90,7 +90,17 @@ class MemeCanvasRenderer {
           this.controller.holdingCtrl === false &&
           this.controller.selectedElements.length === 1
         ) {
-          // Draw rotation handle on the element (no rotation for handles)
+          // Draw handlers WITH rotation (same as border)
+          this.ctx.save();
+          if (element.rotation !== 0) {
+            const centerX = element.x + element.width / 2;
+            const centerY = element.y + element.height / 2;
+            this.ctx.translate(centerX, centerY);
+            this.ctx.rotate((element.rotation * Math.PI) / 180);
+            this.ctx.translate(-centerX, -centerY);
+          }
+
+          // Draw rotation handle on the element
           {
             const size = getRotationHandleSize(this.controller);
             const handleX = getHandlePos(element, MemeElementHandle.ROTATION_HANDLE);
@@ -99,7 +109,6 @@ class MemeCanvasRenderer {
             const iconWidth = size / 1.5;
             const iconHeight = size / 1.5;
 
-            this.ctx.save();
             this.ctx.fillStyle = '#ffffff';
             this.ctx.strokeStyle = '#3b82f6';
             this.ctx.lineWidth = 2;
@@ -112,7 +121,6 @@ class MemeCanvasRenderer {
             }
             this.ctx.fill();
             this.ctx.stroke();
-            this.ctx.restore();
 
             this.ctx.drawImage(
               this.rotateImageSvg,
@@ -123,7 +131,7 @@ class MemeCanvasRenderer {
             );
           }
 
-          // Draw resize handles around the element (no rotation for handles)
+          // Draw resize handles around the element
           {
             const size = getHandleSize(this.controller);
             this.ctx.fillStyle = '#3b82f6';
@@ -140,7 +148,6 @@ class MemeCanvasRenderer {
               const x = pos.x - size / 2;
               const y = pos.y - size / 2;
 
-              this.ctx.save();
               this.ctx.beginPath();
               if (this.ctx.roundRect) {
                 this.ctx.roundRect(
@@ -156,9 +163,10 @@ class MemeCanvasRenderer {
               }
               this.ctx.fill();
               this.ctx.stroke();
-              this.ctx.restore();
             }
           }
+
+          this.ctx.restore();
         }
       }
     }
