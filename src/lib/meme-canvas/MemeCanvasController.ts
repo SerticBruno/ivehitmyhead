@@ -398,6 +398,11 @@ class MemeCanvasController {
     });
   }
 
+  public addElement(element: MemeElement) {
+    this._elements.push(element);
+    this.emit('elementsListChanged');
+  }
+
   public changeImage(image: HTMLImageElement) {
     this._image = image;
 

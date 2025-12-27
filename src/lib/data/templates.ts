@@ -1,3 +1,17 @@
+/**
+ * MEME TEMPLATES - SINGLE SOURCE OF TRUTH
+ * 
+ * This file contains all meme template definitions including:
+ * - Template images
+ * - Text field positions (x, y as percentages 0-100)
+ * - Text field sizes (width, height as percentages 0-100)
+ * - Font properties (size, family, color, stroke)
+ * - Text alignment and styling
+ * 
+ * All templates used in the meme generator should be defined here.
+ * To add a new template, add it to the MEME_TEMPLATES array below.
+ */
+
 import { MemeTemplate, TemplateCategory } from '../types/meme';
 
 export const MEME_TEMPLATES: MemeTemplate[] = [
@@ -14,48 +28,50 @@ export const MEME_TEMPLATES: MemeTemplate[] = [
     textFields: [
       {
         id: 'top-left',
-        x: 37, // 25% from left
-        y: 20, // 20% from top
-        width: 15, // 35% of image width
-        height: 25, // 15% of image height
-        fontSize: 46,
+        x: 14, // 10% from left
+        y: 12, // 5% from top
+        width: 35, // 35% of image width
+        height: 20, // 20% of image height
+        fontSize: 42, // Smaller font size (in pixels for base 600px height)
         color: '#ffffff',
+        rotation: -13,
         fontFamily: 'Impact',
         fontWeight: 'bold',
         textAlign: 'left',
         maxWidth: 40, // 40% of image width
         strokeColor: '#000000',
-        strokeWidth: 6
+        strokeWidth: 4
       },
       {
         id: 'top-right',
-        x: 60, // 75% from left
-        y: 20, // 20% from top
-        width: 15, // 35% of image width
-        height: 25, // 15% of image height
-        fontSize: 46,
+        x: 50, // 55% from left (right side)
+        y: 7, // 5% from top
+        width: 35, // 35% of image width
+        height: 20, // 20% of image height
+        fontSize: 42, // Smaller font size
+        rotation: -11,
         color: '#ffffff',
         fontFamily: 'Impact',
         fontWeight: 'bold',
         textAlign: 'right',
         maxWidth: 40, // 40% of image width
         strokeColor: '#000000',
-        strokeWidth: 6
+        strokeWidth: 4
       },
       {
         id: 'bottom',
-        x: 50, // center horizontally
-        y: 85, // 80% from top
-        width: 30, // 70% of image width
-        height: 10, // 15% of image height
-        fontSize: 46,
+        x: 40, // center horizontally
+        y: 80, // 80% from top
+        width: 80, // 80% of image width
+        height: 15, // 15% of image height
+        fontSize: 42, // Slightly larger for bottom text
         color: '#ffffff',
         fontFamily: 'Impact',
         fontWeight: 'bold',
         textAlign: 'center',
         maxWidth: 80, // 80% of image width
         strokeColor: '#000000',
-        strokeWidth: 6
+        strokeWidth: 4
       }
     ],
     tags: ['classic', 'three-text', 'impact-font'],
