@@ -42,37 +42,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get user from auth header (you'll need to implement auth middleware)
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
-    // Use the real admin user ID for testing
-    const user_id = 'e3a55bbb-23fa-4cf2-b53a-4e9cc1055044'; // Real admin UUID
+    // Allow anyone to upload - use admin user for all uploads
+    const admin_user_id = '64a6411e-cc4e-47cd-999d-804d836abf90';
+    let user_id: string = admin_user_id;
     
-    console.log('Using hardcoded admin user ID:', user_id);
-    
-    // Check if admin profile exists, create if not (simplified)
+    // Check if admin profile exists, create if not
     console.log('Checking for admin profile...');
-    const { error: profileError } = await supabaseAdmin
+    const { data: adminProfile, error: profileCheckError } = await supabaseAdmin
       .from('profiles')
       .select('id')
-      .eq('id', user_id)
+      .eq('id', admin_user_id)
       .single();
     
-    if (profileError && profileError.code === 'PGRST116') {
-      // Profile doesn't exist, create a simple one
-      console.log('Creating simple admin profile...');
+    if (profileCheckError && profileCheckError.code === 'PGRST116') {
+      // Profile doesn't exist, create it
+      console.log('Admin profile not found, creating profile...');
       const { error: createProfileError } = await supabaseAdmin
         .from('profiles')
         .insert({
-          id: user_id,
-          username: 'admin',
-          display_name: 'Admin User'
+          id: admin_user_id,
+          username: 'IHMH',
+          display_name: 'IHMH'
         });
       
       if (createProfileError) {
@@ -84,12 +74,12 @@ export async function POST(request: NextRequest) {
         }, { status: 500 });
       }
       console.log('Admin profile created successfully');
-    } else if (profileError) {
-      console.error('Error checking profile:', profileError);
+    } else if (profileCheckError) {
+      console.error('Error checking admin profile:', profileCheckError);
       return NextResponse.json({
         success: false,
         error: 'Failed to check admin profile',
-        details: profileError.message
+        details: profileCheckError.message
       }, { status: 500 });
     } else {
       console.log('Admin profile already exists');
