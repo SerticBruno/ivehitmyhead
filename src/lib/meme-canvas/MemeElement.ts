@@ -289,8 +289,8 @@ abstract class MemeElement<T extends Settings = Settings> {
           ? getRotationHandleSize(element.controller)
           : getHandleSize(element.controller)
       );
-      // Increase hit area for better usability
-      const offset = size / 2 + 5;
+      // Increase hit area for better usability - larger hit area for easier clicking
+      const offset = size / 2 + (handle === MemeElementHandle.ROTATION_HANDLE ? 10 : 15);
 
       if (
         x >= handleX - offset &&

@@ -30,8 +30,8 @@ export const MEME_TEMPLATES: MemeTemplate[] = [
         id: 'top-left',
         x: 14, // 10% from left
         y: 12, // 5% from top
-        width: 35, // 35% of image width
-        height: 20, // 20% of image height
+        width: 10, // 35% of image width
+        height: 10, // 20% of image height
         fontSize: 42, // Smaller font size (in pixels for base 600px height)
         color: '#ffffff',
         rotation: -13,

@@ -24,6 +24,7 @@ export type TextElementSettings = ValidateOptions<{
 
 class TextElement extends MemeElement<TextElementSettings> {
   private _splitText: string[] = [];
+  private readonly PADDING = 10; // Padding around text in pixels
 
   constructor(controller: MemeCanvasController) {
     const fontSize = scaled(controller.canvas, 32);
@@ -63,10 +64,9 @@ class TextElement extends MemeElement<TextElementSettings> {
 
   private updateSizeToText() {
     const textSize = this.getTextSize();
-    // Element size matches text size exactly (no padding)
-    // This ensures text fits perfectly within the border
-    this._width = textSize.width;
-    this._height = textSize.height;
+    // Add padding around text for better visual spacing
+    this._width = textSize.width + this.PADDING * 2;
+    this._height = textSize.height + this.PADDING * 2;
   }
 
   private getTextSize() {
@@ -86,10 +86,10 @@ class TextElement extends MemeElement<TextElementSettings> {
     this.ctx.strokeStyle = this.settings.stroke.replaceAll('none', 'transparent');
     this.ctx.lineWidth = this.settings.stroke_width;
 
-    // Element size matches text size exactly
-    // Draw text at element position (top-left corner)
-    // Since size matches, text fits perfectly within border
-    const textSize = this.getTextSize();
+    // Draw text with padding offset
+    // Text is drawn at element position + padding
+    const textX = this.x + this.PADDING;
+    const textY = this.y + this.PADDING;
     
     // Draw each line of text
     const lineHeight = lineBreakedText.getHeight(this.ctx);
@@ -97,9 +97,9 @@ class TextElement extends MemeElement<TextElementSettings> {
     this.ctx.textBaseline = 'top';
     
     this._splitText.forEach((line, index) => {
-      const y = this.y + index * lineHeight;
-      this.ctx.strokeText(line, this.x, y);
-      this.ctx.fillText(line, this.x, y);
+      const y = textY + index * lineHeight;
+      this.ctx.strokeText(line, textX, y);
+      this.ctx.fillText(line, textX, y);
     });
   }
 
@@ -158,38 +158,75 @@ class TextElement extends MemeElement<TextElementSettings> {
         const currentWidth = this.width;
         const currentHeight = this.height;
         
+        // Store the anchor point (opposite corner from the handle being dragged)
+        // This point should remain fixed during resize
+        let anchorX: number;
+        let anchorY: number;
+        
+        switch (this.handle) {
+          case MemeElementHandle.TOP_LEFT: {
+            // Anchor is bottom-right corner
+            anchorX = this.x + this.width;
+            anchorY = this.y + this.height;
+            break;
+          }
+          case MemeElementHandle.TOP_RIGHT: {
+            // Anchor is bottom-left corner
+            anchorX = this.x;
+            anchorY = this.y + this.height;
+            break;
+          }
+          case MemeElementHandle.BOTTOM_LEFT: {
+            // Anchor is top-right corner
+            anchorX = this.x + this.width;
+            anchorY = this.y;
+            break;
+          }
+          case MemeElementHandle.BOTTOM_RIGHT: {
+            // Anchor is top-left corner
+            anchorX = this.x;
+            anchorY = this.y;
+            break;
+          }
+          default:
+            anchorX = this.x;
+            anchorY = this.y;
+        }
+        
         // Calculate new dimensions based on handle
-        let newX = this.x;
-        let newY = this.y;
         let newWidth = this.width;
         let newHeight = this.height;
 
         switch (this.handle) {
           case MemeElementHandle.TOP_LEFT: {
-            newX = Math.round(mouseX - this.offsetX);
-            newY = Math.round(mouseY - this.offsetY);
-            newWidth = this.x + this.width - newX;
-            newHeight = this.y + this.height - newY;
+            const newX = Math.round(mouseX - this.offsetX);
+            const newY = Math.round(mouseY - this.offsetY);
+            newWidth = anchorX - newX;
+            newHeight = anchorY - newY;
             break;
           }
           case MemeElementHandle.TOP_RIGHT: {
-            newY = Math.round(mouseY - this.offsetY);
-            newWidth = mouseX - this.x - this.offsetX;
-            newHeight = this.y + this.height - newY;
+            const newY = Math.round(mouseY - this.offsetY);
+            newWidth = Math.round(mouseX - this.offsetX) - anchorX;
+            newHeight = anchorY - newY;
             break;
           }
           case MemeElementHandle.BOTTOM_LEFT: {
-            newX = Math.round(mouseX - this.offsetX);
-            newWidth = this.x + this.width - newX;
-            newHeight = mouseY - this.y - this.offsetY;
+            const newX = Math.round(mouseX - this.offsetX);
+            newWidth = anchorX - newX;
+            newHeight = Math.round(mouseY - this.offsetY) - anchorY;
             break;
           }
           case MemeElementHandle.BOTTOM_RIGHT: {
-            newWidth = mouseX - this.x - this.offsetX;
-            newHeight = mouseY - this.y - this.offsetY;
+            newWidth = Math.round(mouseX - this.offsetX) - anchorX;
+            newHeight = Math.round(mouseY - this.offsetY) - anchorY;
             break;
           }
         }
+
+        // Ensure minimum size
+        newWidth = Math.max(newWidth, this.getMinWidth());
+        newHeight = Math.max(newHeight, this.getMinHeight());
 
         // Calculate scale factors
         const scaleX = newWidth / currentWidth;
@@ -203,14 +240,37 @@ class TextElement extends MemeElement<TextElementSettings> {
         // Update element size to match new text size
         this.updateSizeToText();
         
-        // Adjust position if needed (for top/left handles)
-        if (this.handle === MemeElementHandle.TOP_LEFT || this.handle === MemeElementHandle.BOTTOM_LEFT) {
-          const textSize = this.getTextSize();
-          this.x = newX + (newWidth - textSize.width) / 2;
-        }
-        if (this.handle === MemeElementHandle.TOP_LEFT || this.handle === MemeElementHandle.TOP_RIGHT) {
-          const textSize = this.getTextSize();
-          this.y = newY + (newHeight - textSize.height) / 2;
+        // Get the new text size after font change
+        const newTextSize = this.getTextSize();
+        const newElementWidth = newTextSize.width + this.PADDING * 2;
+        const newElementHeight = newTextSize.height + this.PADDING * 2;
+        
+        // Adjust position to maintain the anchor point
+        switch (this.handle) {
+          case MemeElementHandle.TOP_LEFT: {
+            // Anchor is bottom-right, so position from anchor
+            this.x = anchorX - newElementWidth;
+            this.y = anchorY - newElementHeight;
+            break;
+          }
+          case MemeElementHandle.TOP_RIGHT: {
+            // Anchor is bottom-left, so x stays same, y from anchor
+            this.x = anchorX;
+            this.y = anchorY - newElementHeight;
+            break;
+          }
+          case MemeElementHandle.BOTTOM_LEFT: {
+            // Anchor is top-right, so x from anchor, y stays same
+            this.x = anchorX - newElementWidth;
+            this.y = anchorY;
+            break;
+          }
+          case MemeElementHandle.BOTTOM_RIGHT: {
+            // Anchor is top-left, so position stays same
+            this.x = anchorX;
+            this.y = anchorY;
+            break;
+          }
         }
 
         break;
