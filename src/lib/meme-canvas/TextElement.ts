@@ -61,34 +61,30 @@ class TextElement extends MemeElement<TextElementSettings> {
     // Split by newlines first, then wrap each line
     const lines = this.settings.text.value.split('\n');
     
+    // Always wrap text within current width (if width is set)
+    this._splitText = this.wrapText(lines);
+    
     // Only auto-size if user hasn't manually set the size
     if (!this._userHasSetSize) {
-      // Auto-size: wrap text and update size to fit
-      this._splitText = this.wrapText(lines);
+      // Auto-size: update both width and height to fit
       this.updateSizeToText();
     } else {
-      // User has set size: only re-wrap text and update height
-      // Store current position to prevent shifting
-      const currentX = this.x;
-      const currentY = this.y;
-      
-      this._splitText = this.wrapText(lines);
+      // User has set size: keep width fixed, only update height based on wrapped text
       this.updateHeightToText();
-      
-      // Restore position (in case height change caused any shift)
-      this.x = currentX;
-      this.y = currentY;
     }
   }
 
   private wrapText(lines: string[]): string[] {
-    if (this._width <= this.getMinWidth() + this.PADDING * 2) {
-      // If width is at minimum, don't wrap
+    // Always wrap text, even if width is small
+    // If width is 0 or not set yet, return lines as-is (will be set later)
+    if (this._width === 0) {
       return lines;
     }
 
     this.ctx.font = this.buildFont();
-    const maxWidth = this._width - this.PADDING * 2;
+    // Calculate available width for text (element width minus padding)
+    // Ensure at least some space for text (minimum 20px)
+    const maxWidth = Math.max(this._width - this.PADDING * 2, 20);
     const wrappedLines: string[] = [];
 
     for (const line of lines) {
@@ -132,10 +128,13 @@ class TextElement extends MemeElement<TextElementSettings> {
 
   private updateHeightToText() {
     this.ctx.font = this.buildFont();
-    const height = Math.round(
-      this._splitText.length * lineBreakedText.getHeight(this.ctx)
+    const lineHeight = lineBreakedText.getHeight(this.ctx);
+    const textHeight = Math.round(
+      this._splitText.length * lineHeight
     );
-    this._height = height + this.PADDING * 2;
+    // Ensure minimum height
+    const minHeight = this.getMinHeight();
+    this._height = Math.max(textHeight + this.PADDING * 2, minHeight);
   }
 
   private getTextSize() {
@@ -334,22 +333,26 @@ class TextElement extends MemeElement<TextElementSettings> {
           }
         }
 
-        // Ensure minimum size
-        newWidth = Math.max(newWidth, this.getMinWidth());
+        // Ensure minimum size (but allow smaller widths for text wrapping)
+        // Minimum width should be small enough to allow text wrapping
+        const minWidth = Math.max(this.getMinWidth(), 30); // At least 30px to allow wrapping
+        newWidth = Math.max(newWidth, minWidth);
         newHeight = Math.max(newHeight, this.getMinHeight());
 
-        // Set the new width first (font size stays the same)
-        this._width = newWidth;
-        
-        // Mark that user has manually set the size (after setting width)
+        // Mark that user has manually set the size
         this._userHasSetSize = true;
         
-        // Re-wrap text based on new width
+        // Set the new width (font size stays the same)
+        this._width = newWidth;
+        
+        // Re-wrap text based on new width (this will create more lines if width is smaller)
         const lines = this.settings.text.value.split('\n');
         this._splitText = this.wrapText(lines);
         
         // Calculate minimum height needed for wrapped text
         const minHeightForText = this.getTextSize().height + this.PADDING * 2;
+        
+        // Auto-adjust height to fit wrapped text
         // Use the larger of user-specified height or minimum needed for text
         this._height = Math.max(newHeight, minHeightForText);
         
