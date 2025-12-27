@@ -43,10 +43,10 @@ export const enum MemeElementHandle {
 }
 
 export const getHandleSize = (controller: MemeCanvasController) =>
-  scaled(controller.canvas, controller.isTouch ? 17 : 12);
+  scaled(controller.canvas, controller.isTouch ? 20 : 14);
 
 export const getRotationHandleSize = (controller: MemeCanvasController) =>
-  scaled(controller.canvas, controller.isTouch ? 25 : 20);
+  scaled(controller.canvas, controller.isTouch ? 28 : 22);
 
 export function getHandlePos(
   element: MemeElement,
@@ -289,8 +289,8 @@ abstract class MemeElement<T extends Settings = Settings> {
           ? getRotationHandleSize(element.controller)
           : getHandleSize(element.controller)
       );
-      // Increase hit area for better usability - larger hit area for easier clicking
-      const offset = size / 2 + (handle === MemeElementHandle.ROTATION_HANDLE ? 10 : 15);
+      // Increase hit area for better usability - much larger hit area for easier clicking
+      const offset = size / 2 + (handle === MemeElementHandle.ROTATION_HANDLE ? 15 : 25);
 
       if (
         x >= handleX - offset &&

@@ -145,7 +145,18 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
               if (!controllerRef.current) return;
               const textElement = new TextElement(controllerRef.current);
               
-              // Set text properties first (before position/size so size calculation works)
+              // Set size FIRST before any other operations to prevent shifting
+              // Force the width/height to match template
+              textElement.width = Math.max(Math.round(width), 50);
+              textElement.height = Math.max(Math.round(height), 30);
+              // Mark that size has been set by template (prevents auto-resize)
+              textElement.markSizeAsUserSet();
+              
+              // Set position AFTER size is set
+              textElement.x = Math.round(x);
+              textElement.y = Math.round(y);
+              
+              // Set text properties (text will wrap within the set size)
               // Add placeholder text based on field index (Text 1, Text 2, etc.)
               const fieldIndex = template.textFields.indexOf(field);
               const placeholderText = `Text ${fieldIndex + 1}`;
@@ -178,16 +189,6 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
               if (field.rotation) {
                 textElement.rotation = field.rotation;
               }
-
-              // Set position and size after properties are set
-              // The element will auto-size to text, but we want to use template size
-              // So we set it after to override the auto-size
-              textElement.x = Math.round(x);
-              textElement.y = Math.round(y);
-              // Force the width/height to match template (text will be empty so it will be small)
-              // We'll let the user resize or the text will grow as they type
-              textElement.width = Math.max(Math.round(width), 50);
-              textElement.height = Math.max(Math.round(height), 30);
 
               // Add to controller
               controllerRef.current!.addElement(textElement);

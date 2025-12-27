@@ -25,6 +25,7 @@ export type TextElementSettings = ValidateOptions<{
 class TextElement extends MemeElement<TextElementSettings> {
   private _splitText: string[] = [];
   private readonly PADDING = 10; // Padding around text in pixels
+  private _userHasSetSize: boolean = false; // Track if user has manually set size
 
   constructor(controller: MemeCanvasController) {
     const fontSize = scaled(controller.canvas, 32);
@@ -48,7 +49,7 @@ class TextElement extends MemeElement<TextElementSettings> {
       },
     });
 
-    // Initialize size immediately
+    // Initialize size immediately (auto-size on creation)
     this.updateText();
     // Ensure size is set before element is positioned
     if (this.width === 0 || this.height === 0) {
@@ -57,16 +58,84 @@ class TextElement extends MemeElement<TextElementSettings> {
   }
 
   private updateText() {
-    this._splitText = this.settings.text.value.split('\n');
-    // Automatically update element size to match text size
-    this.updateSizeToText();
+    // Split by newlines first, then wrap each line
+    const lines = this.settings.text.value.split('\n');
+    
+    // Only auto-size if user hasn't manually set the size
+    if (!this._userHasSetSize) {
+      // Auto-size: wrap text and update size to fit
+      this._splitText = this.wrapText(lines);
+      this.updateSizeToText();
+    } else {
+      // User has set size: only re-wrap text and update height
+      // Store current position to prevent shifting
+      const currentX = this.x;
+      const currentY = this.y;
+      
+      this._splitText = this.wrapText(lines);
+      this.updateHeightToText();
+      
+      // Restore position (in case height change caused any shift)
+      this.x = currentX;
+      this.y = currentY;
+    }
+  }
+
+  private wrapText(lines: string[]): string[] {
+    if (this._width <= this.getMinWidth() + this.PADDING * 2) {
+      // If width is at minimum, don't wrap
+      return lines;
+    }
+
+    this.ctx.font = this.buildFont();
+    const maxWidth = this._width - this.PADDING * 2;
+    const wrappedLines: string[] = [];
+
+    for (const line of lines) {
+      if (!line.trim()) {
+        wrappedLines.push('');
+        continue;
+      }
+
+      const words = line.split(' ');
+      let currentLine = '';
+
+      for (const word of words) {
+        const testLine = currentLine ? `${currentLine} ${word}` : word;
+        const metrics = this.ctx.measureText(testLine);
+
+        if (metrics.width <= maxWidth || !currentLine) {
+          // Word fits or it's the first word (must add it even if too long)
+          currentLine = testLine;
+        } else {
+          // Word doesn't fit, start a new line
+          wrappedLines.push(currentLine);
+          currentLine = word;
+        }
+      }
+
+      if (currentLine) {
+        wrappedLines.push(currentLine);
+      }
+    }
+
+    return wrappedLines;
   }
 
   private updateSizeToText() {
     const textSize = this.getTextSize();
     // Add padding around text for better visual spacing
+    // Always update size when this method is called (it's only called when we want to auto-size)
     this._width = textSize.width + this.PADDING * 2;
     this._height = textSize.height + this.PADDING * 2;
+  }
+
+  private updateHeightToText() {
+    this.ctx.font = this.buildFont();
+    const height = Math.round(
+      this._splitText.length * lineBreakedText.getHeight(this.ctx)
+    );
+    this._height = height + this.PADDING * 2;
   }
 
   private getTextSize() {
@@ -86,20 +155,42 @@ class TextElement extends MemeElement<TextElementSettings> {
     this.ctx.strokeStyle = this.settings.stroke.replaceAll('none', 'transparent');
     this.ctx.lineWidth = this.settings.stroke_width;
 
-    // Draw text with padding offset
-    // Text is drawn at element position + padding
+    // Calculate text area (element size minus padding)
+    const textAreaWidth = this._width - this.PADDING * 2;
+    const textAreaHeight = this._height - this.PADDING * 2;
     const textX = this.x + this.PADDING;
     const textY = this.y + this.PADDING;
     
-    // Draw each line of text
+    // Draw each line of text with proper alignment
     const lineHeight = lineBreakedText.getHeight(this.ctx);
-    this.ctx.textAlign = 'left';
     this.ctx.textBaseline = 'top';
     
+    // Calculate vertical alignment offset
+    const totalTextHeight = this._splitText.length * lineHeight;
+    let startY = textY;
+    if (this.settings.vertical_align.current === 'center') {
+      startY = textY + (textAreaHeight - totalTextHeight) / 2;
+    } else if (this.settings.vertical_align.current === 'bottom') {
+      startY = textY + textAreaHeight - totalTextHeight;
+    }
+    
     this._splitText.forEach((line, index) => {
-      const y = textY + index * lineHeight;
-      this.ctx.strokeText(line, textX, y);
-      this.ctx.fillText(line, textX, y);
+      const y = startY + index * lineHeight;
+      
+      // Set horizontal alignment
+      let x = textX;
+      if (this.settings.horizontal_align.current === 'center') {
+        this.ctx.textAlign = 'center';
+        x = textX + textAreaWidth / 2;
+      } else if (this.settings.horizontal_align.current === 'right') {
+        this.ctx.textAlign = 'right';
+        x = textX + textAreaWidth;
+      } else {
+        this.ctx.textAlign = 'left';
+      }
+      
+      this.ctx.strokeText(line, x, y);
+      this.ctx.fillText(line, x, y);
     });
   }
 
@@ -121,8 +212,23 @@ class TextElement extends MemeElement<TextElementSettings> {
           break;
         case 'font_size':
         case 'font_family':
-          // Update size when font changes
-          this.updateSizeToText();
+          // Re-wrap text when font changes
+          // Store current position to prevent shifting
+          const currentX = this.x;
+          const currentY = this.y;
+          
+          const lines = this.settings.text.value.split('\n');
+          this._splitText = this.wrapText(lines);
+          // If user has set size, only update height. Otherwise auto-size.
+          if (this._userHasSetSize) {
+            this.updateHeightToText();
+          } else {
+            this.updateSizeToText();
+          }
+          
+          // Restore position (in case size change caused any shift)
+          this.x = currentX;
+          this.y = currentY;
           break;
       }
   }
@@ -153,10 +259,14 @@ class TextElement extends MemeElement<TextElementSettings> {
       case MemeElementHandle.TOP_RIGHT:
       case MemeElementHandle.BOTTOM_LEFT:
       case MemeElementHandle.BOTTOM_RIGHT: {
-        // For text elements, resizing should scale the font size proportionally
-        const currentTextSize = this.getTextSize();
-        const currentWidth = this.width;
-        const currentHeight = this.height;
+        // For text elements, resizing should change the text box area
+        // Font size remains unchanged - only width/height change
+        
+        // Store current dimensions and position before resize
+        const currentX = this.x;
+        const currentY = this.y;
+        const currentWidth = this._width;
+        const currentHeight = this._height;
         
         // Store the anchor point (opposite corner from the handle being dragged)
         // This point should remain fixed during resize
@@ -166,36 +276,36 @@ class TextElement extends MemeElement<TextElementSettings> {
         switch (this.handle) {
           case MemeElementHandle.TOP_LEFT: {
             // Anchor is bottom-right corner
-            anchorX = this.x + this.width;
-            anchorY = this.y + this.height;
+            anchorX = currentX + currentWidth;
+            anchorY = currentY + currentHeight;
             break;
           }
           case MemeElementHandle.TOP_RIGHT: {
             // Anchor is bottom-left corner
-            anchorX = this.x;
-            anchorY = this.y + this.height;
+            anchorX = currentX;
+            anchorY = currentY + currentHeight;
             break;
           }
           case MemeElementHandle.BOTTOM_LEFT: {
             // Anchor is top-right corner
-            anchorX = this.x + this.width;
-            anchorY = this.y;
+            anchorX = currentX + currentWidth;
+            anchorY = currentY;
             break;
           }
           case MemeElementHandle.BOTTOM_RIGHT: {
             // Anchor is top-left corner
-            anchorX = this.x;
-            anchorY = this.y;
+            anchorX = currentX;
+            anchorY = currentY;
             break;
           }
           default:
-            anchorX = this.x;
-            anchorY = this.y;
+            anchorX = currentX;
+            anchorY = currentY;
         }
         
-        // Calculate new dimensions based on handle
-        let newWidth = this.width;
-        let newHeight = this.height;
+        // Calculate new dimensions based on handle and mouse position
+        let newWidth = currentWidth;
+        let newHeight = currentHeight;
 
         switch (this.handle) {
           case MemeElementHandle.TOP_LEFT: {
@@ -228,40 +338,38 @@ class TextElement extends MemeElement<TextElementSettings> {
         newWidth = Math.max(newWidth, this.getMinWidth());
         newHeight = Math.max(newHeight, this.getMinHeight());
 
-        // Calculate scale factors
-        const scaleX = newWidth / currentWidth;
-        const scaleY = newHeight / currentHeight;
-        const scale = Math.min(scaleX, scaleY); // Use smaller scale to maintain aspect ratio
-
-        // Update font size proportionally
-        const newFontSize = Math.max(12, this.settings.font_size * scale);
-        this.settings.font_size = newFontSize;
-
-        // Update element size to match new text size
-        this.updateSizeToText();
+        // Set the new width first (font size stays the same)
+        this._width = newWidth;
         
-        // Get the new text size after font change
-        const newTextSize = this.getTextSize();
-        const newElementWidth = newTextSize.width + this.PADDING * 2;
-        const newElementHeight = newTextSize.height + this.PADDING * 2;
+        // Mark that user has manually set the size (after setting width)
+        this._userHasSetSize = true;
         
-        // Adjust position to maintain the anchor point
+        // Re-wrap text based on new width
+        const lines = this.settings.text.value.split('\n');
+        this._splitText = this.wrapText(lines);
+        
+        // Calculate minimum height needed for wrapped text
+        const minHeightForText = this.getTextSize().height + this.PADDING * 2;
+        // Use the larger of user-specified height or minimum needed for text
+        this._height = Math.max(newHeight, minHeightForText);
+        
+        // Adjust position to maintain the anchor point (after width and height are finalized)
         switch (this.handle) {
           case MemeElementHandle.TOP_LEFT: {
             // Anchor is bottom-right, so position from anchor
-            this.x = anchorX - newElementWidth;
-            this.y = anchorY - newElementHeight;
+            this.x = anchorX - this._width;
+            this.y = anchorY - this._height;
             break;
           }
           case MemeElementHandle.TOP_RIGHT: {
             // Anchor is bottom-left, so x stays same, y from anchor
             this.x = anchorX;
-            this.y = anchorY - newElementHeight;
+            this.y = anchorY - this._height;
             break;
           }
           case MemeElementHandle.BOTTOM_LEFT: {
             // Anchor is top-right, so x from anchor, y stays same
-            this.x = anchorX - newElementWidth;
+            this.x = anchorX - this._width;
             this.y = anchorY;
             break;
           }
@@ -280,6 +388,11 @@ class TextElement extends MemeElement<TextElementSettings> {
 
   public buildFont(): string {
     return `${this.settings.font_size}px ${this.settings.font_family}`;
+  }
+
+  // Method to mark size as user-set (called when size is set externally)
+  public markSizeAsUserSet(): void {
+    this._userHasSetSize = true;
   }
 }
 
