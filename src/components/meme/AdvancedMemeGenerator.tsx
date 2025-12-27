@@ -7,7 +7,8 @@ import type MemeElement from '@/lib/meme-canvas/MemeElement';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Download, Plus, Trash2, Type } from 'lucide-react';
-import { MEME_TEMPLATES, type MemeTemplate } from '@/lib/data/templates';
+import { MEME_TEMPLATES } from '@/lib/data/templates';
+import type { MemeTemplate } from '@/lib/types/meme';
 import type { TextField } from '@/lib/types/meme';
 
 interface AdvancedMemeGeneratorProps {
@@ -27,6 +28,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
   const [selectedElement, setSelectedElement] = useState<any>(null);
   const [showTextInput, setShowTextInput] = useState(false);
   const [isTemplateDropdownOpen, setIsTemplateDropdownOpen] = useState(false);
+  const [allTextElements, setAllTextElements] = useState<TextElement[]>([]);
 
   // Initialize canvas
   useEffect(() => {
@@ -60,6 +62,19 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
         setSelectedElement(null);
         setShowTextInput(false);
       }
+      // Update text elements list
+      const elements = controller.elements.filter(
+        (e) => e instanceof TextElement
+      ) as TextElement[];
+      setAllTextElements(elements);
+    });
+
+    // Listen for elements list changes to update sidebar
+    controller.listen('elementsListChanged', () => {
+      const elements = controller.elements.filter(
+        (e) => e instanceof TextElement
+      ) as TextElement[];
+      setAllTextElements(elements);
     });
 
     // Handle window resize to recalculate canvas size
@@ -85,7 +100,8 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
       const img = new Image();
       img.crossOrigin = 'anonymous';
       img.onload = () => {
-        controllerRef.current?.changeImage(img);
+        if (!controllerRef.current) return;
+        controllerRef.current.changeImage(img);
         setSelectedTemplate(template);
 
         // Clear existing elements
@@ -101,7 +117,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
             const canvasWidth = canvas.width;
             const canvasHeight = canvas.height;
 
-            template.textFields.forEach((field) => {
+            template.textFields.forEach((field: any) => {
               // Convert percentage positions to pixel positions
               const x = (field.x / 100) * canvasWidth;
               const y = (field.y / 100) * canvasHeight;
@@ -113,7 +129,8 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
               const fontSize = field.fontSize * (canvasHeight / 600);
 
               // Create text element
-              const textElement = new TextElement(controllerRef.current!);
+              if (!controllerRef.current) return;
+              const textElement = new TextElement(controllerRef.current);
               
               // Set text properties first (before position/size so size calculation works)
               // Add placeholder text based on field index (Text 1, Text 2, etc.)
@@ -262,7 +279,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
               </Button>
               <Button
                 onClick={downloadMeme}
-                variant="default"
+                variant="primary"
                 size="sm"
                 disabled={!selectedTemplate}
                 className="ml-auto"
@@ -350,6 +367,61 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
               )}
             </div>
           </div>
+
+          {/* Text Fields List */}
+          {selectedTemplate && allTextElements.length > 0 && (
+            <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-4 border border-gray-200 dark:border-gray-800">
+              <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <Type className="w-5 h-5" />
+                Text Fields ({allTextElements.length})
+              </h2>
+              <div className="space-y-2">
+                {allTextElements.map((element, index) => {
+                  const isSelected = selectedElement === element;
+                  const textValue = element.settings.text.value || `Text ${index + 1}`;
+                  const displayText = textValue.length > 30 
+                    ? textValue.substring(0, 30) + '...' 
+                    : textValue || `Text ${index + 1}`;
+                  
+                  return (
+                    <button
+                      key={index}
+                      onClick={() => {
+                        if (controllerRef.current) {
+                          controllerRef.current.selectedElements = [element];
+                          controllerRef.current.emit('selectedElementsChange');
+                          setSelectedElement(element);
+                          setTextInput(element.settings.text.value);
+                          setShowTextInput(true);
+                        }
+                      }}
+                      className={`w-full text-left p-3 rounded-lg border-2 transition-all ${
+                        isSelected
+                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                          : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-sm text-gray-900 dark:text-white truncate">
+                            {displayText || `Text Field ${index + 1}`}
+                          </div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            {element.settings.font_family} • {Math.round(element.settings.font_size)}px
+                          </div>
+                        </div>
+                        {isSelected && (
+                          <div className="ml-2 flex-shrink-0">
+                            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                          </div>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Text input */}
           {showTextInput && selectedElement && (
