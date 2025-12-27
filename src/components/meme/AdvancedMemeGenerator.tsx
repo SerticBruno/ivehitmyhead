@@ -83,8 +83,18 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
       }
     });
 
+    // Handle window resize to recalculate canvas size
+    const handleResize = () => {
+      if (controller.image) {
+        controller.resize(controller.image.width, controller.image.height);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+
     return () => {
       unregister();
+      window.removeEventListener('resize', handleResize);
     };
   }, []);
 
@@ -154,30 +164,30 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
   }, [textInput, selectedElement, showTextInput, updateText]);
 
   return (
-    <div className="max-w-7xl mx-auto p-6">
-      <div className="text-center mb-8">
-        <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
+    <div className="max-w-7xl mx-auto p-4 md:p-6" style={{ maxHeight: '100vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+      <div className="text-center mb-4 md:mb-6 flex-shrink-0">
+        <h1 className="text-2xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2">
           Advanced Meme Generator
         </h1>
-        <p className="text-gray-600 dark:text-gray-400">
+        <p className="text-sm md:text-base text-gray-600 dark:text-gray-400">
           Choose a template, add text, and create your meme
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 flex-1 min-h-0">
         {/* Left side - Canvas */}
-        <div className="lg:col-span-2">
-          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-4 border border-gray-200 dark:border-gray-800">
-            <div className="flex justify-center items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-4 min-h-[400px]">
+        <div className="lg:col-span-2 flex flex-col min-h-0">
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-2 md:p-4 border border-gray-200 dark:border-gray-800 flex-1 flex flex-col min-h-0">
+            <div className="flex justify-center items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-2 md:p-4 overflow-auto flex-1 min-h-0" style={{ maxHeight: '100%' }}>
               <canvas
                 ref={canvasRef}
                 className="max-w-full h-auto border border-gray-300 dark:border-gray-700 rounded"
-                style={{ cursor: 'crosshair' }}
+                style={{ display: 'block', maxHeight: '100%' }}
               />
             </div>
 
             {/* Canvas controls */}
-            <div className="mt-4 flex gap-2 flex-wrap">
+            <div className="mt-2 md:mt-4 flex gap-2 flex-wrap flex-shrink-0">
               <Button onClick={addText} variant="outline" size="sm">
                 <Plus className="w-4 h-4 mr-2" />
                 Add Text
@@ -206,7 +216,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
         </div>
 
         {/* Right side - Controls */}
-        <div className="space-y-6">
+        <div className="space-y-4 md:space-y-6 overflow-y-auto" style={{ maxHeight: '100%' }}>
           {/* Template selection */}
           <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-4 border border-gray-200 dark:border-gray-800">
             <h2 className="text-lg font-semibold mb-4">Templates</h2>

@@ -133,16 +133,18 @@ class MemeCanvasController {
     this.offsetX = x;
     this.offsetY = y;
 
-    if (this.selectedElements.length === 1) {
-      const element = this.selectedElements[0]!;
+    // First, check if we're clicking on a handle of any selected element
+    // This has priority over element selection
+    for (const element of this.selectedElements) {
       const handle = element.handleAt(x, y);
-
       if (handle !== null) {
+        this.canvas.style.cursor = handle === 4 ? 'grabbing' : 'move';
         this.startResize(element, handle, x, y);
         return;
       }
     }
 
+    // Then check if we're clicking on an element
     const foundElement = this.elementAt(x, y);
 
     if (foundElement) {
@@ -163,6 +165,7 @@ class MemeCanvasController {
       }
 
       if (alreadySelected) {
+        this.canvas.style.cursor = 'move';
         this.selectedElements.forEach((e) => {
           this.startDrag(e, x, y);
           e.onPress(x, y);
@@ -171,6 +174,7 @@ class MemeCanvasController {
         return;
       }
 
+      this.canvas.style.cursor = 'move';
       this.selectedElements = [foundElement];
       this.emit('selectedElementsChange');
       this.startDrag(foundElement, x, y);
@@ -178,6 +182,11 @@ class MemeCanvasController {
       return;
     }
 
+    // If clicking on empty space, clear selection or start selection box
+    if (this.selectedElements.length > 0 && !this.holdingShift) {
+      this.clearSelected();
+    }
+    this.canvas.style.cursor = 'crosshair';
     this.startSelectionBox(x, y);
   }
 
@@ -195,6 +204,21 @@ class MemeCanvasController {
         x - this.offsetX,
         y - this.offsetY
       );
+    }
+
+    // Reset cursor
+    if (this.selectedElements.length === 1) {
+      const element = this.selectedElements[0];
+      const handle = element.handleAt(x, y);
+      if (handle !== null) {
+        this.canvas.style.cursor = handle === 4 ? 'grab' : 'pointer';
+      } else if (element.intersects(x, y)) {
+        this.canvas.style.cursor = 'move';
+      } else {
+        this.canvas.style.cursor = 'default';
+      }
+    } else {
+      this.canvas.style.cursor = 'default';
     }
 
     this.selectedElements.forEach((e) => e.onRelease(x, y));
@@ -359,14 +383,19 @@ class MemeCanvasController {
     const instance = new Element(this);
     instance.created();
 
-    instance.x = Math.round(this.canvas.width / 2 - instance.width / 2);
-    instance.y = Math.round(this.canvas.height / 2 - instance.height / 2);
+    // Ensure element has valid size before positioning
+    // Force a frame request to ensure canvas context is ready
+    this.requestFrame(() => {
+      // Position element at center of canvas
+      instance.x = Math.round(this.canvas.width / 2 - instance.width / 2);
+      instance.y = Math.round(this.canvas.height / 2 - instance.height / 2);
 
-    this._elements.push(instance);
-    this.emit('elementsListChanged');
+      this._elements.push(instance);
+      this.emit('elementsListChanged');
 
-    this.selectedElements = [instance];
-    this.emit('selectedElementsChange');
+      this.selectedElements = [instance];
+      this.emit('selectedElementsChange');
+    });
   }
 
   public changeImage(image: HTMLImageElement) {
@@ -400,20 +429,44 @@ class MemeCanvasController {
   }
 
   public resize(width: number, height: number) {
-    if (width === height) {
-      this.canvas.width = width;
-      this.canvas.height = height;
-    } else {
-      const aspectRatio = width / height;
-      const canvasWidth = width;
+    // Set actual canvas dimensions to original image size (no scaling)
+    this.canvas.width = width;
+    this.canvas.height = height;
 
-      this.canvas.width = canvasWidth;
-      const newHeight = Math.round(canvasWidth / aspectRatio);
-      this.canvas.height = newHeight;
+    // Calculate display size - constrain to viewport while maintaining aspect ratio
+    const maxDisplayWidth = 800;
+    const maxDisplayHeight = typeof window !== 'undefined' 
+      ? Math.min(window.innerHeight * 0.6, 600) 
+      : 600;
+    
+    const aspectRatio = width / height;
+    let displayWidth = width;
+    let displayHeight = height;
+
+    // Scale down proportionally to fit max dimensions while maintaining aspect ratio
+    const widthScale = maxDisplayWidth / width;
+    const heightScale = maxDisplayHeight / height;
+    const scale = Math.min(widthScale, heightScale, 1); // Don't scale up, only down
+
+    displayWidth = width * scale;
+    displayHeight = height * scale;
+
+    // Ensure minimum size (but maintain aspect ratio)
+    const minWidth = 300;
+    const minHeight = 200;
+    if (displayWidth < minWidth || displayHeight < minHeight) {
+      const minScale = Math.max(minWidth / width, minHeight / height);
+      if (minScale > scale) {
+        displayWidth = width * minScale;
+        displayHeight = height * minScale;
+      }
     }
 
-    const scaled = MathHelper.clamp(this.canvas.width * 1.5, 300, 500);
-    this.canvas.style.width = `${scaled}px`;
+    this.canvas.style.width = `${displayWidth}px`;
+    this.canvas.style.height = `${displayHeight}px`;
+    this.canvas.style.maxWidth = '100%';
+    this.canvas.style.maxHeight = `${maxDisplayHeight}px`;
+    this.canvas.style.objectFit = 'contain';
 
     this.requestFrame();
   }

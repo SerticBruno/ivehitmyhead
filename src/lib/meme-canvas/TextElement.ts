@@ -5,6 +5,7 @@ import MemeElement, {
   type ExtendedString,
   type Filterable,
   type ValidateOptions,
+  MemeElementHandle,
 } from './MemeElement';
 
 export const HTextAlignment = ['left', 'center', 'right'] as const;
@@ -46,11 +47,37 @@ class TextElement extends MemeElement<TextElementSettings> {
       },
     });
 
+    // Initialize size immediately
     this.updateText();
+    // Ensure size is set before element is positioned
+    if (this.width === 0 || this.height === 0) {
+      this.updateSizeToText();
+    }
   }
 
   private updateText() {
     this._splitText = this.settings.text.value.split('\n');
+    // Automatically update element size to match text size
+    this.updateSizeToText();
+  }
+
+  private updateSizeToText() {
+    const textSize = this.getTextSize();
+    // Element size matches text size exactly (no padding)
+    // This ensures text fits perfectly within the border
+    this._width = textSize.width;
+    this._height = textSize.height;
+  }
+
+  private getTextSize() {
+    this.ctx.font = this.buildFont();
+    const width = Math.round(
+      lineBreakedText.getWidth(this.ctx, this._splitText)
+    );
+    const height = Math.round(
+      this._splitText.length * lineBreakedText.getHeight(this.ctx)
+    );
+    return { width, height };
   }
 
   public override draw(): void {
@@ -59,20 +86,21 @@ class TextElement extends MemeElement<TextElementSettings> {
     this.ctx.strokeStyle = this.settings.stroke.replaceAll('none', 'transparent');
     this.ctx.lineWidth = this.settings.stroke_width;
 
-    lineBreakedText.draw(
-      this.ctx,
-      this._splitText,
-      this.x,
-      this.y,
-      {
-        alignment: this.settings.horizontal_align.current,
-        width: this.width,
-      },
-      {
-        alignment: this.settings.vertical_align.current,
-        height: this.height,
-      }
-    );
+    // Element size matches text size exactly
+    // Draw text at element position (top-left corner)
+    // Since size matches, text fits perfectly within border
+    const textSize = this.getTextSize();
+    
+    // Draw each line of text
+    const lineHeight = lineBreakedText.getHeight(this.ctx);
+    this.ctx.textAlign = 'left';
+    this.ctx.textBaseline = 'top';
+    
+    this._splitText.forEach((line, index) => {
+      const y = this.y + index * lineHeight;
+      this.ctx.strokeText(line, this.x, y);
+      this.ctx.fillText(line, this.x, y);
+    });
   }
 
   public override onDoubleClick(): void {
@@ -91,43 +119,103 @@ class TextElement extends MemeElement<TextElementSettings> {
         case 'text':
           this.updateText();
           break;
-        case 'font_size': {
-          const newWidth = this.getMinWidth();
-          if (this.width < newWidth) this.width = newWidth;
-          const newHeight = this.getMinHeight();
-          if (this.height < newHeight) this.height = newHeight;
+        case 'font_size':
+        case 'font_family':
+          // Update size when font changes
+          this.updateSizeToText();
           break;
-        }
       }
   }
 
   public override getMinSize() {
-    this.ctx.font = this.buildFont();
-    const width = Math.round(
-      lineBreakedText.getWidth(this.ctx, this._splitText)
-    );
-    const height = Math.round(
-      this._splitText.length * lineBreakedText.getHeight(this.ctx)
-    );
+    // Return actual text size (not rotated bounds)
+    return this.getTextSize();
+  }
 
-    const size = {
-      width: Math.round(
-        MathHelper.sizeOfRotatedRect(
-          width,
-          height,
-          ((this.rotation - 90) * Math.PI) / 180
-        ).width
-      ),
-      height: Math.round(
-        MathHelper.sizeOfRotatedRect(
-          width,
-          height,
-          ((this.rotation - 90) * Math.PI) / 180
-        ).height
-      ),
-    };
+  public override handleInteraction(mouseX: number, mouseY: number): void {
+    if (this.locked) return;
 
-    return size;
+    if (this.handle === null) return;
+
+    switch (this.handle) {
+      case MemeElementHandle.ROTATION_HANDLE: {
+        const centerX = this.x + this.width / 2;
+        const centerY = this.y + this.height / 2;
+        const angle =
+          (Math.atan2(mouseY - centerY, mouseX - centerX) * 180) / Math.PI;
+
+        this.rotation = ((Math.round(angle) + 90 + this._rotationPrev) % 360);
+        if (this.rotation < 0) this.rotation += 360;
+        break;
+      }
+
+      case MemeElementHandle.TOP_LEFT:
+      case MemeElementHandle.TOP_RIGHT:
+      case MemeElementHandle.BOTTOM_LEFT:
+      case MemeElementHandle.BOTTOM_RIGHT: {
+        // For text elements, resizing should scale the font size proportionally
+        const currentTextSize = this.getTextSize();
+        const currentWidth = this.width;
+        const currentHeight = this.height;
+        
+        // Calculate new dimensions based on handle
+        let newX = this.x;
+        let newY = this.y;
+        let newWidth = this.width;
+        let newHeight = this.height;
+
+        switch (this.handle) {
+          case MemeElementHandle.TOP_LEFT: {
+            newX = Math.round(mouseX - this.offsetX);
+            newY = Math.round(mouseY - this.offsetY);
+            newWidth = this.x + this.width - newX;
+            newHeight = this.y + this.height - newY;
+            break;
+          }
+          case MemeElementHandle.TOP_RIGHT: {
+            newY = Math.round(mouseY - this.offsetY);
+            newWidth = mouseX - this.x - this.offsetX;
+            newHeight = this.y + this.height - newY;
+            break;
+          }
+          case MemeElementHandle.BOTTOM_LEFT: {
+            newX = Math.round(mouseX - this.offsetX);
+            newWidth = this.x + this.width - newX;
+            newHeight = mouseY - this.y - this.offsetY;
+            break;
+          }
+          case MemeElementHandle.BOTTOM_RIGHT: {
+            newWidth = mouseX - this.x - this.offsetX;
+            newHeight = mouseY - this.y - this.offsetY;
+            break;
+          }
+        }
+
+        // Calculate scale factors
+        const scaleX = newWidth / currentWidth;
+        const scaleY = newHeight / currentHeight;
+        const scale = Math.min(scaleX, scaleY); // Use smaller scale to maintain aspect ratio
+
+        // Update font size proportionally
+        const newFontSize = Math.max(12, this.settings.font_size * scale);
+        this.settings.font_size = newFontSize;
+
+        // Update element size to match new text size
+        this.updateSizeToText();
+        
+        // Adjust position if needed (for top/left handles)
+        if (this.handle === MemeElementHandle.TOP_LEFT || this.handle === MemeElementHandle.BOTTOM_LEFT) {
+          const textSize = this.getTextSize();
+          this.x = newX + (newWidth - textSize.width) / 2;
+        }
+        if (this.handle === MemeElementHandle.TOP_LEFT || this.handle === MemeElementHandle.TOP_RIGHT) {
+          const textSize = this.getTextSize();
+          this.y = newY + (newHeight - textSize.height) / 2;
+        }
+
+        break;
+      }
+    }
   }
 
   public buildFont(): string {

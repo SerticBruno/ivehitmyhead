@@ -84,9 +84,9 @@ export function getHandlePos(
 abstract class MemeElement<T extends Settings = Settings> {
   public x: number = 0;
   public y: number = 0;
-  private offsetX: number = 0;
-  private offsetY: number = 0;
-  private handle: MemeElementHandle | null = null;
+  protected offsetX: number = 0;
+  protected offsetY: number = 0;
+  protected handle: MemeElementHandle | null = null;
   private _width: number = 0;
   private _height: number = 0;
 
@@ -273,12 +273,13 @@ abstract class MemeElement<T extends Settings = Settings> {
     x: number,
     y: number
   ): MemeElementHandle | null {
+    // Check handles first (they have priority)
     const handles = [
+      MemeElementHandle.ROTATION_HANDLE,
       MemeElementHandle.TOP_LEFT,
       MemeElementHandle.TOP_RIGHT,
       MemeElementHandle.BOTTOM_LEFT,
       MemeElementHandle.BOTTOM_RIGHT,
-      MemeElementHandle.ROTATION_HANDLE,
     ];
 
     for (const handle of handles) {
@@ -288,7 +289,8 @@ abstract class MemeElement<T extends Settings = Settings> {
           ? getRotationHandleSize(element.controller)
           : getHandleSize(element.controller)
       );
-      const offset = size / 2;
+      // Increase hit area for better usability
+      const offset = size / 2 + 5;
 
       if (
         x >= handleX - offset &&

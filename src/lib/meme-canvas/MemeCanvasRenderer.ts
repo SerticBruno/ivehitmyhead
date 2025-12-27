@@ -6,6 +6,7 @@ import {
   getRotationHandleSize,
   MemeElementHandle,
 } from './MemeElement';
+import TextElement from './TextElement';
 
 const rotateSvg = svgToDataUrl(
   `<svg width="100%" height="100%" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -63,12 +64,25 @@ class MemeCanvasRenderer {
         !this.controller.exporting &&
         this.controller.selectedElements.includes(element)
       ) {
-        // Draw border around the element
+        // Draw border around the element (with rotation)
+        // Border should match element bounds exactly
+        const borderX = element.x;
+        const borderY = element.y;
+        const borderWidth = element.width;
+        const borderHeight = element.height;
+
         this.ctx.save();
-        this.ctx.strokeStyle = 'black';
-        this.ctx.lineWidth = 1;
-        this.ctx.setLineDash([5, 2]);
-        this.ctx.strokeRect(element.x, element.y, element.width, element.height);
+        if (element.rotation !== 0) {
+          const centerX = element.x + element.width / 2;
+          const centerY = element.y + element.height / 2;
+          this.ctx.translate(centerX, centerY);
+          this.ctx.rotate((element.rotation * Math.PI) / 180);
+          this.ctx.translate(-centerX, -centerY);
+        }
+        this.ctx.strokeStyle = '#3b82f6';
+        this.ctx.lineWidth = 2;
+        this.ctx.setLineDash([5, 5]);
+        this.ctx.strokeRect(borderX, borderY, borderWidth, borderHeight);
         this.ctx.restore();
 
         if (
@@ -76,7 +90,7 @@ class MemeCanvasRenderer {
           this.controller.holdingCtrl === false &&
           this.controller.selectedElements.length === 1
         ) {
-          // Draw rotation handle on the element
+          // Draw rotation handle on the element (no rotation for handles)
           {
             const size = getRotationHandleSize(this.controller);
             const handleX = getHandlePos(element, MemeElementHandle.ROTATION_HANDLE);
@@ -85,10 +99,20 @@ class MemeCanvasRenderer {
             const iconWidth = size / 1.5;
             const iconHeight = size / 1.5;
 
-            this.ctx.fillStyle = '#ffffffAA';
+            this.ctx.save();
+            this.ctx.fillStyle = '#ffffff';
+            this.ctx.strokeStyle = '#3b82f6';
+            this.ctx.lineWidth = 2;
             this.ctx.beginPath();
-            this.ctx.roundRect(x, y, size, size, size * 2);
+            if (this.ctx.roundRect) {
+              this.ctx.roundRect(x, y, size, size, size / 2);
+            } else {
+              // Fallback for browsers without roundRect
+              this.ctx.arc(x + size / 2, y + size / 2, size / 2, 0, Math.PI * 2);
+            }
             this.ctx.fill();
+            this.ctx.stroke();
+            this.ctx.restore();
 
             this.ctx.drawImage(
               this.rotateImageSvg,
@@ -99,10 +123,12 @@ class MemeCanvasRenderer {
             );
           }
 
-          // Draw resize handles around the element
+          // Draw resize handles around the element (no rotation for handles)
           {
             const size = getHandleSize(this.controller);
-            this.ctx.fillStyle = '#f05050';
+            this.ctx.fillStyle = '#3b82f6';
+            this.ctx.strokeStyle = '#ffffff';
+            this.ctx.lineWidth = 2;
 
             for (const handle of [
               MemeElementHandle.TOP_LEFT,
@@ -114,15 +140,23 @@ class MemeCanvasRenderer {
               const x = pos.x - size / 2;
               const y = pos.y - size / 2;
 
+              this.ctx.save();
               this.ctx.beginPath();
-              this.ctx.roundRect(
-                x,
-                y,
-                size,
-                size,
-                this.controller.isTouch ? size * 2 : 0
-              );
+              if (this.ctx.roundRect) {
+                this.ctx.roundRect(
+                  x,
+                  y,
+                  size,
+                  size,
+                  this.controller.isTouch ? size / 2 : 2
+                );
+              } else {
+                // Fallback for browsers without roundRect
+                this.ctx.rect(x, y, size, size);
+              }
               this.ctx.fill();
+              this.ctx.stroke();
+              this.ctx.restore();
             }
           }
         }
@@ -136,7 +170,9 @@ class MemeCanvasRenderer {
     this.ctx.fillStyle = 'white';
     this.ctx.fillRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
 
-    if (image !== null)
+    if (image !== null) {
+      // Draw image at its original size, maintaining aspect ratio
+      // Canvas dimensions match image dimensions exactly
       this.ctx.drawImage(
         image,
         this.controller.padding.left,
@@ -148,6 +184,7 @@ class MemeCanvasRenderer {
           this.controller.padding.bottom -
           this.controller.padding.top
       );
+    }
   }
 
   private drawFramerate() {

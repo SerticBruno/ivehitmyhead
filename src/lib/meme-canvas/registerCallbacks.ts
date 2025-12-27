@@ -86,6 +86,8 @@ export default function registerCallbacks(
     touchrelease: (e: TouchEvent) => touchEvent(e, controller.onRelease),
     touchmove: (e: TouchEvent) =>
       touchEvent(e, (x, y) => {
+        controller.mouseX = x;
+        controller.mouseY = y;
         if (controller.dragging === true || controller.resizing === true)
           controller.onDrag(x, y);
       }),
@@ -95,6 +97,34 @@ export default function registerCallbacks(
       mouseEvent(e, (x, y) => {
         controller.mouseX = x;
         controller.mouseY = y;
+        
+        // Update cursor based on what we're hovering over
+        let cursor = 'default';
+        if (controller.selectedElements.length === 1) {
+          const element = controller.selectedElements[0];
+          const handle = element.handleAt(x, y);
+          if (handle !== null) {
+            // Determine cursor based on handle type
+            if (handle === 4) { // ROTATION_HANDLE
+              cursor = 'grab';
+            } else {
+              // Resize handles
+              const handles = [
+                'nw-resize', // TOP_LEFT
+                'ne-resize', // TOP_RIGHT
+                'sw-resize', // BOTTOM_LEFT
+                'se-resize', // BOTTOM_RIGHT
+              ];
+              cursor = handles[handle] || 'move';
+            }
+          } else if (element.intersects(x, y)) {
+            cursor = 'move';
+          }
+        } else if (controller.selecting) {
+          cursor = 'crosshair';
+        }
+        controller.canvas.style.cursor = cursor;
+        
         if (controller.dragging === true || controller.resizing === true)
           controller.onDrag(x, y);
       }),
@@ -106,10 +136,14 @@ export default function registerCallbacks(
       controller.holdingShift = e.shiftKey;
       controller.holdingCtrl = e.ctrlKey;
     },
+    mouseleave: () => {
+      controller.canvas.style.cursor = 'default';
+    },
   };
 
   controller.canvas.addEventListener('dblclick', callbacks.dblclick);
   controller.canvas.addEventListener('mousedown', callbacks.press);
+  controller.canvas.addEventListener('mouseleave', callbacks.mouseleave);
   document.addEventListener('mouseup', callbacks.release);
   document.addEventListener('mousemove', callbacks.mousemove);
   controller.canvas.addEventListener('touchstart', callbacks.touch);
@@ -121,6 +155,7 @@ export default function registerCallbacks(
   return () => {
     controller.canvas.removeEventListener('dblclick', callbacks.dblclick);
     controller.canvas.removeEventListener('mousedown', callbacks.press);
+    controller.canvas.removeEventListener('mouseleave', callbacks.mouseleave);
     document.removeEventListener('mouseup', callbacks.release);
     document.removeEventListener('mousemove', callbacks.mousemove);
     document.removeEventListener('keydown', callbacks.keydown);
