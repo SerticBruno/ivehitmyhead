@@ -29,6 +29,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
   const [showTextInput, setShowTextInput] = useState(false);
   const [isTemplateDropdownOpen, setIsTemplateDropdownOpen] = useState(false);
   const [allTextElements, setAllTextElements] = useState<TextElement[]>([]);
+  const [updateCounter, setUpdateCounter] = useState(0); // Force re-render when element updates
 
   // Initialize canvas
   useEffect(() => {
@@ -75,6 +76,18 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
         (e) => e instanceof TextElement
       ) as TextElement[];
       setAllTextElements(elements);
+    });
+
+    // Listen for element updates to keep UI in sync
+    controller.listen('elementsUpdated', () => {
+      // Force re-render to update UI when element settings change
+      setUpdateCounter(prev => prev + 1);
+      // Update selected element reference if it's still selected
+      const selected = controller.selectedElements[0];
+      if (selected && selected instanceof TextElement) {
+        setSelectedElement(selected);
+        setTextInput(selected.settings.text.value);
+      }
     });
 
     // Handle window resize to recalculate canvas size
@@ -443,106 +456,344 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                     placeholder="Enter your text..."
                   />
                 </div>
-                {selectedElement instanceof TextElement && (
-                  <div className="space-y-2">
-                    <div>
-                      <label className="block text-sm font-medium mb-1">
-                        Font Size
-                      </label>
-                      <Input
-                        type="number"
-                        value={selectedElement.settings.font_size}
-                        onChange={(e) => {
-                          if (controllerRef.current) {
-                            controllerRef.current.updateElement(
-                              selectedElement,
-                              'font_size',
-                              Number(e.target.value)
-                            );
-                          }
-                        }}
-                      />
+                {selectedElement instanceof TextElement && (() => {
+                  // Get current element from controller to ensure we have latest values
+                  const currentElement = controllerRef.current?.selectedElements[0];
+                  const element = (currentElement instanceof TextElement ? currentElement : selectedElement) as TextElement;
+                  const fontSize = element.settings.font_size;
+                  const strokeWidth = element.settings.stroke_width;
+                  
+                  return (
+                    <div className="space-y-4">
+                      {/* Font Size with Slider and Input */}
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="block text-sm font-medium">
+                            Font Size
+                          </label>
+                          <span className="text-sm text-gray-500 dark:text-gray-400">
+                            {Math.round(fontSize)}px
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (controllerRef.current) {
+                                const newSize = Math.max(12, fontSize - 2);
+                                controllerRef.current.updateElement(
+                                  element,
+                                  'font_size',
+                                  newSize
+                                );
+                              }
+                            }}
+                          className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm font-medium"
+                        >
+                          −
+                        </button>
+                        <input
+                          type="range"
+                          min="12"
+                          max="120"
+                          step="1"
+                          value={fontSize}
+                          onChange={(e) => {
+                            if (controllerRef.current) {
+                              controllerRef.current.updateElement(
+                                element,
+                                'font_size',
+                                Number(e.target.value)
+                              );
+                            }
+                          }}
+                          className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (controllerRef.current) {
+                              const newSize = Math.min(120, fontSize + 2);
+                              controllerRef.current.updateElement(
+                                element,
+                                'font_size',
+                                newSize
+                              );
+                            }
+                          }}
+                          className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm font-medium"
+                        >
+                          +
+                        </button>
+                        <Input
+                          type="number"
+                          min="12"
+                          max="120"
+                          value={Math.round(fontSize)}
+                          onChange={(e) => {
+                            const value = Number(e.target.value);
+                            if (!isNaN(value) && value >= 12 && value <= 120 && controllerRef.current) {
+                              controllerRef.current.updateElement(
+                                element,
+                                'font_size',
+                                value
+                              );
+                            }
+                          }}
+                          onBlur={(e) => {
+                            // Ensure value is valid on blur
+                            const value = Number(e.target.value);
+                            if (isNaN(value) || value < 12 || value > 120) {
+                              if (controllerRef.current) {
+                                const clampedValue = Math.max(12, Math.min(120, value || fontSize));
+                                controllerRef.current.updateElement(
+                                  element,
+                                  'font_size',
+                                  clampedValue
+                                );
+                              }
+                            }
+                          }}
+                          className="w-20"
+                        />
+                      </div>
                     </div>
+                    {/* Font Family */}
                     <div>
-                      <label className="block text-sm font-medium mb-1">
+                      <label className="block text-sm font-medium mb-2">
                         Font Family
                       </label>
                       <select
-                        value={selectedElement.settings.font_family}
+                        value={element.settings.font_family}
                         onChange={(e) => {
                           if (controllerRef.current) {
                             controllerRef.current.updateElement(
-                              selectedElement,
+                              element,
                               'font_family',
                               e.target.value
                             );
                           }
                         }}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
-                        <option value="sans-serif">Sans Serif</option>
                         <option value="Impact">Impact</option>
                         <option value="Arial">Arial</option>
+                        <option value="Helvetica">Helvetica</option>
                         <option value="Comic Sans MS">Comic Sans MS</option>
                         <option value="Times New Roman">Times New Roman</option>
+                        <option value="sans-serif">Sans Serif</option>
+                        <option value="Georgia">Georgia</option>
+                        <option value="Verdana">Verdana</option>
                       </select>
                     </div>
+
+                    {/* Text Color */}
                     <div>
-                      <label className="block text-sm font-medium mb-1">
+                      <label className="block text-sm font-medium mb-2">
                         Text Color
                       </label>
-                      <Input
-                        type="color"
-                        value={selectedElement.settings.color}
-                        onChange={(e) => {
-                          if (controllerRef.current) {
-                            controllerRef.current.updateElement(
-                              selectedElement,
-                              'color',
-                              e.target.value
-                            );
-                          }
-                        }}
-                      />
+                      <div className="flex items-center gap-3">
+                        <Input
+                          type="color"
+                          value={element.settings.color}
+                          onChange={(e) => {
+                            if (controllerRef.current) {
+                              controllerRef.current.updateElement(
+                                element,
+                                'color',
+                                e.target.value
+                              );
+                            }
+                          }}
+                          className="w-16 h-10 cursor-pointer"
+                        />
+                        <Input
+                          type="text"
+                          value={element.settings.color}
+                          onChange={(e) => {
+                            if (controllerRef.current && /^#[0-9A-F]{6}$/i.test(e.target.value)) {
+                              controllerRef.current.updateElement(
+                                element,
+                                'color',
+                                e.target.value
+                              );
+                            }
+                          }}
+                          placeholder="#FFFFFF"
+                          className="flex-1 font-mono text-sm"
+                        />
+                      </div>
                     </div>
+
+                    {/* Stroke Color */}
                     <div>
-                      <label className="block text-sm font-medium mb-1">
+                      <label className="block text-sm font-medium mb-2">
                         Stroke Color
                       </label>
-                      <Input
-                        type="color"
-                        value={selectedElement.settings.stroke}
-                        onChange={(e) => {
-                          if (controllerRef.current) {
-                            controllerRef.current.updateElement(
-                              selectedElement,
-                              'stroke',
-                              e.target.value
-                            );
-                          }
-                        }}
-                      />
+                      <div className="flex items-center gap-3">
+                        <Input
+                          type="color"
+                          value={element.settings.stroke}
+                          onChange={(e) => {
+                            if (controllerRef.current) {
+                              controllerRef.current.updateElement(
+                                element,
+                                'stroke',
+                                e.target.value
+                              );
+                            }
+                          }}
+                          className="w-16 h-10 cursor-pointer"
+                        />
+                        <Input
+                          type="text"
+                          value={element.settings.stroke}
+                          onChange={(e) => {
+                            if (controllerRef.current && /^#[0-9A-F]{6}$/i.test(e.target.value)) {
+                              controllerRef.current.updateElement(
+                                element,
+                                'stroke',
+                                e.target.value
+                              );
+                            }
+                          }}
+                          placeholder="#000000"
+                          className="flex-1 font-mono text-sm"
+                        />
+                      </div>
                     </div>
+
+                    {/* Stroke Width */}
                     <div>
-                      <label className="block text-sm font-medium mb-1">
-                        Stroke Width
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="block text-sm font-medium">
+                          Stroke Width
+                        </label>
+                        <span className="text-sm text-gray-500 dark:text-gray-400">
+                          {Math.round(strokeWidth)}px
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (controllerRef.current) {
+                              const newWidth = Math.max(0, strokeWidth - 1);
+                              controllerRef.current.updateElement(
+                                element,
+                                'stroke_width',
+                                newWidth
+                              );
+                            }
+                          }}
+                          className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm font-medium"
+                        >
+                          −
+                        </button>
+                        <input
+                          type="range"
+                          min="0"
+                          max="20"
+                          step="0.5"
+                          value={strokeWidth}
+                          onChange={(e) => {
+                            if (controllerRef.current) {
+                              controllerRef.current.updateElement(
+                                element,
+                                'stroke_width',
+                                Number(e.target.value)
+                              );
+                            }
+                          }}
+                          className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (controllerRef.current) {
+                              const newWidth = Math.min(20, strokeWidth + 1);
+                              controllerRef.current.updateElement(
+                                element,
+                                'stroke_width',
+                                newWidth
+                              );
+                            }
+                          }}
+                          className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm font-medium"
+                        >
+                          +
+                        </button>
+                        <Input
+                          type="number"
+                          min="0"
+                          max="20"
+                          step="0.5"
+                          value={strokeWidth}
+                          onChange={(e) => {
+                            const value = Number(e.target.value);
+                            if (!isNaN(value) && value >= 0 && value <= 20 && controllerRef.current) {
+                              controllerRef.current.updateElement(
+                                element,
+                                'stroke_width',
+                                value
+                              );
+                            }
+                          }}
+                          onBlur={(e) => {
+                            // Ensure value is valid on blur
+                            const value = Number(e.target.value);
+                            if (isNaN(value) || value < 0 || value > 20) {
+                              if (controllerRef.current) {
+                                const clampedValue = Math.max(0, Math.min(20, value || strokeWidth));
+                                controllerRef.current.updateElement(
+                                  element,
+                                  'stroke_width',
+                                  clampedValue
+                                );
+                              }
+                            }
+                          }}
+                          className="w-20"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Text Alignment */}
+                    <div>
+                      <label className="block text-sm font-medium mb-2">
+                        Text Alignment
                       </label>
-                      <Input
-                        type="number"
-                        value={selectedElement.settings.stroke_width}
-                        onChange={(e) => {
-                          if (controllerRef.current) {
-                            controllerRef.current.updateElement(
-                              selectedElement,
-                              'stroke_width',
-                              Number(e.target.value)
-                            );
-                          }
-                        }}
-                      />
+                      <div className="grid grid-cols-3 gap-2">
+                        {(['left', 'center', 'right'] as const).map((align) => (
+                          <button
+                            key={align}
+                            type="button"
+                            onClick={() => {
+                              if (controllerRef.current) {
+                                controllerRef.current.updateElement(
+                                  element,
+                                  'horizontal_align',
+                                  {
+                                    valid: ['left', 'center', 'right'] as const,
+                                    current: align,
+                                  }
+                                );
+                              }
+                            }}
+                            className={`px-3 py-2 border rounded-md text-sm font-medium transition-colors ${
+                              element.settings.horizontal_align.current === align
+                                ? 'bg-blue-500 text-white border-blue-500'
+                                : 'border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800'
+                            }`}
+                          >
+                            {align.charAt(0).toUpperCase() + align.slice(1)}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </div>
-                )}
+                  );
+                })()}
               </div>
             </div>
           )}

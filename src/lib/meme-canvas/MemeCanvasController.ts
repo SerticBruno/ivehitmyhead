@@ -291,6 +291,8 @@ class MemeCanvasController {
     }
 
     this.requestFrame();
+    // Emit event to notify UI of element changes
+    this.emit('elementsUpdated');
   }
 
   // Other
