@@ -1,5 +1,6 @@
 import type MemeCanvasController from './MemeCanvasController';
 import { scaled } from '@/lib/utils/canvas';
+import MathHelper from '@/lib/utils/math';
 
 export interface Filterable<T extends readonly ValidOptionTypes[]> {
   valid: T;
@@ -84,8 +85,8 @@ abstract class MemeElement<T extends Settings = Settings> {
   protected offsetX: number = 0;
   protected offsetY: number = 0;
   protected handle: MemeElementHandle | null = null;
-  private _width: number = 0;
-  private _height: number = 0;
+  protected _width: number = 0;
+  protected _height: number = 0;
 
   // Degrees
   public rotation: number = 0;
@@ -151,7 +152,7 @@ abstract class MemeElement<T extends Settings = Settings> {
     );
   }
 
-  private _rotationPrev: number = 0;
+  protected _rotationPrev: number = 0;
 
   public prepareHandle(
     handle: MemeElementHandle | null,

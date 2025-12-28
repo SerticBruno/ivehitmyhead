@@ -31,7 +31,7 @@ export const useScrollRestoration = (options: UseScrollRestorationOptions = {}) 
     debounceMs = 100
   } = options;
 
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const isRestoringRef = useRef(false);
 
   // Generate a unique key for this page state

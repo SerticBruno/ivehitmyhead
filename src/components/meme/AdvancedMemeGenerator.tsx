@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Download, Plus, Trash2, Type, ChevronDown, ChevronUp } from 'lucide-react';
 import { MEME_TEMPLATES } from '@/lib/data/templates';
-import type { MemeTemplate, TextField } from '@/lib/types/meme';
+import type { MemeTemplate } from '@/lib/types/meme';
 import { useNavigationWarning } from '@/lib/contexts/NavigationWarningContext';
 
 interface AdvancedMemeGeneratorProps {
@@ -264,7 +264,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                   const canvasWidth = canvas.width;
                   const canvasHeight = canvas.height;
 
-                  template.textFields.forEach((field: TextField, fieldIndex: number) => {
+                  template.textFields.forEach((field, fieldIndex: number) => {
                 // Convert percentage positions to pixel positions
                 const x = (field.x / 100) * canvasWidth;
                 const y = (field.y / 100) * canvasHeight;
