@@ -53,6 +53,8 @@ class MemeCanvasController {
   public dragging: boolean = false;
   public selecting: boolean = false;
   public resizing: boolean = false;
+  public pendingDrag: { element: MemeElement; x: number; y: number } | null = null;
+  public readonly DRAG_THRESHOLD = 5; // pixels of movement before drag starts
 
   // Interaction state
   public holdingShift: boolean = false;
@@ -165,8 +167,9 @@ class MemeCanvasController {
 
       if (alreadySelected) {
         this.canvas.style.cursor = 'move';
+        // Don't start drag immediately - wait for mouse movement
+        this.pendingDrag = { element: foundElement, x, y };
         this.selectedElements.forEach((e) => {
-          this.startDrag(e, x, y);
           e.onPress(x, y);
         });
 
@@ -176,7 +179,8 @@ class MemeCanvasController {
       this.canvas.style.cursor = 'move';
       this.selectedElements = [foundElement];
       this.emit('selectedElementsChange');
-      this.startDrag(foundElement, x, y);
+      // Don't start drag immediately - wait for mouse movement
+      this.pendingDrag = { element: foundElement, x, y };
       foundElement.onPress(x, y);
       return;
     }
@@ -194,6 +198,7 @@ class MemeCanvasController {
 
     this.dragging = false;
     this.resizing = false;
+    this.pendingDrag = null;
 
     if (this.selecting === true) {
       this.selecting = false;
@@ -255,7 +260,7 @@ class MemeCanvasController {
     element.handleInteraction(Math.round(x), Math.round(y));
   }
 
-  private startDrag(element: MemeElement | null, x: number, y: number) {
+  public startDrag(element: MemeElement | null, x: number, y: number) {
     if (!element) return;
 
     this.dragging = true;

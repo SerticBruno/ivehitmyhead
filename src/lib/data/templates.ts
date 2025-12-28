@@ -17,7 +17,7 @@ import { MemeTemplate, TemplateCategory } from '../types/meme';
 export const MEME_TEMPLATES: MemeTemplate[] = [
   {
     id: 'ab',
-    name: 'AB Template',
+    name: 'AB',
     description: 'Classic three-text meme template with top left, top right, and bottom text areas',
     src: '/images/templates/ab.png',
     width: 800,
@@ -80,7 +80,7 @@ export const MEME_TEMPLATES: MemeTemplate[] = [
   },
   {
     id: 'imonceagain',
-    name: 'I\'m Once Again Template',
+    name: 'I\'m Once Again',
     description: 'Bernie Sanders template with bottom text area only',
     src: '/images/templates/imonceagain.png',
     width: 800,
@@ -111,7 +111,7 @@ export const MEME_TEMPLATES: MemeTemplate[] = [
   },
   {
     id: 'transcendenace',
-    name: 'Transcendenace Template',
+    name: 'Transcendenace',
     description: 'Template with four text areas for complex meme creation',
     src: '/images/templates/transcendenace.png',
     width: 800,

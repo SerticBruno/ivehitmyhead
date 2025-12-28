@@ -98,6 +98,20 @@ export default function registerCallbacks(
         controller.mouseX = x;
         controller.mouseY = y;
         
+        // Check for pending drag and start it if threshold is met
+        if (controller.pendingDrag && !controller.dragging && !controller.resizing) {
+          const pendingDrag = controller.pendingDrag;
+          const dx = Math.abs(x - pendingDrag.x);
+          const dy = Math.abs(y - pendingDrag.y);
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          
+          if (distance >= controller.DRAG_THRESHOLD) {
+            // Start the drag now
+            controller.startDrag(pendingDrag.element, pendingDrag.x, pendingDrag.y);
+            controller.pendingDrag = null;
+          }
+        }
+        
         // Update cursor based on what we're hovering over
         let cursor = 'default';
         if (controller.selectedElements.length === 1) {
