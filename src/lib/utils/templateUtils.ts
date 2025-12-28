@@ -229,7 +229,7 @@ export const renderTextOnCanvas = (
   
   ctx.fillStyle = field.color;
   ctx.strokeStyle = field.strokeColor || '#000000';
-  ctx.lineWidth = (field.strokeWidth || 6) * scale;
+  ctx.lineWidth = (field.strokeWidth ?? 6) * scale;
   
   if (field.textAlign === 'left') {
     ctx.textAlign = 'left';
@@ -344,7 +344,7 @@ export const renderTextForDownload = (
   
   ctx.fillStyle = field.color;
   ctx.strokeStyle = field.strokeColor || '#000000';
-  ctx.lineWidth = field.strokeWidth || 6;
+  ctx.lineWidth = field.strokeWidth ?? 6;
   
   if (field.textAlign === 'left') {
     ctx.textAlign = 'left';

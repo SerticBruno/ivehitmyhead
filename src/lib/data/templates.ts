@@ -184,6 +184,50 @@ export const MEME_TEMPLATES: MemeTemplate[] = [
     tags: ['complex', 'four-text', 'advanced'],
     category: 'advanced',
     difficulty: 'hard'
+  },
+  {
+    id: 'hotlinebling',
+    name: 'Hotline Bling',
+    description: 'Drake Hotline Bling template with two text areas - left (disapproving) and right (approving)',
+    src: '/images/templates/drakehotlinebling.png',
+    width: 800,
+    height: 600,
+    defaultFont: 'Arial',
+    defaultFontSize: 36,
+    defaultColor: '#000000',
+    textFields: [
+      {
+        id: 'left',
+        x: 55, // 10% from left
+        y: 20, // 20% from top
+        width: 35, // 35% of image width
+        height: 25, // 25% of image height
+        fontSize: 36,
+        color: '#000000',
+        fontFamily: 'Arial',
+        fontWeight: 'bold',
+        textAlign: 'center',
+        maxWidth: 40, // 40% of image width
+        strokeWidth: 0
+      },
+      {
+        id: 'right',
+        x: 55, // 55% from left (right side)
+        y: 70, // 70% from top
+        width: 35, // 35% of image width
+        height: 25, // 25% of image height
+        fontSize: 36,
+        color: '#000000',
+        fontFamily: 'Arial',
+        fontWeight: 'bold',
+        textAlign: 'center',
+        maxWidth: 40, // 40% of image width
+        strokeWidth: 0
+      }
+    ],
+    tags: ['drake', 'hotline-bling', 'two-text', 'arial-font'],
+    category: 'classic',
+    difficulty: 'easy'
   }
 ];
 

@@ -303,7 +303,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                 controllerRef.current!.updateElement(textElement, 'font_size', fontSize);
                 controllerRef.current!.updateElement(textElement, 'color', field.color || template.defaultColor || '#ffffff');
                 controllerRef.current!.updateElement(textElement, 'stroke', field.strokeColor || '#000000');
-                controllerRef.current!.updateElement(textElement, 'stroke_width', (field.strokeWidth || 6) * (canvasHeight / 600)); // Scale stroke width
+                controllerRef.current!.updateElement(textElement, 'stroke_width', ((field.strokeWidth ?? 6) * (canvasHeight / 600))); // Scale stroke width
                 
                 // Set alignment
                 if (field.textAlign) {
