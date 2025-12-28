@@ -54,7 +54,8 @@ class MemeCanvasController {
   public selecting: boolean = false;
   public resizing: boolean = false;
   public pendingDrag: { element: MemeElement; x: number; y: number } | null = null;
-  public readonly DRAG_THRESHOLD = 5; // pixels of movement before drag starts
+  public readonly DRAG_THRESHOLD = 5; // pixels of movement before drag starts (for mouse)
+  public readonly TOUCH_DRAG_THRESHOLD = 10; // pixels of movement before drag starts (for touch - larger to prevent accidental drags)
 
   // Interaction state
   public holdingShift: boolean = false;

@@ -88,6 +88,21 @@ export default function registerCallbacks(
       touchEvent(e, (x, y) => {
         controller.mouseX = x;
         controller.mouseY = y;
+        
+        // Check for pending drag and start it if threshold is met (for touch)
+        if (controller.pendingDrag && !controller.dragging && !controller.resizing) {
+          const pendingDrag = controller.pendingDrag;
+          const dx = Math.abs(x - pendingDrag.x);
+          const dy = Math.abs(y - pendingDrag.y);
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          
+          if (distance >= controller.TOUCH_DRAG_THRESHOLD) {
+            // Start the drag now
+            controller.startDrag(pendingDrag.element, pendingDrag.x, pendingDrag.y);
+            controller.pendingDrag = null;
+          }
+        }
+        
         if (controller.dragging === true || controller.resizing === true)
           controller.onDrag(x, y);
       }),

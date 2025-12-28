@@ -293,7 +293,10 @@ abstract class MemeElement<T extends Settings = Settings> {
           : getHandleSize(element.controller)
       );
       // Increase hit area for better usability - much larger hit area for easier clicking
-      const offset = size / 2 + (handle === MemeElementHandle.ROTATION_HANDLE ? 15 : 25);
+      // Even larger hit area on touch devices for better mobile interaction
+      const baseOffset = handle === MemeElementHandle.ROTATION_HANDLE ? 15 : 25;
+      const touchMultiplier = element.controller.isTouch ? 1.5 : 1;
+      const offset = size / 2 + (baseOffset * touchMultiplier);
 
       if (
         x >= handleX - offset &&
@@ -308,11 +311,13 @@ abstract class MemeElement<T extends Settings = Settings> {
   }
 
   public static intersects(element: MemeElement, x: number, y: number): boolean {
+    // Add a small padding for touch devices to make selection easier
+    const padding = element.controller.isTouch ? scaled(element.controller.canvas, 5) : 0;
     return (
-      x >= element.x &&
-      x <= element.x + element.width &&
-      y >= element.y &&
-      y <= element.y + element.height
+      x >= element.x - padding &&
+      x <= element.x + element.width + padding &&
+      y >= element.y - padding &&
+      y <= element.y + element.height + padding
     );
   }
 

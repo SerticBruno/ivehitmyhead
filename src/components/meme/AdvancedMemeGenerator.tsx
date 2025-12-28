@@ -457,7 +457,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
         flexDirection: 'column' 
       }}
     >
-      <div className="text-center mb-2 md:mb-4 flex-shrink-0 hidden md:block">
+      <div className="text-center mb-2 md:mb-4 flex-shrink-0">
         <h1 className="text-xl md:text-2xl lg:text-4xl font-bold text-gray-900 dark:text-white mb-1 md:mb-2">
           Advanced Meme Generator
         </h1>
@@ -495,7 +495,8 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                   zIndex: 1,
                   opacity: selectedTemplate ? 1 : 0,
                   pointerEvents: selectedTemplate ? 'auto' : 'none',
-                  display: 'block'
+                  display: 'block',
+                  touchAction: 'none' // Prevent default touch behaviors like scrolling/zooming
                 }}
               />
               
