@@ -90,7 +90,7 @@ export function MemeGeneratorShowcase({ screenshots = [] }: MemeGeneratorShowcas
                 
                 {/* Main image */}
                 <div 
-                  className="relative w-full h-full rounded-xl shadow-2xl overflow-hidden border-4 border-white dark:border-gray-700 bg-white dark:bg-gray-800 transition-transform duration-300 hover:scale-105 z-10"
+                  className="relative w-full h-full rounded-xl shadow-2xl overflow-hidden border-4 border-white dark:border-gray-700 bg-white dark:bg-gray-800 z-10"
                   style={{
                     transform: `rotate(${-rotation * 0.5}deg)`,
                   }}
