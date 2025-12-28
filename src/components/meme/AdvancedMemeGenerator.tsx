@@ -757,9 +757,19 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                           value={currentTextInput}
                           onChange={(e) => updateText(e.target.value)}
                           onFocus={selectElement}
-                          onClick={(e) => e.stopPropagation()}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            selectElement();
+                          }}
+                          onMouseDown={(e) => {
+                            e.stopPropagation();
+                          }}
+                          onPointerDown={(e) => {
+                            e.stopPropagation();
+                          }}
+                          tabIndex={0}
                           className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                          style={{ pointerEvents: 'auto' }}
+                          style={{ pointerEvents: 'auto', cursor: 'text' }}
                           rows={2}
                           placeholder={`Enter text for field ${index + 1}...`}
                         />
