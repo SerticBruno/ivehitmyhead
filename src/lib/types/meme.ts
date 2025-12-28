@@ -136,6 +136,11 @@ export interface TextField {
   maxWidth?: number; // percentage of image width
   strokeColor?: string; // outline color
   strokeWidth?: number; // outline width
+  shadowColor?: string; // shadow color
+  shadowBlur?: number; // shadow blur radius
+  shadowOffsetX?: number; // shadow horizontal offset
+  shadowOffsetY?: number; // shadow vertical offset
+  useShadow?: boolean; // whether to use shadow instead of stroke
   rotation?: number; // rotation in degrees
   letterSpacing?: string; // letter spacing (e.g., '0.05em')
   isDragging?: boolean;

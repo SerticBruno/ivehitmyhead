@@ -304,6 +304,14 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                 controllerRef.current!.updateElement(textElement, 'color', field.color || template.defaultColor || '#ffffff');
                 controllerRef.current!.updateElement(textElement, 'stroke', field.strokeColor || '#000000');
                 controllerRef.current!.updateElement(textElement, 'stroke_width', ((field.strokeWidth ?? 6) * (canvasHeight / 600))); // Scale stroke width
+                // Apply shadow settings if specified
+                if (field.useShadow !== undefined) {
+                  controllerRef.current!.updateElement(textElement, 'use_shadow', field.useShadow);
+                  controllerRef.current!.updateElement(textElement, 'shadow_color', field.shadowColor || '#000000');
+                  controllerRef.current!.updateElement(textElement, 'shadow_blur', (field.shadowBlur ?? 10) * (canvasHeight / 600));
+                  controllerRef.current!.updateElement(textElement, 'shadow_offset_x', (field.shadowOffsetX ?? 2) * (canvasHeight / 600));
+                  controllerRef.current!.updateElement(textElement, 'shadow_offset_y', (field.shadowOffsetY ?? 2) * (canvasHeight / 600));
+                }
                 
                 // Set alignment
                 if (field.textAlign) {
@@ -681,6 +689,10 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                   const currentTextInput = elementTextInputs[index] ?? textValue;
                   const fontSize = element.settings.font_size;
                   const strokeWidth = element.settings.stroke_width;
+                  const useShadow = element.settings.use_shadow ?? false;
+                  const shadowBlur = element.settings.shadow_blur ?? 0;
+                  const shadowOffsetX = element.settings.shadow_offset_x ?? 0;
+                  const shadowOffsetY = element.settings.shadow_offset_y ?? 0;
                   
                   const toggleExpand = () => {
                     const newExpanded = new Set(expandedElements);
@@ -981,6 +993,245 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                               />
                             </div>
                           </div>
+
+                          {/* Use Shadow Toggle */}
+                          <div>
+                            <label className="flex items-center gap-2 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={useShadow}
+                                onChange={(e) => {
+                                  if (controllerRef.current) {
+                                    controllerRef.current.updateElement(element, 'use_shadow', e.target.checked);
+                                  }
+                                }}
+                                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                              />
+                              <span className="text-xs font-medium">Use Shadow Instead of Stroke</span>
+                            </label>
+                          </div>
+
+                          {/* Shadow Controls - Only show if useShadow is true */}
+                          {useShadow && (
+                            <>
+                              {/* Shadow Color */}
+                              <div>
+                                <label className="block text-xs font-medium mb-1">Shadow Color</label>
+                                <div className="flex items-center gap-2">
+                                  <Input
+                                    type="color"
+                                    value={element.settings.shadow_color || '#000000'}
+                                    onChange={(e) => {
+                                      if (controllerRef.current) {
+                                        controllerRef.current.updateElement(element, 'shadow_color', e.target.value);
+                                      }
+                                    }}
+                                    className="w-12 h-8 cursor-pointer"
+                                  />
+                                  <Input
+                                    type="text"
+                                    value={element.settings.shadow_color || '#000000'}
+                                    onChange={(e) => {
+                                      if (controllerRef.current && /^#[0-9A-F]{6}$/i.test(e.target.value)) {
+                                        controllerRef.current.updateElement(element, 'shadow_color', e.target.value);
+                                      }
+                                    }}
+                                    placeholder="#000000"
+                                    className="flex-1 font-mono text-xs h-8"
+                                  />
+                                </div>
+                              </div>
+
+                              {/* Shadow Blur */}
+                              <div>
+                                <div className="flex items-center justify-between mb-2">
+                                  <label className="block text-xs font-medium">Shadow Blur</label>
+                                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                                    {Math.round(shadowBlur)}px
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      if (controllerRef.current) {
+                                        const newBlur = Math.max(0, shadowBlur - 1);
+                                        controllerRef.current.updateElement(element, 'shadow_blur', newBlur);
+                                      }
+                                    }}
+                                    className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-800 text-xs"
+                                  >
+                                    −
+                                  </button>
+                                  <input
+                                    type="range"
+                                    min="0"
+                                    max="50"
+                                    step="1"
+                                    value={shadowBlur}
+                                    onChange={(e) => {
+                                      if (controllerRef.current) {
+                                        controllerRef.current.updateElement(element, 'shadow_blur', Number(e.target.value));
+                                      }
+                                    }}
+                                    className="flex-1 h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      if (controllerRef.current) {
+                                        const newBlur = Math.min(50, shadowBlur + 1);
+                                        controllerRef.current.updateElement(element, 'shadow_blur', newBlur);
+                                      }
+                                    }}
+                                    className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-800 text-xs"
+                                  >
+                                    +
+                                  </button>
+                                  <Input
+                                    type="number"
+                                    min="0"
+                                    max="50"
+                                    step="1"
+                                    value={Math.round(shadowBlur)}
+                                    onChange={(e) => {
+                                      const value = Number(e.target.value);
+                                      if (!isNaN(value) && value >= 0 && value <= 50 && controllerRef.current) {
+                                        controllerRef.current.updateElement(element, 'shadow_blur', value);
+                                      }
+                                    }}
+                                    className="w-16 text-xs h-8"
+                                  />
+                                </div>
+                              </div>
+
+                              {/* Shadow Offset X */}
+                              <div>
+                                <div className="flex items-center justify-between mb-2">
+                                  <label className="block text-xs font-medium">Shadow Offset X</label>
+                                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                                    {Math.round(shadowOffsetX)}px
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      if (controllerRef.current) {
+                                        const newOffset = shadowOffsetX - 1;
+                                        controllerRef.current.updateElement(element, 'shadow_offset_x', newOffset);
+                                      }
+                                    }}
+                                    className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-800 text-xs"
+                                  >
+                                    −
+                                  </button>
+                                  <input
+                                    type="range"
+                                    min="-20"
+                                    max="20"
+                                    step="1"
+                                    value={shadowOffsetX}
+                                    onChange={(e) => {
+                                      if (controllerRef.current) {
+                                        controllerRef.current.updateElement(element, 'shadow_offset_x', Number(e.target.value));
+                                      }
+                                    }}
+                                    className="flex-1 h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      if (controllerRef.current) {
+                                        const newOffset = shadowOffsetX + 1;
+                                        controllerRef.current.updateElement(element, 'shadow_offset_x', newOffset);
+                                      }
+                                    }}
+                                    className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-800 text-xs"
+                                  >
+                                    +
+                                  </button>
+                                  <Input
+                                    type="number"
+                                    min="-20"
+                                    max="20"
+                                    step="1"
+                                    value={Math.round(shadowOffsetX)}
+                                    onChange={(e) => {
+                                      const value = Number(e.target.value);
+                                      if (!isNaN(value) && value >= -20 && value <= 20 && controllerRef.current) {
+                                        controllerRef.current.updateElement(element, 'shadow_offset_x', value);
+                                      }
+                                    }}
+                                    className="w-16 text-xs h-8"
+                                  />
+                                </div>
+                              </div>
+
+                              {/* Shadow Offset Y */}
+                              <div>
+                                <div className="flex items-center justify-between mb-2">
+                                  <label className="block text-xs font-medium">Shadow Offset Y</label>
+                                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                                    {Math.round(shadowOffsetY)}px
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      if (controllerRef.current) {
+                                        const newOffset = shadowOffsetY - 1;
+                                        controllerRef.current.updateElement(element, 'shadow_offset_y', newOffset);
+                                      }
+                                    }}
+                                    className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-800 text-xs"
+                                  >
+                                    −
+                                  </button>
+                                  <input
+                                    type="range"
+                                    min="-20"
+                                    max="20"
+                                    step="1"
+                                    value={shadowOffsetY}
+                                    onChange={(e) => {
+                                      if (controllerRef.current) {
+                                        controllerRef.current.updateElement(element, 'shadow_offset_y', Number(e.target.value));
+                                      }
+                                    }}
+                                    className="flex-1 h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      if (controllerRef.current) {
+                                        const newOffset = shadowOffsetY + 1;
+                                        controllerRef.current.updateElement(element, 'shadow_offset_y', newOffset);
+                                      }
+                                    }}
+                                    className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-800 text-xs"
+                                  >
+                                    +
+                                  </button>
+                                  <Input
+                                    type="number"
+                                    min="-20"
+                                    max="20"
+                                    step="1"
+                                    value={Math.round(shadowOffsetY)}
+                                    onChange={(e) => {
+                                      const value = Number(e.target.value);
+                                      if (!isNaN(value) && value >= -20 && value <= 20 && controllerRef.current) {
+                                        controllerRef.current.updateElement(element, 'shadow_offset_y', value);
+                                      }
+                                    }}
+                                    className="w-16 text-xs h-8"
+                                  />
+                                </div>
+                              </div>
+                            </>
+                          )}
 
                           {/* Text Alignment */}
                           <div>

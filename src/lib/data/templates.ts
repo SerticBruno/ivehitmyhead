@@ -228,6 +228,117 @@ export const MEME_TEMPLATES: MemeTemplate[] = [
     tags: ['drake', 'hotline-bling', 'two-text', 'arial-font'],
     category: 'classic',
     difficulty: 'easy'
+  },
+  {
+    id: 'runningawayballoon',
+    name: 'Running Away Balloon',
+    description: 'Running Away Balloon template with five text areas using shadow effect',
+    src: '/images/templates/runningawayballoon.png',
+    width: 800,
+    height: 600,
+    defaultFont: 'Impact',
+    defaultFontSize: 36,
+    defaultColor: '#ffffff',
+    textFields: [
+      {
+        id: 'balloon1',
+        x: 68, // 20% from left
+        y: 13, // 15% from top
+        width: 25, // 25% of image width
+        height: 12, // 12% of image height
+        fontSize: 36,
+        color: '#ffffff',
+        fontFamily: 'Impact',
+        fontWeight: 'bold',
+        textAlign: 'center',
+        maxWidth: 30, // 30% of image width
+        useShadow: true,
+        shadowColor: '#000000',
+        shadowBlur: 8,
+        shadowOffsetX: 2,
+        shadowOffsetY: 2,
+        strokeWidth: 0
+      },
+      {
+        id: 'balloon2',
+        x: 6, // 50% from left
+        y: 31, // 25% from top
+        width: 25, // 25% of image width
+        height: 12, // 12% of image height
+        fontSize: 36,
+        color: '#ffffff',
+        fontFamily: 'Impact',
+        fontWeight: 'bold',
+        textAlign: 'center',
+        maxWidth: 30, // 30% of image width
+        useShadow: true,
+        shadowColor: '#000000',
+        shadowBlur: 8,
+        shadowOffsetX: 2,
+        shadowOffsetY: 2,
+        strokeWidth: 0
+      },
+      {
+        id: 'balloon3',
+        x: 73, // 75% from left
+        y: 60, // 40% from top
+        width: 25, // 20% of image width
+        height: 12, // 12% of image height
+        fontSize: 36,
+        color: '#ffffff',
+        fontFamily: 'Impact',
+        fontWeight: 'bold',
+        textAlign: 'center',
+        maxWidth: 25, // 25% of image width
+        useShadow: true,
+        shadowColor: '#000000',
+        shadowBlur: 8,
+        shadowOffsetX: 2,
+        shadowOffsetY: 2,
+        strokeWidth: 0
+      },
+      {
+        id: 'balloon4',
+        x: 33, // 15% from left
+        y: 74, // 60% from top
+        width: 25, // 25% of image width
+        height: 12, // 12% of image height
+        fontSize: 36,
+        color: '#ffffff',
+        fontFamily: 'Impact',
+        fontWeight: 'bold',
+        textAlign: 'center',
+        maxWidth: 30, // 30% of image width
+        useShadow: true,
+        shadowColor: '#000000',
+        shadowBlur: 8,
+        shadowOffsetX: 2,
+        shadowOffsetY: 2,
+        strokeWidth: 0
+      },
+      {
+        id: 'balloon5',
+        x: 5, // 60% from left
+        y: 80, // 75% from top
+        width: 25, // 25% of image width
+        height: 12, // 12% of image height
+        fontSize: 36,
+        color: '#ffffff',
+        fontFamily: 'Impact',
+        fontWeight: 'bold',
+        textAlign: 'center',
+        maxWidth: 30, // 30% of image width
+        useShadow: true,
+        shadowColor: '#000000',
+        shadowBlur: 8,
+        shadowOffsetX: 2,
+        shadowOffsetY: 2,
+        strokeWidth: 0
+      }
+    ],
+    tags: ['running-away', 'balloon', 'five-text', 'shadow', 'impact-font'],
+    category: 'classic',
+    difficulty: 'medium'
   }
 ];
 

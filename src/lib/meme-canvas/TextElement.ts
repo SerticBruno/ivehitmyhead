@@ -17,6 +17,11 @@ export type TextElementSettings = ValidateOptions<{
   color: string;
   stroke: string;
   stroke_width: number;
+  shadow_color: string;
+  shadow_blur: number;
+  shadow_offset_x: number;
+  shadow_offset_y: number;
+  use_shadow: boolean;
   horizontal_align: Filterable<typeof HTextAlignment>;
   vertical_align: Filterable<typeof VTextAlignment>;
 }>;
@@ -38,6 +43,11 @@ class TextElement extends MemeElement<TextElementSettings> {
       color: 'white',
       stroke: 'black',
       stroke_width: scaled(controller.canvas, 3),
+      shadow_color: '#000000',
+      shadow_blur: 0,
+      shadow_offset_x: 0,
+      shadow_offset_y: 0,
+      use_shadow: false,
       horizontal_align: {
         valid: HTextAlignment,
         current: 'center',
@@ -150,8 +160,24 @@ class TextElement extends MemeElement<TextElementSettings> {
   public override draw(): void {
     this.ctx.font = this.buildFont();
     this.ctx.fillStyle = this.settings.color.replaceAll('none', 'transparent');
-    this.ctx.strokeStyle = this.settings.stroke.replaceAll('none', 'transparent');
-    this.ctx.lineWidth = this.settings.stroke_width;
+    
+    // Set shadow or stroke based on use_shadow setting
+    if (this.settings.use_shadow) {
+      this.ctx.shadowColor = this.settings.shadow_color.replaceAll('none', 'transparent');
+      this.ctx.shadowBlur = this.settings.shadow_blur;
+      this.ctx.shadowOffsetX = this.settings.shadow_offset_x;
+      this.ctx.shadowOffsetY = this.settings.shadow_offset_y;
+      // Clear stroke when using shadow
+      this.ctx.lineWidth = 0;
+    } else {
+      this.ctx.strokeStyle = this.settings.stroke.replaceAll('none', 'transparent');
+      this.ctx.lineWidth = this.settings.stroke_width;
+      // Clear shadow when using stroke
+      this.ctx.shadowColor = 'transparent';
+      this.ctx.shadowBlur = 0;
+      this.ctx.shadowOffsetX = 0;
+      this.ctx.shadowOffsetY = 0;
+    }
 
     // Calculate text area (element size minus padding)
     const textAreaWidth = this._width - this.PADDING * 2;
@@ -187,7 +213,10 @@ class TextElement extends MemeElement<TextElementSettings> {
         this.ctx.textAlign = 'left';
       }
       
-      this.ctx.strokeText(line, x, y);
+      // Draw stroke first (if not using shadow), then fill
+      if (!this.settings.use_shadow && this.settings.stroke_width > 0) {
+        this.ctx.strokeText(line, x, y);
+      }
       this.ctx.fillText(line, x, y);
     });
   }

@@ -228,8 +228,22 @@ export const renderTextOnCanvas = (
   }
   
   ctx.fillStyle = field.color;
-  ctx.strokeStyle = field.strokeColor || '#000000';
-  ctx.lineWidth = (field.strokeWidth ?? 6) * scale;
+  
+  // Set shadow or stroke based on useShadow setting
+  if (field.useShadow) {
+    ctx.shadowColor = field.shadowColor || '#000000';
+    ctx.shadowBlur = (field.shadowBlur ?? 10) * scale;
+    ctx.shadowOffsetX = (field.shadowOffsetX ?? 2) * scale;
+    ctx.shadowOffsetY = (field.shadowOffsetY ?? 2) * scale;
+    ctx.lineWidth = 0;
+  } else {
+    ctx.strokeStyle = field.strokeColor || '#000000';
+    ctx.lineWidth = (field.strokeWidth ?? 6) * scale;
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 0;
+  }
   
   if (field.textAlign === 'left') {
     ctx.textAlign = 'left';
@@ -307,7 +321,10 @@ export const renderTextOnCanvas = (
   
   wrappedLines.forEach((line, index) => {
     const lineY = startY + (index * lineHeight);
-    ctx.strokeText(line, lineX, lineY);
+    // Draw stroke first (if not using shadow), then fill
+    if (!field.useShadow && (field.strokeWidth ?? 6) > 0) {
+      ctx.strokeText(line, lineX, lineY);
+    }
     ctx.fillText(line, lineX, lineY);
   });
   
@@ -343,8 +360,22 @@ export const renderTextForDownload = (
   }
   
   ctx.fillStyle = field.color;
-  ctx.strokeStyle = field.strokeColor || '#000000';
-  ctx.lineWidth = field.strokeWidth ?? 6;
+  
+  // Set shadow or stroke based on useShadow setting
+  if (field.useShadow) {
+    ctx.shadowColor = field.shadowColor || '#000000';
+    ctx.shadowBlur = field.shadowBlur ?? 10;
+    ctx.shadowOffsetX = field.shadowOffsetX ?? 2;
+    ctx.shadowOffsetY = field.shadowOffsetY ?? 2;
+    ctx.lineWidth = 0;
+  } else {
+    ctx.strokeStyle = field.strokeColor || '#000000';
+    ctx.lineWidth = field.strokeWidth ?? 6;
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 0;
+  }
   
   if (field.textAlign === 'left') {
     ctx.textAlign = 'left';
@@ -422,7 +453,10 @@ export const renderTextForDownload = (
   
   wrappedLines.forEach((line, index) => {
     const lineY = startY + (index * lineHeight);
-    ctx.strokeText(line, lineX, lineY);
+    // Draw stroke first (if not using shadow), then fill
+    if (!field.useShadow && (field.strokeWidth ?? 6) > 0) {
+      ctx.strokeText(line, lineX, lineY);
+    }
     ctx.fillText(line, lineX, lineY);
   });
   
