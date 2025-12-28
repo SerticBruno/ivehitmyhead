@@ -285,6 +285,26 @@ abstract class MemeElement<T extends Settings = Settings> {
       MemeElementHandle.BOTTOM_RIGHT,
     ];
 
+    // Transform click coordinates to element's local coordinate system if rotated
+    let localX = x;
+    let localY = y;
+    
+    if (element.rotation !== 0) {
+      const centerX = element.x + element.width / 2;
+      const centerY = element.y + element.height / 2;
+      const angleRad = -(element.rotation * Math.PI) / 180; // Negative for inverse rotation
+      const cos = Math.cos(angleRad);
+      const sin = Math.sin(angleRad);
+      
+      // Translate to origin (center of element)
+      const dx = x - centerX;
+      const dy = y - centerY;
+      
+      // Apply inverse rotation
+      localX = dx * cos - dy * sin + centerX;
+      localY = dx * sin + dy * cos + centerY;
+    }
+
     for (const handle of handles) {
       const { x: handleX, y: handleY } = getHandlePos(element, handle);
       const size = Math.round(
@@ -298,13 +318,15 @@ abstract class MemeElement<T extends Settings = Settings> {
       const touchMultiplier = element.controller.isTouch ? 1.5 : 1;
       const offset = size / 2 + (baseOffset * touchMultiplier);
 
-      if (
-        x >= handleX - offset &&
-        x <= handleX + offset &&
-        y >= handleY - offset &&
-        y <= handleY + offset
-      )
+      // All handles are drawn in the rotated coordinate system, so check in local space
+      // Use distance calculation for more accurate hit detection with rotation
+      const dx = localX - handleX;
+      const dy = localY - handleY;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      
+      if (distance <= offset) {
         return handle;
+      }
     }
 
     return null;
