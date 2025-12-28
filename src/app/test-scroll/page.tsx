@@ -7,7 +7,7 @@ interface ScrollRestorationDemoProps {
   pageKey: string;
 }
 
-export const ScrollRestorationDemo: React.FC<ScrollRestorationDemoProps> = ({ pageKey }) => {
+const ScrollRestorationDemo: React.FC<ScrollRestorationDemoProps> = ({ pageKey }) => {
   const [items, setItems] = useState<number[]>([]);
   const [loading, setLoading] = useState(false);
 
