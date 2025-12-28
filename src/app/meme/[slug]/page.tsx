@@ -109,9 +109,16 @@ export default function MemeDetailPage() {
     if (slug) {
       fetchMeme();
     }
-  }, [slug, recordView, checkLikeStatus, memesState.memes]);
+    // Reset the view recording flag when slug changes
+    hasRecordedView.current = false;
+  }, [slug, recordView, checkLikeStatus]);
 
-  const handleLike = async () => {
+  const handleLike = async (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
     if (!meme || isLiking) return;
     
     try {
@@ -150,7 +157,12 @@ export default function MemeDetailPage() {
     }
   };
 
-  const handleShare = async () => {
+  const handleShare = async (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
     if (!meme) return;
     
     // Only update the counter if the share was actually successful
@@ -293,6 +305,7 @@ export default function MemeDetailPage() {
                 <div className="flex items-center space-x-4">
                   {/* Like Button */}
                   <button
+                    type="button"
                     onClick={handleLike}
                     disabled={isCheckingLikeStatus || isLiking}
                     className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-200 ${
@@ -315,6 +328,7 @@ export default function MemeDetailPage() {
                   
                   {/* Share Button */}
                   <button
+                    type="button"
                     onClick={handleShare}
                     className="flex items-center space-x-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                   >
