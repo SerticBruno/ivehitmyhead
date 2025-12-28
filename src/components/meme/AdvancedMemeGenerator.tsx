@@ -10,6 +10,7 @@ import { Download, Plus, Trash2, Type, ChevronDown, ChevronUp } from 'lucide-rea
 import { MEME_TEMPLATES } from '@/lib/data/templates';
 import type { MemeTemplate } from '@/lib/types/meme';
 import type { TextField } from '@/lib/types/meme';
+import { useNavigationWarning } from '@/lib/contexts/NavigationWarningContext';
 
 interface AdvancedMemeGeneratorProps {
   templates?: MemeTemplate[];
@@ -32,6 +33,10 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
   const [updateCounter, setUpdateCounter] = useState(0); // Force re-render when element updates
   const [expandedElements, setExpandedElements] = useState<Set<number>>(new Set());
   const [elementTextInputs, setElementTextInputs] = useState<Record<number, string>>({});
+  const [isDirty, setIsDirty] = useState(false);
+  const [initialTemplateState, setInitialTemplateState] = useState<string>('');
+  const [isLoadingTemplate, setIsLoadingTemplate] = useState(false);
+  const { setDirty: setNavigationDirty } = useNavigationWarning();
 
   // Initialize canvas - re-run when canvas becomes available
   useEffect(() => {
@@ -133,9 +138,106 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
     };
   }, []);
 
+  // Helper to mark as dirty
+  const markDirty = useCallback(() => {
+    // Don't mark as dirty during template loading or if we don't have an initial state
+    if (isLoadingTemplate || !initialTemplateState) return;
+    
+    if (selectedTemplate && controllerRef.current) {
+      const elements = controllerRef.current.elements.filter(
+        (e) => e instanceof TextElement
+      ) as TextElement[];
+      const currentState = JSON.stringify({
+        templateId: selectedTemplate.id,
+        elements: elements.map(el => ({
+          text: el.settings.text.value,
+          x: el.x,
+          y: el.y,
+          width: el.width,
+          height: el.height,
+          fontSize: el.settings.font_size,
+          fontFamily: el.settings.font_family,
+          color: el.settings.color,
+          stroke: el.settings.stroke,
+          strokeWidth: el.settings.stroke_width,
+          alignment: el.settings.horizontal_align.current
+        }))
+      });
+      const dirty = currentState !== initialTemplateState;
+      setIsDirty(dirty);
+      setNavigationDirty(dirty);
+    }
+  }, [selectedTemplate, initialTemplateState, setNavigationDirty, isLoadingTemplate]);
+
+  // Mark as dirty when elements are updated
+  useEffect(() => {
+    if (!controllerRef.current || !selectedTemplate) return;
+
+    const handleElementsUpdated = () => {
+      markDirty();
+    };
+
+    controllerRef.current.listen('elementsUpdated', handleElementsUpdated);
+  }, [markDirty, selectedTemplate]);
+
+  // Check if user has unsaved changes and confirm before proceeding
+  const checkDirtyAndProceed = useCallback((action: () => void) => {
+    // Don't check if we're currently loading a template
+    if (isLoadingTemplate) {
+      action();
+      return true;
+    }
+
+    // Actually verify if there are changes by comparing states
+    let actuallyDirty = false;
+    if (selectedTemplate && controllerRef.current && initialTemplateState) {
+      const elements = controllerRef.current.elements.filter(
+        (e) => e instanceof TextElement
+      ) as TextElement[];
+      const currentState = JSON.stringify({
+        templateId: selectedTemplate.id,
+        elements: elements.map(el => ({
+          text: el.settings.text.value,
+          x: el.x,
+          y: el.y,
+          width: el.width,
+          height: el.height,
+          fontSize: el.settings.font_size,
+          fontFamily: el.settings.font_family,
+          color: el.settings.color,
+          stroke: el.settings.stroke,
+          strokeWidth: el.settings.stroke_width,
+          alignment: el.settings.horizontal_align.current
+        }))
+      });
+      actuallyDirty = currentState !== initialTemplateState;
+    }
+
+    if (actuallyDirty) {
+      const confirmed = window.confirm(
+        'You have unsaved changes. Are you sure you want to proceed? Your changes will be lost.'
+      );
+      if (!confirmed) {
+        return false;
+      }
+    }
+    action();
+    return true;
+  }, [isDirty, isLoadingTemplate, selectedTemplate, initialTemplateState]);
+
   // Load template image and create text elements from template
   const loadTemplate = useCallback(
-    (template: MemeTemplate) => {
+    (template: MemeTemplate, skipConfirm = false) => {
+      // Check for unsaved changes unless explicitly skipping confirmation
+      if (!skipConfirm && !checkDirtyAndProceed(() => {})) {
+        return;
+      }
+
+      // Immediately reset dirty state when starting to load a new template
+      setIsDirty(false);
+      setNavigationDirty(false);
+      setIsLoadingTemplate(true);
+
       // Helper function to actually load the template
       const doLoadTemplate = () => {
         if (!controllerRef.current) {
@@ -150,6 +252,9 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
           if (!controllerRef.current) return;
           controllerRef.current.changeImage(img);
           setSelectedTemplate(template);
+          // Dirty state already reset above, just ensure it stays false
+          setIsDirty(false);
+          setNavigationDirty(false);
 
           // Clear existing elements
           controllerRef.current.clear();
@@ -240,6 +345,25 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                   newInputs[idx] = el.settings.text.value || '';
                 });
                 setElementTextInputs(newInputs);
+                // Set initial state after all elements are created - this is the baseline
+                setInitialTemplateState(JSON.stringify({
+                  templateId: template.id,
+                  elements: elements.map(el => ({
+                    text: el.settings.text.value,
+                    x: el.x,
+                    y: el.y,
+                    width: el.width,
+                    height: el.height,
+                    fontSize: el.settings.font_size,
+                    fontFamily: el.settings.font_family,
+                    color: el.settings.color,
+                    stroke: el.settings.stroke,
+                    strokeWidth: el.settings.stroke_width,
+                    alignment: el.settings.horizontal_align.current
+                  }))
+                }));
+                // Mark loading as complete - now we can track changes
+                setIsLoadingTemplate(false);
               }, 150);
             }, 100);
           }
@@ -252,7 +376,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
       
       doLoadTemplate();
     },
-    []
+    [checkDirtyAndProceed]
   );
 
   // Add text element
@@ -408,7 +532,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
 
         {/* Right side - Controls */}
         <div className="flex flex-col min-h-0 flex-1" style={{ minWidth: 0, maxWidth: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-          <div className="space-y-4 overflow-y-auto flex-1 min-h-0 pb-4" style={{ flex: '1 1 0%', minHeight: 0, overflowY: 'auto', overflowX: 'hidden', WebkitOverflowScrolling: 'touch' }}>
+          <div className="space-y-4 overflow-y-auto flex-1 min-h-0 pb-4 custom-scrollbar" style={{ flex: '1 1 0%', minHeight: 0, overflowY: 'auto', overflowX: 'hidden', WebkitOverflowScrolling: 'touch' }}>
           {/* Template selection */}
           <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-4 border border-gray-200 dark:border-gray-800">
             <h2 className="text-lg font-semibold mb-4">Templates</h2>
@@ -587,6 +711,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                         value: newText,
                         multiline: true,
                       });
+                      // Mark as dirty when text is updated (will be checked in elementsUpdated listener)
                     }
                   };
 
