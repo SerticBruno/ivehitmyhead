@@ -31,9 +31,10 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
   const [allTextElements, setAllTextElements] = useState<TextElement[]>([]);
   const [updateCounter, setUpdateCounter] = useState(0); // Force re-render when element updates
 
-  // Initialize canvas
+  // Initialize canvas - re-run when canvas becomes available
   useEffect(() => {
     if (!canvasRef.current) return;
+    if (controllerRef.current) return; // Already initialized
 
     const controller = new MemeCanvasController();
     const unregister = controller.init(canvasRef.current);
@@ -108,101 +109,110 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
   // Load template image and create text elements from template
   const loadTemplate = useCallback(
     (template: MemeTemplate) => {
-      if (!controllerRef.current) return;
-
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.onload = () => {
-        if (!controllerRef.current) return;
-        controllerRef.current.changeImage(img);
-        setSelectedTemplate(template);
-
-        // Clear existing elements
-        controllerRef.current.clear();
-
-        // Create text elements from template textFields
-        if (template.textFields && template.textFields.length > 0) {
-          // Wait for canvas to be ready
-          setTimeout(() => {
-            if (!controllerRef.current) return;
-
-            const canvas = controllerRef.current.canvas;
-            const canvasWidth = canvas.width;
-            const canvasHeight = canvas.height;
-
-            template.textFields.forEach((field: any) => {
-              // Convert percentage positions to pixel positions
-              const x = (field.x / 100) * canvasWidth;
-              const y = (field.y / 100) * canvasHeight;
-              const width = (field.width / 100) * canvasWidth;
-              const height = (field.height / 100) * canvasHeight;
-              
-              // Convert fontSize from pixels (for base 600px height) to actual canvas pixels
-              // fontSize in template is in pixels for a 600px high image
-              const fontSize = field.fontSize * (canvasHeight / 600);
-
-              // Create text element
-              if (!controllerRef.current) return;
-              const textElement = new TextElement(controllerRef.current);
-              
-              // Set size FIRST before any other operations to prevent shifting
-              // Force the width/height to match template
-              textElement.width = Math.max(Math.round(width), 50);
-              textElement.height = Math.max(Math.round(height), 30);
-              // Mark that size has been set by template (prevents auto-resize)
-              textElement.markSizeAsUserSet();
-              
-              // Set position AFTER size is set
-              textElement.x = Math.round(x);
-              textElement.y = Math.round(y);
-              
-              // Set text properties (text will wrap within the set size)
-              // Add placeholder text based on field index (Text 1, Text 2, etc.)
-              const fieldIndex = template.textFields.indexOf(field);
-              const placeholderText = `Text ${fieldIndex + 1}`;
-              
-              controllerRef.current!.updateElement(textElement, 'text', {
-                value: placeholderText,
-                multiline: true,
-              });
-              
-              controllerRef.current!.updateElement(textElement, 'font_family', field.fontFamily || template.defaultFont || 'Impact');
-              controllerRef.current!.updateElement(textElement, 'font_size', fontSize);
-              controllerRef.current!.updateElement(textElement, 'color', field.color || template.defaultColor || '#ffffff');
-              controllerRef.current!.updateElement(textElement, 'stroke', field.strokeColor || '#000000');
-              controllerRef.current!.updateElement(textElement, 'stroke_width', (field.strokeWidth || 6) * (canvasHeight / 600)); // Scale stroke width
-              
-              // Set alignment
-              if (field.textAlign) {
-                const alignMap: Record<string, 'left' | 'center' | 'right'> = {
-                  left: 'left',
-                  center: 'center',
-                  right: 'right',
-                };
-                controllerRef.current!.updateElement(textElement, 'horizontal_align', {
-                  valid: ['left', 'center', 'right'] as const,
-                  current: alignMap[field.textAlign] || 'center',
-                });
-              }
-              
-              // Set rotation if specified
-              if (field.rotation) {
-                textElement.rotation = field.rotation;
-              }
-
-              // Add to controller
-              controllerRef.current!.addElement(textElement);
-            });
-
-            controllerRef.current!.emit('elementsListChanged');
-            controllerRef.current!.requestFrame();
-          }, 100);
+      // Helper function to actually load the template
+      const doLoadTemplate = () => {
+        if (!controllerRef.current) {
+          console.warn('Canvas controller not initialized yet, retrying...');
+          setTimeout(doLoadTemplate, 100);
+          return;
         }
+
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+          if (!controllerRef.current) return;
+          controllerRef.current.changeImage(img);
+          setSelectedTemplate(template);
+
+          // Clear existing elements
+          controllerRef.current.clear();
+
+          // Create text elements from template textFields
+          if (template.textFields && template.textFields.length > 0) {
+            // Wait for canvas to be ready
+            setTimeout(() => {
+              if (!controllerRef.current) return;
+
+              const canvas = controllerRef.current.canvas;
+              const canvasWidth = canvas.width;
+              const canvasHeight = canvas.height;
+
+              template.textFields.forEach((field: any) => {
+                // Convert percentage positions to pixel positions
+                const x = (field.x / 100) * canvasWidth;
+                const y = (field.y / 100) * canvasHeight;
+                const width = (field.width / 100) * canvasWidth;
+                const height = (field.height / 100) * canvasHeight;
+                
+                // Convert fontSize from pixels (for base 600px height) to actual canvas pixels
+                // fontSize in template is in pixels for a 600px high image
+                const fontSize = field.fontSize * (canvasHeight / 600);
+
+                // Create text element
+                if (!controllerRef.current) return;
+                const textElement = new TextElement(controllerRef.current);
+                
+                // Set size FIRST before any other operations to prevent shifting
+                // Force the width/height to match template
+                textElement.width = Math.max(Math.round(width), 50);
+                textElement.height = Math.max(Math.round(height), 30);
+                // Mark that size has been set by template (prevents auto-resize)
+                textElement.markSizeAsUserSet();
+                
+                // Set position AFTER size is set
+                textElement.x = Math.round(x);
+                textElement.y = Math.round(y);
+                
+                // Set text properties (text will wrap within the set size)
+                // Add placeholder text based on field index (Text 1, Text 2, etc.)
+                const fieldIndex = template.textFields.indexOf(field);
+                const placeholderText = `Text ${fieldIndex + 1}`;
+                
+                controllerRef.current!.updateElement(textElement, 'text', {
+                  value: placeholderText,
+                  multiline: true,
+                });
+                
+                controllerRef.current!.updateElement(textElement, 'font_family', field.fontFamily || template.defaultFont || 'Impact');
+                controllerRef.current!.updateElement(textElement, 'font_size', fontSize);
+                controllerRef.current!.updateElement(textElement, 'color', field.color || template.defaultColor || '#ffffff');
+                controllerRef.current!.updateElement(textElement, 'stroke', field.strokeColor || '#000000');
+                controllerRef.current!.updateElement(textElement, 'stroke_width', (field.strokeWidth || 6) * (canvasHeight / 600)); // Scale stroke width
+                
+                // Set alignment
+                if (field.textAlign) {
+                  const alignMap: Record<string, 'left' | 'center' | 'right'> = {
+                    left: 'left',
+                    center: 'center',
+                    right: 'right',
+                  };
+                  controllerRef.current!.updateElement(textElement, 'horizontal_align', {
+                    valid: ['left', 'center', 'right'] as const,
+                    current: alignMap[field.textAlign] || 'center',
+                  });
+                }
+                
+                // Set rotation if specified
+                if (field.rotation) {
+                  textElement.rotation = field.rotation;
+                }
+
+                // Add to controller
+                controllerRef.current!.addElement(textElement);
+              });
+
+              controllerRef.current!.emit('elementsListChanged');
+              controllerRef.current!.requestFrame();
+            }, 100);
+          }
+        };
+        img.onerror = () => {
+          console.error('Failed to load template image:', template.src);
+        };
+        img.src = template.src;
       };
-      img.onerror = () => {
-        console.error('Failed to load template image:', template.src);
-      };
-      img.src = template.src;
+      
+      doLoadTemplate();
     },
     []
   );
@@ -254,7 +264,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
   }, [textInput, selectedElement, showTextInput, updateText]);
 
   return (
-    <div className="max-w-7xl mx-auto p-4" style={{ maxHeight: '100vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+    <div className="max-w-7xl mx-auto p-4" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <div className="text-center mb-4 flex-shrink-0">
         <h1 className="text-2xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2">
           Advanced Meme Generator
@@ -264,24 +274,24 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
         </p>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-4 flex-1 min-h-0" style={{ height: '100%', overflow: 'hidden' }}>
+      <div className="flex flex-col lg:flex-row gap-4 flex-1" style={{ minHeight: 'calc(100vh - 120px)' }}>
         {/* Left side - Canvas */}
-        <div className="flex flex-col min-h-0 flex-[2]" style={{ height: '100%', overflow: 'hidden', minWidth: 0 }}>
-          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-4 border border-gray-200 dark:border-gray-800 flex-1 flex flex-col min-h-0" style={{ height: '100%', overflow: 'hidden' }}>
+        <div className="flex flex-col flex-[2]" style={{ minHeight: 'calc(100vh - 120px)', minWidth: 0 }}>
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-4 border border-gray-200 dark:border-gray-800 flex-1 flex flex-col" style={{ minHeight: 'calc(100vh - 180px)' }}>
             <div 
-              className="flex justify-center items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-4 overflow-auto flex-1 min-h-0" 
+              className="flex justify-center items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-4 overflow-auto flex-1" 
               style={{ 
-                height: '100%', 
+                minHeight: 'calc(100vh - 240px)',
                 width: '100%',
-                position: 'relative',
-                flexShrink: 0
+                position: 'relative'
               }}
             >
+              {/* Canvas - always rendered for proper initialization */}
               <canvas
                 ref={canvasRef}
                 className="border border-gray-300 dark:border-gray-700 rounded"
                 style={{ 
-                  display: 'block', 
+                  display: selectedTemplate ? 'block' : 'none',
                   maxWidth: 'calc(100% - 0px)', 
                   maxHeight: 'calc(100% - 0px)', 
                   height: 'auto',
@@ -291,11 +301,65 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                   flexShrink: 0
                 }}
               />
+              
+              {/* Placeholder overlay when no template is selected */}
+              {!selectedTemplate && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8 max-w-md mx-auto z-10">
+                  <div className="w-24 h-24 mb-4 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                    <svg
+                      className="w-12 h-12 text-gray-400 dark:text-gray-500"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                    No Template Selected
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-400 mb-4">
+                    Choose a template from the right panel to start creating your meme
+                  </p>
+                  <div className="flex flex-wrap gap-2 justify-center">
+                    {templates.slice(0, 3).map((template) => (
+                      <button
+                        key={template.id}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          loadTemplate(template);
+                          setIsTemplateDropdownOpen(false);
+                        }}
+                        className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+                      >
+                        <img
+                          src={template.src}
+                          alt={template.name}
+                          className="w-8 h-8 object-cover rounded"
+                        />
+                        <span className="text-sm font-medium text-gray-900 dark:text-white">
+                          {template.name}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Canvas controls */}
             <div className="mt-4 flex gap-2 flex-wrap flex-shrink-0">
-              <Button onClick={addText} variant="outline" size="sm">
+              <Button 
+                onClick={addText} 
+                variant="outline" 
+                size="sm"
+                disabled={!selectedTemplate}
+              >
                 <Plus className="w-4 h-4 mr-2" />
                 Add Text
               </Button>
@@ -366,34 +430,53 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                     onClick={() => setIsTemplateDropdownOpen(false)}
                   />
                   <div className="absolute z-20 w-full mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-96 overflow-y-auto">
-                    {templates.map((template) => (
-                      <button
-                        key={template.id}
-                        onClick={() => {
-                          loadTemplate(template);
-                          setIsTemplateDropdownOpen(false);
-                        }}
-                        className={`w-full flex items-center gap-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
-                          selectedTemplate?.id === template.id
-                            ? 'bg-blue-50 dark:bg-blue-900/20'
-                            : ''
-                        }`}
-                      >
-                        <img
-                          src={template.src}
-                          alt={template.name}
-                          className="w-16 h-16 object-cover rounded flex-shrink-0"
-                        />
-                        <div className="flex-1 text-left min-w-0">
-                          <div className="font-medium truncate">{template.name}</div>
-                          {template.description && (
-                            <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                              {template.description}
+                    {templates.length === 0 ? (
+                      <div className="p-4 text-center text-gray-500 dark:text-gray-400">
+                        No templates available
+                      </div>
+                    ) : (
+                      templates.map((template) => (
+                        <button
+                          key={template.id}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            loadTemplate(template);
+                            setIsTemplateDropdownOpen(false);
+                          }}
+                          className={`w-full flex items-center gap-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border-b border-gray-100 dark:border-gray-700 last:border-b-0 ${
+                            selectedTemplate?.id === template.id
+                              ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
+                              : ''
+                          }`}
+                        >
+                          <img
+                            src={template.src}
+                            alt={template.name}
+                            className="w-16 h-16 object-cover rounded flex-shrink-0 border border-gray-200 dark:border-gray-600"
+                            onError={(e) => {
+                              // Fallback if image fails to load
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                            }}
+                          />
+                          <div className="flex-1 text-left min-w-0">
+                            <div className="font-medium truncate text-gray-900 dark:text-white">
+                              {template.name}
                             </div>
-                          )}
-                        </div>
-                      </button>
-                    ))}
+                            {template.description && (
+                              <div className="text-sm text-gray-500 dark:text-gray-400 truncate mt-0.5">
+                                {template.description}
+                              </div>
+                            )}
+                            {selectedTemplate?.id === template.id && (
+                              <div className="text-xs text-blue-600 dark:text-blue-400 mt-0.5">
+                                Selected
+                              </div>
+                            )}
+                          </div>
+                        </button>
+                      ))
+                    )}
                   </div>
                 </>
               )}
