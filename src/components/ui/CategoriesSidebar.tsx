@@ -147,7 +147,7 @@ export const FiltersAndSorting: React.FC<FiltersAndSortingProps> = ({
         <div className="flex justify-between gap-2">
           <button
             onClick={() => handleTimePeriodChange('today')}
-            className={`flex flex-col items-center px-3 py-3 text-xs font-medium rounded-lg min-w-[60px] border-2 ${
+            className={`flex flex-col items-center px-3 py-3 text-xs font-medium rounded-lg min-w-[60px] border-2 cursor-pointer ${
               selectedTimePeriod === 'today'
                 ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-500 shadow-sm"
                 : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 hover:shadow-sm border-transparent"
@@ -157,7 +157,7 @@ export const FiltersAndSorting: React.FC<FiltersAndSortingProps> = ({
           </button>
           <button
             onClick={() => handleTimePeriodChange('week')}
-            className={`flex flex-col items-center px-3 py-3 text-xs font-medium rounded-lg min-w-[60px] border-2 ${
+            className={`flex flex-col items-center px-3 py-3 text-xs font-medium rounded-lg min-w-[60px] border-2 cursor-pointer ${
               selectedTimePeriod === 'week'
                 ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-500 shadow-sm"
                 : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 hover:shadow-sm border-transparent"
@@ -167,7 +167,7 @@ export const FiltersAndSorting: React.FC<FiltersAndSortingProps> = ({
           </button>
           <button
             onClick={() => handleTimePeriodChange('month')}
-            className={`flex flex-col items-center px-3 py-3 text-xs font-medium rounded-lg min-w-[60px] border-2 ${
+            className={`flex flex-col items-center px-3 py-3 text-xs font-medium rounded-lg min-w-[60px] border-2 cursor-pointer ${
               selectedTimePeriod === 'month'
                 ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-500 shadow-sm"
                 : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 hover:shadow-sm border-transparent"
@@ -177,7 +177,7 @@ export const FiltersAndSorting: React.FC<FiltersAndSortingProps> = ({
           </button>
           <button
             onClick={() => handleTimePeriodChange('all')}
-            className={`flex flex-col items-center px-3 py-3 text-xs font-medium rounded-lg min-w-[60px] border-2 ${
+            className={`flex flex-col items-center px-3 py-3 text-xs font-medium rounded-lg min-w-[60px] border-2 cursor-pointer ${
               selectedTimePeriod === 'all'
                 ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-500 shadow-sm"
                 : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 hover:shadow-sm border-transparent"
@@ -194,7 +194,7 @@ export const FiltersAndSorting: React.FC<FiltersAndSortingProps> = ({
         <div className="flex justify-between gap-2">
           <button
             onClick={() => handleFilterChange('hottest')}
-            className={`flex flex-col items-center px-3 py-3 text-xs font-medium rounded-lg flex-1 border-2 ${
+            className={`flex flex-col items-center px-3 py-3 text-xs font-medium rounded-lg flex-1 border-2 cursor-pointer ${
               selectedFilter === 'hottest'
                 ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-500 shadow-sm"
                 : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 hover:shadow-sm border-transparent"
@@ -204,7 +204,7 @@ export const FiltersAndSorting: React.FC<FiltersAndSortingProps> = ({
           </button>
           <button
             onClick={() => handleFilterChange('trending')}
-            className={`flex flex-col items-center px-3 py-3 text-xs font-medium rounded-lg flex-1 border-2 ${
+            className={`flex flex-col items-center px-3 py-3 text-xs font-medium rounded-lg flex-1 border-2 cursor-pointer ${
               selectedFilter === 'trending'
                 ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-500 shadow-sm"
                 : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 hover:shadow-sm border-transparent"
@@ -214,7 +214,7 @@ export const FiltersAndSorting: React.FC<FiltersAndSortingProps> = ({
           </button>
           <button
             onClick={() => handleFilterChange('newest')}
-            className={`flex flex-col items-center px-3 py-3 text-xs font-medium rounded-lg flex-1 border-2 ${
+            className={`flex flex-col items-center px-3 py-3 text-xs font-medium rounded-lg flex-1 border-2 cursor-pointer ${
               selectedFilter === 'newest'
                 ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-500 shadow-sm"
                 : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 hover:shadow-sm border-transparent"
@@ -233,7 +233,7 @@ export const FiltersAndSorting: React.FC<FiltersAndSortingProps> = ({
             {/* All Categories Option */}
             <button
               onClick={() => handleCategorySelect('')}
-              className={`w-full flex items-center px-3 py-3 text-sm font-medium rounded-lg border-2 ${
+              className={`w-full flex items-center px-3 py-3 text-sm font-medium rounded-lg border-2 cursor-pointer ${
                 !selectedCategory 
                   ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-500 shadow-sm"
                   : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 hover:shadow-sm border-transparent"
@@ -254,7 +254,7 @@ export const FiltersAndSorting: React.FC<FiltersAndSortingProps> = ({
                 <button
                   key={category.id}
                   onClick={() => handleCategorySelect(category.id)}
-                  className={`w-full flex items-center px-3 py-3 text-sm font-medium rounded-lg border-2 ${
+                  className={`w-full flex items-center px-3 py-3 text-sm font-medium rounded-lg border-2 cursor-pointer ${
                     isSelected 
                       ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-500 shadow-sm"
                       : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 hover:shadow-sm border-transparent"

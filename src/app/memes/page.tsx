@@ -679,7 +679,7 @@ export default function MemesPage() {
                       <button
                         key={period.value}
                         onClick={() => handleTimePeriodChange(period.value)}
-                        className={`flex flex-col items-center p-3 rounded-md transition-colors duration-150 ${
+                        className={`flex flex-col items-center p-3 rounded-md transition-colors duration-150 cursor-pointer ${
                           memesState.filters.time_period === period.value
                             ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300"
                             : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
@@ -714,7 +714,7 @@ export default function MemesPage() {
                       <button
                         key={filter.value}
                         onClick={() => handleFilterChange(filter.value)}
-                        className={`flex flex-col items-center p-3 rounded-md transition-colors duration-150 ${
+                        className={`flex flex-col items-center p-3 rounded-md transition-colors duration-150 cursor-pointer ${
                           memesState.filters.filter === filter.value
                             ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300"
                             : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
@@ -736,7 +736,7 @@ export default function MemesPage() {
                 <div className="flex flex-wrap gap-2">
                   <button
                     onClick={() => handleCategorySelect('')}
-                    className={`px-3 py-2 text-sm font-medium rounded-md transition-colors duration-150 ${
+                    className={`px-3 py-2 text-sm font-medium rounded-md transition-colors duration-150 cursor-pointer ${
                       !memesState.filters.category_id 
                         ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300"
                         : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
@@ -755,7 +755,7 @@ export default function MemesPage() {
                       <button
                         key={category.id}
                         onClick={() => handleCategorySelect(category.id)}
-                        className={`px-3 py-2 text-sm font-medium rounded-md transition-colors duration-150 ${
+                        className={`px-3 py-2 text-sm font-medium rounded-md transition-colors duration-150 cursor-pointer ${
                           memesState.filters.category_id === category.id 
                             ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300"
                             : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
