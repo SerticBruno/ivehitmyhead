@@ -50,11 +50,6 @@ const Footer: React.FC = () => {
                   Upload Meme
                 </Link>
               </li>
-              <li>
-                <Link href="/about" className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 cursor-pointer">
-                  About Us
-                </Link>
-              </li>
             </ul>
           </div>
 

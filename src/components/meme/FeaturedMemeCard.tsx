@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader } from '@/components/ui/Card';
-import { cn, formatRelativeTime, formatTime } from '@/lib/utils';
+import { cn, formatCompactTime, formatFullDateTime } from '@/lib/utils';
 import { Meme } from '@/lib/types/meme';
 import { useMemeInteractions } from '@/lib/hooks/useMemeInteractions';
 import { ICONS, getCategoryIconOrEmoji } from '@/lib/utils/categoryIcons';
@@ -50,17 +50,17 @@ const FeaturedMemeCard: React.FC<FeaturedMemeCardProps> = ({
       <Card 
         className={cn("overflow-hidden cursor-pointer h-full flex flex-col", className)}
       >
-        <CardHeader className="pb-3 flex-shrink-0">
-          <div>
-            <h3 className="font-semibold text-lg line-clamp-2">{meme.title}</h3>
-            <p className="text-sm text-gray-500">
+        <CardHeader className="px-4 pt-4 pb-3 flex-shrink-0">
+          <div className="space-y-2">
+            <h3 className="font-semibold text-lg line-clamp-2 leading-tight">{meme.title}</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
               by {meme.author?.display_name || meme.author?.username || 'Unknown'}
             </p>
-            <div className="flex items-center gap-2 mt-2">
+            <div className="flex items-center gap-2 pt-1">
               {meme.category ? (
                 <>
                   {getCategoryIconOrEmoji(meme.category.name, meme.category.emoji)}
-                  <span className="text-xs text-gray-500">{meme.category.name}</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">{meme.category.name}</span>
                 </>
               ) : (
                 <>
@@ -84,7 +84,7 @@ const FeaturedMemeCard: React.FC<FeaturedMemeCardProps> = ({
           </div>
         </CardContent>
         
-        <div className="p-4 pt-2 flex-shrink-0">
+        <div className="px-4 pb-4 pt-3 flex-shrink-0">
           <div className="flex items-center justify-between text-sm text-gray-500">
             <div className="flex items-center gap-4">
               <button
@@ -110,8 +110,11 @@ const FeaturedMemeCard: React.FC<FeaturedMemeCardProps> = ({
                 <span>{meme.views}</span>
               </div>
             </div>
-            <span className="text-xs">
-              {formatRelativeTime(meme.created_at)} ({formatTime(meme.created_at)})
+            <span 
+              className="text-xs text-gray-500 dark:text-gray-400"
+              title={formatFullDateTime(meme.created_at)}
+            >
+              {formatCompactTime(meme.created_at)}
             </span>
           </div>
         </div>

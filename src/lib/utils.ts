@@ -83,4 +83,57 @@ export function formatTime(date: string | Date): string {
     minute: '2-digit',
     hour12: false
   });
+}
+
+export function formatCompactTime(date: string | Date): string {
+  const now = new Date();
+  const targetDate = new Date(date);
+  const diffInSeconds = Math.floor((now.getTime() - targetDate.getTime()) / 1000);
+  const diffInHours = Math.floor(diffInSeconds / 3600);
+  const diffInDays = Math.floor(diffInHours / 24);
+
+  // For posts within the last 24 hours, show relative time
+  if (diffInHours < 24) {
+    if (diffInSeconds < 60) {
+      return 'just now';
+    }
+    const diffInMinutes = Math.floor(diffInSeconds / 60);
+    if (diffInMinutes < 60) {
+      return `${diffInMinutes}m`;
+    }
+    return `${diffInHours}h`;
+  }
+
+  // For posts older than 24 hours but within 7 days, show days
+  if (diffInDays < 7) {
+    return `${diffInDays}d`;
+  }
+
+  // For older posts, show date in a compact format
+  const isThisYear = targetDate.getFullYear() === now.getFullYear();
+  if (isThisYear) {
+    return targetDate.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric'
+    });
+  }
+
+  // For posts from previous years, include year
+  return targetDate.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  });
+}
+
+export function formatFullDateTime(date: string | Date): string {
+  const targetDate = new Date(date);
+  return targetDate.toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true
+  });
 } 
