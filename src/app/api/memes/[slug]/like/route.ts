@@ -62,10 +62,11 @@ export async function POST(
         throw deleteError;
       }
 
-      // Update the meme's likes count
+      // Update the meme's likes count (ensure it doesn't go negative)
+      const newLikeCount = Math.max(0, meme.likes_count - 1);
       const { error: updateError } = await supabaseAdmin
         .from('memes')
-        .update({ likes_count: meme.likes_count - 1 })
+        .update({ likes_count: newLikeCount })
         .eq('id', memeId);
 
       if (updateError) {
@@ -118,13 +119,43 @@ export async function POST(
     }
   } catch (error) {
     console.error('Error toggling like:', error);
+    
+    // Extract error message from various error types
+    let errorMessage = 'Unknown error';
+    let errorDetails: any = {};
+    
+    if (error instanceof Error) {
+      errorMessage = error.message;
+      errorDetails = {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      };
+    } else if (typeof error === 'object' && error !== null) {
+      // Handle Supabase errors or other object errors
+      const errorObj = error as any;
+      errorMessage = errorObj.message || errorObj.error || errorObj.details || 'Unknown error';
+      errorDetails = {
+        code: errorObj.code,
+        message: errorObj.message,
+        details: errorObj.details,
+        hint: errorObj.hint
+      };
+    }
+    
     console.error('Error details:', {
-      message: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined,
-      error: error
+      errorMessage,
+      errorDetails,
+      errorType: typeof error,
+      error
     });
+    
     return NextResponse.json(
-      { error: 'Failed to toggle like', details: error instanceof Error ? error.message : 'Unknown error' },
+      { 
+        error: 'Failed to toggle like',
+        message: errorMessage,
+        details: errorDetails
+      },
       { status: 500 }
     );
   }

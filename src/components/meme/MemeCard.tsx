@@ -31,6 +31,7 @@ const MemeCard: React.FC<MemeCardProps> = ({
   const handleLike = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    e.nativeEvent.stopImmediatePropagation();
     
     if (isLiking) {
       console.log('MemeCard: Like action already in progress, ignoring click');
@@ -45,15 +46,18 @@ const MemeCard: React.FC<MemeCardProps> = ({
       isLiked: isActuallyLiked
     });
     
-    if (onLike) {
-      setIsLiking(true);
-      try {
-        await onLike(meme.slug);
-      } finally {
-        setIsLiking(false);
-      }
-    } else {
+    if (!onLike) {
       console.error('MemeCard: onLike function is undefined!');
+      return;
+    }
+    
+    setIsLiking(true);
+    try {
+      await onLike(meme.slug);
+    } catch (error) {
+      console.error('MemeCard: Error in onLike callback:', error);
+    } finally {
+      setIsLiking(false);
     }
   };
 
@@ -176,10 +180,18 @@ const MemeCard: React.FC<MemeCardProps> = ({
               variant="ghost"
               size="sm"
               onClick={handleLike}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                e.nativeEvent.stopImmediatePropagation();
+              }}
+              onMouseUp={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                e.nativeEvent.stopImmediatePropagation();
+              }}
               disabled={isLiking}
               className={`flex items-center space-x-1 ${isActuallyLiked ? 'text-red-500' : ''} ${isLiking ? 'opacity-50 cursor-not-allowed' : ''}`}
-              onMouseDown={() => console.log('MemeCard: Like button mouse down')}
-              onMouseUp={() => console.log('MemeCard: Like button mouse up')}
               style={{ zIndex: 10, position: 'relative' }}
             >
               <span>

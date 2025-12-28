@@ -18,21 +18,55 @@ export const useMemeInteractions = (): UseMemeInteractionsReturn => {
       setLoading(true);
       setError(null);
 
+      console.log('useMemeInteractions: Attempting to like meme:', memeSlug);
+
       const response = await fetch(`/api/memes/${memeSlug}/like`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include', // Include cookies in the request
       });
 
+      console.log('useMemeInteractions: Response status:', response.status);
+      console.log('useMemeInteractions: Response headers:', Object.fromEntries(response.headers.entries()));
+
       if (!response.ok) {
-        throw new Error('Failed to like meme');
+        // Try to get the response text first
+        const responseText = await response.text();
+        console.error('useMemeInteractions: Error response text:', responseText);
+        
+        let errorData: any = {};
+        try {
+          errorData = JSON.parse(responseText);
+        } catch (parseError) {
+          console.error('useMemeInteractions: Failed to parse error response as JSON:', parseError);
+          errorData = { error: responseText || `HTTP ${response.status}: ${response.statusText}` };
+        }
+        
+        console.error('useMemeInteractions: Error response data:', errorData);
+        const errorMessage = errorData.error || errorData.details || `Failed to like meme: ${response.status} ${response.statusText}`;
+        throw new Error(errorMessage);
       }
 
-      const data = await response.json();
-      return data.liked;
+      const responseText = await response.text();
+      console.log('useMemeInteractions: Response text:', responseText);
+      
+      let data: any = {};
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error('useMemeInteractions: Failed to parse success response as JSON:', parseError);
+        throw new Error('Invalid response from server');
+      }
+      
+      console.log('useMemeInteractions: Like response data:', data);
+      return data.liked ?? false;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to like meme');
+      console.error('useMemeInteractions: Exception caught:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Failed to like meme';
+      setError(errorMessage);
+      console.error('useMemeInteractions: Setting error state:', errorMessage);
       return false;
     } finally {
       setLoading(false);
