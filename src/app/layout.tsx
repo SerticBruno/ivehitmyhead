@@ -34,7 +34,7 @@ export default function RootLayout({
           <NavigationWarningProvider>
             <MemesStateProvider>
               <CategoriesStateProvider>
-                <Header showSearch={true} />
+                <Header showSearch={false} />
                 <main className="min-h-screen">
                   {children}
                 </main>

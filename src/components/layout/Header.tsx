@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Menu, X, LogOut, Shield } from 'lucide-react';
@@ -14,6 +14,7 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ showSearch = true }) => {
   const router = useRouter();
+  const pathname = usePathname();
   const { user, isAdmin, signOut } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
@@ -81,19 +82,29 @@ const Header: React.FC<HeaderProps> = ({ showSearch = true }) => {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-4">
-            {navigationItems.map((item) => (
-              <Link key={item.href} href={item.href} className="cursor-pointer">
-                <Button variant="ghost" size="sm">
-                  {item.label}
-                </Button>
-              </Link>
-            ))}
+            {navigationItems.map((item) => {
+              const isActive = pathname === item.href || (item.href !== '/' && pathname?.startsWith(item.href));
+              return (
+                <Link key={item.href} href={item.href} className="cursor-pointer">
+                  <Button 
+                    variant={isActive ? "primary" : "ghost"} 
+                    size="sm"
+                  >
+                    {item.label}
+                  </Button>
+                </Link>
+              );
+            })}
             
             {/* Admin Indicator and Logout */}
             {user && isAdmin && (
               <>
                 <Link href="/admin" className="cursor-pointer">
-                  <Button variant="ghost" size="sm" className="flex items-center gap-1.5">
+                  <Button 
+                    variant={pathname?.startsWith('/admin') ? "primary" : "ghost"} 
+                    size="sm" 
+                    className="flex items-center gap-1.5"
+                  >
                     <Shield className="h-4 w-4" />
                     <span>Admin</span>
                   </Button>
@@ -151,23 +162,34 @@ const Header: React.FC<HeaderProps> = ({ showSearch = true }) => {
               )}
               
               {/* Mobile Navigation Items */}
-              {navigationItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors duration-150"
-                  onClick={closeMobileMenu}
-                >
-                  {item.label}
-                </Link>
-              ))}
+              {navigationItems.map((item) => {
+                const isActive = pathname === item.href || (item.href !== '/' && pathname?.startsWith(item.href));
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`block px-3 py-2 text-base font-medium rounded-md transition-colors duration-150 ${
+                      isActive
+                        ? 'bg-blue-600 text-white'
+                        : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-gray-100 dark:hover:bg-gray-800'
+                    }`}
+                    onClick={closeMobileMenu}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              })}
               
               {/* Mobile Admin Indicator and Logout */}
               {user && isAdmin && (
                 <>
                   <Link
                     href="/admin"
-                    className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors duration-150 flex items-center gap-2"
+                    className={`block px-3 py-2 text-base font-medium rounded-md transition-colors duration-150 flex items-center gap-2 ${
+                      pathname?.startsWith('/admin')
+                        ? 'bg-blue-600 text-white'
+                        : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-gray-100 dark:hover:bg-gray-800'
+                    }`}
                     onClick={closeMobileMenu}
                   >
                     <Shield className="h-4 w-4" />
