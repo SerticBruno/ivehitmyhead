@@ -54,7 +54,8 @@ export default function MemesPage() {
     if (likedMemes.size === 0) {
       fetchLikedMemes();
     }
-  }, []); // Remove dependencies to avoid infinite loops
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run on mount to avoid infinite loops
 
   // Update memes with liked state whenever memes change in context
   useEffect(() => {
@@ -494,8 +495,6 @@ export default function MemesPage() {
         });
       }
       
-      const wasLikedBefore = likedMemes.has(slug);
-      
       // Make the API call first to get the actual result
       const actualIsLiked = await likeMeme(slug);
       console.log('API returned isLiked:', actualIsLiked);
@@ -562,7 +561,7 @@ export default function MemesPage() {
       // Always remove the processing flag, even if there was an error
       processingMemesRef.current.delete(slug);
     }
-  }, [likeMeme, memesState.memes, updateMemeLikeCount, updateMemeLikedState, likedMemes]);
+  }, [likeMeme, memesState.memes, updateMemeLikeCount, updateMemeLikedState]);
 
   const handleShare = useCallback(async (id: string) => {
     // Find the meme by ID to get its slug

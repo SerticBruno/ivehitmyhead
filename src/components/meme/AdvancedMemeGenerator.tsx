@@ -1,15 +1,14 @@
 'use client';
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
+import Image from 'next/image';
 import MemeCanvasController from '@/lib/meme-canvas/MemeCanvasController';
 import TextElement from '@/lib/meme-canvas/TextElement';
-import type MemeElement from '@/lib/meme-canvas/MemeElement';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Download, Plus, Trash2, Type, ChevronDown, ChevronUp } from 'lucide-react';
 import { MEME_TEMPLATES } from '@/lib/data/templates';
-import type { MemeTemplate } from '@/lib/types/meme';
-import type { TextField } from '@/lib/types/meme';
+import type { MemeTemplate, TextField } from '@/lib/types/meme';
 import { useNavigationWarning } from '@/lib/contexts/NavigationWarningContext';
 
 interface AdvancedMemeGeneratorProps {
@@ -26,14 +25,12 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
     null
   );
   const [textInput, setTextInput] = useState('');
-  const [selectedElement, setSelectedElement] = useState<any>(null);
+  const [selectedElement, setSelectedElement] = useState<TextElement | null>(null);
   const [showTextInput, setShowTextInput] = useState(false);
   const [isTemplateDropdownOpen, setIsTemplateDropdownOpen] = useState(false);
   const [allTextElements, setAllTextElements] = useState<TextElement[]>([]);
-  const [updateCounter, setUpdateCounter] = useState(0); // Force re-render when element updates
   const [expandedElements, setExpandedElements] = useState<Set<number>>(new Set());
   const [elementTextInputs, setElementTextInputs] = useState<Record<number, string>>({});
-  const [isDirty, setIsDirty] = useState(false);
   const [initialTemplateState, setInitialTemplateState] = useState<string>('');
   const [isLoadingTemplate, setIsLoadingTemplate] = useState(false);
   const { setDirty: setNavigationDirty } = useNavigationWarning();
@@ -104,8 +101,6 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
 
     // Listen for element updates to keep UI in sync
     controller.listen('elementsUpdated', () => {
-      // Force re-render to update UI when element settings change
-      setUpdateCounter(prev => prev + 1);
       // Update selected element reference if it's still selected
       const selected = controller.selectedElements[0];
       if (selected && selected instanceof TextElement) {
@@ -170,13 +165,11 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
   const markDirty = useCallback(() => {
     // Don't mark as dirty during template loading or if we don't have an initial state
     if (isLoadingTemplate || !initialTemplateState) {
-      setIsDirty(false);
       setNavigationDirty(false);
       return;
     }
     
     const actuallyDirty = checkIfActuallyDirty();
-    setIsDirty(actuallyDirty);
     setNavigationDirty(actuallyDirty);
   }, [checkIfActuallyDirty, setNavigationDirty, isLoadingTemplate, initialTemplateState]);
 
@@ -198,14 +191,12 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
   useEffect(() => {
     if (!selectedTemplate || isLoadingTemplate) {
       setNavigationDirty(false);
-      setIsDirty(false);
       return;
     }
 
     // Verify actual state and sync navigation dirty
     const actuallyDirty = checkIfActuallyDirty();
     setNavigationDirty(actuallyDirty);
-    setIsDirty(actuallyDirty);
   }, [selectedTemplate, isLoadingTemplate, checkIfActuallyDirty, setNavigationDirty]);
 
   // Check if user has unsaved changes and confirm before proceeding
@@ -240,7 +231,6 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
       }
 
       // Immediately reset dirty state when starting to load a new template
-      setIsDirty(false);
       setNavigationDirty(false);
       setIsLoadingTemplate(true);
 
@@ -259,7 +249,6 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
           controllerRef.current.changeImage(img);
           setSelectedTemplate(template);
           // Dirty state already reset above, just ensure it stays false
-          setIsDirty(false);
           setNavigationDirty(false);
 
           // Clear existing elements
@@ -275,7 +264,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                   const canvasWidth = canvas.width;
                   const canvasHeight = canvas.height;
 
-                  template.textFields.forEach((field: any, fieldIndex: number) => {
+                  template.textFields.forEach((field: TextField, fieldIndex: number) => {
                 // Convert percentage positions to pixel positions
                 const x = (field.x / 100) * canvasWidth;
                 const y = (field.y / 100) * canvasHeight;
@@ -382,7 +371,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
       
       doLoadTemplate();
     },
-    [checkDirtyAndProceed]
+    [checkDirtyAndProceed, setNavigationDirty]
   );
 
   // Add text element
@@ -550,9 +539,11 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                 <div className="flex items-center gap-3 flex-1 min-w-0">
                   {selectedTemplate ? (
                     <>
-                      <img
+                      <Image
                         src={selectedTemplate.src}
                         alt={selectedTemplate.name}
+                        width={48}
+                        height={48}
                         className="w-12 h-12 object-cover rounded flex-shrink-0"
                       />
                       <span className="font-medium text-left truncate">{selectedTemplate.name}</span>
@@ -599,15 +590,12 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                               : ''
                           }`}
                         >
-                          <img
+                          <Image
                             src={template.src}
                             alt={template.name}
+                            width={64}
+                            height={64}
                             className="w-16 h-16 object-cover rounded flex-shrink-0 border border-gray-200 dark:border-gray-600"
-                            onError={(e) => {
-                              // Fallback if image fails to load
-                              const target = e.target as HTMLImageElement;
-                              target.style.display = 'none';
-                            }}
                           />
                           <div className="flex-1 text-left min-w-0">
                             <div className="font-medium truncate text-gray-900 dark:text-white">
@@ -646,9 +634,11 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                       }}
                       className="flex items-center gap-3 p-3 rounded-lg border-2 border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 bg-white dark:bg-gray-800 transition-all text-left"
                     >
-                      <img
+                      <Image
                         src={template.src}
                         alt={template.name}
+                        width={48}
+                        height={48}
                         className="w-12 h-12 object-cover rounded flex-shrink-0 border border-gray-200 dark:border-gray-600"
                       />
                       <div className="flex-1 min-w-0">

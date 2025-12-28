@@ -44,11 +44,11 @@ export async function POST(request: NextRequest) {
 
     // Allow anyone to upload - use admin user for all uploads
     const admin_user_id = '64a6411e-cc4e-47cd-999d-804d836abf90';
-    let user_id: string = admin_user_id;
+    const user_id: string = admin_user_id;
     
     // Check if admin profile exists, create if not
     console.log('Checking for admin profile...');
-    const { data: adminProfile, error: profileCheckError } = await supabaseAdmin
+    const { error: profileCheckError } = await supabaseAdmin
       .from('profiles')
       .select('id')
       .eq('id', admin_user_id)

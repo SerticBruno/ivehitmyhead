@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Button } from '@/components/ui/Button';
-import { formatRelativeTime, formatTime } from '@/lib/utils';
+import { formatRelativeTime } from '@/lib/utils';
 import { Meme } from '@/lib/types/meme';
 import { useMemeInteractions } from '@/lib/hooks/useMemeInteractions';
 import { useMemesState } from '@/lib/contexts';
@@ -30,7 +30,7 @@ export default function MemeDetailPage() {
   const hasRecordedView = useRef(false);
 
   // Check if the current meme is liked by the user
-  const checkLikeStatus = async () => {
+  const checkLikeStatus = useCallback(async () => {
     try {
       const response = await fetch('/api/memes/liked');
       if (response.ok) {
@@ -49,7 +49,7 @@ export default function MemeDetailPage() {
     } finally {
       setIsCheckingLikeStatus(false);
     }
-  };
+  }, [slug]);
 
   useEffect(() => {
     const fetchMeme = async () => {
@@ -109,7 +109,7 @@ export default function MemeDetailPage() {
     if (slug) {
       fetchMeme();
     }
-  }, [slug, recordView]);
+  }, [slug, recordView, checkLikeStatus, memesState.memes]);
 
   const handleLike = async () => {
     if (!meme || isLiking) return;

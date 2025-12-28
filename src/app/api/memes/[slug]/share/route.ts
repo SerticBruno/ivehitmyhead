@@ -3,11 +3,11 @@ import { supabaseAdmin } from '@/lib/supabase/server';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
     const supabase = supabaseAdmin;
-    const { slug } = params;
+    const { slug } = await params;
 
     // First, get the meme to check if it exists
     const { data: meme, error: fetchError } = await supabase
