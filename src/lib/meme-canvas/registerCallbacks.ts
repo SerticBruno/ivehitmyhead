@@ -22,17 +22,26 @@ export default function registerCallbacks(
     controller.requestFrame();
 
     const rect = controller.canvas.getBoundingClientRect();
+    // Get the actual displayed size (accounting for CSS scaling)
+    const displayWidth = rect.width;
+    const displayHeight = rect.height;
+    
+    // Calculate position relative to canvas element
     const mouseX = event.clientX - rect.left;
     const mouseY = event.clientY - rect.top;
-    const scale = controller.canvas.width / rect.width;
+    
+    // Calculate scale factor between display size and internal canvas size
+    const scaleX = controller.canvas.width / displayWidth;
+    const scaleY = controller.canvas.height / displayHeight;
 
+    // Convert display coordinates to canvas coordinates
     const x = MathHelper.clamp(
-      Math.round(mouseX * scale),
+      Math.round(mouseX * scaleX),
       0,
       controller.canvas.width
     );
     const y = MathHelper.clamp(
-      Math.round(mouseY * scale),
+      Math.round(mouseY * scaleY),
       0,
       controller.canvas.height
     );
@@ -59,17 +68,26 @@ export default function registerCallbacks(
     event.stopPropagation();
 
     const rect = controller.canvas.getBoundingClientRect();
+    // Get the actual displayed size (accounting for CSS scaling)
+    const displayWidth = rect.width;
+    const displayHeight = rect.height;
+    
+    // Calculate position relative to canvas element
     const mouseX = touch.clientX - rect.left;
     const mouseY = touch.clientY - rect.top;
-    const scale = controller.canvas.width / rect.width;
+    
+    // Calculate scale factor between display size and internal canvas size
+    const scaleX = controller.canvas.width / displayWidth;
+    const scaleY = controller.canvas.height / displayHeight;
 
+    // Convert display coordinates to canvas coordinates
     const x = MathHelper.clamp(
-      Math.round(mouseX * scale),
+      Math.round(mouseX * scaleX),
       0,
       controller.canvas.width
     );
     const y = MathHelper.clamp(
-      Math.round(mouseY * scale),
+      Math.round(mouseY * scaleY),
       0,
       controller.canvas.height
     );

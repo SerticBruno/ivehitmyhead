@@ -457,9 +457,14 @@ class MemeCanvasController {
     if (container) {
       // Use actual container dimensions, accounting for padding
       const containerRect = container.getBoundingClientRect();
-      const containerPadding = 32; // Account for padding (p-2 md:p-4 = 8-16px on each side)
-      maxDisplayWidth = containerRect.width - containerPadding;
-      maxDisplayHeight = containerRect.height - containerPadding;
+      // Get computed padding from styles
+      const computedStyle = window.getComputedStyle(container);
+      const paddingLeft = parseFloat(computedStyle.paddingLeft) || 0;
+      const paddingRight = parseFloat(computedStyle.paddingRight) || 0;
+      const paddingTop = parseFloat(computedStyle.paddingTop) || 0;
+      const paddingBottom = parseFloat(computedStyle.paddingBottom) || 0;
+      maxDisplayWidth = containerRect.width - paddingLeft - paddingRight;
+      maxDisplayHeight = containerRect.height - paddingTop - paddingBottom;
     } else {
       // Fallback to viewport-based calculation if container not found
       maxDisplayWidth = isMobile ? (typeof window !== 'undefined' ? window.innerWidth - 40 : 800) : 800;
