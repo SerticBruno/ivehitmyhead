@@ -279,12 +279,13 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
         <div className="flex flex-col min-h-0 flex-[2]" style={{ height: '100%', overflow: 'hidden', minWidth: 0 }}>
           <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-4 border border-gray-200 dark:border-gray-800 flex-1 flex flex-col min-h-0" style={{ height: '100%', overflow: 'hidden' }}>
             <div 
-              className="flex justify-center items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-4 overflow-auto flex-1 min-h-0" 
+              className="flex justify-center items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-4 flex-1 min-h-0" 
               style={{ 
                 height: '100%', 
                 width: '100%',
                 position: 'relative',
-                flexShrink: 0
+                overflow: 'auto',
+                minHeight: '400px'
               }}
             >
               {/* Canvas - always rendered for proper initialization */}
@@ -293,22 +294,21 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                 className="border border-gray-300 dark:border-gray-700 rounded"
                 style={{ 
                   display: selectedTemplate ? 'block' : 'none',
-                  maxWidth: 'calc(100% - 0px)', 
-                  maxHeight: 'calc(100% - 0px)', 
+                  maxWidth: '100%', 
+                  maxHeight: '100%', 
                   height: 'auto',
                   width: 'auto',
-                  margin: '0 auto',
-                  objectFit: 'contain',
-                  flexShrink: 0
+                  margin: 'auto',
+                  objectFit: 'contain'
                 }}
               />
               
               {/* Placeholder overlay when no template is selected */}
               {!selectedTemplate && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8 max-w-md mx-auto z-10">
-                  <div className="w-24 h-24 mb-4 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8 z-10 pointer-events-none">
+                  <div className="w-20 h-20 mb-4 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
                     <svg
-                      className="w-12 h-12 text-gray-400 dark:text-gray-500"
+                      className="w-10 h-10 text-gray-400 dark:text-gray-500"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -321,34 +321,12 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                       />
                     </svg>
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
                     No Template Selected
                   </h3>
-                  <p className="text-gray-600 dark:text-gray-400 mb-4">
-                    Choose a template from the right panel to start creating your meme
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Choose a template from the right panel to start
                   </p>
-                  <div className="flex flex-wrap gap-2 justify-center">
-                    {templates.slice(0, 3).map((template) => (
-                      <button
-                        key={template.id}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          loadTemplate(template);
-                          setIsTemplateDropdownOpen(false);
-                        }}
-                        className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
-                      >
-                        <img
-                          src={template.src}
-                          alt={template.name}
-                          className="w-8 h-8 object-cover rounded"
-                        />
-                        <span className="text-sm font-medium text-gray-900 dark:text-white">
-                          {template.name}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
                 </div>
               )}
             </div>
@@ -430,7 +408,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                     className="fixed inset-0 z-10"
                     onClick={() => setIsTemplateDropdownOpen(false)}
                   />
-                  <div className="absolute z-20 w-full mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-96 overflow-y-auto">
+                  <div className="absolute z-20 w-full mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-[60vh] overflow-y-auto">
                     {templates.length === 0 ? (
                       <div className="p-4 text-center text-gray-500 dark:text-gray-400">
                         No templates available
@@ -482,6 +460,49 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                 </>
               )}
             </div>
+            
+            {/* Always visible template grid when no template is selected */}
+            {!selectedTemplate && !isTemplateDropdownOpen && (
+              <div className="mt-4">
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">Quick select:</p>
+                <div className="grid grid-cols-1 gap-2">
+                  {templates.slice(0, 3).map((template) => (
+                    <button
+                      key={template.id}
+                      onClick={() => {
+                        loadTemplate(template);
+                        setIsTemplateDropdownOpen(false);
+                      }}
+                      className="flex items-center gap-3 p-3 rounded-lg border-2 border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 bg-white dark:bg-gray-800 transition-all text-left"
+                    >
+                      <img
+                        src={template.src}
+                        alt={template.name}
+                        className="w-12 h-12 object-cover rounded flex-shrink-0 border border-gray-200 dark:border-gray-600"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-sm text-gray-900 dark:text-white truncate">
+                          {template.name}
+                        </div>
+                        {template.description && (
+                          <div className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
+                            {template.description}
+                          </div>
+                        )}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+                {templates.length > 3 && (
+                  <button
+                    onClick={() => setIsTemplateDropdownOpen(true)}
+                    className="w-full mt-2 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
+                  >
+                    View all {templates.length} templates →
+                  </button>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Text Fields List */}
