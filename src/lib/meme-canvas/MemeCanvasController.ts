@@ -445,11 +445,29 @@ class MemeCanvasController {
     this.canvas.width = width;
     this.canvas.height = height;
 
-    // Calculate display size - constrain to viewport while maintaining aspect ratio
-    const maxDisplayWidth = 800;
-    const maxDisplayHeight = typeof window !== 'undefined' 
-      ? Math.min(window.innerHeight * 0.6, 600) 
-      : 600;
+    // Calculate display size based on container dimensions (not viewport)
+    // Get the container element (parent of canvas)
+    const container = this.canvas.parentElement;
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 1024;
+    
+    let maxDisplayWidth: number;
+    let maxDisplayHeight: number;
+    
+    if (container) {
+      // Use actual container dimensions, accounting for padding
+      const containerRect = container.getBoundingClientRect();
+      const containerPadding = 32; // Account for padding (p-2 md:p-4 = 8-16px on each side)
+      maxDisplayWidth = containerRect.width - containerPadding;
+      maxDisplayHeight = containerRect.height - containerPadding;
+    } else {
+      // Fallback to viewport-based calculation if container not found
+      maxDisplayWidth = isMobile ? (typeof window !== 'undefined' ? window.innerWidth - 40 : 800) : 800;
+      maxDisplayHeight = typeof window !== 'undefined' 
+        ? (isMobile 
+            ? Math.min(window.innerHeight * 0.85, window.innerHeight - 200)
+            : Math.min(window.innerHeight * 0.6, 600))
+        : 600;
+    }
     
     let displayWidth = width;
     let displayHeight = height;
@@ -476,7 +494,7 @@ class MemeCanvasController {
     this.canvas.style.width = `${displayWidth}px`;
     this.canvas.style.height = `${displayHeight}px`;
     this.canvas.style.maxWidth = '100%';
-    this.canvas.style.maxHeight = `${maxDisplayHeight}px`;
+    this.canvas.style.maxHeight = '100%';
     this.canvas.style.objectFit = 'contain';
 
     this.requestFrame();

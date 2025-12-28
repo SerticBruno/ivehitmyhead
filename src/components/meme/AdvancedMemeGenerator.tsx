@@ -34,6 +34,24 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
   const [initialTemplateState, setInitialTemplateState] = useState<string>('');
   const [isLoadingTemplate, setIsLoadingTemplate] = useState(false);
   const { setDirty: setNavigationDirty } = useNavigationWarning();
+  const [containerHeight, setContainerHeight] = useState('100vh');
+
+  // Calculate container height based on viewport and screen size
+  useEffect(() => {
+    const updateHeight = () => {
+      if (typeof window !== 'undefined') {
+        const isMobile = window.innerWidth < 768;
+        // On mobile, use full viewport height
+        // On desktop, account for header (64px = 4rem)
+        const height = isMobile ? '100vh' : 'calc(100vh - 4rem)';
+        setContainerHeight(height);
+      }
+    };
+
+    updateHeight();
+    window.addEventListener('resize', updateHeight);
+    return () => window.removeEventListener('resize', updateHeight);
+  }, []);
 
   // Initialize canvas - re-run when canvas becomes available
   useEffect(() => {
@@ -429,28 +447,37 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
   }, [textInput, selectedElement, showTextInput, updateText]);
 
   return (
-    <div className="max-w-7xl mx-auto p-4" style={{ maxHeight: '100vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-      <div className="text-center mb-4 flex-shrink-0">
-        <h1 className="text-2xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2">
+    <div 
+      className="max-w-7xl mx-auto p-2 md:p-4" 
+      style={{ 
+        height: containerHeight,
+        maxHeight: containerHeight,
+        overflow: 'hidden', 
+        display: 'flex', 
+        flexDirection: 'column' 
+      }}
+    >
+      <div className="text-center mb-2 md:mb-4 flex-shrink-0 hidden md:block">
+        <h1 className="text-xl md:text-2xl lg:text-4xl font-bold text-gray-900 dark:text-white mb-1 md:mb-2">
           Advanced Meme Generator
         </h1>
-        <p className="text-sm md:text-base text-gray-600 dark:text-gray-400">
+        <p className="text-xs md:text-sm lg:text-base text-gray-600 dark:text-gray-400">
           Choose a template, add text, and create your meme
         </p>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-4 flex-1 min-h-0" style={{ flex: '1 1 0%', minHeight: 0, overflow: 'hidden' }}>
+      <div className="flex flex-col lg:flex-row gap-2 md:gap-4 flex-1 min-h-0" style={{ flex: '1 1 0%', minHeight: 0, overflow: 'hidden' }}>
         {/* Left side - Canvas */}
-        <div className="flex flex-col min-h-0 flex-[2]" style={{ height: '100%', overflow: 'hidden', minWidth: 0 }}>
-          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-4 border border-gray-200 dark:border-gray-800 flex-1 flex flex-col min-h-0" style={{ height: '100%', overflow: 'hidden' }}>
+        <div className="flex flex-col min-h-0 flex-[2] lg:flex-[2]" style={{ height: '100%', overflow: 'hidden', minWidth: 0 }}>
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-2 md:p-4 border border-gray-200 dark:border-gray-800 flex-1 flex flex-col min-h-0" style={{ height: '100%', overflow: 'hidden' }}>
             <div 
-              className="flex justify-center items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-4 flex-1 min-h-0" 
+              className="flex justify-center items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-2 md:p-4 flex-1 min-h-0" 
               style={{ 
                 height: '100%', 
                 width: '100%',
                 position: 'relative',
-                overflow: 'auto',
-                minHeight: '400px'
+                overflow: 'hidden',
+                minHeight: 0
               }}
             >
               {/* Canvas - always rendered for proper initialization */}
@@ -467,7 +494,8 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                   position: 'relative',
                   zIndex: 1,
                   opacity: selectedTemplate ? 1 : 0,
-                  pointerEvents: selectedTemplate ? 'auto' : 'none'
+                  pointerEvents: selectedTemplate ? 'auto' : 'none',
+                  display: 'block'
                 }}
               />
               
@@ -500,45 +528,49 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
             </div>
 
             {/* Canvas controls */}
-            <div className="mt-4 flex gap-2 flex-wrap flex-shrink-0">
+            <div className="mt-2 md:mt-4 flex gap-1.5 md:gap-2 flex-wrap flex-shrink-0">
               <Button 
                 onClick={addText} 
                 variant="outline" 
                 size="sm"
                 disabled={!selectedTemplate}
+                className="text-xs md:text-sm"
               >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Text
+                <Plus className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
+                <span className="hidden sm:inline">Add Text</span>
+                <span className="sm:hidden">Add</span>
               </Button>
               <Button
                 onClick={deleteSelected}
                 variant="outline"
                 size="sm"
                 disabled={!selectedElement}
+                className="text-xs md:text-sm"
               >
-                <Trash2 className="w-4 h-4 mr-2" />
-                Delete
+                <Trash2 className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
+                <span className="hidden sm:inline">Delete</span>
               </Button>
               <Button
                 onClick={downloadMeme}
                 variant="primary"
                 size="sm"
                 disabled={!selectedTemplate}
-                className="ml-auto"
+                className="ml-auto text-xs md:text-sm"
               >
-                <Download className="w-4 h-4 mr-2" />
-                Download
+                <Download className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
+                <span className="hidden sm:inline">Download</span>
+                <span className="sm:hidden">Save</span>
               </Button>
             </div>
           </div>
         </div>
 
         {/* Right side - Controls */}
-        <div className="flex flex-col min-h-0 flex-1" style={{ minWidth: 0, maxWidth: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-          <div className="space-y-4 overflow-y-auto flex-1 min-h-0 pb-4 custom-scrollbar" style={{ flex: '1 1 0%', minHeight: 0, overflowY: 'auto', overflowX: 'hidden', WebkitOverflowScrolling: 'touch' }}>
+        <div className="flex flex-col min-h-0 flex-1 lg:max-w-md" style={{ minWidth: 0, maxWidth: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <div className="space-y-2 md:space-y-4 flex-1 min-h-0 pb-2 md:pb-4 overflow-x-hidden lg:overflow-y-auto" style={{ flex: '1 1 0%', minHeight: 0, WebkitOverflowScrolling: 'touch' }}>
           {/* Template selection */}
-          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-4 border border-gray-200 dark:border-gray-800">
-            <h2 className="text-lg font-semibold mb-4">Templates</h2>
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-2 md:p-4 border border-gray-200 dark:border-gray-800">
+            <h2 className="text-base md:text-lg font-semibold mb-2 md:mb-4">Templates</h2>
             <div className="relative">
               <button
                 onClick={() => setIsTemplateDropdownOpen(!isTemplateDropdownOpen)}
@@ -676,12 +708,12 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
 
           {/* Text Fields List - Reworked */}
           {selectedTemplate && allTextElements.length > 0 && (
-            <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-4 border border-gray-200 dark:border-gray-800">
-              <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                <Type className="w-5 h-5" />
+            <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-2 md:p-4 border border-gray-200 dark:border-gray-800">
+              <h2 className="text-base md:text-lg font-semibold mb-2 md:mb-4 flex items-center gap-2">
+                <Type className="w-4 h-4 md:w-5 md:h-5" />
                 Text Fields ({allTextElements.length})
               </h2>
-              <div className="space-y-3">
+              <div className="space-y-2 md:space-y-3">
                 {allTextElements.map((element, index) => {
                   const isSelected = selectedElement === element;
                   const isExpanded = expandedElements.has(index);
@@ -733,8 +765,8 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                       }`}
                     >
                       {/* Header */}
-                      <div className="p-3">
-                        <div className="flex items-center justify-between mb-2">
+                      <div className="p-2 md:p-3">
+                        <div className="flex items-center justify-between mb-1 md:mb-2">
                           <button
                             onClick={selectElement}
                             className="flex-1 text-left flex items-center gap-2"
@@ -780,16 +812,16 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                             e.stopPropagation();
                           }}
                           tabIndex={0}
-                          className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                          className="w-full px-2 md:px-3 py-1.5 md:py-2 text-xs md:text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                           style={{ pointerEvents: 'auto', cursor: 'text' }}
-                          rows={2}
+                          rows={1}
                           placeholder={`Enter text for field ${index + 1}...`}
                         />
                       </div>
 
                       {/* Expanded Properties */}
                       {isExpanded && (
-                        <div className="px-3 pb-3 space-y-3 border-t border-gray-200 dark:border-gray-700 pt-3">
+                        <div className="px-2 md:px-3 pb-2 md:pb-3 space-y-2 md:space-y-3 border-t border-gray-200 dark:border-gray-700 pt-2 md:pt-3">
                           {/* Font Size */}
                           <div>
                             <div className="flex items-center justify-between mb-2">
