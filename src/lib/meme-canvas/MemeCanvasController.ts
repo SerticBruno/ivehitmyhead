@@ -4,7 +4,6 @@ import type {
   MemeElementHandle,
   ValidOptionTypes,
 } from './MemeElement';
-import MathHelper from '@/lib/utils/math';
 import MemeCanvasRenderer from './MemeCanvasRenderer';
 import registerCallbacks from './registerCallbacks';
 
@@ -285,6 +284,7 @@ class MemeCanvasController {
         );
 
       if (includes) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (element as any)[key] = value;
         element.onChanged(true, key);
       }
@@ -446,7 +446,6 @@ class MemeCanvasController {
       ? Math.min(window.innerHeight * 0.6, 600) 
       : 600;
     
-    const aspectRatio = width / height;
     let displayWidth = width;
     let displayHeight = height;
 

@@ -1,8 +1,5 @@
 import type MemeCanvasController from './MemeCanvasController';
 import { scaled } from '@/lib/utils/canvas';
-import MathHelper from '@/lib/utils/math';
-
-/* eslint-disable unused-imports/no-unused-vars -- Events lol */
 
 export interface Filterable<T extends readonly ValidOptionTypes[]> {
   valid: T;
@@ -22,7 +19,7 @@ export type ValidOptionTypes =
   | string
   | number
   | boolean
-  | Filterable<any>
+  | Filterable<readonly (string | number | boolean)[]>
   | ExtendedString
   | ImageSource;
 
@@ -121,12 +118,17 @@ abstract class MemeElement<T extends Settings = Settings> {
     return this.getMinSize().height;
   }
 
-  // Events
-  public onPress(x: number, y: number): void {}
-  public onRelease(x: number, y: number): void {}
-  public onDoubleClick(x: number, y: number): void {}
-  public onKeyTyped(key: string, ctrl: boolean, shift: boolean): void {}
-  public onChanged(isSetting: boolean, key: keyof T): void {}
+  // Events - these are meant to be overridden by subclasses
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  public onPress(_x: number, _y: number): void {}
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  public onRelease(_x: number, _y: number): void {}
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  public onDoubleClick(_x: number, _y: number): void {}
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  public onKeyTyped(_key: string, _ctrl: boolean, _shift: boolean): void {}
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  public onChanged(_isSetting: boolean, _key: keyof T): void {}
 
   // Element manipulation
   public prepareDrag(x: number, y: number): void {

@@ -1,6 +1,5 @@
 import type MemeCanvasController from './MemeCanvasController';
 import { lineBreakedText, scaled } from '@/lib/utils/canvas';
-import MathHelper from '@/lib/utils/math';
 import MemeElement, {
   type ExtendedString,
   type Filterable,
