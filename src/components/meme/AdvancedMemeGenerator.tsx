@@ -21,7 +21,6 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const controllerRef = useRef<MemeCanvasController | null>(null);
   const unregisterRef = useRef<(() => void) | null>(null);
-  const templateButtonRef = useRef<HTMLButtonElement>(null);
   const [selectedTemplate, setSelectedTemplate] = useState<MemeTemplate | null>(
     null
   );
@@ -31,7 +30,6 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
   const [isTemplateDropdownOpen, setIsTemplateDropdownOpen] = useState(false);
   const [allTextElements, setAllTextElements] = useState<TextElement[]>([]);
   const [updateCounter, setUpdateCounter] = useState(0); // Force re-render when element updates
-  const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number; width: number } | null>(null);
 
   // Initialize canvas - re-run when canvas becomes available
   useEffect(() => {
@@ -265,50 +263,8 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
     }
   }, [textInput, selectedElement, showTextInput, updateText]);
 
-  // Update dropdown position on scroll/resize when open
-  useEffect(() => {
-    if (!isTemplateDropdownOpen || !templateButtonRef.current || !dropdownPosition) return;
-
-    const updatePosition = () => {
-      if (templateButtonRef.current) {
-        const rect = templateButtonRef.current.getBoundingClientRect();
-        setDropdownPosition({
-          top: rect.bottom + 8,
-          left: rect.left,
-          width: rect.width
-        });
-      }
-    };
-
-    // Update position on scroll (capture phase to catch all scroll events)
-    window.addEventListener('scroll', updatePosition, true);
-    window.addEventListener('resize', updatePosition);
-    
-    // Find and listen to scroll on all scrollable parent containers
-    let currentElement: HTMLElement | null = templateButtonRef.current.parentElement;
-    const scrollableContainers: HTMLElement[] = [];
-    
-    while (currentElement) {
-      const style = window.getComputedStyle(currentElement);
-      if (style.overflow === 'auto' || style.overflow === 'scroll' || 
-          style.overflowY === 'auto' || style.overflowY === 'scroll') {
-        scrollableContainers.push(currentElement);
-        currentElement.addEventListener('scroll', updatePosition, true);
-      }
-      currentElement = currentElement.parentElement;
-    }
-
-    return () => {
-      window.removeEventListener('scroll', updatePosition, true);
-      window.removeEventListener('resize', updatePosition);
-      scrollableContainers.forEach(container => {
-        container.removeEventListener('scroll', updatePosition, true);
-      });
-    };
-  }, [isTemplateDropdownOpen, dropdownPosition]);
-
   return (
-    <div className="max-w-7xl mx-auto p-4" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div className="max-w-7xl mx-auto p-4" style={{ maxHeight: '100vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
       <div className="text-center mb-4 flex-shrink-0">
         <h1 className="text-2xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2">
           Advanced Meme Generator
@@ -318,16 +274,17 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
         </p>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-4 flex-1" style={{ minHeight: 'calc(100vh - 120px)' }}>
+      <div className="flex flex-col lg:flex-row gap-4 flex-1 min-h-0" style={{ height: '100%', overflow: 'hidden' }}>
         {/* Left side - Canvas */}
-        <div className="flex flex-col flex-[2]" style={{ minHeight: 'calc(100vh - 120px)', minWidth: 0 }}>
-          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-4 border border-gray-200 dark:border-gray-800 flex-1 flex flex-col" style={{ minHeight: 'calc(100vh - 180px)' }}>
+        <div className="flex flex-col min-h-0 flex-[2]" style={{ height: '100%', overflow: 'hidden', minWidth: 0 }}>
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-4 border border-gray-200 dark:border-gray-800 flex-1 flex flex-col min-h-0" style={{ height: '100%', overflow: 'hidden' }}>
             <div 
-              className="flex justify-center items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-4 overflow-auto flex-1" 
+              className="flex justify-center items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-4 overflow-auto flex-1 min-h-0" 
               style={{ 
-                minHeight: 'calc(100vh - 240px)',
+                height: '100%', 
                 width: '100%',
-                position: 'relative'
+                position: 'relative',
+                flexShrink: 0
               }}
             >
               {/* Canvas - always rendered for proper initialization */}
@@ -432,31 +389,13 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
 
         {/* Right side - Controls */}
         <div className="flex flex-col min-h-0 flex-1" style={{ height: '100%', overflow: 'hidden', minWidth: 0, maxWidth: '100%' }}>
-          <div 
-            className="space-y-4 flex-1 min-h-0" 
-            style={{ 
-              height: '100%', 
-              overflowY: isTemplateDropdownOpen ? 'visible' : 'auto',
-              position: 'relative' 
-            }}
-          >
+          <div className="space-y-4 overflow-y-auto flex-1 min-h-0" style={{ height: '100%', overflowY: 'auto' }}>
           {/* Template selection */}
-          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-4 border border-gray-200 dark:border-gray-800" style={{ position: 'relative', zIndex: isTemplateDropdownOpen ? 30 : 'auto' }}>
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-4 border border-gray-200 dark:border-gray-800">
             <h2 className="text-lg font-semibold mb-4">Templates</h2>
-            <div style={{ position: 'relative', zIndex: 40 }}>
+            <div className="relative">
               <button
-                ref={templateButtonRef}
-                onClick={() => {
-                  if (templateButtonRef.current) {
-                    const rect = templateButtonRef.current.getBoundingClientRect();
-                    setDropdownPosition({
-                      top: rect.bottom + 8,
-                      left: rect.left,
-                      width: rect.width
-                    });
-                  }
-                  setIsTemplateDropdownOpen(!isTemplateDropdownOpen);
-                }}
+                onClick={() => setIsTemplateDropdownOpen(!isTemplateDropdownOpen)}
                 className="w-full flex items-center justify-between p-3 rounded-lg border-2 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-800 transition-all"
               >
                 <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -485,25 +424,13 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                 </svg>
               </button>
 
-              {isTemplateDropdownOpen && dropdownPosition && (
+              {isTemplateDropdownOpen && (
                 <>
                   <div
-                    className="fixed inset-0"
-                    style={{ zIndex: 30 }}
-                    onClick={() => {
-                      setIsTemplateDropdownOpen(false);
-                      setDropdownPosition(null);
-                    }}
+                    className="fixed inset-0 z-10"
+                    onClick={() => setIsTemplateDropdownOpen(false)}
                   />
-                  <div 
-                    className="fixed bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl max-h-96 overflow-y-auto"
-                    style={{ 
-                      zIndex: 50,
-                      top: `${dropdownPosition.top}px`,
-                      left: `${dropdownPosition.left}px`,
-                      width: `${dropdownPosition.width}px`
-                    }}
-                  >
+                  <div className="absolute z-20 w-full mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-96 overflow-y-auto">
                     {templates.length === 0 ? (
                       <div className="p-4 text-center text-gray-500 dark:text-gray-400">
                         No templates available
@@ -516,7 +443,6 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                             e.stopPropagation();
                             loadTemplate(template);
                             setIsTemplateDropdownOpen(false);
-                            setDropdownPosition(null);
                           }}
                           className={`w-full flex items-center gap-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border-b border-gray-100 dark:border-gray-700 last:border-b-0 ${
                             selectedTemplate?.id === template.id
