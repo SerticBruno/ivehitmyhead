@@ -2,9 +2,20 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/server';
 import cloudinary from '@/lib/cloudinary/config';
 import { generateUniqueSlug } from '@/lib/utils';
+import { verifyAdminAuth } from '@/lib/utils/auth';
 
 export async function POST(request: NextRequest) {
   try {
+    // Verify admin authentication
+    const { user: authUser, error: authError } = await verifyAdminAuth(request);
+    
+    if (authError || !authUser) {
+      return NextResponse.json(
+        { error: authError || 'Unauthorized. Admin access required.' },
+        { status: 401 }
+      );
+    }
+
     const formData = await request.formData();
     const title = formData.get('title') as string;
     const image = formData.get('image') as File;
@@ -18,7 +29,8 @@ export async function POST(request: NextRequest) {
       category_id, 
       category_id_type: typeof category_id,
       category_id_length: category_id?.length,
-      tags 
+      tags,
+      userId: authUser.id
     });
     console.log('FormData entries:');
     for (const [key, value] of formData.entries()) {
@@ -42,47 +54,46 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Allow anyone to upload - use admin user for all uploads
-    const admin_user_id = '64a6411e-cc4e-47cd-999d-804d836abf90';
-    const user_id: string = admin_user_id;
+    // Use authenticated admin user
+    const user_id: string = authUser.id;
     
-    // Check if admin profile exists, create if not
-    console.log('Checking for admin profile...');
+    // Check if profile exists, create if not
+    console.log('Checking for user profile...');
     const { error: profileCheckError } = await supabaseAdmin
       .from('profiles')
       .select('id')
-      .eq('id', admin_user_id)
+      .eq('id', user_id)
       .single();
     
     if (profileCheckError && profileCheckError.code === 'PGRST116') {
       // Profile doesn't exist, create it
-      console.log('Admin profile not found, creating profile...');
+      console.log('Profile not found, creating profile...');
       const { error: createProfileError } = await supabaseAdmin
         .from('profiles')
         .insert({
-          id: admin_user_id,
-          username: 'IHMH',
-          display_name: 'IHMH'
+          id: user_id,
+          username: authUser.email?.split('@')[0] || 'admin',
+          display_name: authUser.user_metadata?.display_name || 'Admin User'
         });
       
       if (createProfileError) {
-        console.error('Failed to create admin profile:', createProfileError);
+        console.error('Failed to create profile:', createProfileError);
         return NextResponse.json({
           success: false,
-          error: 'Failed to create admin profile',
+          error: 'Failed to create profile',
           details: createProfileError.message
         }, { status: 500 });
       }
-      console.log('Admin profile created successfully');
+      console.log('Profile created successfully');
     } else if (profileCheckError) {
-      console.error('Error checking admin profile:', profileCheckError);
+      console.error('Error checking profile:', profileCheckError);
       return NextResponse.json({
         success: false,
-        error: 'Failed to check admin profile',
+        error: 'Failed to check profile',
         details: profileCheckError.message
       }, { status: 500 });
     } else {
-      console.log('Admin profile already exists');
+      console.log('Profile already exists');
     }
 
     // Generate unique slug for the meme

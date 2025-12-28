@@ -6,6 +6,7 @@ import { Button } from './Button';
 import { Input } from './Input';
 import { Category } from '@/lib/types/meme';
 import { getCategoryIconOrEmoji } from '@/lib/utils/categoryIcons';
+import { useAuth } from '@/lib/contexts/AuthContext';
 
 interface MemeUploadProps {
   categories: Category[];
@@ -18,6 +19,7 @@ export const MemeUpload: React.FC<MemeUploadProps> = ({
   onUploadSuccess,
   className = ''
 }) => {
+  const { session } = useAuth();
   const [title, setTitle] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [tags, setTags] = useState('');
@@ -61,11 +63,18 @@ export const MemeUpload: React.FC<MemeUploadProps> = ({
         formData.append('tags', tags);
       }
 
+      // Get auth token from session
+      const token = session?.access_token;
+      
+      if (!token) {
+        throw new Error('You must be logged in to upload memes');
+      }
+
       const response = await fetch('/api/memes/upload', {
         method: 'POST',
         body: formData,
         headers: {
-          'Authorization': 'Bearer placeholder-token' // Temporary placeholder for development
+          'Authorization': `Bearer ${token}`
         }
       });
 

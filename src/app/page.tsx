@@ -225,10 +225,6 @@ export default function Home() {
             <Button size="lg" className="text-lg px-8" onClick={() => window.location.href = '/memes'}>
               Browse Memes
             </Button>
-            <Button variant="outline" size="lg" className="text-lg px-8" onClick={() => window.location.href = '/upload'}>
-              <ICONS.Upload className="w-5 h-5 mr-2" />
-              Upload Your Own
-            </Button>
           </div>
         </section>
 
@@ -261,11 +257,8 @@ export default function Home() {
               </div>
               <h3 className="text-xl font-semibold mb-2">No memes yet</h3>
               <p className="text-gray-500 dark:text-gray-400 mb-4">
-                Be the first to upload a meme!
+                Check back soon for new memes!
               </p>
-              <Button onClick={() => window.location.href = '/upload'}>
-                Upload First Meme
-              </Button>
             </div>
           )}
         </section>

@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, LogOut, Shield } from 'lucide-react';
+import { useAuth } from '@/lib/contexts/AuthContext';
 
 interface HeaderProps {
   showSearch?: boolean;
@@ -13,6 +14,7 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ showSearch = true }) => {
   const router = useRouter();
+  const { user, isAdmin, signOut } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
@@ -33,12 +35,16 @@ const Header: React.FC<HeaderProps> = ({ showSearch = true }) => {
     setIsMobileMenuOpen(false);
   };
 
+  const handleLogout = async () => {
+    await signOut();
+    closeMobileMenu();
+    router.push('/');
+  };
+
   const navigationItems = [
     { href: '/memes', label: 'Memes' },
     { href: '/meme-generator-advanced', label: 'Generator' },
-    { href: '/upload', label: 'Upload' },
     { href: '/about', label: 'About' },
-    { href: '/profile', label: 'Profile' },
   ];
 
   return (
@@ -82,6 +88,27 @@ const Header: React.FC<HeaderProps> = ({ showSearch = true }) => {
                 </Button>
               </Link>
             ))}
+            
+            {/* Admin Indicator and Logout */}
+            {user && isAdmin && (
+              <>
+                <Link href="/admin" className="cursor-pointer">
+                  <Button variant="ghost" size="sm" className="flex items-center gap-1.5">
+                    <Shield className="h-4 w-4" />
+                    <span>Admin</span>
+                  </Button>
+                </Link>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={handleLogout}
+                  className="flex items-center gap-1.5"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>Logout</span>
+                </Button>
+              </>
+            )}
           </nav>
 
           {/* Mobile Menu Button */}
@@ -134,6 +161,27 @@ const Header: React.FC<HeaderProps> = ({ showSearch = true }) => {
                   {item.label}
                 </Link>
               ))}
+              
+              {/* Mobile Admin Indicator and Logout */}
+              {user && isAdmin && (
+                <>
+                  <Link
+                    href="/admin"
+                    className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors duration-150 flex items-center gap-2"
+                    onClick={closeMobileMenu}
+                  >
+                    <Shield className="h-4 w-4" />
+                    <span>Admin</span>
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className="w-full text-left px-3 py-2 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors duration-150 flex items-center gap-2"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    <span>Logout</span>
+                  </button>
+                </>
+              )}
             </div>
           </div>
         )}
