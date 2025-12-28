@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 
 import { FeaturedMemes } from '@/components/meme';
-import { Button } from '@/components/ui';
+import { Button, MemeGeneratorShowcase } from '@/components/ui';
 import { ICONS } from '@/lib/utils/categoryIcons';
 
 import { useCategories } from '@/lib/hooks/useCategories';
@@ -135,6 +135,9 @@ export default function Home() {
             </div>
           </section>
 
+          {/* Meme Generator Showcase */}
+          <MemeGeneratorShowcase />
+
           {/* Hottest Memes This Month Section - Loading State */}
           <section className="mb-12">
             <div className="flex items-center justify-between mb-6">
@@ -223,6 +226,9 @@ export default function Home() {
             </Button>
           </div>
         </section>
+
+        {/* Meme Generator Showcase */}
+        <MemeGeneratorShowcase />
 
         {/* Hottest Memes This Month Section */}
         <section className="mb-12">
