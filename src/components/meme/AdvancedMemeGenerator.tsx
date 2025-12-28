@@ -138,47 +138,75 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
     };
   }, []);
 
+  // Helper to check if actually dirty by comparing states
+  const checkIfActuallyDirty = useCallback(() => {
+    if (!selectedTemplate || !controllerRef.current || !initialTemplateState || isLoadingTemplate) {
+      return false;
+    }
+    
+    const elements = controllerRef.current.elements.filter(
+      (e) => e instanceof TextElement
+    ) as TextElement[];
+    const currentState = JSON.stringify({
+      templateId: selectedTemplate.id,
+      elements: elements.map(el => ({
+        text: el.settings.text.value,
+        x: el.x,
+        y: el.y,
+        width: el.width,
+        height: el.height,
+        fontSize: el.settings.font_size,
+        fontFamily: el.settings.font_family,
+        color: el.settings.color,
+        stroke: el.settings.stroke,
+        strokeWidth: el.settings.stroke_width,
+        alignment: el.settings.horizontal_align.current
+      }))
+    });
+    return currentState !== initialTemplateState;
+  }, [selectedTemplate, initialTemplateState, isLoadingTemplate]);
+
   // Helper to mark as dirty
   const markDirty = useCallback(() => {
     // Don't mark as dirty during template loading or if we don't have an initial state
-    if (isLoadingTemplate || !initialTemplateState) return;
-    
-    if (selectedTemplate && controllerRef.current) {
-      const elements = controllerRef.current.elements.filter(
-        (e) => e instanceof TextElement
-      ) as TextElement[];
-      const currentState = JSON.stringify({
-        templateId: selectedTemplate.id,
-        elements: elements.map(el => ({
-          text: el.settings.text.value,
-          x: el.x,
-          y: el.y,
-          width: el.width,
-          height: el.height,
-          fontSize: el.settings.font_size,
-          fontFamily: el.settings.font_family,
-          color: el.settings.color,
-          stroke: el.settings.stroke,
-          strokeWidth: el.settings.stroke_width,
-          alignment: el.settings.horizontal_align.current
-        }))
-      });
-      const dirty = currentState !== initialTemplateState;
-      setIsDirty(dirty);
-      setNavigationDirty(dirty);
+    if (isLoadingTemplate || !initialTemplateState) {
+      setIsDirty(false);
+      setNavigationDirty(false);
+      return;
     }
-  }, [selectedTemplate, initialTemplateState, setNavigationDirty, isLoadingTemplate]);
+    
+    const actuallyDirty = checkIfActuallyDirty();
+    setIsDirty(actuallyDirty);
+    setNavigationDirty(actuallyDirty);
+  }, [checkIfActuallyDirty, setNavigationDirty, isLoadingTemplate, initialTemplateState]);
 
   // Mark as dirty when elements are updated
   useEffect(() => {
     if (!controllerRef.current || !selectedTemplate) return;
 
     const handleElementsUpdated = () => {
-      markDirty();
+      // Use a small delay to ensure all updates are complete before checking
+      setTimeout(() => {
+        markDirty();
+      }, 50);
     };
 
     controllerRef.current.listen('elementsUpdated', handleElementsUpdated);
   }, [markDirty, selectedTemplate]);
+
+  // Also verify and sync navigation dirty state when template or loading state changes
+  useEffect(() => {
+    if (!selectedTemplate || isLoadingTemplate) {
+      setNavigationDirty(false);
+      setIsDirty(false);
+      return;
+    }
+
+    // Verify actual state and sync navigation dirty
+    const actuallyDirty = checkIfActuallyDirty();
+    setNavigationDirty(actuallyDirty);
+    setIsDirty(actuallyDirty);
+  }, [selectedTemplate, isLoadingTemplate, checkIfActuallyDirty, setNavigationDirty]);
 
   // Check if user has unsaved changes and confirm before proceeding
   const checkDirtyAndProceed = useCallback((action: () => void) => {
@@ -189,29 +217,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
     }
 
     // Actually verify if there are changes by comparing states
-    let actuallyDirty = false;
-    if (selectedTemplate && controllerRef.current && initialTemplateState) {
-      const elements = controllerRef.current.elements.filter(
-        (e) => e instanceof TextElement
-      ) as TextElement[];
-      const currentState = JSON.stringify({
-        templateId: selectedTemplate.id,
-        elements: elements.map(el => ({
-          text: el.settings.text.value,
-          x: el.x,
-          y: el.y,
-          width: el.width,
-          height: el.height,
-          fontSize: el.settings.font_size,
-          fontFamily: el.settings.font_family,
-          color: el.settings.color,
-          stroke: el.settings.stroke,
-          strokeWidth: el.settings.stroke_width,
-          alignment: el.settings.horizontal_align.current
-        }))
-      });
-      actuallyDirty = currentState !== initialTemplateState;
-    }
+    const actuallyDirty = checkIfActuallyDirty();
 
     if (actuallyDirty) {
       const confirmed = window.confirm(
@@ -223,7 +229,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
     }
     action();
     return true;
-  }, [isDirty, isLoadingTemplate, selectedTemplate, initialTemplateState]);
+  }, [checkIfActuallyDirty, isLoadingTemplate]);
 
   // Load template image and create text elements from template
   const loadTemplate = useCallback(
