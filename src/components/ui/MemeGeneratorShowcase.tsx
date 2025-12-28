@@ -57,33 +57,64 @@ export function MemeGeneratorShowcase({ screenshots = [] }: MemeGeneratorShowcas
           const isEven = index % 2 === 0;
           const imageOrder = isEven ? 'order-1' : 'order-2';
           const textOrder = isEven ? 'order-2' : 'order-1';
+          
+          // Use different image for background (toggle between the two)
+          const backgroundImage = index === 0 ? defaultScreenshots[1] : defaultScreenshots[0];
+          const rotation = index === 0 ? -3 : 3; // Different rotation for each section
 
           return (
             <div
               key={index}
               className={`grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center mb-16 last:mb-0`}
             >
-              {/* Image */}
-              <div className={`${imageOrder} relative aspect-[16/10] rounded-xl shadow-2xl overflow-hidden border-4 border-white dark:border-gray-700 bg-white dark:bg-gray-800 transition-transform duration-300 hover:scale-105`}>
-                {section.image ? (
-                  <Image
-                    src={section.image}
-                    alt={`Meme generator screenshot ${index + 1}`}
-                    fill
-                    className="object-top"
-                    sizes="(max-width: 768px) 100vw, 50vw"
-                    priority={index === 0}
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900 dark:to-purple-900 flex items-center justify-center">
-                    <div className="text-center p-8">
-                      <ICONS.Star className="w-16 h-16 mx-auto mb-4 text-blue-600 dark:text-blue-400" />
-                      <p className="text-gray-600 dark:text-gray-300 font-medium">
-                        Screenshot {index + 1}
-                      </p>
-                    </div>
+              {/* Image with stacking effect */}
+              <div className={`${imageOrder} relative aspect-[16/10]`}>
+                {/* Background/stacked image */}
+                {backgroundImage && (
+                  <div 
+                    className="absolute inset-0 rounded-xl shadow-xl overflow-hidden border-4 border-white dark:border-gray-700 bg-white dark:bg-gray-800 opacity-90 z-0"
+                    style={{
+                      transform: `translate(50px, 50px) rotate(${rotation}deg) scale(0.92)`,
+                    }}
+                  >
+                    <Image
+                      src={backgroundImage}
+                      alt={`Meme generator screenshot background ${index + 1}`}
+                      fill
+                      className="object-top"
+                      sizes="(max-width: 768px) 100vw, 50vw"
+                      priority={false}
+                    />
                   </div>
                 )}
+                
+                {/* Main image */}
+                <div 
+                  className="relative w-full h-full rounded-xl shadow-2xl overflow-hidden border-4 border-white dark:border-gray-700 bg-white dark:bg-gray-800 transition-transform duration-300 hover:scale-105 z-10"
+                  style={{
+                    transform: `rotate(${-rotation * 0.5}deg)`,
+                  }}
+                >
+                  {section.image ? (
+                    <Image
+                      src={section.image}
+                      alt={`Meme generator screenshot ${index + 1}`}
+                      fill
+                      className="object-top"
+                      sizes="(max-width: 768px) 100vw, 50vw"
+                      priority={index === 0}
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900 dark:to-purple-900 flex items-center justify-center">
+                      <div className="text-center p-8">
+                        <ICONS.Star className="w-16 h-16 mx-auto mb-4 text-blue-600 dark:text-blue-400" />
+                        <p className="text-gray-600 dark:text-gray-300 font-medium">
+                          Screenshot {index + 1}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Text content */}
