@@ -44,7 +44,7 @@ const Header: React.FC<HeaderProps> = ({ showSearch = true }) => {
 
   const navigationItems = [
     { href: '/memes', label: 'Memes' },
-    { href: '/meme-generator-advanced', label: 'Generator' },
+    { href: '/meme-generator', label: 'Generator' },
   ];
 
   return (
