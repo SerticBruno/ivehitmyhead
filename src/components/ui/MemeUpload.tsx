@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useCallback, useEffect } from 'react';
+import Image from 'next/image';
 import { useDropzone } from 'react-dropzone';
 import { Button } from './Button';
 import { Input } from './Input';
@@ -162,11 +163,15 @@ export const MemeUpload: React.FC<MemeUploadProps> = ({
           {imagePreview ? (
             <div className="space-y-3">
               <div className="relative border-2 border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden">
-                <img
-                  src={imagePreview}
-                  alt="Preview"
-                  className="w-full h-auto max-h-96 object-contain"
-                />
+                <div className="relative w-full h-96">
+                  <Image
+                    src={imagePreview}
+                    alt="Preview"
+                    fill
+                    className="object-contain"
+                    unoptimized
+                  />
+                </div>
                 <button
                   type="button"
                   onClick={handleRemoveImage}

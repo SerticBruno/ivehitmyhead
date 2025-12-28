@@ -36,9 +36,14 @@ export const useMemeInteractions = (): UseMemeInteractionsReturn => {
         const responseText = await response.text();
         console.error('useMemeInteractions: Error response text:', responseText);
         
-        let errorData: any = {};
+        interface ErrorData {
+          error?: string;
+          details?: string;
+          message?: string;
+        }
+        let errorData: ErrorData = {};
         try {
-          errorData = JSON.parse(responseText);
+          errorData = JSON.parse(responseText) as ErrorData;
         } catch (parseError) {
           console.error('useMemeInteractions: Failed to parse error response as JSON:', parseError);
           errorData = { error: responseText || `HTTP ${response.status}: ${response.statusText}` };
@@ -52,9 +57,12 @@ export const useMemeInteractions = (): UseMemeInteractionsReturn => {
       const responseText = await response.text();
       console.log('useMemeInteractions: Response text:', responseText);
       
-      let data: any = {};
+      interface LikeResponse {
+        liked?: boolean;
+      }
+      let data: LikeResponse = {};
       try {
-        data = JSON.parse(responseText);
+        data = JSON.parse(responseText) as LikeResponse;
       } catch (parseError) {
         console.error('useMemeInteractions: Failed to parse success response as JSON:', parseError);
         throw new Error('Invalid response from server');

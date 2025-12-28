@@ -26,7 +26,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
-      checkAdminStatus(session?.user);
+      checkAdminStatus(session?.user ?? null);
       setLoading(false);
     });
 
@@ -36,7 +36,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
-      checkAdminStatus(session?.user);
+      checkAdminStatus(session?.user ?? null);
       setLoading(false);
     });
 
@@ -66,10 +66,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .single();
 
       // Check if error is due to missing column (PostgreSQL error code 42703)
-      if (profileError && (profileError.code === '42703' || profileError.code === 42703 || profileError.message?.includes('does not exist'))) {
-        // Column doesn't exist, rely on metadata
-        setIsAdmin(isAdminFromMetadata);
-        return;
+      if (profileError) {
+        const errorCode = profileError.code?.toString();
+        if (errorCode === '42703' || profileError.message?.includes('does not exist')) {
+          // Column doesn't exist, rely on metadata
+          setIsAdmin(isAdminFromMetadata);
+          return;
+        }
       }
 
       // If profile exists and has is_admin field, use it
@@ -79,7 +82,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // If profile doesn't exist or other error, rely on metadata
         setIsAdmin(isAdminFromMetadata);
       }
-    } catch (error) {
+    } catch {
       // If profiles table check fails, rely on metadata
       setIsAdmin(isAdminFromMetadata);
     }

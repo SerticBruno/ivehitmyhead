@@ -122,7 +122,15 @@ export async function POST(
     
     // Extract error message from various error types
     let errorMessage = 'Unknown error';
-    let errorDetails: any = {};
+    interface ErrorDetails {
+      message?: string;
+      stack?: string;
+      name?: string;
+      code?: string | number;
+      details?: string;
+      hint?: string;
+    }
+    let errorDetails: ErrorDetails = {};
     
     if (error instanceof Error) {
       errorMessage = error.message;
@@ -133,13 +141,13 @@ export async function POST(
       };
     } else if (typeof error === 'object' && error !== null) {
       // Handle Supabase errors or other object errors
-      const errorObj = error as any;
-      errorMessage = errorObj.message || errorObj.error || errorObj.details || 'Unknown error';
+      const errorObj = error as Record<string, unknown>;
+      errorMessage = (errorObj.message as string) || (errorObj.error as string) || (errorObj.details as string) || 'Unknown error';
       errorDetails = {
-        code: errorObj.code,
-        message: errorObj.message,
-        details: errorObj.details,
-        hint: errorObj.hint
+        code: errorObj.code as string | number | undefined,
+        message: errorObj.message as string | undefined,
+        details: errorObj.details as string | undefined,
+        hint: errorObj.hint as string | undefined
       };
     }
     

@@ -36,7 +36,7 @@ export default function AdminLoginPage() {
 
       // Check if user is admin after sign in
       // The AuthContext will update isAdmin, and useEffect will redirect
-    } catch (err) {
+    } catch {
       setError('An unexpected error occurred. Please try again.');
     } finally {
       setLoading(false);

@@ -111,7 +111,7 @@ export default function MemeDetailPage() {
     }
     // Reset the view recording flag when slug changes
     hasRecordedView.current = false;
-  }, [slug, recordView, checkLikeStatus]);
+  }, [slug, recordView, checkLikeStatus, memesState.memes]);
 
   const handleLike = async (e?: React.MouseEvent) => {
     if (e) {
