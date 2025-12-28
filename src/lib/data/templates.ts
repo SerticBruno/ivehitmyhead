@@ -28,8 +28,8 @@ export const MEME_TEMPLATES: MemeTemplate[] = [
     textFields: [
       {
         id: 'top-left',
-        x: 14, // 10% from left
-        y: 12, // 5% from top
+        x: 7, // 10% from left
+        y: 10, // 5% from top
         width: 35, // 35% of image width
         height: 35, // 20% of image height
         fontSize: 42, // Smaller font size (in pixels for base 600px height)
@@ -44,8 +44,8 @@ export const MEME_TEMPLATES: MemeTemplate[] = [
       },
       {
         id: 'top-right',
-        x: 50, // 55% from left (right side)
-        y: 7, // 5% from top
+        x: 43, // 55% from left (right side)
+        y: 6, // 5% from top
         width: 35, // 35% of image width
         height: 20, // 20% of image height
         fontSize: 42, // Smaller font size
