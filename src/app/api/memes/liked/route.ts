@@ -31,7 +31,16 @@ export async function GET(request: NextRequest) {
     }
 
     // Extract the slugs from the liked memes
-    const likedSlugs = likedMemes.map(like => like.memes.slug);
+    // With Supabase joins, memes can be an array or object depending on the relationship
+    const likedSlugs = (likedMemes || [])
+      .map((like: { meme_id: string; memes: { slug: string } | { slug: string }[] }) => {
+        // Handle both array and object cases
+        if (Array.isArray(like.memes)) {
+          return like.memes[0]?.slug;
+        }
+        return like.memes?.slug;
+      })
+      .filter((slug): slug is string => typeof slug === 'string');
     
     console.log('Found liked memes:', likedSlugs);
 

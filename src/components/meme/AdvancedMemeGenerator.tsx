@@ -242,7 +242,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
           return;
         }
 
-        const img = new Image();
+        const img = new window.Image();
         img.crossOrigin = 'anonymous';
         img.onload = () => {
           if (!controllerRef.current) return;
