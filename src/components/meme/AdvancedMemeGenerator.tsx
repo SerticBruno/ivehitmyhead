@@ -35,16 +35,41 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
   const [isLoadingTemplate, setIsLoadingTemplate] = useState(false);
   const { setDirty: setNavigationDirty } = useNavigationWarning();
   const [containerHeight, setContainerHeight] = useState('100vh');
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
+  const [editingTextIndex, setEditingTextIndex] = useState<number | null>(null);
+  const textAreaRefs = useRef<Record<number, HTMLTextAreaElement | null>>({});
+  const editingElementRef = useRef<TextElement | null>(null);
+  const lastTapRef = useRef<{ index: number | null; time: number }>({
+    index: null,
+    time: 0,
+  });
+  const stopEditing = useCallback(() => {
+    editingElementRef.current = null;
+    setEditingTextIndex(null);
+  }, []);
+  const focusAndSelectTextAreaAtIndex = useCallback((index: number) => {
+    requestAnimationFrame(() => {
+      const ta = textAreaRefs.current[index];
+      if (!ta) return;
+      ta.focus();
+      ta.select();
+      // Prevent internal scrollbars; grow to fit content.
+      ta.style.height = 'auto';
+      ta.style.height = `${ta.scrollHeight}px`;
+    });
+  }, []);
 
   // Calculate container height based on viewport and screen size
   useEffect(() => {
     const updateHeight = () => {
       if (typeof window !== 'undefined') {
-        const isMobile = window.innerWidth < 768;
-        // On mobile, use full viewport height
+        // Treat tablets like mobile for layout/scroll behavior.
+        const isMobile = window.innerWidth < 1024;
+        setIsMobileViewport(isMobile);
+
         // On desktop, account for header (64px = 4rem)
-        const height = isMobile ? '100vh' : 'calc(100vh - 4rem)';
-        setContainerHeight(height);
+        // On mobile, let content size naturally so we avoid nested scroll areas.
+        setContainerHeight(isMobile ? 'auto' : 'calc(100vh - 4rem)');
       }
     };
 
@@ -71,6 +96,17 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
           setSelectedElement(selected);
           setTextInput(selected.settings.text.value);
           setShowTextInput(true);
+
+          // Open the matching sidebar field for editing (from canvas double-click / double-tap).
+          const elements = controller.elements.filter(
+            (e) => e instanceof TextElement
+          ) as TextElement[];
+          const index = elements.indexOf(selected);
+          if (index !== -1) {
+            editingElementRef.current = selected;
+            setEditingTextIndex(index);
+            focusAndSelectTextAreaAtIndex(index);
+          }
         }
       }
     });
@@ -86,6 +122,11 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
         setSelectedElement(null);
         setShowTextInput(false);
       }
+
+      // If selection moved away from the element being edited, exit edit mode.
+      if (editingElementRef.current && selected !== editingElementRef.current) {
+        stopEditing();
+      }
       // Update text elements list
       const elements = controller.elements.filter(
         (e) => e instanceof TextElement
@@ -95,6 +136,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
 
     // Listen for elements list changes to update sidebar
     controller.listen('elementsListChanged', () => {
+      stopEditing();
       const elements = controller.elements.filter(
         (e) => e instanceof TextElement
       ) as TextElement[];
@@ -149,7 +191,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
       unregister();
       window.removeEventListener('resize', handleResize);
     };
-  }, []);
+  }, [stopEditing, focusAndSelectTextAreaAtIndex]);
 
   // Helper to check if actually dirty by comparing states
   const checkIfActuallyDirty = useCallback(() => {
@@ -450,9 +492,9 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
     <div 
       className="max-w-7xl mx-auto p-2 md:p-4" 
       style={{ 
-        height: containerHeight,
-        maxHeight: containerHeight,
-        overflow: 'hidden', 
+        height: isMobileViewport ? 'auto' : containerHeight,
+        maxHeight: isMobileViewport ? 'none' : containerHeight,
+        overflow: isMobileViewport ? 'visible' : 'hidden', 
         display: 'flex', 
         flexDirection: 'column' 
       }}
@@ -466,7 +508,10 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
         </p>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-2 md:gap-4 flex-1 min-h-0" style={{ flex: '1 1 0%', minHeight: 0, overflow: 'hidden' }}>
+      <div
+        className="flex flex-col lg:flex-row gap-2 md:gap-4 flex-1 min-h-0"
+        style={{ flex: '1 1 0%', minHeight: 0, overflow: isMobileViewport ? 'visible' : 'hidden' }}
+      >
         {/* Template chooser - shown first on mobile, part of right panel on desktop */}
         <div className="flex flex-col min-h-0 lg:hidden order-1" style={{ minWidth: 0, maxWidth: '100%' }}>
           <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-2 md:p-4 border border-gray-200 dark:border-gray-800">
@@ -707,7 +752,16 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
         </div>
 
         {/* Right side - Controls (text fields below on mobile, right side on desktop) */}
-        <div className="flex flex-col min-h-0 flex-1 lg:max-w-md order-3 lg:order-2" style={{ minWidth: 0, maxWidth: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div
+          className="flex flex-col min-h-0 flex-1 lg:max-w-md order-3 lg:order-2"
+          style={{
+            minWidth: 0,
+            maxWidth: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: isMobileViewport ? 'visible' : 'hidden',
+          }}
+        >
           <div className="space-y-2 md:space-y-4 flex-1 min-h-0 pb-2 md:pb-4 overflow-x-hidden lg:overflow-y-auto" style={{ flex: '1 1 0%', minHeight: 0, WebkitOverflowScrolling: 'touch' }}>
           {/* Template selection - hidden on mobile, shown on desktop */}
           <div className="hidden lg:block bg-white dark:bg-gray-900 rounded-lg shadow-lg p-2 md:p-4 border border-gray-200 dark:border-gray-800">
@@ -866,6 +920,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                   const shadowBlur = element.settings.shadow_blur ?? 0;
                   const shadowOffsetX = element.settings.shadow_offset_x ?? 0;
                   const shadowOffsetY = element.settings.shadow_offset_y ?? 0;
+                  const isEditing = editingTextIndex === index;
                   
                   const toggleExpand = () => {
                     const newExpanded = new Set(expandedElements);
@@ -875,13 +930,15 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                       newExpanded.add(index);
                     }
                     setExpandedElements(newExpanded);
+                    stopEditing();
                   };
 
-                  const selectElement = () => {
+                  const selectElement = (opts?: { keepEditing?: boolean }) => {
                     if (controllerRef.current) {
                       controllerRef.current.selectedElements = [element];
                       controllerRef.current.emit('selectedElementsChange');
                       setSelectedElement(element);
+                      if (!opts?.keepEditing) stopEditing();
                     }
                   };
 
@@ -893,6 +950,51 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                         multiline: true,
                       });
                       // Mark as dirty when text is updated (will be checked in elementsUpdated listener)
+                    }
+                  };
+
+                  const resizeTextArea = (ta: HTMLTextAreaElement | null) => {
+                    if (!ta) return;
+                    // Prevent internal scrollbars; grow to fit content.
+                    ta.style.height = 'auto';
+                    ta.style.height = `${ta.scrollHeight}px`;
+                  };
+
+                  const beginEditing = () => {
+                    editingElementRef.current = element;
+                    selectElement({ keepEditing: true });
+                    setEditingTextIndex(index);
+                    requestAnimationFrame(() => {
+                      const ta = textAreaRefs.current[index];
+                      if (ta) {
+                        ta.focus();
+                        ta.select();
+                        resizeTextArea(ta);
+                      }
+                    });
+                  };
+
+                  const handleTapToSelectOrEdit = (e: React.PointerEvent) => {
+                    e.stopPropagation();
+
+                    // Desktop: single-click selects; double-click edits (handled separately).
+                    if (e.pointerType !== 'touch') {
+                      selectElement();
+                      return;
+                    }
+
+                    // Touch: single-tap selects, double-tap edits.
+                    const now = Date.now();
+                    const last = lastTapRef.current;
+                    const isDoubleTap = last.index === index && now - last.time < 350;
+                    lastTapRef.current = { index, time: now };
+
+                    if (isDoubleTap) {
+                      // Prevent browser double-tap zoom.
+                      e.preventDefault();
+                      beginEditing();
+                    } else {
+                      selectElement();
                     }
                   };
 
@@ -909,7 +1011,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                       <div className="p-2 md:p-3">
                         <div className="flex items-center justify-between mb-1 md:mb-2">
                           <button
-                            onClick={selectElement}
+                            onClick={() => selectElement()}
                             className="flex-1 text-left flex items-center gap-2"
                           >
                             <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 bg-gray-200 dark:bg-gray-700 px-2 py-0.5 rounded">
@@ -938,26 +1040,54 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                         </div>
                         
                         {/* Inline Text Input */}
-                        <textarea
-                          value={currentTextInput}
-                          onChange={(e) => updateText(e.target.value)}
-                          onFocus={selectElement}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            selectElement();
-                          }}
-                          onMouseDown={(e) => {
-                            e.stopPropagation();
-                          }}
-                          onPointerDown={(e) => {
-                            e.stopPropagation();
-                          }}
-                          tabIndex={0}
-                          className="w-full px-2 md:px-3 py-1.5 md:py-2 text-xs md:text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                          style={{ pointerEvents: 'auto', cursor: 'text' }}
-                          rows={1}
-                          placeholder={`Enter text for field ${index + 1}...`}
-                        />
+                        {isEditing ? (
+                          <textarea
+                            ref={(node) => {
+                              textAreaRefs.current[index] = node;
+                              resizeTextArea(node);
+                            }}
+                            value={currentTextInput}
+                            onChange={(e) => {
+                              updateText(e.target.value);
+                              resizeTextArea(e.currentTarget);
+                            }}
+                            onFocus={() => selectElement({ keepEditing: true })}
+                            onBlur={stopEditing}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                            }}
+                            onPointerDown={(e) => {
+                              // Prevent bubbling to outer click handlers.
+                              e.stopPropagation();
+                            }}
+                            tabIndex={0}
+                            className="w-full px-2 md:px-3 py-1.5 md:py-2 text-base lg:text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                            style={{ overflow: 'hidden' }}
+                            rows={1}
+                            placeholder={`Enter text for field ${index + 1}...`}
+                          />
+                        ) : (
+                          <div
+                            role="button"
+                            tabIndex={0}
+                            onPointerDown={handleTapToSelectOrEdit}
+                            onDoubleClick={(e) => {
+                              e.stopPropagation();
+                              beginEditing();
+                            }}
+                            className="w-full px-2 md:px-3 py-1.5 md:py-2 text-xs md:text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white cursor-text select-none whitespace-pre-wrap break-words touch-manipulation"
+                            style={{ minHeight: '2.25rem' }}
+                            title="Tap to select, double tap/click to edit"
+                          >
+                            {currentTextInput.trim().length > 0 ? (
+                              currentTextInput
+                            ) : (
+                              <span className="text-gray-400">
+                                {`Enter text for field ${index + 1}...`}
+                              </span>
+                            )}
+                          </div>
+                        )}
                       </div>
 
                       {/* Expanded Properties */}

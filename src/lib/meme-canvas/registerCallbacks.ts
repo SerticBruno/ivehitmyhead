@@ -12,6 +12,10 @@ type MouseEventSourceCapabilities = MouseEvent & {
 export default function registerCallbacks(
   controller: MemeCanvasController
 ): UnregisterCallbacks {
+  const TOUCH_DOUBLE_TAP_MS = 350;
+  const TOUCH_DOUBLE_TAP_DISTANCE = 24; // in canvas coordinates
+  let lastTouchTap: { time: number; x: number; y: number } | null = null;
+
   function mouseEvent(
     event: MouseEventSourceCapabilities,
     fn: (x: number, y: number) => void
@@ -100,7 +104,27 @@ export default function registerCallbacks(
 
   const callbacks = {
     dblclick: (e: MouseEvent) => mouseEvent(e, controller.onDoubleClick),
-    touch: (e: TouchEvent) => touchEvent(e, controller.onPress),
+    touch: (e: TouchEvent) =>
+      touchEvent(e, (x, y) => {
+        const now = Date.now();
+        const last = lastTouchTap;
+        const dx = last ? Math.abs(x - last.x) : Infinity;
+        const dy = last ? Math.abs(y - last.y) : Infinity;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const isDoubleTap =
+          last !== null &&
+          now - last.time < TOUCH_DOUBLE_TAP_MS &&
+          dist < TOUCH_DOUBLE_TAP_DISTANCE;
+
+        if (isDoubleTap) {
+          lastTouchTap = null;
+          controller.onDoubleClick(x, y);
+          return;
+        }
+
+        lastTouchTap = { time: now, x, y };
+        controller.onPress(x, y);
+      }),
     touchrelease: (e: TouchEvent) => touchEvent(e, controller.onRelease),
     touchmove: (e: TouchEvent) =>
       touchEvent(e, (x, y) => {

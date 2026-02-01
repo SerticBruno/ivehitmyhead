@@ -223,6 +223,7 @@ class TextElement extends MemeElement<TextElementSettings> {
 
   public override onDoubleClick(): void {
     this.controller.selectedElements = [this];
+    this.controller.emit('selectedElementsChange');
     this.controller.emit('inputFocusRequest', {
       inputName: 'text',
     });
