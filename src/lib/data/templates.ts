@@ -363,6 +363,61 @@ export const TEMPLATE_CATEGORIES: TemplateCategory[] = [
   }
 ];
 
+/**
+ * User-uploaded image in the generator (not part of {@link MEME_TEMPLATES}).
+ */
+export const CUSTOM_PHOTO_TEMPLATE_ID = '__custom_photo__';
+
+/**
+ * Default text boxes for a custom upload: top center + bottom center, black text, white outline.
+ */
+export function createCustomPhotoMemeTemplate(imageObjectUrl: string): MemeTemplate {
+  return {
+    id: CUSTOM_PHOTO_TEMPLATE_ID,
+    name: 'Custom photo',
+    description: 'Your uploaded image',
+    src: imageObjectUrl,
+    width: 800,
+    height: 600,
+    defaultFont: 'Impact',
+    defaultFontSize: 42,
+    defaultColor: '#000000',
+    textFields: [
+      {
+        id: 'custom-top',
+        x: 5,
+        y: 2,
+        width: 90,
+        height: 24,
+        fontSize: 42,
+        color: '#000000',
+        fontFamily: 'Impact',
+        fontWeight: 'bold',
+        textAlign: 'center',
+        strokeColor: '#ffffff',
+        strokeWidth: 5,
+      },
+      {
+        id: 'custom-bottom',
+        x: 5,
+        y: 74,
+        width: 90,
+        height: 24,
+        fontSize: 42,
+        color: '#000000',
+        fontFamily: 'Impact',
+        fontWeight: 'bold',
+        textAlign: 'center',
+        strokeColor: '#ffffff',
+        strokeWidth: 5,
+      },
+    ],
+    tags: ['custom'],
+    category: 'custom',
+    difficulty: 'easy',
+  };
+}
+
 // Helper function to get template by ID
 export const getTemplateById = (id: string): MemeTemplate | undefined => {
   return MEME_TEMPLATES.find(template => template.id === id);

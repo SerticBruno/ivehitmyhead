@@ -6,13 +6,40 @@ import MemeCanvasController from '@/lib/meme-canvas/MemeCanvasController';
 import TextElement from '@/lib/meme-canvas/TextElement';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Download, Plus, Trash2, Type, ChevronDown, ChevronUp } from 'lucide-react';
-import { MEME_TEMPLATES } from '@/lib/data/templates';
+import { Download, Plus, Trash2, Type, ChevronDown, ChevronUp, Upload } from 'lucide-react';
+import {
+  MEME_TEMPLATES,
+  CUSTOM_PHOTO_TEMPLATE_ID,
+  createCustomPhotoMemeTemplate,
+} from '@/lib/data/templates';
 import type { MemeTemplate } from '@/lib/types/meme';
 import { useNavigationWarning } from '@/lib/contexts/NavigationWarningContext';
 
 interface AdvancedMemeGeneratorProps {
   templates?: MemeTemplate[];
+}
+
+function TemplatePreviewImage({
+  src,
+  alt,
+  width,
+  height,
+  className,
+}: {
+  src: string;
+  alt: string;
+  width: number;
+  height: number;
+  className?: string;
+}) {
+  if (src.startsWith('blob:')) {
+    return (
+      <img src={src} alt={alt} width={width} height={height} className={className} />
+    );
+  }
+  return (
+    <Image src={src} alt={alt} width={width} height={height} className={className} />
+  );
 }
 
 export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
@@ -43,10 +70,74 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
     index: null,
     time: 0,
   });
+  const customPhotoObjectUrlRef = useRef<string | null>(null);
+  const customPhotoFileInputRef = useRef<HTMLInputElement>(null);
+
+  const revokeCustomPhotoIfAny = useCallback(() => {
+    if (customPhotoObjectUrlRef.current) {
+      URL.revokeObjectURL(customPhotoObjectUrlRef.current);
+      customPhotoObjectUrlRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => () => revokeCustomPhotoIfAny(), [revokeCustomPhotoIfAny]);
   const stopEditing = useCallback(() => {
     editingElementRef.current = null;
     setEditingTextIndex(null);
   }, []);
+
+  const generatorRootRef = useRef<HTMLDivElement>(null);
+
+  /** Clicks outside the canvas should blur sidebar fields and clear canvas selection (except on interactive controls). */
+  useEffect(() => {
+    const isLikelyInteractive = (target: EventTarget | null) => {
+      if (!(target instanceof Element)) return false;
+      return Boolean(
+        target.closest(
+          'button, a[href], input, textarea, select, label, [role="button"], [role="tab"]'
+        )
+      );
+    };
+
+    const onPointerDownCapture = (e: PointerEvent) => {
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      const canvas = canvasRef.current;
+      const root = generatorRootRef.current;
+      const target = e.target;
+      if (!canvas || !(target instanceof Node)) return;
+      if (canvas.contains(target)) return;
+
+      // Let the browser move focus between sidebar fields without double-clearing state.
+      if (
+        root?.contains(target) &&
+        (target instanceof HTMLTextAreaElement ||
+          target instanceof HTMLInputElement ||
+          target instanceof HTMLSelectElement)
+      ) {
+        return;
+      }
+
+      const ae = document.activeElement;
+      if (
+        (ae instanceof HTMLTextAreaElement ||
+          ae instanceof HTMLInputElement ||
+          ae instanceof HTMLSelectElement) &&
+        root?.contains(ae)
+      ) {
+        ae.blur();
+      }
+      stopEditing();
+
+      if (!root?.contains(target)) return;
+      if (!isLikelyInteractive(target)) {
+        controllerRef.current?.clearSelected();
+      }
+    };
+
+    document.addEventListener('pointerdown', onPointerDownCapture, true);
+    return () =>
+      document.removeEventListener('pointerdown', onPointerDownCapture, true);
+  }, [stopEditing]);
   const focusAndSelectTextAreaAtIndex = useCallback((index: number) => {
     requestAnimationFrame(() => {
       const ta = textAreaRefs.current[index];
@@ -290,6 +381,10 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
         return;
       }
 
+      if (template.id !== CUSTOM_PHOTO_TEMPLATE_ID) {
+        revokeCustomPhotoIfAny();
+      }
+
       // Immediately reset dirty state when starting to load a new template
       setNavigationDirty(false);
       setIsLoadingTemplate(true);
@@ -303,7 +398,10 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
         }
 
         const img = new window.Image();
-        img.crossOrigin = 'anonymous';
+        const src = template.src;
+        if (src.startsWith('http://') || src.startsWith('https://')) {
+          img.crossOrigin = 'anonymous';
+        }
         img.onload = () => {
           if (!controllerRef.current) return;
           controllerRef.current.changeImage(img);
@@ -433,13 +531,33 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
         };
         img.onerror = () => {
           console.error('Failed to load template image:', template.src);
+          if (template.id === CUSTOM_PHOTO_TEMPLATE_ID) {
+            revokeCustomPhotoIfAny();
+          }
+          setIsLoadingTemplate(false);
         };
-        img.src = template.src;
+        img.src = src;
       };
       
       doLoadTemplate();
     },
-    [checkDirtyAndProceed, setNavigationDirty]
+    [checkDirtyAndProceed, setNavigationDirty, revokeCustomPhotoIfAny]
+  );
+
+  const loadCustomPhotoFromFile = useCallback(
+    (file: File) => {
+      if (!file.type.startsWith('image/')) return;
+      if (file.size > 10 * 1024 * 1024) {
+        window.alert('Please choose an image under 10MB.');
+        return;
+      }
+      if (!checkDirtyAndProceed(() => {})) return;
+      revokeCustomPhotoIfAny();
+      const objectUrl = URL.createObjectURL(file);
+      customPhotoObjectUrlRef.current = objectUrl;
+      loadTemplate(createCustomPhotoMemeTemplate(objectUrl), true);
+    },
+    [checkDirtyAndProceed, loadTemplate, revokeCustomPhotoIfAny]
   );
 
   // Add text element
@@ -489,14 +607,15 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
   }, [textInput, selectedElement, showTextInput, updateText]);
 
   return (
-    <div 
-      className="max-w-7xl mx-auto p-2 md:p-4" 
-      style={{ 
+    <div
+      ref={generatorRootRef}
+      className="max-w-7xl mx-auto p-2 md:p-4"
+      style={{
         height: isMobileViewport ? 'auto' : containerHeight,
         maxHeight: isMobileViewport ? 'none' : containerHeight,
-        overflow: isMobileViewport ? 'visible' : 'hidden', 
-        display: 'flex', 
-        flexDirection: 'column' 
+        overflow: isMobileViewport ? 'visible' : 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
       }}
     >
       <div className="text-center mb-2 md:mb-4 flex-shrink-0">
@@ -504,9 +623,22 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
           Advanced Meme Generator
         </h1>
         <p className="text-xs md:text-sm lg:text-base text-gray-600 dark:text-gray-400">
-          Choose a template, add text, and create your meme
+          Choose a template or upload your own photo, add text, and create your meme
         </p>
       </div>
+
+      <input
+        ref={customPhotoFileInputRef}
+        type="file"
+        accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+        className="sr-only"
+        aria-label="Upload your own meme image"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          e.target.value = '';
+          if (f) loadCustomPhotoFromFile(f);
+        }}
+      />
 
       <div
         className="flex flex-col lg:flex-row gap-2 md:gap-4 flex-1 min-h-0"
@@ -516,15 +648,26 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
         <div className="flex flex-col min-h-0 lg:hidden order-1" style={{ minWidth: 0, maxWidth: '100%' }}>
           <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-2 md:p-4 border border-gray-200 dark:border-gray-800">
             <h2 className="text-base md:text-lg font-semibold mb-2 md:mb-4">Templates</h2>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="w-full gap-2 mb-3"
+              onClick={() => customPhotoFileInputRef.current?.click()}
+            >
+              <Upload className="w-4 h-4" />
+              Upload your photo
+            </Button>
             <div className="relative">
               <button
+                type="button"
                 onClick={() => setIsTemplateDropdownOpen(!isTemplateDropdownOpen)}
                 className="w-full flex items-center justify-between p-3 rounded-lg border-2 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-800 transition-all"
               >
                 <div className="flex items-center gap-3 flex-1 min-w-0">
                   {selectedTemplate ? (
                     <>
-                      <Image
+                      <TemplatePreviewImage
                         src={selectedTemplate.src}
                         alt={selectedTemplate.name}
                         width={48}
@@ -556,6 +699,29 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                     onClick={() => setIsTemplateDropdownOpen(false)}
                   />
                   <div className="absolute z-20 w-full mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-[60vh] overflow-y-auto">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsTemplateDropdownOpen(false);
+                        customPhotoFileInputRef.current?.click();
+                      }}
+                      className={`w-full flex items-center gap-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border-b border-gray-100 dark:border-gray-700 ${
+                        selectedTemplate?.id === CUSTOM_PHOTO_TEMPLATE_ID
+                          ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
+                          : ''
+                      }`}
+                    >
+                      <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded border-2 border-dashed border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
+                        <Upload className="h-7 w-7 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <div className="min-w-0 flex-1 text-left">
+                        <div className="font-medium text-gray-900 dark:text-white">Upload your photo</div>
+                        <div className="mt-0.5 truncate text-sm text-gray-500 dark:text-gray-400">
+                          Your image · top & bottom text
+                        </div>
+                      </div>
+                    </button>
                     {templates.length === 0 ? (
                       <div className="p-4 text-center text-gray-500 dark:text-gray-400">
                         No templates available
@@ -563,6 +729,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                     ) : (
                       templates.map((template) => (
                         <button
+                          type="button"
                           key={template.id}
                           onClick={(e) => {
                             e.stopPropagation();
@@ -575,7 +742,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                               : ''
                           }`}
                         >
-                          <Image
+                          <TemplatePreviewImage
                             src={template.src}
                             alt={template.name}
                             width={64}
@@ -610,8 +777,26 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
               <div className="mt-4">
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">Quick select:</p>
                 <div className="grid grid-cols-1 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => customPhotoFileInputRef.current?.click()}
+                    className="flex items-center gap-3 p-3 rounded-lg border-2 border-dashed border-blue-300 dark:border-blue-700 hover:border-blue-500 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 bg-white dark:bg-gray-800 transition-all text-left"
+                  >
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
+                      <Upload className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-medium text-gray-900 dark:text-white">
+                        Upload your photo
+                      </div>
+                      <div className="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400">
+                        Use any image from your device
+                      </div>
+                    </div>
+                  </button>
                   {templates.slice(0, 3).map((template) => (
                     <button
+                      type="button"
                       key={template.id}
                       onClick={() => {
                         loadTemplate(template);
@@ -619,7 +804,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                       }}
                       className="flex items-center gap-3 p-3 rounded-lg border-2 border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 bg-white dark:bg-gray-800 transition-all text-left"
                     >
-                      <Image
+                      <TemplatePreviewImage
                         src={template.src}
                         alt={template.name}
                         width={48}
@@ -687,8 +872,8 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
               
               {/* Placeholder overlay when no template is selected */}
               {!selectedTemplate && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8 z-10 pointer-events-none">
-                  <div className="w-20 h-20 mb-4 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 p-8 text-center">
+                  <div className="pointer-events-none w-20 h-20 mb-1 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
                     <svg
                       className="w-10 h-10 text-gray-400 dark:text-gray-500"
                       fill="none"
@@ -703,12 +888,24 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                       />
                     </svg>
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
-                    No Template Selected
-                  </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Choose a template from the right panel to start
-                  </p>
+                  <div className="pointer-events-none space-y-1">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                      Get started
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Upload your own photo or pick a template in the panel {isMobileViewport ? 'above' : 'beside'} this canvas
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => customPhotoFileInputRef.current?.click()}
+                  >
+                    <Upload className="w-4 h-4" />
+                    Upload your photo
+                  </Button>
                 </div>
               )}
             </div>
@@ -766,15 +963,26 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
           {/* Template selection - hidden on mobile, shown on desktop */}
           <div className="hidden lg:block bg-white dark:bg-gray-900 rounded-lg shadow-lg p-2 md:p-4 border border-gray-200 dark:border-gray-800">
             <h2 className="text-base md:text-lg font-semibold mb-2 md:mb-4">Templates</h2>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="w-full gap-2 mb-3"
+              onClick={() => customPhotoFileInputRef.current?.click()}
+            >
+              <Upload className="w-4 h-4" />
+              Upload your photo
+            </Button>
             <div className="relative">
               <button
+                type="button"
                 onClick={() => setIsTemplateDropdownOpen(!isTemplateDropdownOpen)}
                 className="w-full flex items-center justify-between p-3 rounded-lg border-2 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-800 transition-all"
               >
                 <div className="flex items-center gap-3 flex-1 min-w-0">
                   {selectedTemplate ? (
                     <>
-                      <Image
+                      <TemplatePreviewImage
                         src={selectedTemplate.src}
                         alt={selectedTemplate.name}
                         width={48}
@@ -806,6 +1014,29 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                     onClick={() => setIsTemplateDropdownOpen(false)}
                   />
                   <div className="absolute z-20 w-full mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-[60vh] overflow-y-auto">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsTemplateDropdownOpen(false);
+                        customPhotoFileInputRef.current?.click();
+                      }}
+                      className={`w-full flex items-center gap-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border-b border-gray-100 dark:border-gray-700 ${
+                        selectedTemplate?.id === CUSTOM_PHOTO_TEMPLATE_ID
+                          ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
+                          : ''
+                      }`}
+                    >
+                      <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded border-2 border-dashed border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
+                        <Upload className="h-7 w-7 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <div className="min-w-0 flex-1 text-left">
+                        <div className="font-medium text-gray-900 dark:text-white">Upload your photo</div>
+                        <div className="mt-0.5 truncate text-sm text-gray-500 dark:text-gray-400">
+                          Your image · top & bottom text
+                        </div>
+                      </div>
+                    </button>
                     {templates.length === 0 ? (
                       <div className="p-4 text-center text-gray-500 dark:text-gray-400">
                         No templates available
@@ -813,6 +1044,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                     ) : (
                       templates.map((template) => (
                         <button
+                          type="button"
                           key={template.id}
                           onClick={(e) => {
                             e.stopPropagation();
@@ -825,7 +1057,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                               : ''
                           }`}
                         >
-                          <Image
+                          <TemplatePreviewImage
                             src={template.src}
                             alt={template.name}
                             width={64}
@@ -860,8 +1092,26 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
               <div className="mt-4">
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">Quick select:</p>
                 <div className="grid grid-cols-1 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => customPhotoFileInputRef.current?.click()}
+                    className="flex items-center gap-3 p-3 rounded-lg border-2 border-dashed border-blue-300 dark:border-blue-700 hover:border-blue-500 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 bg-white dark:bg-gray-800 transition-all text-left"
+                  >
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
+                      <Upload className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-medium text-gray-900 dark:text-white">
+                        Upload your photo
+                      </div>
+                      <div className="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400">
+                        Use any image from your device
+                      </div>
+                    </div>
+                  </button>
                   {templates.slice(0, 3).map((template) => (
                     <button
+                      type="button"
                       key={template.id}
                       onClick={() => {
                         loadTemplate(template);
@@ -869,7 +1119,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                       }}
                       className="flex items-center gap-3 p-3 rounded-lg border-2 border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 bg-white dark:bg-gray-800 transition-all text-left"
                     >
-                      <Image
+                      <TemplatePreviewImage
                         src={template.src}
                         alt={template.name}
                         width={48}
@@ -909,7 +1159,10 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                 Text Fields ({allTextElements.length})
               </h2>
               <div className="space-y-2 md:space-y-3">
-                {allTextElements.map((element, index) => {
+                {(() => {
+                  /** Touch double-tap + mouse double-click interval for the text preview. */
+                  const FIELD_DOUBLE_ACTIVATION_MS = 450;
+                  return allTextElements.map((element, index) => {
                   const isSelected = selectedElement === element;
                   const isExpanded = expandedElements.has(index);
                   const textValue = element.settings.text.value || '';
@@ -977,25 +1230,23 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                   const handleTapToSelectOrEdit = (e: React.PointerEvent) => {
                     e.stopPropagation();
 
-                    // Desktop: single-click selects; double-click edits (handled separately).
-                    if (e.pointerType !== 'touch') {
-                      selectElement();
+                    const now = Date.now();
+                    const last = lastTapRef.current;
+                    const isDoubleActivation =
+                      last.index === index &&
+                      now - last.time < FIELD_DOUBLE_ACTIVATION_MS;
+                    lastTapRef.current = { index, time: now };
+
+                    if (isDoubleActivation) {
+                      if (e.pointerType === 'touch') {
+                        e.preventDefault(); // reduce double-tap zoom on touch
+                      }
+                      lastTapRef.current = { index: null, time: 0 };
+                      beginEditing();
                       return;
                     }
 
-                    // Touch: single-tap selects, double-tap edits.
-                    const now = Date.now();
-                    const last = lastTapRef.current;
-                    const isDoubleTap = last.index === index && now - last.time < 350;
-                    lastTapRef.current = { index, time: now };
-
-                    if (isDoubleTap) {
-                      // Prevent browser double-tap zoom.
-                      e.preventDefault();
-                      beginEditing();
-                    } else {
-                      selectElement();
-                    }
+                    selectElement();
                   };
 
                   return (
@@ -1008,11 +1259,16 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                       }`}
                     >
                       {/* Header */}
-                      <div className="p-2 md:p-3">
+                      <div className="p-2 md:p-3 cursor-pointer">
                         <div className="flex items-center justify-between mb-1 md:mb-2">
                           <button
+                            type="button"
                             onClick={() => selectElement()}
-                            className="flex-1 text-left flex items-center gap-2"
+                            onDoubleClick={(e) => {
+                              e.preventDefault();
+                              beginEditing();
+                            }}
+                            className="flex-1 text-left flex items-center gap-2 cursor-pointer"
                           >
                             <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 bg-gray-200 dark:bg-gray-700 px-2 py-0.5 rounded">
                               Text {index + 1}
@@ -1026,8 +1282,9 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                           </button>
                           <div className="flex items-center gap-1">
                             <button
+                              type="button"
                               onClick={toggleExpand}
-                              className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                              className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors cursor-pointer"
                               title={isExpanded ? 'Collapse' : 'Expand'}
                             >
                               {isExpanded ? (
@@ -1061,7 +1318,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                               e.stopPropagation();
                             }}
                             tabIndex={0}
-                            className="w-full px-2 md:px-3 py-1.5 md:py-2 text-base lg:text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                            className="w-full px-2 md:px-3 py-1.5 md:py-2 text-base lg:text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none cursor-text"
                             style={{ overflow: 'hidden' }}
                             rows={1}
                             placeholder={`Enter text for field ${index + 1}...`}
@@ -1071,11 +1328,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                             role="button"
                             tabIndex={0}
                             onPointerDown={handleTapToSelectOrEdit}
-                            onDoubleClick={(e) => {
-                              e.stopPropagation();
-                              beginEditing();
-                            }}
-                            className="w-full px-2 md:px-3 py-1.5 md:py-2 text-xs md:text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white cursor-text select-none whitespace-pre-wrap break-words touch-manipulation"
+                            className="w-full px-2 md:px-3 py-1.5 md:py-2 text-xs md:text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white cursor-pointer select-none whitespace-pre-wrap break-words touch-manipulation"
                             style={{ minHeight: '2.25rem' }}
                             title="Tap to select, double tap/click to edit"
                           >
@@ -1110,7 +1363,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                                     controllerRef.current.updateElement(element, 'font_size', newSize);
                                   }
                                 }}
-                                className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-800 text-xs"
+                                className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-800 text-xs cursor-pointer"
                               >
                                 −
                               </button>
@@ -1135,7 +1388,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                                     controllerRef.current.updateElement(element, 'font_size', newSize);
                                   }
                                 }}
-                                className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-800 text-xs"
+                                className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-800 text-xs cursor-pointer"
                               >
                                 +
                               </button>
@@ -1165,7 +1418,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                                   controllerRef.current.updateElement(element, 'font_family', e.target.value);
                                 }
                               }}
-                              className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
                             >
                               <option value="Impact">Impact</option>
                               <option value="Arial">Arial</option>
@@ -1251,7 +1504,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                                     controllerRef.current.updateElement(element, 'stroke_width', newWidth);
                                   }
                                 }}
-                                className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-800 text-xs"
+                                className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-800 text-xs cursor-pointer"
                               >
                                 −
                               </button>
@@ -1276,7 +1529,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                                     controllerRef.current.updateElement(element, 'stroke_width', newWidth);
                                   }
                                 }}
-                                className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-800 text-xs"
+                                className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-800 text-xs cursor-pointer"
                               >
                                 +
                               </button>
@@ -1362,7 +1615,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                                         controllerRef.current.updateElement(element, 'shadow_blur', newBlur);
                                       }
                                     }}
-                                    className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-800 text-xs"
+                                    className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-800 text-xs cursor-pointer"
                                   >
                                     −
                                   </button>
@@ -1387,7 +1640,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                                         controllerRef.current.updateElement(element, 'shadow_blur', newBlur);
                                       }
                                     }}
-                                    className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-800 text-xs"
+                                    className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-800 text-xs cursor-pointer"
                                   >
                                     +
                                   </button>
@@ -1425,7 +1678,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                                         controllerRef.current.updateElement(element, 'shadow_offset_x', newOffset);
                                       }
                                     }}
-                                    className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-800 text-xs"
+                                    className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-800 text-xs cursor-pointer"
                                   >
                                     −
                                   </button>
@@ -1450,7 +1703,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                                         controllerRef.current.updateElement(element, 'shadow_offset_x', newOffset);
                                       }
                                     }}
-                                    className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-800 text-xs"
+                                    className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-800 text-xs cursor-pointer"
                                   >
                                     +
                                   </button>
@@ -1488,7 +1741,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                                         controllerRef.current.updateElement(element, 'shadow_offset_y', newOffset);
                                       }
                                     }}
-                                    className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-800 text-xs"
+                                    className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-800 text-xs cursor-pointer"
                                   >
                                     −
                                   </button>
@@ -1513,7 +1766,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                                         controllerRef.current.updateElement(element, 'shadow_offset_y', newOffset);
                                       }
                                     }}
-                                    className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-800 text-xs"
+                                    className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-800 text-xs cursor-pointer"
                                   >
                                     +
                                   </button>
@@ -1552,7 +1805,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                                       });
                                     }
                                   }}
-                                  className={`px-2 py-1.5 border rounded text-xs font-medium transition-colors ${
+                                  className={`px-2 py-1.5 border rounded text-xs font-medium transition-colors cursor-pointer ${
                                     element.settings.horizontal_align.current === align
                                       ? 'bg-blue-500 text-white border-blue-500'
                                       : 'border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800'
@@ -1567,6 +1820,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                           {/* Delete Button */}
                           <div>
                             <button
+                              type="button"
                               onClick={() => {
                                 if (controllerRef.current) {
                                   controllerRef.current.removeElements([element]);
@@ -1575,7 +1829,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                                   setExpandedElements(newExpanded);
                                 }
                               }}
-                              className="w-full px-3 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 border border-red-300 dark:border-red-700 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex items-center justify-center gap-1"
+                              className="w-full px-3 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 border border-red-300 dark:border-red-700 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex items-center justify-center gap-1 cursor-pointer"
                             >
                               <Trash2 className="w-3 h-3" />
                               Delete Text Field
@@ -1585,7 +1839,8 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                       )}
                     </div>
                   );
-                })}
+                });
+                })()}
               </div>
             </div>
           )}
