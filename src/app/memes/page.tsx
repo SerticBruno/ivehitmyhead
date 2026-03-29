@@ -448,6 +448,22 @@ export default function MemesPage() {
   // Memoize the display memes to prevent unnecessary re-renders
   const displayMemes = useMemo(() => memes, [memes]);
 
+  const emptyMemesGridDescription = useMemo(() => {
+    const { category_id, filter, time_period } = memesState.filters;
+    const timeSuffix =
+      time_period !== 'all'
+        ? ` in the last ${time_period === 'today' ? '24 hours' : time_period === 'week' ? '7 days' : '30 days'}`
+        : '';
+    if (category_id) {
+      return `No ${filter} memes found in this category${timeSuffix} yet.`;
+    }
+    return `No ${filter} memes found${timeSuffix} yet. Be the first to upload something hilarious!`;
+  }, [
+    memesState.filters.category_id,
+    memesState.filters.filter,
+    memesState.filters.time_period,
+  ]);
+
   // Memoize the hero section content to prevent unnecessary re-renders
   const heroContent = useMemo(() => {
     const { category_id, filter, time_period } = memesState.filters;
@@ -791,28 +807,12 @@ export default function MemesPage() {
                    onLoadMore={loadMore}
                    hasMore={hasMore}
                    layout="vertical"
-                   showEmptyState={false}
+                   emptyStateDescription={emptyMemesGridDescription}
                  />
                </>
              )}
           </section>
         </div>
-
-        {/* No memes found */}
-        {!memesLoading && displayMemes.length === 0 && !memesError && (
-          <section className="text-center py-12">
-            <div className="text-6xl mb-4 flex justify-center">
-              <ICONS.Star className="w-16 h-16 text-gray-400" />
-            </div>
-            <h3 className="text-xl font-semibold mb-2">No memes found</h3>
-            <p className="text-gray-500 dark:text-gray-400 text-center max-w-md">
-              {memesState.filters.category_id 
-                ? `No ${memesState.filters.filter} memes found in this category${memesState.filters.time_period !== 'all' ? ` in the last ${memesState.filters.time_period === 'today' ? '24 hours' : memesState.filters.time_period === 'week' ? '7 days' : '30 days'}` : ''} yet.`
-                : `No ${memesState.filters.filter} memes found${memesState.filters.time_period !== 'all' ? ` in the last ${memesState.filters.time_period === 'today' ? '24 hours' : memesState.filters.time_period === 'week' ? '7 days' : '30 days'}` : ''} yet. Be the first to upload something hilarious!`
-              }
-            </p>
-          </section>
-        )}
       </main>
     </div>
   );

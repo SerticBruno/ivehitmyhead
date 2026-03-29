@@ -16,7 +16,7 @@ export const MemeGrid: React.FC<MemeGridProps> = ({
   onLoadMore,
   hasMore = false,
   layout = 'vertical',
-  showEmptyState = true,
+  emptyStateDescription,
 }) => {
   // Preload images for better performance when navigating back
   React.useEffect(() => {
@@ -60,16 +60,16 @@ export const MemeGrid: React.FC<MemeGridProps> = ({
   }
 
   if (memes.length === 0 && !loading) {
-    if (!showEmptyState) {
-      return null;
-    }
     return (
       <div className={`text-center py-12 ${className}`}>
         <div className="text-6xl mb-4 flex justify-center">
           <ICONS.Star className="w-16 h-16 text-gray-400" />
         </div>
         <h3 className="text-xl font-semibold mb-2">No memes found</h3>
-        <p className="text-gray-500 dark:text-gray-400">Try adjusting your filters or check back later.</p>
+        <p className="text-gray-500 dark:text-gray-400 mx-auto max-w-md">
+          {emptyStateDescription ??
+            'Try adjusting your filters or check back later.'}
+        </p>
       </div>
     );
   }

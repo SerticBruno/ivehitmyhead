@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 export interface User {
   id: string;
   username: string;
@@ -96,8 +98,8 @@ export interface MemeGridProps {
   onLoadMore?: () => void;
   hasMore?: boolean;
   layout?: 'grid' | 'vertical';
-  /** When false, empty non-loading state renders nothing (parent supplies empty UI). Default true. */
-  showEmptyState?: boolean;
+  /** Optional body copy when the grid is empty (e.g. filter-aware message on /memes). */
+  emptyStateDescription?: ReactNode;
 }
 
 // API Types
