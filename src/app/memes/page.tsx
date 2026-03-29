@@ -791,6 +791,7 @@ export default function MemesPage() {
                    onLoadMore={loadMore}
                    hasMore={hasMore}
                    layout="vertical"
+                   showEmptyState={false}
                  />
                </>
              )}

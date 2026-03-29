@@ -1255,7 +1255,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                   return (
                     <div
                       key={index}
-                      className={`rounded-lg border-2 transition-all ${
+                      className={`rounded-lg border-2 transition-colors ${
                         isSelected
                           ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
                           : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
@@ -1279,9 +1279,10 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                             <span className="text-xs text-gray-500 dark:text-gray-400">
                               {element.settings.font_family} • {Math.round(fontSize)}px
                             </span>
-                            {isSelected && (
-                              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                            )}
+                            <span
+                              className={`block h-2 w-2 shrink-0 rounded-full ${isSelected ? 'bg-blue-500' : 'opacity-0'}`}
+                              aria-hidden
+                            />
                           </button>
                           <div className="flex items-center gap-1">
                             <button
@@ -1299,51 +1300,53 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                           </div>
                         </div>
                         
-                        {/* Inline Text Input */}
-                        {isEditing ? (
-                          <textarea
-                            ref={(node) => {
-                              textAreaRefs.current[index] = node;
-                              resizeTextArea(node);
-                            }}
-                            value={currentTextInput}
-                            onChange={(e) => {
-                              updateText(e.target.value);
-                              resizeTextArea(e.currentTarget);
-                            }}
-                            onFocus={() => selectElement({ keepEditing: true })}
-                            onBlur={stopEditing}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                            }}
-                            onPointerDown={(e) => {
-                              // Prevent bubbling to outer click handlers.
-                              e.stopPropagation();
-                            }}
-                            tabIndex={0}
-                            className="w-full px-2 md:px-3 py-1.5 md:py-2 text-base lg:text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none cursor-text"
-                            style={{ overflow: 'hidden' }}
-                            rows={1}
-                            placeholder={`Enter text for field ${index + 1}...`}
-                          />
-                        ) : (
-                          <div
-                            role="button"
-                            tabIndex={0}
-                            onPointerDown={handleTapToSelectOrEdit}
-                            className="w-full px-2 md:px-3 py-1.5 md:py-2 text-xs md:text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white cursor-pointer select-none whitespace-pre-wrap break-words touch-manipulation"
-                            style={{ minHeight: '2.25rem' }}
-                            title="Tap to select, double tap/click to edit"
-                          >
-                            {currentTextInput.trim().length > 0 ? (
-                              currentTextInput
-                            ) : (
-                              <span className="text-gray-400">
-                                {`Enter text for field ${index + 1}...`}
-                              </span>
-                            )}
-                          </div>
-                        )}
+                        {/* Inline Text Input — border lives on wrapper so preview ↔ textarea swap cannot shift layout */}
+                        <div
+                          className="w-full min-h-[2.25rem] box-border rounded-md border border-gray-300 bg-white px-2 py-1.5 text-xs transition-[border-color] md:px-3 md:py-2 md:text-sm hover:border-blue-500 focus-within:border-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:hover:border-blue-400 dark:focus-within:border-blue-400"
+                        >
+                          {isEditing ? (
+                            <textarea
+                              ref={(node) => {
+                                textAreaRefs.current[index] = node;
+                                resizeTextArea(node);
+                              }}
+                              value={currentTextInput}
+                              onChange={(e) => {
+                                updateText(e.target.value);
+                                resizeTextArea(e.currentTarget);
+                              }}
+                              onFocus={() => selectElement({ keepEditing: true })}
+                              onBlur={stopEditing}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                              }}
+                              onPointerDown={(e) => {
+                                e.stopPropagation();
+                              }}
+                              tabIndex={0}
+                              className="m-0 block w-full min-h-[1.25rem] resize-none border-0 bg-transparent p-0 text-gray-900 outline-none ring-0 focus:outline-none focus:ring-0 dark:text-white"
+                              style={{ overflow: 'hidden' }}
+                              rows={1}
+                              placeholder={`Enter text for field ${index + 1}...`}
+                            />
+                          ) : (
+                            <div
+                              role="button"
+                              tabIndex={0}
+                              onPointerDown={handleTapToSelectOrEdit}
+                              className="w-full cursor-pointer select-none break-words whitespace-pre-wrap text-gray-900 outline-none touch-manipulation dark:text-white"
+                              title="Tap to select, double tap/click to edit"
+                            >
+                              {currentTextInput.trim().length > 0 ? (
+                                currentTextInput
+                              ) : (
+                                <span className="text-gray-400">
+                                  {`Enter text for field ${index + 1}...`}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       </div>
 
                       {/* Expanded Properties */}
@@ -1421,7 +1424,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                                   controllerRef.current.updateElement(element, 'font_family', e.target.value);
                                 }
                               }}
-                              className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                              className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 cursor-pointer"
                             >
                               <option value="Impact">Impact</option>
                               <option value="Arial">Arial</option>
@@ -1986,7 +1989,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                             );
                           }
                         }}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
                       >
                         <option value="Impact">Impact</option>
                         <option value="Arial">Arial</option>

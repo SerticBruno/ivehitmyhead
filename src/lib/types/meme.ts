@@ -96,6 +96,8 @@ export interface MemeGridProps {
   onLoadMore?: () => void;
   hasMore?: boolean;
   layout?: 'grid' | 'vertical';
+  /** When false, empty non-loading state renders nothing (parent supplies empty UI). Default true. */
+  showEmptyState?: boolean;
 }
 
 // API Types

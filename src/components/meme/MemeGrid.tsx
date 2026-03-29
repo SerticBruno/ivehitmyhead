@@ -15,7 +15,8 @@ export const MemeGrid: React.FC<MemeGridProps> = ({
   showLoadMore = false,
   onLoadMore,
   hasMore = false,
-  layout = 'vertical'
+  layout = 'vertical',
+  showEmptyState = true,
 }) => {
   // Preload images for better performance when navigating back
   React.useEffect(() => {
@@ -59,6 +60,9 @@ export const MemeGrid: React.FC<MemeGridProps> = ({
   }
 
   if (memes.length === 0 && !loading) {
+    if (!showEmptyState) {
+      return null;
+    }
     return (
       <div className={`text-center py-12 ${className}`}>
         <div className="text-6xl mb-4 flex justify-center">

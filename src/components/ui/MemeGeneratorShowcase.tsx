@@ -500,7 +500,7 @@ function ShowcaseMiniMemeMaker() {
               rows={3}
               value={topText}
               onChange={(e) => setTopText(e.target.value)}
-              className="flex min-h-[72px] w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2 dark:border-gray-700 dark:bg-gray-950 dark:placeholder:text-gray-400 dark:focus-visible:ring-gray-300"
+              className="flex min-h-[72px] w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-gray-950 dark:border-gray-700 dark:bg-gray-950 dark:placeholder:text-gray-400 dark:focus-visible:ring-gray-300"
               placeholder="Top caption"
             />
           </div>
@@ -513,7 +513,7 @@ function ShowcaseMiniMemeMaker() {
               rows={3}
               value={bottomText}
               onChange={(e) => setBottomText(e.target.value)}
-              className="flex min-h-[72px] w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2 dark:border-gray-700 dark:bg-gray-950 dark:placeholder:text-gray-400 dark:focus-visible:ring-gray-300"
+              className="flex min-h-[72px] w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-gray-950 dark:border-gray-700 dark:bg-gray-950 dark:placeholder:text-gray-400 dark:focus-visible:ring-gray-300"
               placeholder="Bottom caption"
             />
           </div>
