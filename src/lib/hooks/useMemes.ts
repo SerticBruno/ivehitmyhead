@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Meme } from '@/lib/types/meme';
 import { useMemesState } from '@/lib/contexts';
 
@@ -23,14 +23,15 @@ interface UseMemesReturn {
 export const useMemes = (options: UseMemesOptions = {}): UseMemesReturn => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+  /** Drops stale fetch responses (e.g. all-memes request finishing after session restores category). */
+  const fetchGenerationRef = useRef(0);
+
   const {
     state,
     setMemes,
     appendMemes,
     setHasMore,
     setCurrentPage,
-    setFilters
   } = useMemesState();
 
   const {
@@ -42,15 +43,24 @@ export const useMemes = (options: UseMemesOptions = {}): UseMemesReturn => {
     limit = 20
   } = options;
 
-  // Memoize current filters to prevent unnecessary re-renders
-  const currentFilters = useMemo(() => ({
-    category_id: category_id || '',
-    filter: sort_by === 'likes' ? 'hottest' as const : 
-            sort_by === 'views' ? 'trending' as const : 'newest' as const,
-    time_period: time_period || 'all'
-  }), [category_id, sort_by, time_period]);
+  const querySignature = useMemo(
+    () =>
+      JSON.stringify({
+        cat: category_id || '',
+        tp: time_period || 'all',
+        sb: sort_by,
+        so: sort_order,
+        se: search || '',
+        lim: limit,
+      }),
+    [category_id, time_period, sort_by, sort_order, search, limit]
+  );
 
   const fetchMemes = useCallback(async (pageNum: number, append: boolean = false) => {
+    const requestGeneration = append
+      ? fetchGenerationRef.current
+      : ++fetchGenerationRef.current;
+
     try {
       setLoading(true);
       setError(null);
@@ -81,19 +91,29 @@ export const useMemes = (options: UseMemesOptions = {}): UseMemesReturn => {
       }
 
       const data = await response.json();
-      
+
+      if (requestGeneration !== fetchGenerationRef.current) {
+        return;
+      }
+
       if (append) {
         appendMemes(data.memes);
       } else {
         setMemes(data.memes);
       }
-      
+
       setHasMore(data.pagination?.has_more || false);
       setCurrentPage(pageNum);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch memes');
+      if (requestGeneration === fetchGenerationRef.current) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch memes');
+      }
     } finally {
-      setLoading(false);
+      if (append) {
+        setLoading(false);
+      } else if (requestGeneration === fetchGenerationRef.current) {
+        setLoading(false);
+      }
     }
   }, [category_id, search, sort_by, sort_order, time_period, limit, setMemes, appendMemes, setHasMore, setCurrentPage]);
 
@@ -112,60 +132,14 @@ export const useMemes = (options: UseMemesOptions = {}): UseMemesReturn => {
     fetchMemes(1, false);
   }, [fetchMemes, setCurrentPage, setMemes, setHasMore]);
 
-  // Initialize state when we have existing memes but not initialized
-  const initializeExistingState = useCallback(() => {
-    if (state.memes.length > 0 && !state.isInitialized) {
-      const calculatedPage = Math.ceil(state.memes.length / 7);
-      setCurrentPage(calculatedPage);
-      // Set loading to false since we have memes and don't need to fetch
-      setLoading(false);
-      // Don't change hasMore or memes since they're already correct
-    }
-  }, [state.memes.length, state.isInitialized, setCurrentPage]);
+  // Filters are owned by MemesStateContext (sidebar / session restore).
+  // Refetch whenever API query params change so session-restored filters match the list.
 
-  // Update filters in context when options change
   useEffect(() => {
-    // Always update filters when they change
-    setFilters(currentFilters);
-  }, [currentFilters, setFilters]);
-
-  // Initialize existing state when component mounts
-  useEffect(() => {
-    initializeExistingState();
-    // Also set loading to false immediately if we have memes
-    if (state.memes.length > 0) {
-      setLoading(false);
-    }
-  }, [initializeExistingState, state.memes.length]);
-
-  // Manage loading state when we have existing memes
-  useEffect(() => {
-    if (state.memes.length > 0 && loading) {
-      setLoading(false);
-    }
-  }, [state.memes.length, loading]);
-
-  // Set loading to false immediately if we have memes and are initialized
-  useEffect(() => {
-    if (state.isInitialized && state.memes.length > 0 && loading) {
-      setLoading(false);
-    }
-  }, [state.isInitialized, state.memes.length, loading]);
-
-  // Fetch memes when context state changes
-  useEffect(() => {
-    // Only fetch if we're not initialized AND we don't have any memes
-    // This prevents unnecessary loading when returning from single meme page
-    if (!state.isInitialized && state.memes.length === 0) {
-      setCurrentPage(1);
-      setMemes([]);
-      setHasMore(true);
-      fetchMemes(1, false);
-    } else if (!state.isInitialized && state.memes.length > 0) {
-      // We have memes but not initialized, just initialize the state
-      initializeExistingState();
-    }
-  }, [state.isInitialized, state.memes.length, currentFilters, setCurrentPage, setMemes, setHasMore, fetchMemes, initializeExistingState]);
+    setCurrentPage(1);
+    setHasMore(true);
+    fetchMemes(1, false);
+  }, [querySignature, fetchMemes, setCurrentPage, setHasMore]);
 
   return {
     memes: state.memes,

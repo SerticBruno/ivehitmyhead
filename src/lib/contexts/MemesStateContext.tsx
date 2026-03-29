@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo } from 'react';
 import { Meme } from '@/lib/types/meme';
 
 interface MemesState {
@@ -44,6 +44,43 @@ const initialState: MemesState = {
   isInitialized: false
 };
 
+function normalizeMemesStateSnapshot(raw: unknown): MemesState {
+  if (!raw || typeof raw !== 'object') {
+    return initialState;
+  }
+  const p = raw as Partial<MemesState>;
+  const f = p.filters && typeof p.filters === 'object' ? p.filters : {};
+  return {
+    ...initialState,
+    ...p,
+    memes: Array.isArray(p.memes) ? p.memes : initialState.memes,
+    filters: {
+      ...initialState.filters,
+      category_id:
+        typeof (f as MemesState['filters']).category_id === 'string'
+          ? (f as MemesState['filters']).category_id
+          : initialState.filters.category_id,
+      filter:
+        (f as MemesState['filters']).filter === 'hottest' ||
+        (f as MemesState['filters']).filter === 'trending' ||
+        (f as MemesState['filters']).filter === 'newest'
+          ? (f as MemesState['filters']).filter
+          : initialState.filters.filter,
+      time_period:
+        (f as MemesState['filters']).time_period === 'today' ||
+        (f as MemesState['filters']).time_period === 'week' ||
+        (f as MemesState['filters']).time_period === 'month' ||
+        (f as MemesState['filters']).time_period === 'all'
+          ? (f as MemesState['filters']).time_period
+          : initialState.filters.time_period,
+    },
+    hasMore: typeof p.hasMore === 'boolean' ? p.hasMore : initialState.hasMore,
+    currentPage: typeof p.currentPage === 'number' && p.currentPage >= 1 ? p.currentPage : initialState.currentPage,
+    scrollPosition: typeof p.scrollPosition === 'number' ? p.scrollPosition : initialState.scrollPosition,
+    isInitialized: typeof p.isInitialized === 'boolean' ? p.isInitialized : initialState.isInitialized,
+  };
+}
+
 const MemesStateContext = createContext<MemesStateContextType | undefined>(undefined);
 
 export const useMemesState = () => {
@@ -63,22 +100,18 @@ export const MemesStateProvider: React.FC<MemesStateProviderProps> = ({ children
   const isInitialMount = useRef(true);
   const lastSavedState = useRef<string>('');
 
-  // Load state from sessionStorage on mount
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const savedState = sessionStorage.getItem('memesState');
-      
-      if (savedState) {
-        try {
-          const parsedState = JSON.parse(savedState);
-          
-          setState(parsedState);
-          lastSavedState.current = savedState;
-        } catch (error) {
-          console.error('Failed to parse saved memes state:', error);
-        }
-      } else {
-        console.log('No saved state found, using initial state');
+  // Restore filters + list from session before child useEffects (e.g. /memes fetch) run.
+  useLayoutEffect(() => {
+    const savedState = sessionStorage.getItem('memesState');
+
+    if (savedState) {
+      try {
+        const parsedState = normalizeMemesStateSnapshot(JSON.parse(savedState));
+        const normalizedJson = JSON.stringify(parsedState);
+        setState(parsedState);
+        lastSavedState.current = normalizedJson;
+      } catch (error) {
+        console.error('Failed to parse saved memes state:', error);
       }
     }
   }, []);
