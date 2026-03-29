@@ -17,6 +17,7 @@ export default function registerCallbacks(
   const TOUCH_DOUBLE_TAP_DISTANCE = 24; // in canvas coordinates
   let lastTouchTap: { time: number; x: number; y: number } | null = null;
 
+  /** Mouse down / up / dblclick: require primary button. */
   function mouseEvent(
     event: MouseEventSourceCapabilities,
     fn: (x: number, y: number) => void
@@ -24,22 +25,29 @@ export default function registerCallbacks(
     if (event.sourceCapabilities?.firesTouchEvents === true) return;
     if (event.button !== 0) return;
 
-    controller.requestFrame();
+    mouseEventCoords(event, fn);
+  }
+
+  /**
+   * Mouse move: do not require `button === 0` — many browsers leave `button` unset or non-zero
+   * while moving with no buttons pressed, which previously skipped all hover / hit-testing.
+   */
+  function mouseEventCoords(
+    event: MouseEventSourceCapabilities,
+    fn: (x: number, y: number) => void
+  ) {
+    if (event.sourceCapabilities?.firesTouchEvents === true) return;
 
     const rect = controller.canvas.getBoundingClientRect();
-    // Get the actual displayed size (accounting for CSS scaling)
     const displayWidth = rect.width;
     const displayHeight = rect.height;
-    
-    // Calculate position relative to canvas element
+
     const mouseX = event.clientX - rect.left;
     const mouseY = event.clientY - rect.top;
-    
-    // Calculate scale factor between display size and internal canvas size
+
     const scaleX = controller.canvas.width / displayWidth;
     const scaleY = controller.canvas.height / displayHeight;
 
-    // Convert display coordinates to canvas coordinates
     const x = MathHelper.clamp(
       Math.round(mouseX * scaleX),
       0,
@@ -52,6 +60,7 @@ export default function registerCallbacks(
     );
 
     controller.isTouch = false;
+    controller.requestFrame();
     fn.call(controller, x, y);
   }
 
@@ -152,7 +161,7 @@ export default function registerCallbacks(
     press: (e: MouseEvent) => mouseEvent(e, controller.onPress),
     release: (e: MouseEvent) => mouseEvent(e, controller.onRelease),
     mousemove: (e: MouseEvent) =>
-      mouseEvent(e, (x, y) => {
+      mouseEventCoords(e, (x, y) => {
         controller.mouseX = x;
         controller.mouseY = y;
         

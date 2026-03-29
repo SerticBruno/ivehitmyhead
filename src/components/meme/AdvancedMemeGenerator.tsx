@@ -875,7 +875,8 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                   position: 'relative',
                   zIndex: 1,
                   opacity: selectedTemplate ? 1 : 0,
-                  pointerEvents: selectedTemplate ? 'auto' : 'none',
+                  pointerEvents:
+                    selectedTemplate && !isLoadingTemplate ? 'auto' : 'none',
                   display: 'block',
                   touchAction: 'none' // Prevent default touch behaviors like scrolling/zooming
                 }}
@@ -1156,7 +1157,9 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
           </div>
 
           {/* Text Fields List - Reworked */}
-          {selectedTemplate && allTextElements.length > 0 && (
+          {selectedTemplate &&
+            !isLoadingTemplate &&
+            allTextElements.length > 0 && (
             <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-2 md:p-4 border border-gray-200 dark:border-gray-800">
               <h2 className="text-base md:text-lg font-semibold mb-2 md:mb-4 flex items-center gap-2">
                 <Type className="w-4 h-4 md:w-5 md:h-5" />
@@ -1191,12 +1194,45 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                   };
 
                   const selectElement = (opts?: { keepEditing?: boolean }) => {
-                    if (controllerRef.current) {
-                      controllerRef.current.selectedElements = [element];
-                      controllerRef.current.emit('selectedElementsChange');
-                      setSelectedElement(element);
-                      if (!opts?.keepEditing) stopEditing();
+                    if (!opts?.keepEditing) stopEditing();
+
+                    const applySelection = (
+                      ctrl: MemeCanvasController | null
+                    ) => {
+                      const list =
+                        ctrl?.elements.filter(
+                          (e): e is TextElement => e instanceof TextElement
+                        ) ?? null;
+                      const target =
+                        list && index < list.length ? list[index]! : element;
+
+                      setSelectedElement(target);
+                      if (ctrl) {
+                        ctrl.selectedElements = [target];
+                        ctrl.emit('selectedElementsChange');
+                      }
+                    };
+
+                    const ctrl = controllerRef.current;
+                    if (ctrl) {
+                      applySelection(ctrl);
+                      return;
                     }
+
+                    let attempts = 0;
+                    const retry = () => {
+                      const c = controllerRef.current;
+                      if (c) {
+                        applySelection(c);
+                        return;
+                      }
+                      if (attempts++ < 24) {
+                        requestAnimationFrame(retry);
+                      } else {
+                        applySelection(null);
+                      }
+                    };
+                    requestAnimationFrame(retry);
                   };
 
                   const updateText = (newText: string) => {
