@@ -698,7 +698,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                     className="fixed inset-0 z-10"
                     onClick={() => setIsTemplateDropdownOpen(false)}
                   />
-                  <div className="absolute z-20 w-full mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-[60vh] overflow-y-auto">
+                  <div className="absolute z-20 w-full mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-[60vh] overflow-y-auto [scrollbar-gutter:stable]">
                     <button
                       type="button"
                       onClick={(e) => {
@@ -959,7 +959,10 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
             overflow: isMobileViewport ? 'visible' : 'hidden',
           }}
         >
-          <div className="space-y-2 md:space-y-4 flex-1 min-h-0 pb-2 md:pb-4 overflow-x-hidden lg:overflow-y-auto" style={{ flex: '1 1 0%', minHeight: 0, WebkitOverflowScrolling: 'touch' }}>
+          <div
+            className="space-y-2 md:space-y-4 flex-1 min-h-0 pb-2 md:pb-4 overflow-x-hidden lg:overflow-y-auto lg:[scrollbar-gutter:stable]"
+            style={{ flex: '1 1 0%', minHeight: 0, WebkitOverflowScrolling: 'touch' }}
+          >
           {/* Template selection - hidden on mobile, shown on desktop */}
           <div className="hidden lg:block bg-white dark:bg-gray-900 rounded-lg shadow-lg p-2 md:p-4 border border-gray-200 dark:border-gray-800">
             <h2 className="text-base md:text-lg font-semibold mb-2 md:mb-4">Templates</h2>
@@ -1013,7 +1016,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                     className="fixed inset-0 z-10"
                     onClick={() => setIsTemplateDropdownOpen(false)}
                   />
-                  <div className="absolute z-20 w-full mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-[60vh] overflow-y-auto">
+                  <div className="absolute z-20 w-full mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-[60vh] overflow-y-auto [scrollbar-gutter:stable]">
                     <button
                       type="button"
                       onClick={(e) => {
