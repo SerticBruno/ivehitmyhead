@@ -66,10 +66,6 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
   const [editingTextIndex, setEditingTextIndex] = useState<number | null>(null);
   const textAreaRefs = useRef<Record<number, HTMLTextAreaElement | null>>({});
   const editingElementRef = useRef<TextElement | null>(null);
-  const lastTapRef = useRef<{ index: number | null; time: number }>({
-    index: null,
-    time: 0,
-  });
   const customPhotoObjectUrlRef = useRef<string | null>(null);
   const customPhotoFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -1166,10 +1162,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                 Text Fields ({allTextElements.length})
               </h2>
               <div className="space-y-2 md:space-y-3">
-                {(() => {
-                  /** Touch double-tap + mouse double-click interval for the text preview. */
-                  const FIELD_DOUBLE_ACTIVATION_MS = 450;
-                  return allTextElements.map((element, index) => {
+                {allTextElements.map((element, index) => {
                   const isSelected = selectedElement === element;
                   const isExpanded = expandedElements.has(index);
                   const textValue = element.settings.text.value || '';
@@ -1263,30 +1256,23 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                         ta.focus();
                         ta.select();
                         resizeTextArea(ta);
+                      } else {
+                        requestAnimationFrame(() => {
+                          const t2 = textAreaRefs.current[index];
+                          if (t2) {
+                            t2.focus();
+                            t2.select();
+                            resizeTextArea(t2);
+                          }
+                        });
                       }
                     });
                   };
 
-                  const handleTapToSelectOrEdit = (e: React.PointerEvent) => {
+                  const handleTextFieldPointerDown = (e: React.PointerEvent) => {
                     e.stopPropagation();
-
-                    const now = Date.now();
-                    const last = lastTapRef.current;
-                    const isDoubleActivation =
-                      last.index === index &&
-                      now - last.time < FIELD_DOUBLE_ACTIVATION_MS;
-                    lastTapRef.current = { index, time: now };
-
-                    if (isDoubleActivation) {
-                      if (e.pointerType === 'touch') {
-                        e.preventDefault(); // reduce double-tap zoom on touch
-                      }
-                      lastTapRef.current = { index: null, time: 0 };
-                      beginEditing();
-                      return;
-                    }
-
-                    selectElement();
+                    if (e.pointerType === 'mouse' && e.button !== 0) return;
+                    beginEditing();
                   };
 
                   return (
@@ -1370,9 +1356,15 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                             <div
                               role="button"
                               tabIndex={0}
-                              onPointerDown={handleTapToSelectOrEdit}
-                              className="w-full cursor-pointer select-none break-words whitespace-pre-wrap text-gray-900 outline-none touch-manipulation dark:text-white"
-                              title="Tap to select, double tap/click to edit"
+                              onPointerDown={handleTextFieldPointerDown}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                  e.preventDefault();
+                                  beginEditing();
+                                }
+                              }}
+                              className="w-full cursor-text select-none break-words whitespace-pre-wrap text-gray-900 outline-none touch-manipulation dark:text-white"
+                              title="Click to edit text"
                             >
                               {currentTextInput.trim().length > 0 ? (
                                 currentTextInput
@@ -1882,8 +1874,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                       )}
                     </div>
                   );
-                });
-                })()}
+                })}
               </div>
             </div>
           )}
