@@ -1,7 +1,18 @@
 'use client';
 
 import React, { createContext, useContext, useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo } from 'react';
+import { usePathname } from 'next/navigation';
 import { Meme } from '@/lib/types/meme';
+
+/** sessionStorage key: epoch ms when list scroll restore stops applying (set when leaving `/memes` for a route other than `/memes/[slug]`). */
+export const MEMES_LIST_SCROLL_EXPIRY_AT_KEY = 'memesListScrollExpiryAt';
+
+/** How long scroll position is restored after leaving the memes grid for non–detail pages. */
+export const MEMES_LIST_SCROLL_TTL_MS = 0.5 * 60 * 1000;
+
+function isMemeDetailPath(pathname: string): boolean {
+  return /^\/memes\/[^/]+$/.test(pathname);
+}
 
 interface MemesState {
   memes: Meme[];
@@ -99,6 +110,32 @@ export const MemesStateProvider: React.FC<MemesStateProviderProps> = ({ children
   const [state, setState] = useState<MemesState>(initialState);
   const isInitialMount = useRef(true);
   const lastSavedState = useRef<string>('');
+  const pathname = usePathname();
+  const prevPathnameRef = useRef<string | null>(null);
+
+  // Memes list page unmounts on navigation — track route changes here so we know where the user went.
+  useEffect(() => {
+    const prev = prevPathnameRef.current;
+    prevPathnameRef.current = pathname;
+
+    if (prev !== '/memes' || typeof window === 'undefined') {
+      return;
+    }
+
+    if (pathname === '/memes') {
+      return;
+    }
+
+    if (isMemeDetailPath(pathname)) {
+      sessionStorage.removeItem(MEMES_LIST_SCROLL_EXPIRY_AT_KEY);
+      return;
+    }
+
+    sessionStorage.setItem(
+      MEMES_LIST_SCROLL_EXPIRY_AT_KEY,
+      String(Date.now() + MEMES_LIST_SCROLL_TTL_MS)
+    );
+  }, [pathname]);
 
   // Restore filters + list from session before child useEffects (e.g. /memes fetch) run.
   useLayoutEffect(() => {

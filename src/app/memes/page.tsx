@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo } from 'react';
 import { MemeGrid } from '@/components/meme';
 import { FiltersAndSorting } from '@/components/ui';
 import { useMemes } from '@/lib/hooks/useMemes';
 import { useCategories } from '@/lib/hooks/useCategories';
 import { useMemeInteractions } from '@/lib/hooks/useMemeInteractions';
-import { useMemesState } from '@/lib/contexts';
+import { useMemesState, MEMES_LIST_SCROLL_EXPIRY_AT_KEY } from '@/lib/contexts';
 import { ICONS, getCategoryIconOrEmoji } from '@/lib/utils/categoryIcons';
 import { shareMemeWithFallback } from '@/lib/utils/shareUtils';
 
@@ -185,12 +185,35 @@ export default function MemesPage() {
   }, []);
 
   // Fetch real data using the global context state
-  const { memes, loading: memesLoading, error: memesError, hasMore, loadMore } = useMemes({
+  const { memes, loading: memesLoading, error: memesError, hasMore, loadMore, refresh } = useMemes({
     category_id: memesState.filters.category_id || undefined,
     limit: 7, // Changed from 2 to 7 for initial load
     time_period: memesState.filters.time_period,
     ...getSortParams
   });
+
+  // After leaving the grid for a non-detail page, scroll restore expires; next visit starts at top with a fresh fetch.
+  useLayoutEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    const raw = sessionStorage.getItem(MEMES_LIST_SCROLL_EXPIRY_AT_KEY);
+    if (raw === null) {
+      return;
+    }
+    const expiresAt = parseInt(raw, 10);
+    if (Number.isNaN(expiresAt)) {
+      sessionStorage.removeItem(MEMES_LIST_SCROLL_EXPIRY_AT_KEY);
+      return;
+    }
+    if (Date.now() <= expiresAt) {
+      return;
+    }
+    sessionStorage.removeItem(MEMES_LIST_SCROLL_EXPIRY_AT_KEY);
+    setScrollPosition(0);
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    refresh();
+  }, [setScrollPosition, refresh]);
   
   // Additional effect to restore scroll when memes are loaded and we have a saved position
   useEffect(() => {
