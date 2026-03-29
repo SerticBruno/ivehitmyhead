@@ -1324,7 +1324,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                                 e.stopPropagation();
                               }}
                               tabIndex={0}
-                              className="m-0 block w-full min-h-[1.25rem] resize-none border-0 bg-transparent p-0 text-gray-900 outline-none ring-0 focus:outline-none focus:ring-0 dark:text-white"
+                              className="m-0 block w-full min-h-[1.25rem] resize-none border-0 bg-transparent p-0 text-gray-900 placeholder:text-gray-400 outline-none ring-0 focus:outline-none focus:ring-0 dark:text-white dark:placeholder:text-gray-500"
                               style={{ overflow: 'hidden' }}
                               rows={1}
                               placeholder={`Enter text for field ${index + 1}...`}
