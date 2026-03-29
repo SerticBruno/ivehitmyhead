@@ -977,16 +977,6 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
           {/* Template selection - hidden on mobile, shown on desktop */}
           <div className="hidden lg:block bg-white dark:bg-gray-900 rounded-lg shadow-lg p-2 md:p-4 border border-gray-200 dark:border-gray-800">
             <h2 className="text-base md:text-lg font-semibold mb-2 md:mb-4">Templates</h2>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="w-full gap-2 mb-3"
-              onClick={() => customPhotoFileInputRef.current?.click()}
-            >
-              <Upload className="w-4 h-4" />
-              Upload your photo
-            </Button>
             <div className="relative">
               <button
                 type="button"
