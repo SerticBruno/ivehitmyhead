@@ -33,18 +33,35 @@ class MemeCanvasRenderer {
     this.drawBackground();
     this.drawElements();
     this.drawSelectionBox();
+    if (this.controller.showCustomPhotoWatermark && !this.controller.exporting) {
+      this.drawWatermark();
+    }
     this.drawFramerate();
   }
 
   public drawWatermark() {
-    this.ctx.textAlign = 'left';
-    this.ctx.font = `${scaled(this.ctx.canvas, 10)}px Outfit`;
-    this.ctx.fillStyle = '#f0505080';
-    this.ctx.fillText(
-      'Made with meme.lynith.dev',
-      4,
-      this.ctx.canvas.height - 4
-    );
+    const { ctx } = this;
+    const canvas = ctx.canvas;
+    const fontSize = scaled(canvas, 17);
+    const paddingX = scaled(canvas, 6);
+    const paddingY = scaled(canvas, 6);
+    const strokeWidth = Math.max(2, scaled(canvas, 2.25));
+    const text = 'ivehitmyhead.com';
+
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'bottom';
+    ctx.font = `${fontSize}px Outfit, sans-serif`;
+    ctx.lineJoin = 'round';
+    ctx.miterLimit = 2;
+
+    const x = paddingX;
+    const y = canvas.height - paddingY;
+
+    ctx.lineWidth = strokeWidth;
+    ctx.strokeStyle = '#000000';
+    ctx.strokeText(text, x, y);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(text, x, y);
   }
 
   private drawElementChrome(

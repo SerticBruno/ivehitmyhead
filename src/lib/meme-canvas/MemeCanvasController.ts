@@ -37,6 +37,8 @@ class MemeCanvasController {
   private _lastTimeRendered: number = 0;
   private _renderer: MemeCanvasRenderer | null = null;
   public exporting: boolean = false;
+  /** When true, preview draws the same footer watermark as custom-photo exports. */
+  public showCustomPhotoWatermark = false;
   public debug: boolean = typeof window !== 'undefined' && location.search.includes('dbg');
 
   // Elements

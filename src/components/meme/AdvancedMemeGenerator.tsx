@@ -591,13 +591,24 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
     }
   }, []);
 
-  // Download meme
+  // Download meme (custom uploads include site watermark in file)
   const downloadMeme = useCallback(() => {
     if (!controllerRef.current) return;
 
     const name = selectedTemplate?.name || 'meme';
-    controllerRef.current.export(name, 'png', false);
+    const includeWatermark =
+      selectedTemplate?.id === CUSTOM_PHOTO_TEMPLATE_ID;
+    controllerRef.current.export(name, 'png', includeWatermark);
   }, [selectedTemplate]);
+
+  // Keep canvas preview watermark in sync with template (custom photo only)
+  useEffect(() => {
+    const c = controllerRef.current;
+    if (!c) return;
+    c.showCustomPhotoWatermark =
+      selectedTemplate?.id === CUSTOM_PHOTO_TEMPLATE_ID;
+    c.requestFrame();
+  }, [selectedTemplate?.id]);
 
   // Handle text input change
   useEffect(() => {
