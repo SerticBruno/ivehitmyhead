@@ -1,4 +1,5 @@
 import type MemeCanvasController from './MemeCanvasController';
+import TextElement from './TextElement';
 import MathHelper from '@/lib/utils/math';
 
 type UnregisterCallbacks = () => void;
@@ -169,6 +170,28 @@ export default function registerCallbacks(
           }
         }
         
+        // Hover preview (mouse only): unselected text fields show faint chrome
+        if (
+          !controller.exporting &&
+          !controller.dragging &&
+          !controller.resizing &&
+          !controller.selecting &&
+          !controller.isTouch
+        ) {
+          const at = controller.elementAt(x, y);
+          const nextHover =
+            at instanceof TextElement &&
+            !at.locked &&
+            !controller.selectedElements.includes(at)
+              ? at
+              : null;
+          if (controller.hoveredPreviewElement !== nextHover) {
+            controller.hoveredPreviewElement = nextHover;
+          }
+        } else if (controller.hoveredPreviewElement !== null) {
+          controller.hoveredPreviewElement = null;
+        }
+
         // Update cursor based on what we're hovering over
         let cursor = 'default';
         if (controller.selectedElements.length === 1) {
@@ -194,6 +217,25 @@ export default function registerCallbacks(
         } else if (controller.selecting) {
           cursor = 'crosshair';
         }
+
+        if (
+          cursor === 'default' &&
+          !controller.exporting &&
+          !controller.dragging &&
+          !controller.resizing &&
+          !controller.selecting &&
+          !controller.isTouch
+        ) {
+          const at = controller.elementAt(x, y);
+          if (
+            at instanceof TextElement &&
+            !at.locked &&
+            !controller.selectedElements.includes(at)
+          ) {
+            cursor = 'pointer';
+          }
+        }
+
         controller.canvas.style.cursor = cursor;
         
         if (controller.dragging === true || controller.resizing === true)
@@ -208,6 +250,8 @@ export default function registerCallbacks(
       controller.holdingCtrl = e.ctrlKey;
     },
     mouseleave: () => {
+      controller.hoveredPreviewElement = null;
+      controller.requestFrame();
       controller.canvas.style.cursor = 'default';
     },
   };

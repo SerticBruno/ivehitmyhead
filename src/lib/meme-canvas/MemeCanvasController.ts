@@ -62,6 +62,9 @@ class MemeCanvasController {
   public holdingCtrl: boolean = false;
   public isTouch: boolean = false;
 
+  /** Text under cursor (not selected); drives faint preview chrome on the canvas. */
+  public hoveredPreviewElement: MemeElement | null = null;
+
   // Events
   private _events: {
     [K in Events]: ((e: EventCallbacks[K]) => void)[];
