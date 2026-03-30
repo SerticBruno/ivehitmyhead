@@ -322,20 +322,22 @@ export function MemeGeneratorShowcase({ screenshots = [] }: MemeGeneratorShowcas
   const sections = [
     {
       image: defaultScreenshots[0],
-      title: 'Create Memes Like a Pro',
-      description: 'Our advanced meme generator lets you create custom memes with ease. Choose from dozens of templates, add your own text, customize fonts and colors, and download your masterpiece in seconds.',
+      title: "Text on a JPEG. That's the whole pitch.",
+      description:
+        "Templates you've already seen everywhere, fonts if you're feeling fancy, colors if you must. Export a PNG, post it, question your choices. No \"masterpieces.\" Just pixels.",
       features: [
-        'Multiple meme templates to choose from',
-        'Customize text, fonts, and colors',
+        'Enough templates to stop stalling',
+        'Type, tweak, pretend it was ironic',
       ],
     },
     {
       image: defaultScreenshots[1],
-      title: 'Easy Drag-and-Drop Interface',
-      description: 'With our intuitive interface, creating memes has never been easier. Simply drag elements, adjust settings, and see your creation come to life in real-time.',
+      title: 'Drag stuff until it looks wrong on purpose',
+      description:
+        "Move layers around while it updates in real time. Looks fine? Make it worse. Download when you're done lying to yourself.",
       features: [
-        'Easy drag-and-drop interface',
-        'Download high-quality memes instantly',
+        "Click and drag like you know what you're doing",
+        'High-res export - your shame in crisp detail',
       ],
     },
   ];
@@ -382,13 +384,7 @@ export function MemeGeneratorShowcase({ screenshots = [] }: MemeGeneratorShowcas
               {/* Text content */}
               <div className={`${textOrder} space-y-6`}>
                 <h2 className="text-3xl md:text-4xl font-bold leading-tight">
-                  {section.title.split(' ').map((word, i) => 
-                    word === 'Pro' || word === 'Interface' ? (
-                      <span key={i} className="text-blue-600 dark:text-blue-400"> {word}</span>
-                    ) : (
-                      <span key={i}> {word}</span>
-                    )
-                  )}
+                  {section.title}
                 </h2>
                 
                 <p className="text-lg text-gray-600 dark:text-gray-300 leading-relaxed">

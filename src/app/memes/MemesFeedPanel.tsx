@@ -623,7 +623,11 @@ export function MemesFeedPanel({ memeGridRef, sidebar }: MemesFeedPanelProps) {
             </div>
           ) : (
             <>
-              <div ref={memeGridRef} className="scroll-anchor" style={{ height: '1px', marginTop: '-1px' }}></div>
+              <div
+                ref={memeGridRef}
+                className="scroll-anchor scroll-mt-20"
+                style={{ height: '1px', marginTop: '-1px' }}
+              />
               <MemeGrid
                 memes={displayMemes}
                 onLike={handleLike}

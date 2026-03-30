@@ -147,7 +147,7 @@ export const MemesStateProvider: React.FC<MemesStateProviderProps> = ({ children
   const pathname = usePathname();
   const prevPathnameRef = useRef<string | null>(null);
 
-  // Memes list page unmounts on navigation — track route changes here so we know where the user went.
+  // Memes list page unmounts on navigation - track route changes here so we know where the user went.
   useEffect(() => {
     const prev = prevPathnameRef.current;
     prevPathnameRef.current = pathname;

@@ -1323,7 +1323,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                           </div>
                         </div>
                         
-                        {/* Inline Text Input — border lives on wrapper so preview ↔ textarea swap cannot shift layout */}
+                        {/* Inline Text Input - border lives on wrapper so preview ↔ textarea swap cannot shift layout */}
                         <div
                           className="w-full min-h-[2.25rem] box-border rounded-md border border-gray-300 bg-white px-2 py-1.5 text-xs transition-[border-color] md:px-3 md:py-2 md:text-sm hover:border-blue-500 focus-within:border-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:hover:border-blue-400 dark:focus-within:border-blue-400"
                         >

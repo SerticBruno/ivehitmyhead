@@ -29,7 +29,7 @@ export default function registerCallbacks(
   }
 
   /**
-   * Mouse move: do not require `button === 0` — many browsers leave `button` unset or non-zero
+   * Mouse move: do not require `button === 0` - many browsers leave `button` unset or non-zero
    * while moving with no buttons pressed, which previously skipped all hover / hit-testing.
    */
   function mouseEventCoords(

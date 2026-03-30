@@ -3,6 +3,9 @@ import { useCategories } from '@/lib/hooks/useCategories';
 import { useMemesUIState } from '@/lib/contexts';
 import { getCategoryIconOrEmoji, ICONS } from '@/lib/utils/categoryIcons';
 
+/** Matches `sticky top-20` on the filter panel (5rem - align scroll-to-grid with sticky column). */
+const STICKY_FILTER_TOP_PX = 80;
+
 export interface FiltersAndSortingProps {
   className?: string;
   onCategorySelect?: (categoryId: string) => void;
@@ -50,11 +53,11 @@ const FiltersAndSortingInner: React.FC<FiltersAndSortingProps> = ({
       // Use the memeGridRef if provided, otherwise fall back to the old method
       if (memeGridRef?.current) {
         const rect = memeGridRef.current.getBoundingClientRect();
-        const scrollTop = window.pageYOffset + rect.top - 100; // 100px offset from top
+        const scrollTop =
+          window.pageYOffset + rect.top - STICKY_FILTER_TOP_PX;
         window.scrollTo({ top: scrollTop, behavior: 'smooth' });
       } else {
-        // Fallback: scroll to just below the navbar where memes typically start
-        window.scrollTo({ top: 80, behavior: 'smooth' });
+        window.scrollTo({ top: STICKY_FILTER_TOP_PX, behavior: 'smooth' });
       }
     }
   };
