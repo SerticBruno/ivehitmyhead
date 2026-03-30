@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { Check } from 'lucide-react';
 import { Button } from './Button';
@@ -33,6 +33,7 @@ function SwipeableScreenshotStack({
   const [isAnimatingOut, setIsAnimatingOut] = useState(false);
 
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const stackTouchRef = useRef<HTMLDivElement | null>(null);
   const pointerIdRef = useRef<number | null>(null);
   const startXRef = useRef(0);
   const dragXRef = useRef(0);
@@ -68,7 +69,8 @@ function SwipeableScreenshotStack({
   const onPointerDown = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
       if (!canSwipe || isAnimatingOut) return;
-      // Left click only for mouse; touch/pen are fine.
+      // Touch is handled via non-passive native listeners so preventDefault works on touchmove.
+      if (e.pointerType === 'touch') return;
       if (e.pointerType === 'mouse' && e.button !== 0) return;
 
       // Prevent browser default drag interactions on images.
@@ -131,6 +133,75 @@ function SwipeableScreenshotStack({
     [finishPointer, setDrag, swap]
   );
 
+  const canSwipeRef = useRef(canSwipe);
+  const isAnimatingOutRef = useRef(isAnimatingOut);
+  canSwipeRef.current = canSwipe;
+  isAnimatingOutRef.current = isAnimatingOut;
+
+  useEffect(() => {
+    const el = stackTouchRef.current;
+    if (!el || !canSwipe) return;
+
+    const onTouchStart = (e: TouchEvent) => {
+      if (!canSwipeRef.current || isAnimatingOutRef.current) return;
+      if (e.touches.length !== 1) return;
+      touchActiveRef.current = true;
+      touchStartXRef.current = e.touches[0]?.clientX ?? 0;
+      setIsDragging(true);
+      setDrag(0);
+    };
+
+    const onTouchMove = (e: TouchEvent) => {
+      if (!touchActiveRef.current) return;
+      if (e.touches.length !== 1) return;
+      e.preventDefault();
+      const x = e.touches[0]?.clientX ?? touchStartXRef.current;
+      const delta = x - touchStartXRef.current;
+      const clamped = Math.max(-220, Math.min(220, delta));
+      setDrag(clamped);
+    };
+
+    const finishTouch = () => {
+      if (!touchActiveRef.current) return;
+      touchActiveRef.current = false;
+
+      const threshold = 80;
+      const currentDrag = dragXRef.current;
+      const shouldSwap = Math.abs(currentDrag) > threshold;
+
+      if (!shouldSwap) {
+        setIsDragging(false);
+        setDrag(0);
+        return;
+      }
+
+      const width = containerRef.current?.clientWidth ?? 520;
+      const direction = currentDrag >= 0 ? 1 : -1;
+
+      setIsAnimatingOut(true);
+      setIsDragging(false);
+      setDrag(direction * (width * 0.85 + 60));
+
+      window.setTimeout(() => {
+        swap();
+        setDrag(0);
+        setIsAnimatingOut(false);
+      }, 220);
+    };
+
+    el.addEventListener('touchstart', onTouchStart, { passive: true });
+    el.addEventListener('touchmove', onTouchMove, { passive: false });
+    el.addEventListener('touchend', finishTouch);
+    el.addEventListener('touchcancel', finishTouch);
+
+    return () => {
+      el.removeEventListener('touchstart', onTouchStart);
+      el.removeEventListener('touchmove', onTouchMove);
+      el.removeEventListener('touchend', finishTouch);
+      el.removeEventListener('touchcancel', finishTouch);
+    };
+  }, [canSwipe, setDrag, swap]);
+
   return (
     <div
       ref={containerRef}
@@ -138,11 +209,15 @@ function SwipeableScreenshotStack({
       style={{
         paddingRight: stackOffset,
         paddingBottom: stackOffset,
-        touchAction: 'pan-y',
+        touchAction: canSwipe ? 'none' : 'auto',
       }}
       aria-label={canSwipe ? 'Swipe screenshots' : 'Screenshot'}
     >
-      <div className="relative aspect-[16/10] select-none">
+      <div
+        ref={stackTouchRef}
+        className="relative aspect-[16/10] select-none"
+        style={canSwipe ? { touchAction: 'none' } : undefined}
+      >
         {/* Back/stacked screenshot */}
         {backSrc && (
           <div
@@ -155,6 +230,7 @@ function SwipeableScreenshotStack({
               src={backSrc}
               alt={backAlt}
               fill
+              draggable={false}
               className="object-cover object-top"
               sizes="(max-width: 768px) 100vw, 50vw"
               priority={false}
@@ -175,54 +251,6 @@ function SwipeableScreenshotStack({
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUpOrCancel}
           onPointerCancel={onPointerUpOrCancel}
-          onTouchStart={(e) => {
-            if (!canSwipe || isAnimatingOut) return;
-            if (e.touches.length !== 1) return;
-
-            touchActiveRef.current = true;
-            touchStartXRef.current = e.touches[0]?.clientX ?? 0;
-            setIsDragging(true);
-            setDrag(0);
-          }}
-          onTouchMove={(e) => {
-            if (!touchActiveRef.current) return;
-            if (e.touches.length !== 1) return;
-
-            // Since we use touchAction: none, preventDefault is safe and avoids rubber-banding.
-            e.preventDefault();
-
-            const x = e.touches[0]?.clientX ?? touchStartXRef.current;
-            const delta = x - touchStartXRef.current;
-            const clamped = Math.max(-220, Math.min(220, delta));
-            setDrag(clamped);
-          }}
-          onTouchEnd={() => {
-            if (!touchActiveRef.current) return;
-            touchActiveRef.current = false;
-
-            const threshold = 80;
-            const currentDrag = dragXRef.current;
-            const shouldSwap = Math.abs(currentDrag) > threshold;
-
-            if (!shouldSwap) {
-              setIsDragging(false);
-              setDrag(0);
-              return;
-            }
-
-            const width = containerRef.current?.clientWidth ?? 520;
-            const direction = currentDrag >= 0 ? 1 : -1;
-
-            setIsAnimatingOut(true);
-            setIsDragging(false);
-            setDrag(direction * (width * 0.85 + 60));
-
-            window.setTimeout(() => {
-              swap();
-              setDrag(0);
-              setIsAnimatingOut(false);
-            }, 220);
-          }}
           onKeyDown={(e) => {
             if (!canSwipe) return;
             if (e.key === 'Enter' || e.key === ' ') {
@@ -244,6 +272,7 @@ function SwipeableScreenshotStack({
               src={frontSrc}
               alt={frontAlt}
               fill
+              draggable={false}
               className="object-cover object-top"
               sizes="(max-width: 768px) 100vw, 50vw"
               priority={priority}

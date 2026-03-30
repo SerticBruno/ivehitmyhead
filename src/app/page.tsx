@@ -12,7 +12,7 @@ import { Meme } from '@/lib/types/meme';
 import { shareMemeWithFallback } from '@/lib/utils/shareUtils';
 
 export default function Home() {
-  // Homepage-specific state - always fetch hottest this week
+  // Homepage-specific state — hottest in rolling 30-day window
   const [memes, setMemes] = useState<Meme[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -22,14 +22,12 @@ export default function Home() {
   const [likedMemes, setLikedMemes] = useState<Set<string>>(new Set());
   const [localMemes, setLocalMemes] = useState<Meme[]>([]);
 
-  // Fetch homepage memes - always hottest this week
+  // Fetch homepage memes — hottest by likes in the last 30 days
   useEffect(() => {
     const fetchHomepageMemes = async () => {
       try {
         setLoading(true);
         setError(null);
-        
-        // Always fetch hottest memes from this month
         const params = new URLSearchParams({
           page: '1',
           limit: '8',
@@ -138,11 +136,11 @@ export default function Home() {
           {/* Meme Generator Showcase */}
           <MemeGeneratorShowcase />
 
-          {/* Hottest Memes This Month Section - Loading State */}
+          {/* Hottest memes (last 30 days) — loading */}
           <section className="mb-12">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h2 className="text-2xl font-bold">Hottest Memes This Month</h2>
+                <h2 className="text-2xl font-bold">Hottest Memes — Last 30 Days</h2>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                   The most liked memes from the current month
                 </p>
@@ -230,11 +228,11 @@ export default function Home() {
         {/* Meme Generator Showcase */}
         <MemeGeneratorShowcase />
 
-        {/* Hottest Memes This Month Section */}
+        {/* Hottest memes (last 30 days) */}
         <section className="mb-12">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-2xl font-bold">Hottest Memes This Month</h2>
+              <h2 className="text-2xl font-bold">Hottest Memes — Last 30 Days</h2>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                 The most liked memes from the current month
               </p>

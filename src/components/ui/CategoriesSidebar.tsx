@@ -163,7 +163,7 @@ export const FiltersAndSorting: React.FC<FiltersAndSortingProps> = ({
                 : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 hover:shadow-sm border-transparent"
             }`}
           >
-            <span>This Week</span>
+            <span>Last week</span>
           </button>
           <button
             onClick={() => handleTimePeriodChange('month')}
@@ -173,7 +173,7 @@ export const FiltersAndSorting: React.FC<FiltersAndSortingProps> = ({
                 : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 hover:shadow-sm border-transparent"
             }`}
           >
-            <span>This Month</span>
+            <span>Last month</span>
           </button>
           <button
             onClick={() => handleTimePeriodChange('all')}
@@ -183,7 +183,7 @@ export const FiltersAndSorting: React.FC<FiltersAndSortingProps> = ({
                 : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 hover:shadow-sm border-transparent"
             }`}
           >
-            <span>All Time</span>
+            <span>All time</span>
           </button>
         </div>
       </div>

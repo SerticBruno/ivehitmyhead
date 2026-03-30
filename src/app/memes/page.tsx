@@ -14,7 +14,7 @@ export default function MemesPage() {
   const [likedMemes, setLikedMemes] = useState<Set<string>>(new Set());
   
   // Get memes state context
-  const { state: memesState, setScrollPosition, updateMemeLikeCount, updateMemeShareCount, updateMemeLikedState } = useMemesState();
+  const { state: memesState, setScrollPosition, setFilters, updateMemeLikeCount, updateMemeShareCount, updateMemeLikedState } = useMemesState();
   
   // Initialize likedMemes state by fetching user's liked memes from API
   useEffect(() => {
@@ -174,15 +174,15 @@ export default function MemesPage() {
 
   const handleFilterChange = useCallback((filter: string) => {
     if (filter === 'newest' || filter === 'trending' || filter === 'hottest') {
-      // The useMemes hook will handle updating the context filters
+      setFilters({ filter });
     }
-  }, []);
+  }, [setFilters]);
 
   const handleTimePeriodChange = useCallback((period: string) => {
     if (period === 'all' || period === 'today' || period === 'week' || period === 'month') {
-      // The useMemes hook will handle updating the context filters
+      setFilters({ time_period: period });
     }
-  }, []);
+  }, [setFilters]);
 
   // Fetch real data using the global context state
   const { memes, loading: memesLoading, error: memesError, hasMore, loadMore, refresh } = useMemes({
@@ -499,9 +499,8 @@ export default function MemesPage() {
   }, [memesState.filters]);
 
   const handleCategorySelect = useCallback((categoryId: string) => {
-    // The useMemes hook will handle updating the context filters
-    console.log('Category selected:', categoryId);
-  }, []);
+    setFilters({ category_id: categoryId });
+  }, [setFilters]);
 
   const handleLike = useCallback(async (slug: string) => {
     // Prevent double-clicks by checking if this meme is already being processed
@@ -710,10 +709,10 @@ export default function MemesPage() {
                 ) : (
                   <div className="grid grid-cols-4 gap-2">
                     {[
-                      { value: 'today', label: 'Today', icon: <ICONS.Moon className="w-5 h-5" /> },
-                      { value: 'week', label: 'This Week', icon: <ICONS.Calendar className="w-5 h-5" /> },
-                      { value: 'month', label: 'This Month', icon: <ICONS.Calendar className="w-5 h-5" /> },
-                      { value: 'all', label: 'All Time', icon: <ICONS.Calendar className="w-5 h-5" /> }
+                      { value: 'today', label: '24 hours', icon: <ICONS.Moon className="w-5 h-5" /> },
+                      { value: 'week', label: '7 days', icon: <ICONS.Calendar className="w-5 h-5" /> },
+                      { value: 'month', label: '30 days', icon: <ICONS.Calendar className="w-5 h-5" /> },
+                      { value: 'all', label: 'All time', icon: <ICONS.Calendar className="w-5 h-5" /> }
                     ].map((period) => (
                       <button
                         key={period.value}

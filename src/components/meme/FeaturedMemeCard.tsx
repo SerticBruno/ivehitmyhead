@@ -73,12 +73,12 @@ const FeaturedMemeCard: React.FC<FeaturedMemeCardProps> = ({
         </CardHeader>
         
         <CardContent className="p-0 flex-grow">
-          <div className="relative w-full h-64">
+          <div className="relative w-full h-56 sm:h-64 bg-gray-50 dark:bg-gray-900/50">
             <Image
               src={meme.image_url}
               alt={meme.title}
               fill
-              className="object-cover"
+              className="object-contain"
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             />
           </div>

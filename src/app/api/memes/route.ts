@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/server';
+import { getMemeTimePeriodStart } from '@/lib/utils/memeTimePeriod';
 
 export async function GET(request: NextRequest) {
   try {
@@ -33,29 +34,10 @@ export async function GET(request: NextRequest) {
       query = query.or(`title.ilike.%${search}%,tags.cs.{${search}}`);
     }
 
-    // Apply time period filter
-    if (time_period && time_period !== 'all') {
-      const now = new Date();
-      let startDate: Date;
-
-      switch (time_period) {
-        case 'today':
-          startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-          break;
-        case 'week':
-          // Start of current week (Monday)
-          const dayOfWeek = now.getDay();
-          const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-          startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysToSubtract);
-          break;
-        case 'month':
-          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-          break;
-        default:
-          startDate = new Date(0); // Beginning of time
-      }
-
-      query = query.gte('created_at', startDate.toISOString());
+    // Apply time period filter (rolling: last 24h / 7d / 30d)
+    const periodStart = getMemeTimePeriodStart(time_period);
+    if (periodStart) {
+      query = query.gte('created_at', periodStart.toISOString());
     }
 
     // Apply primary sorting with proper tie-breaking
@@ -106,27 +88,9 @@ export async function GET(request: NextRequest) {
         countQuery = countQuery.or(`title.ilike.%${search}%,tags.cs.{${search}}`);
       }
 
-      if (time_period && time_period !== 'all') {
-        const now = new Date();
-        let startDate: Date;
-
-        switch (time_period) {
-          case 'today':
-            startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-            break;
-          case 'week':
-            const dayOfWeek = now.getDay();
-            const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-            startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysToSubtract);
-            break;
-          case 'month':
-            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-            break;
-          default:
-            startDate = new Date(0);
-        }
-
-        countQuery = countQuery.gte('created_at', startDate.toISOString());
+      const countPeriodStart = getMemeTimePeriodStart(time_period);
+      if (countPeriodStart) {
+        countQuery = countQuery.gte('created_at', countPeriodStart.toISOString());
       }
 
       const { count: total } = await countQuery;
