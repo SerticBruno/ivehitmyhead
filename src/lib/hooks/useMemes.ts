@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Meme } from '@/lib/types/meme';
-import { useMemesState } from '@/lib/contexts';
+import { useMemesListState } from '@/lib/contexts';
 
 interface UseMemesOptions {
   category_id?: string;
@@ -27,12 +27,14 @@ export const useMemes = (options: UseMemesOptions = {}): UseMemesReturn => {
   const fetchGenerationRef = useRef(0);
 
   const {
-    state,
+    memes,
+    hasMore,
+    currentPage,
     setMemes,
     appendMemes,
     setHasMore,
     setCurrentPage,
-  } = useMemesState();
+  } = useMemesListState();
 
   const {
     category_id,
@@ -119,11 +121,11 @@ export const useMemes = (options: UseMemesOptions = {}): UseMemesReturn => {
 
   const loadMore = useCallback(() => {
     // Check if we can actually load more
-    if (!loading && state.hasMore && state.memes.length > 0) {
-      const nextPage = state.currentPage + 1;
+    if (!loading && hasMore && memes.length > 0) {
+      const nextPage = currentPage + 1;
       fetchMemes(nextPage, true);
     }
-  }, [loading, state.hasMore, state.currentPage, state.memes.length, fetchMemes]);
+  }, [loading, hasMore, currentPage, memes.length, fetchMemes]);
 
   const refresh = useCallback(() => {
     setCurrentPage(1);
@@ -142,10 +144,10 @@ export const useMemes = (options: UseMemesOptions = {}): UseMemesReturn => {
   }, [querySignature, fetchMemes, setCurrentPage, setHasMore]);
 
   return {
-    memes: state.memes,
+    memes,
     loading,
     error,
-    hasMore: state.hasMore,
+    hasMore,
     loadMore,
     refresh
   };

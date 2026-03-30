@@ -22,7 +22,7 @@ export default function Home() {
   const [likedMemes, setLikedMemes] = useState<Set<string>>(new Set());
   const [localMemes, setLocalMemes] = useState<Meme[]>([]);
 
-  // Fetch homepage memes — hottest by likes in the last 30 days
+  // Fetch homepage memes — hottest by likes over the last month (rolling 30 days)
   useEffect(() => {
     const fetchHomepageMemes = async () => {
       try {
@@ -136,11 +136,11 @@ export default function Home() {
           {/* Meme Generator Showcase */}
           <MemeGeneratorShowcase />
 
-          {/* Hottest memes (last 30 days) — loading */}
+          {/* Hottest memes (last month) — loading */}
           <section className="mb-12">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h2 className="text-2xl font-bold">Hottest Memes — Last 30 Days</h2>
+                <h2 className="text-2xl font-bold">Hottest Memes — Last Month</h2>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                   The most liked memes from the current month
                 </p>
@@ -228,11 +228,11 @@ export default function Home() {
         {/* Meme Generator Showcase */}
         <MemeGeneratorShowcase />
 
-        {/* Hottest memes (last 30 days) */}
+        {/* Hottest memes (last month) */}
         <section className="mb-12">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-2xl font-bold">Hottest Memes — Last 30 Days</h2>
+              <h2 className="text-2xl font-bold">Hottest Memes — Last Month</h2>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                 The most liked memes from the current month
               </p>

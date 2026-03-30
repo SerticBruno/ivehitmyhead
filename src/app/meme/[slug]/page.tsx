@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { formatRelativeTime } from '@/lib/utils';
 import { Meme } from '@/lib/types/meme';
 import { useMemeInteractions } from '@/lib/hooks/useMemeInteractions';
-import { useMemesState } from '@/lib/contexts';
+import { useMemesListState } from '@/lib/contexts';
 import { ICONS, getCategoryIconOrEmoji } from '@/lib/utils/categoryIcons';
 import { shareMemeWithFallback } from '@/lib/utils/shareUtils';
 
@@ -26,7 +26,7 @@ export default function MemeDetailPage() {
   const [isLiking, setIsLiking] = useState(false);
 
   const { likeMeme, recordView } = useMemeInteractions();
-  const { state: memesState, updateMemeLikeCount, updateMemeShareCount, updateMemeLikedState } = useMemesState();
+  const { memes: listMemes, updateMemeLikeCount, updateMemeShareCount, updateMemeLikedState } = useMemesListState();
   const hasRecordedView = useRef(false);
 
   // Check if the current meme is liked by the user
@@ -72,7 +72,7 @@ export default function MemeDetailPage() {
         setMeme(data.meme);
         
         // Check if this meme is already in the context state (from all memes page)
-        const contextMeme = memesState.memes.find(m => m.slug === slug);
+        const contextMeme = listMemes.find(m => m.slug === slug);
         if (contextMeme) {
           // Use the context data which might be more up-to-date
           console.log('Using context data for meme:', { 
@@ -111,7 +111,7 @@ export default function MemeDetailPage() {
     }
     // Reset the view recording flag when slug changes
     hasRecordedView.current = false;
-  }, [slug, recordView, checkLikeStatus, memesState.memes]);
+  }, [slug, recordView, checkLikeStatus, listMemes]);
 
   const handleLike = async (e?: React.MouseEvent) => {
     if (e) {

@@ -27,19 +27,34 @@ interface MemesState {
   isInitialized: boolean;
 }
 
-interface MemesStateContextType {
-  state: MemesState;
+/** List slice + mutators: subscribers do not re-render when only filters/scroll change. */
+export interface MemesListStateContextType {
+  memes: Meme[];
+  hasMore: boolean;
+  currentPage: number;
   setMemes: (memes: Meme[]) => void;
   appendMemes: (memes: Meme[]) => void;
   setHasMore: (hasMore: boolean) => void;
   setCurrentPage: (page: number) => void;
+  updateMemeLikeCount: (memeSlug: string, newLikeCount: number) => void;
+  updateMemeShareCount: (memeSlug: string, newShareCount: number) => void;
+  updateMemeLikedState: (memeSlug: string, isLiked: boolean) => void;
+}
+
+/** UI slice + mutators: subscribers do not re-render when only memes / pagination change. */
+export interface MemesUIStateContextType {
+  filters: MemesState['filters'];
+  scrollPosition: number;
+  isInitialized: boolean;
   setScrollPosition: (position: number) => void;
   setFilters: (filters: Partial<MemesState['filters']>) => void;
   resetState: () => void;
   isSameFilters: (filters: Partial<MemesState['filters']>) => boolean;
-  updateMemeLikeCount: (memeSlug: string, newLikeCount: number) => void;
-  updateMemeShareCount: (memeSlug: string, newShareCount: number) => void;
-  updateMemeLikedState: (memeSlug: string, isLiked: boolean) => void;
+}
+
+/** @deprecated Prefer useMemesUIState / useMemesListState to avoid unnecessary re-renders. */
+interface MemesStateContextType extends MemesListStateContextType, MemesUIStateContextType {
+  state: MemesState;
 }
 
 const initialState: MemesState = {
@@ -92,7 +107,26 @@ function normalizeMemesStateSnapshot(raw: unknown): MemesState {
   };
 }
 
+const MemesListStateContext = createContext<MemesListStateContextType | undefined>(undefined);
+const MemesUIStateContext = createContext<MemesUIStateContextType | undefined>(undefined);
+
 const MemesStateContext = createContext<MemesStateContextType | undefined>(undefined);
+
+export const useMemesListState = () => {
+  const context = useContext(MemesListStateContext);
+  if (!context) {
+    throw new Error('useMemesListState must be used within a MemesStateProvider');
+  }
+  return context;
+};
+
+export const useMemesUIState = () => {
+  const context = useContext(MemesUIStateContext);
+  if (!context) {
+    throw new Error('useMemesUIState must be used within a MemesStateProvider');
+  }
+  return context;
+};
 
 export const useMemesState = () => {
   const context = useContext(MemesStateContext);
@@ -278,11 +312,10 @@ export const MemesStateProvider: React.FC<MemesStateProviderProps> = ({ children
         return { 
           ...prev, 
           filters: newFilters,
-          // Reset memes when filters change
+          // Reset memes when filters change (keep isInitialized so filter UI does not unmount)
           memes: [],
           currentPage: 1,
           hasMore: true,
-          isInitialized: false
         };
       }
       return prev;
@@ -384,25 +417,70 @@ export const MemesStateProvider: React.FC<MemesStateProviderProps> = ({ children
     });
   }, []);
 
-  // Memoize the context value to prevent unnecessary re-renders
-  const value = useMemo<MemesStateContextType>(() => ({
-    state,
-    setMemes,
-    appendMemes,
-    setHasMore,
-    setCurrentPage,
-    setScrollPosition,
-    setFilters,
-    resetState,
-    isSameFilters,
-    updateMemeLikeCount,
-    updateMemeShareCount,
-    updateMemeLikedState
-  }), [state, setMemes, appendMemes, setHasMore, setCurrentPage, setScrollPosition, setFilters, resetState, isSameFilters, updateMemeLikeCount, updateMemeShareCount, updateMemeLikedState]);
+  const listValue = useMemo<MemesListStateContextType>(
+    () => ({
+      memes: state.memes,
+      hasMore: state.hasMore,
+      currentPage: state.currentPage,
+      setMemes,
+      appendMemes,
+      setHasMore,
+      setCurrentPage,
+      updateMemeLikeCount,
+      updateMemeShareCount,
+      updateMemeLikedState
+    }),
+    [
+      state.memes,
+      state.hasMore,
+      state.currentPage,
+      setMemes,
+      appendMemes,
+      setHasMore,
+      setCurrentPage,
+      updateMemeLikeCount,
+      updateMemeShareCount,
+      updateMemeLikedState
+    ]
+  );
+
+  const uiValue = useMemo<MemesUIStateContextType>(
+    () => ({
+      filters: state.filters,
+      scrollPosition: state.scrollPosition,
+      isInitialized: state.isInitialized,
+      setScrollPosition,
+      setFilters,
+      resetState,
+      isSameFilters
+    }),
+    [
+      state.filters,
+      state.scrollPosition,
+      state.isInitialized,
+      setScrollPosition,
+      setFilters,
+      resetState,
+      isSameFilters
+    ]
+  );
+
+  const combinedValue = useMemo<MemesStateContextType>(
+    () => ({
+      state,
+      ...listValue,
+      ...uiValue
+    }),
+    [state, listValue, uiValue]
+  );
 
   return (
-    <MemesStateContext.Provider value={value}>
-      {children}
-    </MemesStateContext.Provider>
+    <MemesListStateContext.Provider value={listValue}>
+      <MemesUIStateContext.Provider value={uiValue}>
+        <MemesStateContext.Provider value={combinedValue}>
+          {children}
+        </MemesStateContext.Provider>
+      </MemesUIStateContext.Provider>
+    </MemesListStateContext.Provider>
   );
 };

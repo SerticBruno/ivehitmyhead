@@ -1,9 +1,9 @@
 import React from 'react';
 import { useCategories } from '@/lib/hooks/useCategories';
-import { useMemesState } from '@/lib/contexts';
+import { useMemesUIState } from '@/lib/contexts';
 import { getCategoryIconOrEmoji, ICONS } from '@/lib/utils/categoryIcons';
 
-interface FiltersAndSortingProps {
+export interface FiltersAndSortingProps {
   className?: string;
   onCategorySelect?: (categoryId: string) => void;
   selectedCategory?: string;
@@ -14,7 +14,7 @@ interface FiltersAndSortingProps {
   memeGridRef?: React.RefObject<HTMLDivElement | null>;
 }
 
-export const FiltersAndSorting: React.FC<FiltersAndSortingProps> = ({
+const FiltersAndSortingInner: React.FC<FiltersAndSortingProps> = ({
   className = '',
   onCategorySelect,
   selectedCategory,
@@ -28,7 +28,7 @@ export const FiltersAndSorting: React.FC<FiltersAndSortingProps> = ({
   const [userInitiated, setUserInitiated] = React.useState(false);
   
   // Get the memes state context to update filters directly
-  const { setFilters } = useMemesState();
+  const { setFilters } = useMemesUIState();
   
   const {
     categories,
@@ -94,9 +94,9 @@ export const FiltersAndSorting: React.FC<FiltersAndSortingProps> = ({
         {/* Time Period Filter */}
         <div className="p-4 border-b border-gray-200 dark:border-gray-700">
           <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Time Period</h4>
-          <div className="flex justify-between gap-2">
+          <div className="flex w-full flex-nowrap gap-2">
             {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-12 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"></div>
+              <div key={i} className="h-12 flex-1 min-w-0 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"></div>
             ))}
           </div>
         </div>
@@ -144,46 +144,50 @@ export const FiltersAndSorting: React.FC<FiltersAndSortingProps> = ({
       {/* Time Period Filter */}
       <div className="p-4 border-b border-gray-200 dark:border-gray-700">
         <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Time Period</h4>
-        <div className="flex justify-between gap-2">
+        <div className="flex w-full flex-nowrap gap-2">
           <button
+            type="button"
             onClick={() => handleTimePeriodChange('today')}
-            className={`flex flex-col items-center px-3 py-3 text-xs font-medium rounded-lg min-w-[60px] border-2 cursor-pointer ${
+            className={`flex flex-1 min-w-0 items-center justify-center text-center text-xs font-medium leading-tight px-1 py-2.5 rounded-lg border-2 cursor-pointer ${
               selectedTimePeriod === 'today'
                 ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-500 shadow-sm"
                 : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 hover:shadow-sm border-transparent"
             }`}
           >
-            <span>Today</span>
+            Today
           </button>
           <button
+            type="button"
             onClick={() => handleTimePeriodChange('week')}
-            className={`flex flex-col items-center px-3 py-3 text-xs font-medium rounded-lg min-w-[60px] border-2 cursor-pointer ${
+            className={`flex flex-1 min-w-0 items-center justify-center text-center text-xs font-medium leading-tight px-1 py-2.5 rounded-lg border-2 cursor-pointer ${
               selectedTimePeriod === 'week'
                 ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-500 shadow-sm"
                 : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 hover:shadow-sm border-transparent"
             }`}
           >
-            <span>Last week</span>
+            Last week
           </button>
           <button
+            type="button"
             onClick={() => handleTimePeriodChange('month')}
-            className={`flex flex-col items-center px-3 py-3 text-xs font-medium rounded-lg min-w-[60px] border-2 cursor-pointer ${
+            className={`flex flex-1 min-w-0 items-center justify-center text-center text-xs font-medium leading-tight px-1 py-2.5 rounded-lg border-2 cursor-pointer ${
               selectedTimePeriod === 'month'
                 ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-500 shadow-sm"
                 : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 hover:shadow-sm border-transparent"
             }`}
           >
-            <span>Last month</span>
+            Last month
           </button>
           <button
+            type="button"
             onClick={() => handleTimePeriodChange('all')}
-            className={`flex flex-col items-center px-3 py-3 text-xs font-medium rounded-lg min-w-[60px] border-2 cursor-pointer ${
+            className={`flex flex-1 min-w-0 items-center justify-center text-center text-xs font-medium leading-tight px-1 py-2.5 rounded-lg border-2 cursor-pointer ${
               selectedTimePeriod === 'all'
                 ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-500 shadow-sm"
                 : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 hover:shadow-sm border-transparent"
             }`}
           >
-            <span>All time</span>
+            All time
           </button>
         </div>
       </div>
@@ -303,3 +307,5 @@ export const FiltersAndSorting: React.FC<FiltersAndSortingProps> = ({
     </div>
   );
 };
+
+export const FiltersAndSorting = React.memo(FiltersAndSortingInner);

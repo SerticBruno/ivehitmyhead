@@ -17,9 +17,9 @@ export interface MemesMobileFilterBarsProps {
 }
 
 const TIME_PERIODS = [
-  { value: 'today', label: '24 hours', icon: <ICONS.Moon className="w-5 h-5" /> },
-  { value: 'week', label: '7 days', icon: <ICONS.Calendar className="w-5 h-5" /> },
-  { value: 'month', label: '30 days', icon: <ICONS.Calendar className="w-5 h-5" /> },
+  { value: 'today', label: 'Today', icon: <ICONS.Moon className="w-5 h-5" /> },
+  { value: 'week', label: 'Last week', icon: <ICONS.Calendar className="w-5 h-5" /> },
+  { value: 'month', label: 'Last month', icon: <ICONS.Calendar className="w-5 h-5" /> },
   { value: 'all', label: 'All time', icon: <ICONS.Calendar className="w-5 h-5" /> },
 ] as const;
 
@@ -46,26 +46,26 @@ function MemesMobileFilterBarsInner({
         <div className="flex flex-col gap-3">
           <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Time Period</h4>
           {showFilterSkeleton ? (
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid w-full grid-cols-4 gap-2">
               {[...Array(4)].map((_, i) => (
                 <div key={i} className="h-16 bg-gray-200 dark:bg-gray-700 rounded-md animate-pulse"></div>
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid w-full grid-cols-4 gap-2">
               {TIME_PERIODS.map((period) => (
                 <button
                   key={period.value}
                   type="button"
                   onClick={() => onTimePeriodChange(period.value)}
-                  className={`flex flex-col items-center p-3 rounded-md transition-colors duration-150 cursor-pointer ${
+                  className={`flex min-h-0 min-w-0 flex-col items-center justify-center gap-1 p-2 rounded-md text-center transition-colors duration-150 cursor-pointer ${
                     selectedTimePeriod === period.value
                       ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
                       : 'bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'
                   }`}
                 >
-                  <span className="mb-1">{period.icon}</span>
-                  <span className="text-xs font-medium">{period.label}</span>
+                  <span className="flex shrink-0 justify-center">{period.icon}</span>
+                  <span className="w-full text-center text-xs font-medium leading-tight">{period.label}</span>
                 </button>
               ))}
             </div>
