@@ -457,7 +457,7 @@ export function MemesFeedPanel({ memeGridRef, sidebar }: MemesFeedPanelProps) {
     if (category_id) {
       return `No ${filter} memes found in this category${timeSuffix} yet.`;
     }
-    return `No ${filter} memes found${timeSuffix} yet. Be the first to upload something hilarious!`;
+    return `No ${filter} memes found${timeSuffix} yet. Be the first to add to the pile.`;
   }, [
     filters.category_id,
     filters.filter,
@@ -476,8 +476,8 @@ export function MemesFeedPanel({ memeGridRef, sidebar }: MemesFeedPanelProps) {
             : ' from the last month'
         : '';
     const description = category_id
-      ? `Discover ${filter} memes from this category${timePhrase}`
-      : `Discover ${filter} memes from all categories${timePhrase}.`;
+      ? `${filter} memes in this category${timePhrase}. You picked the lane.`
+      : `${filter} memes from every bucket${timePhrase}. Quantity over dignity.`;
 
     return { categoryText, description };
   }, [filters.category_id, filters.filter, filters.time_period]);

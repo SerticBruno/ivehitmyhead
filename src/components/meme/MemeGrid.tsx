@@ -68,7 +68,7 @@ export const MemeGrid: React.FC<MemeGridProps> = ({
         <h3 className="text-xl font-semibold mb-2">No memes found</h3>
         <p className="text-gray-500 dark:text-gray-400 mx-auto max-w-md">
           {emptyStateDescription ??
-            'Try adjusting your filters or check back later.'}
+            'Loosen the filters or wait for someone else to post. Both are valid coping strategies.'}
         </p>
       </div>
     );

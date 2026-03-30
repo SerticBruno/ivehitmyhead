@@ -627,10 +627,10 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
     >
       <div className="text-center mb-2 md:mb-4 flex-shrink-0">
         <h1 className="text-xl md:text-2xl lg:text-4xl font-bold text-gray-900 dark:text-white mb-1 md:mb-2">
-          Advanced Meme Generator
+          Meme generator
         </h1>
         <p className="text-xs md:text-sm lg:text-base text-gray-600 dark:text-gray-400">
-          Choose a template or upload your own photo, add text, and create your meme
+          Template, upload, type. Export before you overthink the caption.
         </p>
       </div>
 

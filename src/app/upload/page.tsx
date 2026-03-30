@@ -30,7 +30,7 @@ export default function UploadPage() {
   }, []);
 
   const handleUploadSuccess = () => {
-    alert('Meme uploaded successfully!');
+    alert("Uploaded. It exists now. That's on you.");
     // You can redirect to the memes page or refresh the list
   };
 
@@ -59,10 +59,10 @@ export default function UploadPage() {
       <div className="max-w-4xl mx-auto px-4">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            Upload Your Meme
+            Upload a Meme
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mt-2">
-            Share your favorite memes with the community
+            Lob it into the pile. The community will assign meaning or ignore you.
           </p>
         </div>
         

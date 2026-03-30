@@ -91,7 +91,7 @@ const FiltersAndSortingInner: React.FC<FiltersAndSortingProps> = ({
       <div className={`sticky top-20 h-[calc(100vh-6rem)] bg-white dark:bg-gray-800 rounded-b-xl shadow-lg border border-gray-200 dark:border-gray-700 flex flex-col ${className}`}>
         {/* Header */}
         <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Meme Filters</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Narrow the scroll</h3>
         </div>
 
         {/* Time Period Filter */}
@@ -141,7 +141,7 @@ const FiltersAndSortingInner: React.FC<FiltersAndSortingProps> = ({
     <div className={`sticky top-20 h-[calc(100vh-6rem)] bg-white dark:bg-gray-800 rounded-b-xl shadow-lg border border-gray-200 dark:border-gray-700 flex flex-col ${className}`}>
       {/* Header */}
       <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Meme Filters</h3>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Narrow the scroll</h3>
       </div>
 
       {/* Time Period Filter */}

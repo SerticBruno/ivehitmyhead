@@ -13,10 +13,10 @@ interface NewsletterProps {
 
 const Newsletter: React.FC<NewsletterProps> = ({
   className,
-  title = "Get the latest memes",
-  description = "Subscribe to our newsletter for the best memes delivered to your inbox.",
-  placeholder = "Enter your email",
-  buttonText = "Subscribe"
+  title = "Meme spam, but legal",
+  description = "Hand us your email and we might occasionally send something. Lower your expectations preemptively.",
+  placeholder = "your@email.here",
+  buttonText = "Sure, why not"
 }) => {
   const [email, setEmail] = useState('');
   const [isSubscribed, setIsSubscribed] = useState(false);
@@ -53,7 +53,7 @@ const Newsletter: React.FC<NewsletterProps> = ({
             disabled={isSubscribed}
             className="whitespace-nowrap"
           >
-            {isSubscribed ? 'Subscribed!' : buttonText}
+            {isSubscribed ? "You're on the list." : buttonText}
           </Button>
         </div>
       </form>

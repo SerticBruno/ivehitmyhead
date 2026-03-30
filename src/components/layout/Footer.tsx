@@ -13,7 +13,7 @@ const Footer: React.FC = () => {
               <span className="text-xl font-bold">IVEHITMYHEAD</span>
             </div>
             <p className="text-gray-600 dark:text-gray-400 mb-4 max-w-md">
-              The best place to discover, share, and create dullest memes.
+              Discover, share, and create the dullest memes on the internet. We said what we said.
             </p>
             <div className="flex space-x-4">
               <a href="#" className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-pointer">
@@ -83,7 +83,7 @@ const Footer: React.FC = () => {
 
         <div className="border-t border-gray-200 dark:border-gray-800 mt-8 pt-8 text-center">
           <p className="text-gray-500 dark:text-gray-400 flex items-center justify-center">
-            © 2024 IVEHITMYHEAD. All rights reserved. Made with <ICONS.Heart className="w-4 h-4 mx-1 text-red-500" /> for meme lovers.
+            © 2024 IVEHITMYHEAD. All rights reserved. Held together with <ICONS.Heart className="w-4 h-4 mx-1 text-red-500" /> and mild denial.
           </p>
         </div>
       </div>

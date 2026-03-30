@@ -131,7 +131,7 @@ export default function CategoryPage() {
                 {category.name}
               </h1>
               <p className="text-gray-600 dark:text-gray-400 mt-2">
-                {category.description || `Browse the best ${category.name.toLowerCase()} memes`}
+                {category.description || `More ${category.name.toLowerCase()} memes than anyone needed.`}
               </p>
             </div>
             <Button onClick={() => router.push('/categories')}>

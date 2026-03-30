@@ -128,7 +128,7 @@ export default function Home() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button size="lg" className="text-lg px-8" onClick={() => window.location.href = '/memes'}>
-                Browse Memes
+                Open the feed
               </Button>
             </div>
           </section>
@@ -142,7 +142,7 @@ export default function Home() {
               <div>
                 <h2 className="text-2xl font-bold">Hottest Memes - Last Month</h2>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  The most liked memes from the current month
+                  Who hit like this month. That is the entire bar for inclusion.
                 </p>
               </div>
               <Button variant="ghost" onClick={() => window.location.href = '/memes'}>
@@ -220,7 +220,7 @@ export default function Home() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button size="lg" className="text-lg px-8" onClick={() => window.location.href = '/memes'}>
-              Browse Memes
+              Open the feed
             </Button>
           </div>
         </section>
@@ -234,7 +234,7 @@ export default function Home() {
             <div>
               <h2 className="text-2xl font-bold">Hottest Memes - Last Month</h2>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                The most liked memes from the current month
+                Who hit like this month. That is the entire bar for inclusion.
               </p>
             </div>
             <Button variant="ghost" onClick={() => window.location.href = '/memes'}>
@@ -257,7 +257,7 @@ export default function Home() {
               </div>
               <h3 className="text-xl font-semibold mb-2">No memes yet</h3>
               <p className="text-gray-500 dark:text-gray-400 mb-4">
-                Check back soon for new memes!
+                Quiet month. The void stares back. Someone could upload something.
               </p>
             </div>
           )}

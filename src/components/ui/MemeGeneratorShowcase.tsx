@@ -324,7 +324,7 @@ export function MemeGeneratorShowcase({ screenshots = [] }: MemeGeneratorShowcas
       image: defaultScreenshots[0],
       title: "Text on a JPEG. That's the whole pitch.",
       description:
-        "Templates you've already seen everywhere, fonts if you're feeling fancy, colors if you must. Export a PNG, post it, question your choices. No \"masterpieces.\" Just pixels.",
+        "Templates you've already seen everywhere, fonts if you're feeling fancy, colors if you must. Export a PNG, post it, mock your friends, question your choices. No \"masterpieces.\" Just pixels.",
       features: [
         'Enough templates to stop stalling',
         'Type, tweak, pretend it was ironic',
@@ -349,7 +349,7 @@ export function MemeGeneratorShowcase({ screenshots = [] }: MemeGeneratorShowcas
         <div className="text-center mb-12">
           <div className="inline-block mb-4">
             <span className="px-3 py-1 text-sm font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 rounded-full">
-              New Feature
+              Still exists
             </span>
           </div>
         </div>
@@ -407,7 +407,7 @@ export function MemeGeneratorShowcase({ screenshots = [] }: MemeGeneratorShowcas
                       className="w-full sm:w-auto"
                       onClick={() => window.location.href = '/meme-generator'}
                     >
-                      Try Meme Generator
+                      Open the editor
                     </Button>
                     <Button 
                       variant="outline" 
@@ -415,7 +415,7 @@ export function MemeGeneratorShowcase({ screenshots = [] }: MemeGeneratorShowcas
                       className="w-full sm:w-auto"
                       onClick={() => window.location.href = '/memes'}
                     >
-                      Browse Memes
+                      Stare at the feed
                     </Button>
                   </div>
                 )}

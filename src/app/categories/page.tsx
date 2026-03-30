@@ -50,7 +50,7 @@ export default function CategoriesPage() {
               Meme Categories
             </h1>
             <p className="text-gray-600 dark:text-gray-400">
-              Browse memes by category and discover content that matches your interests
+              Buckets for sorting the hoard. Pick one and pretend it is curated.
             </p>
           </div>
         </section>

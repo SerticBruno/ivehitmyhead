@@ -75,7 +75,7 @@ const FeaturedCreator: React.FC<FeaturedCreatorProps> = ({
       </div>
 
       <div className="mb-4">
-        <h4 className="font-semibold mb-2">Best Meme</h4>
+        <h4 className="font-semibold mb-2">Their least bad one</h4>
         <div className="relative group">
           <Image
             src={creator.bestMeme.imageUrl}

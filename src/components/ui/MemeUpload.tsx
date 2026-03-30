@@ -81,7 +81,7 @@ export const MemeUpload: React.FC<MemeUploadProps> = ({
     e.preventDefault();
     
     if (!title || !uploadedImage) {
-      alert('Please provide a title and select an image');
+      alert('You need a title and an image. The bare minimum exists for a reason.');
       return;
     }
 
@@ -234,8 +234,8 @@ export const MemeUpload: React.FC<MemeUploadProps> = ({
                 </div>
                 <div className="text-sm text-gray-600 dark:text-gray-400">
                   {isDragActive
-                    ? 'Drop the image here...'
-                    : 'Drag & drop an image here, or click to select'
+                    ? 'Drop it. Own it.'
+                    : 'Drag a file in or click and pretend you had a workflow'
                   }
                 </div>
                 <div className="text-xs text-gray-500 dark:text-gray-400">
@@ -256,7 +256,7 @@ export const MemeUpload: React.FC<MemeUploadProps> = ({
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="Enter meme title..."
+            placeholder="A working title for the bit"
             required
             disabled={isUploading}
           />
@@ -351,7 +351,7 @@ export const MemeUpload: React.FC<MemeUploadProps> = ({
               Uploading...
             </span>
           ) : (
-            'Upload Meme'
+            'Send it live'
           )}
         </Button>
       </form>

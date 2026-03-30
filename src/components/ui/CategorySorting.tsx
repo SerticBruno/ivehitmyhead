@@ -52,7 +52,7 @@ export const CategorySorting: React.FC<CategorySortingProps> = ({
       {/* Header */}
       <div className="p-4 border-b border-gray-200 dark:border-gray-700">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Categories</h3>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Browse by topic</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Slice the hoard by vibe</p>
       </div>
 
       {/* Categories List */}
@@ -73,7 +73,7 @@ export const CategorySorting: React.FC<CategorySortingProps> = ({
             <div className="flex-1 text-left">
               <div className="font-medium">All Categories</div>
               <div className="text-xs text-gray-500 dark:text-gray-400">
-                Browse everything
+                The whole messy catalog
               </div>
             </div>
           </button>

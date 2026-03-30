@@ -64,7 +64,7 @@ const Header: React.FC<HeaderProps> = ({ showSearch = true }) => {
               <form onSubmit={handleSearch} className="relative">
                 <Input
                   name="search"
-                  placeholder="Search memes..."
+                  placeholder="Search the archive..."
                   className="pr-10"
                 />
                 <Button
@@ -145,7 +145,7 @@ const Header: React.FC<HeaderProps> = ({ showSearch = true }) => {
                   <form onSubmit={handleSearch} className="relative">
                     <Input
                       name="search"
-                      placeholder="Search memes..."
+                      placeholder="Search the archive..."
                       className="pr-10"
                     />
                     <Button
