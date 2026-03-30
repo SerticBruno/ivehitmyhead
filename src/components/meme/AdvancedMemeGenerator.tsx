@@ -34,6 +34,7 @@ function TemplatePreviewImage({
 }) {
   if (src.startsWith('blob:')) {
     return (
+      // eslint-disable-next-line @next/next/no-img-element -- next/image does not support blob: URLs
       <img src={src} alt={alt} width={width} height={height} className={className} />
     );
   }

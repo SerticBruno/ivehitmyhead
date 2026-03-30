@@ -444,8 +444,9 @@ export function MemesFeedPanel({ memeGridRef, sidebar }: MemesFeedPanelProps) {
 
   const displayMemes = useMemo(() => memes, [memes]);
 
+  const { category_id, filter, time_period } = filters;
+
   const emptyMemesGridDescription = useMemo(() => {
-    const { category_id, filter, time_period } = filters;
     const timeSuffix =
       time_period !== 'all'
         ? time_period === 'today'
@@ -458,14 +459,9 @@ export function MemesFeedPanel({ memeGridRef, sidebar }: MemesFeedPanelProps) {
       return `No ${filter} memes found in this category${timeSuffix} yet.`;
     }
     return `No ${filter} memes found${timeSuffix} yet. Be the first to add to the pile.`;
-  }, [
-    filters.category_id,
-    filters.filter,
-    filters.time_period,
-  ]);
+  }, [category_id, filter, time_period]);
 
   const heroContent = useMemo(() => {
-    const { category_id, filter, time_period } = filters;
     const categoryText = category_id ? 'Category Memes' : 'All Memes';
     const timePhrase =
       time_period !== 'all'
@@ -480,7 +476,7 @@ export function MemesFeedPanel({ memeGridRef, sidebar }: MemesFeedPanelProps) {
       : `${filter} memes from every bucket${timePhrase}. Quantity over dignity.`;
 
     return { categoryText, description };
-  }, [filters.category_id, filters.filter, filters.time_period]);
+  }, [category_id, filter, time_period]);
 
   const handleLike = useCallback(async (slug: string) => {
     if (processingMemesRef.current.has(slug)) {

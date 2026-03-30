@@ -95,7 +95,7 @@ function SwipeableScreenshotStack({
     const delta = e.clientX - startXRef.current;
     const clamped = Math.max(-220, Math.min(220, delta));
     setDrag(clamped);
-  }, []);
+  }, [setDrag]);
 
   const onPointerUpOrCancel = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
