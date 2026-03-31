@@ -1,24 +1,28 @@
 'use client';
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { useDropzone } from 'react-dropzone';
 import { Button } from './Button';
 import { Input } from './Input';
+import { cn } from '@/lib/utils';
 import { Category } from '@/lib/types/meme';
-import { getCategoryIconOrEmoji } from '@/lib/utils/categoryIcons';
+import { getCategoryIconOrEmoji, ICONS } from '@/lib/utils/categoryIcons';
 import { useAuth } from '@/lib/contexts/AuthContext';
 
 interface MemeUploadProps {
   categories: Category[];
   onUploadSuccess?: () => void;
   className?: string;
+  /** Square edges for neo-brutalist layouts (e.g. admin) */
+  sharpCorners?: boolean;
 }
 
 export const MemeUpload: React.FC<MemeUploadProps> = ({
   categories,
   onUploadSuccess,
-  className = ''
+  className = '',
+  sharpCorners = false,
 }) => {
   const { session } = useAuth();
   const [title, setTitle] = useState('');
@@ -28,6 +32,8 @@ export const MemeUpload: React.FC<MemeUploadProps> = ({
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [dragActive] = useState(false);
+  const [categoryMenuOpen, setCategoryMenuOpen] = useState(false);
+  const categoryMenuRef = useRef<HTMLDivElement>(null);
 
   // Create preview URL when image is selected
   useEffect(() => {
@@ -52,6 +58,23 @@ export const MemeUpload: React.FC<MemeUploadProps> = ({
       }
     };
   }, [imagePreview]);
+
+  useEffect(() => {
+    if (!categoryMenuOpen) return;
+    const onPointerDown = (e: PointerEvent) => {
+      if (categoryMenuRef.current?.contains(e.target as Node)) return;
+      setCategoryMenuOpen(false);
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setCategoryMenuOpen(false);
+    };
+    document.addEventListener('pointerdown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [categoryMenuOpen]);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles.length > 0) {
@@ -139,11 +162,29 @@ export const MemeUpload: React.FC<MemeUploadProps> = ({
   };
 
   return (
-    <div className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 relative ${className}`}>
+    <div
+      className={cn(
+        'bg-white dark:bg-gray-800 p-6 relative shadow-sm',
+        sharpCorners
+          ? 'rounded-none border-2 border-zinc-300 dark:border-zinc-600'
+          : 'rounded-lg border border-gray-200 dark:border-gray-700',
+        className
+      )}
+    >
       {isUploading && (
-        <div className="absolute inset-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-lg z-10 flex items-center justify-center">
+        <div
+          className={cn(
+            'absolute inset-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm z-10 flex items-center justify-center',
+            sharpCorners ? 'rounded-none' : 'rounded-lg'
+          )}
+        >
           <div className="text-center">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-gray-300 border-t-blue-600 dark:border-gray-600 dark:border-t-blue-500 mb-4"></div>
+            <div
+              className={cn(
+                'inline-block animate-spin h-12 w-12 border-4 border-gray-300 border-t-blue-600 dark:border-gray-600 dark:border-t-blue-500 mb-4',
+                sharpCorners ? 'rounded-none' : 'rounded-full'
+              )}
+            />
             <p className="text-gray-700 dark:text-gray-300 font-medium">Uploading your meme...</p>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Please wait</p>
           </div>
@@ -162,7 +203,12 @@ export const MemeUpload: React.FC<MemeUploadProps> = ({
           </label>
           {imagePreview ? (
             <div className="space-y-3">
-              <div className="relative border-2 border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden">
+              <div
+                className={cn(
+                  'relative border-2 border-gray-300 dark:border-gray-600 overflow-hidden',
+                  sharpCorners ? 'rounded-none' : 'rounded-lg'
+                )}
+              >
                 <div className="relative w-full h-96">
                   <Image
                     src={imagePreview}
@@ -176,11 +222,13 @@ export const MemeUpload: React.FC<MemeUploadProps> = ({
                   type="button"
                   onClick={handleRemoveImage}
                   disabled={isUploading}
-                  className={`absolute top-2 right-2 bg-red-500 text-white rounded-full p-2 shadow-lg transition-colors ${
-                    isUploading 
-                      ? 'opacity-50 cursor-not-allowed' 
+                  className={cn(
+                    'absolute top-2 right-2 bg-red-500 text-white p-2 shadow-lg transition-colors',
+                    sharpCorners ? 'rounded-none' : 'rounded-full',
+                    isUploading
+                      ? 'opacity-50 cursor-not-allowed'
                       : 'hover:bg-red-600 cursor-pointer'
-                  }`}
+                  )}
                   aria-label="Remove image"
                 >
                   <svg
@@ -200,11 +248,13 @@ export const MemeUpload: React.FC<MemeUploadProps> = ({
               </div>
               <div
                 {...getRootProps()}
-                className={`border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 text-center transition-colors ${
-                  isUploading 
-                    ? 'opacity-50 cursor-not-allowed' 
+                className={cn(
+                  'border-2 border-dashed border-gray-300 dark:border-gray-600 p-4 text-center transition-colors',
+                  sharpCorners ? 'rounded-none' : 'rounded-lg',
+                  isUploading
+                    ? 'opacity-50 cursor-not-allowed'
                     : 'cursor-pointer hover:border-gray-400 dark:hover:border-gray-500'
-                }`}
+                )}
               >
                 <input {...getInputProps()} disabled={isUploading} />
                 <div className="text-sm text-gray-600 dark:text-gray-400">
@@ -215,17 +265,18 @@ export const MemeUpload: React.FC<MemeUploadProps> = ({
           ) : (
             <div
               {...getRootProps()}
-              className={`
-                border-2 border-dashed rounded-lg p-6 text-center transition-colors
-                ${isUploading 
+              className={cn(
+                'border-2 border-dashed p-6 text-center transition-colors',
+                sharpCorners ? 'rounded-none' : 'rounded-lg',
+                isUploading
                   ? 'opacity-50 cursor-not-allowed border-gray-300 dark:border-gray-600'
-                  : `cursor-pointer ${
+                  : [
+                      'cursor-pointer',
                       isDragActive || dragActive
                         ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                        : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
-                    }`
-                }
-              `}
+                        : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500',
+                    ]
+              )}
             >
               <input {...getInputProps()} disabled={isUploading} />
               <div className="space-y-2">
@@ -259,47 +310,112 @@ export const MemeUpload: React.FC<MemeUploadProps> = ({
             placeholder="A working title for the bit"
             required
             disabled={isUploading}
+            className={
+              sharpCorners
+                ? 'rounded-none border-2 border-zinc-300 dark:border-zinc-600 focus:border-zinc-700 dark:focus:border-zinc-400'
+                : undefined
+            }
           />
         </div>
 
-        {/* Category Selection */}
-        <div>
+        {/* Custom category combobox: native select cannot render icons in options */}
+        <div ref={categoryMenuRef} className="relative">
           <label htmlFor="category" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Category (Optional)
           </label>
-          <div className="relative">
-            <select
-              id="category"
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              disabled={isUploading}
-              className={`w-full px-3 py-2 pl-10 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white appearance-none ${
-                isUploading ? 'opacity-50 cursor-not-allowed' : ''
-              }`}
-            >
-              <option value="">Select a category</option>
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
-            {/* Show icon for selected category */}
-            {selectedCategory && (
-              <div className="absolute left-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                {(() => {
-                  const selectedCat = categories.find(cat => cat.id === selectedCategory);
-                  return selectedCat ? getCategoryIconOrEmoji(selectedCat.name, selectedCat.emoji) : null;
-                })()}
-              </div>
+          <button
+            id="category"
+            type="button"
+            disabled={isUploading}
+            aria-haspopup="listbox"
+            aria-expanded={categoryMenuOpen}
+            aria-controls="category-listbox"
+            onClick={() => !isUploading && setCategoryMenuOpen((o) => !o)}
+            className={cn(
+              'flex w-full items-center gap-2 border px-3 py-2 text-left text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white',
+              sharpCorners
+                ? 'rounded-none border-2 border-zinc-300 dark:border-zinc-600 bg-white dark:bg-gray-800'
+                : 'rounded-md border border-gray-300 dark:border-gray-600 bg-white',
+              isUploading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
             )}
-            {/* Dropdown arrow */}
-            <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
-              <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </div>
-          </div>
+          >
+            <span className="flex h-5 w-5 shrink-0 items-center justify-center text-gray-700 dark:text-gray-200">
+              {(() => {
+                const cat = categories.find((c) => c.id === selectedCategory);
+                return cat ? (
+                  getCategoryIconOrEmoji(cat.name, cat.emoji)
+                ) : (
+                  <ICONS.FolderOpen className="h-5 w-5 text-gray-400" aria-hidden />
+                );
+              })()}
+            </span>
+            <span className="min-w-0 flex-1 truncate">
+              {categories.find((c) => c.id === selectedCategory)?.name ?? 'Select a category'}
+            </span>
+            <svg
+              className={`h-4 w-4 shrink-0 text-gray-400 transition-transform ${categoryMenuOpen ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          {categoryMenuOpen && (
+            <ul
+              id="category-listbox"
+              role="listbox"
+              aria-label="Category"
+              className={cn(
+                'absolute left-0 right-0 z-50 mt-1 max-h-60 overflow-auto border bg-white py-1 shadow-lg dark:bg-gray-800',
+                sharpCorners
+                  ? 'rounded-none border-2 border-zinc-300 dark:border-zinc-600'
+                  : 'rounded-md border border-gray-300 dark:border-gray-600'
+              )}
+            >
+              <li role="presentation">
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={selectedCategory === ''}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
+                  onClick={() => {
+                    setSelectedCategory('');
+                    setCategoryMenuOpen(false);
+                  }}
+                >
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center text-gray-400">
+                    <ICONS.FolderOpen className="h-5 w-5" aria-hidden />
+                  </span>
+                  <span className="text-gray-600 dark:text-gray-400">No category</span>
+                </button>
+              </li>
+              {categories.map((category) => (
+                <li key={category.id} role="presentation">
+                  <button
+                    type="button"
+                    role="option"
+                    aria-selected={selectedCategory === category.id}
+                    className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                      selectedCategory === category.id
+                        ? 'bg-blue-50 dark:bg-blue-900/25'
+                        : ''
+                    }`}
+                    onClick={() => {
+                      setSelectedCategory(category.id);
+                      setCategoryMenuOpen(false);
+                    }}
+                  >
+                    <span className="flex h-5 w-5 shrink-0 items-center justify-center">
+                      {getCategoryIconOrEmoji(category.name, category.emoji)}
+                    </span>
+                    <span className="min-w-0 truncate">{category.name}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
 
         {/* Tags Input */}
@@ -324,7 +440,11 @@ export const MemeUpload: React.FC<MemeUploadProps> = ({
         <Button
           type="submit"
           disabled={isUploading || !title || !uploadedImage}
-          className="w-full"
+          className={cn(
+            'w-full',
+            sharpCorners &&
+              'rounded-none border-2 border-zinc-700 dark:border-zinc-400 uppercase tracking-wide font-bold'
+          )}
         >
           {isUploading ? (
             <span className="flex items-center justify-center gap-2">
