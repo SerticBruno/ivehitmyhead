@@ -134,7 +134,7 @@ export function MemeCardStyleLab({ memes = [] }: MemeCardStyleLabProps) {
             <Button
               key={look}
               size="sm"
-              variant={activeLook === look ? 'default' : 'outline'}
+              variant={activeLook === look ? 'primary' : 'outline'}
               onClick={() => setActiveLook(look)}
             >
               {look === 'all' ? 'All looks' : `${look} card`}
@@ -145,7 +145,7 @@ export function MemeCardStyleLab({ memes = [] }: MemeCardStyleLabProps) {
         <div className="flex flex-wrap items-center gap-2">
           <Button
             size="sm"
-            variant={mixedRender ? 'default' : 'outline'}
+            variant={mixedRender ? 'primary' : 'outline'}
             onClick={() => setMixedRender((prev) => !prev)}
           >
             {mixedRender ? 'Mixed render on' : 'Mixed render off'}
@@ -154,7 +154,7 @@ export function MemeCardStyleLab({ memes = [] }: MemeCardStyleLabProps) {
             <Button
               key={style}
               size="sm"
-              variant={activeRenderStyle === style ? 'default' : 'outline'}
+              variant={activeRenderStyle === style ? 'primary' : 'outline'}
               onClick={() => setActiveRenderStyle(style)}
             >
               {style}
@@ -168,7 +168,7 @@ export function MemeCardStyleLab({ memes = [] }: MemeCardStyleLabProps) {
               <Button
                 key={variant}
                 size="sm"
-                variant={activeEditorialVariant === variant ? 'default' : 'outline'}
+                variant={activeEditorialVariant === variant ? 'primary' : 'outline'}
                 onClick={() => setActiveEditorialVariant(variant)}
               >
                 {variant}
