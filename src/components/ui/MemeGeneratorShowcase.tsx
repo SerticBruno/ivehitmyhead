@@ -343,12 +343,12 @@ export function MemeGeneratorShowcase({ screenshots = [] }: MemeGeneratorShowcas
   ];
 
   return (
-    <section className="py-8 md:py-12 bg-white dark:bg-gray-900 mb-12 overflow-hidden">
+    <section className="py-8 md:py-12 bg-[#f7f4ee] dark:bg-gray-950 mb-12 overflow-hidden">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-12">
           <div className="inline-block mb-4">
-              <span className="px-3 py-1 text-xs font-black uppercase tracking-wider text-black dark:text-white bg-[#f7f4ee] dark:bg-gray-800 border border-zinc-700 dark:border-zinc-400">
+              <span className="px-3 py-1 text-xs font-black uppercase tracking-wider text-black dark:text-white bg-white dark:bg-gray-900 border-2 border-zinc-700 dark:border-zinc-400">
               Still exists
             </span>
           </div>
