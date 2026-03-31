@@ -132,7 +132,7 @@ const FiltersAndSortingInner: React.FC<FiltersAndSortingProps> = ({
           <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Time Period</h4>
           <div className="flex w-full flex-nowrap gap-2">
             {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-12 flex-1 min-w-0 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"></div>
+              <div key={i} className="h-12 flex-1 min-w-0 bg-gray-200 dark:bg-gray-700 rounded-none animate-pulse"></div>
             ))}
           </div>
         </div>
@@ -142,7 +142,7 @@ const FiltersAndSortingInner: React.FC<FiltersAndSortingProps> = ({
           <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Sort By</h4>
           <div className="flex justify-between gap-2">
             {[...Array(3)].map((_, i) => (
-              <div key={i} className="h-12 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse flex-1"></div>
+              <div key={i} className="h-12 bg-gray-200 dark:bg-gray-700 rounded-none animate-pulse flex-1"></div>
             ))}
           </div>
         </div>
@@ -152,7 +152,7 @@ const FiltersAndSortingInner: React.FC<FiltersAndSortingProps> = ({
           <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Categories</h4>
           <div className="space-y-2">
             {[...Array(8)].map((_, i) => (
-              <div key={i} className="h-12 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"></div>
+              <div key={i} className="h-12 bg-gray-200 dark:bg-gray-700 rounded-none animate-pulse"></div>
             ))}
           </div>
         </div>

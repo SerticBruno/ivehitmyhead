@@ -141,15 +141,15 @@ export default function Home() {
           <MemeGeneratorShowcase />
 
           {/* Hottest memes (last month) - loading */}
-          <section className="mb-12 bg-white dark:bg-gray-900 p-6">
-            <div className="flex items-center justify-between mb-6">
+          <section className="mb-12">
+            <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h2 className="text-2xl font-black uppercase tracking-tight">Hottest Memes - Last Month</h2>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                   Who hit like this month. That is the entire bar for inclusion.
                 </p>
               </div>
-              <Button variant="ghost" className="rounded-none border-2 border-transparent uppercase tracking-wide font-bold" onClick={() => window.location.href = '/memes'}>
+              <Button variant="ghost" className="self-start rounded-none border-2 border-transparent uppercase tracking-wide font-bold sm:self-auto" onClick={() => window.location.href = '/memes'}>
                 <ICONS.ArrowRight className="w-4 h-4 mr-1" />
                 View All
               </Button>
@@ -159,24 +159,24 @@ export default function Home() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {Array.from({ length: 8 }).map((_, index) => (
                 <div key={index} className="animate-pulse">
-                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
+                  <div className="bg-white dark:bg-gray-800 rounded-none shadow-md overflow-hidden">
                     <div className="p-4 pb-3">
-                      <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded mb-2"></div>
-                      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded mb-2"></div>
+                      <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded-none mb-2"></div>
+                      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-none mb-2"></div>
                       <div className="flex items-center gap-2 mt-2">
-                        <div className="w-4 h-4 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                        <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-20"></div>
+                        <div className="w-4 h-4 bg-gray-200 dark:bg-gray-700 rounded-none"></div>
+                        <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded-none w-20"></div>
                       </div>
                     </div>
-                    <div className="h-64 bg-gray-200 dark:bg-gray-700"></div>
+                    <div className="h-[calc(100vh-300px)] min-h-[400px] max-h-[800px] border-y-2 border-zinc-700 dark:border-zinc-400 bg-gray-200 dark:bg-gray-700 sm:h-64 sm:min-h-0 sm:max-h-none" />
                     <div className="p-4 pt-2">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
-                          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-12"></div>
-                          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-12"></div>
-                          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-12"></div>
+                          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-none w-12"></div>
+                          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-none w-12"></div>
+                          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-none w-12"></div>
                         </div>
-                        <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-16"></div>
+                        <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded-none w-16"></div>
                       </div>
                     </div>
                   </div>
@@ -238,14 +238,14 @@ export default function Home() {
 
         {/* Hottest memes (last month) */}
         <section className="mb-12">
-          <div className="flex items-center justify-between mb-6">
+          <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h2 className="text-2xl font-black uppercase tracking-tight">Hottest Memes - Last Month</h2>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                 Who hit like this month. That is the entire bar for inclusion.
               </p>
             </div>
-            <Button variant="ghost" className="rounded-none border-2 border-transparent uppercase tracking-wide font-bold" onClick={() => window.location.href = '/memes'}>
+            <Button variant="ghost" className="self-start rounded-none border-2 border-transparent uppercase tracking-wide font-bold sm:self-auto" onClick={() => window.location.href = '/memes'}>
               <ICONS.ArrowRight className="w-4 h-4 mr-1" />
               View All
             </Button>

@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader } from '@/components/ui/Card';
-import { cn, formatCompactTime, formatFullDateTime } from '@/lib/utils';
+import { cn, formatFullDateTime, formatRelativeTime, formatTime } from '@/lib/utils';
 import { Meme } from '@/lib/types/meme';
 import { useMemeInteractions } from '@/lib/hooks/useMemeInteractions';
 import { ICONS, getCategoryIconOrEmoji } from '@/lib/utils/categoryIcons';
@@ -56,19 +56,20 @@ const FeaturedMemeCard: React.FC<FeaturedMemeCardProps> = ({
               <h3 className="font-black uppercase tracking-tight text-lg leading-tight flex-1 min-w-0 line-clamp-2">
                 {meme.title}
               </h3>
-              <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide font-semibold text-gray-600 dark:text-gray-300 border border-zinc-700 dark:border-zinc-400 px-2 py-0.5 bg-[#f7f4ee] dark:bg-gray-900 flex-shrink-0">
-                {meme.category ? (
-                  <>
-                    {getCategoryIconOrEmoji(meme.category.name, meme.category.emoji)}
-                    <span>{meme.category.name}</span>
-                  </>
-                ) : (
-                  <>
-                    <span>📁</span>
-                    <span>Uncategorized</span>
-                  </>
-                )}
-              </span>
+              <div
+                className="flex-shrink-0 text-right"
+                title={formatFullDateTime(meme.created_at)}
+              >
+                <div className="text-sm text-gray-700 dark:text-gray-300 font-semibold uppercase tracking-wide">
+                  {formatRelativeTime(meme.created_at)}
+                </div>
+                <div className="text-xs text-gray-500">
+                  {formatTime(meme.created_at)}
+                </div>
+                <div className="text-xs text-gray-400">
+                  {new Date(meme.created_at).toLocaleDateString()}
+                </div>
+              </div>
             </div>
             <p className="text-sm text-gray-500 dark:text-gray-400">
               by {meme.author?.display_name || meme.author?.username || 'Unknown'}
@@ -116,11 +117,18 @@ const FeaturedMemeCard: React.FC<FeaturedMemeCardProps> = ({
                 <span>{meme.views}</span>
               </div>
             </div>
-            <span 
-              className="text-xs text-gray-500 dark:text-gray-400"
-              title={formatFullDateTime(meme.created_at)}
-            >
-              {formatCompactTime(meme.created_at)}
+            <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide font-semibold text-gray-600 dark:text-gray-300 border border-zinc-700 dark:border-zinc-400 px-2 py-0.5 bg-[#f7f4ee] dark:bg-gray-900 flex-shrink-0 max-w-[50%] min-w-0">
+              {meme.category ? (
+                <>
+                  {getCategoryIconOrEmoji(meme.category.name, meme.category.emoji)}
+                  <span className="truncate">{meme.category.name}</span>
+                </>
+              ) : (
+                <>
+                  <span>📁</span>
+                  <span className="truncate">Uncategorized</span>
+                </>
+              )}
             </span>
           </div>
         </div>

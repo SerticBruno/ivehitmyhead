@@ -4,12 +4,18 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Button } from '@/components/ui/Button';
-import { formatRelativeTime } from '@/lib/utils';
+import { cn, formatFullDateTime, formatRelativeTime, formatTime } from '@/lib/utils';
 import { Meme } from '@/lib/types/meme';
 import { useMemeInteractions } from '@/lib/hooks/useMemeInteractions';
 import { useMemesListState } from '@/lib/contexts';
 import { ICONS, getCategoryIconOrEmoji } from '@/lib/utils/categoryIcons';
 import { shareMemeWithFallback } from '@/lib/utils/shareUtils';
+
+const MEME_DETAIL_CARD =
+  'bg-white dark:bg-gray-900 rounded-none border-2 border-zinc-700 dark:border-zinc-400 shadow-[8px_8px_0px_rgba(0,0,0,0.88)] dark:shadow-[8px_8px_0px_rgba(156,163,175,0.42)] overflow-hidden';
+
+const MEME_DETAIL_IMAGE_FRAME =
+  'relative w-full h-[calc(100vh-240px)] min-h-[360px] max-h-[800px] bg-[#f7f4ee] dark:bg-gray-950 border-y-2 border-zinc-700 dark:border-zinc-400';
 
 export default function MemeDetailPage() {
   const params = useParams();
@@ -28,6 +34,13 @@ export default function MemeDetailPage() {
   const { likeMeme, recordView } = useMemeInteractions();
   const { memes: listMemes, updateMemeLikeCount, updateMemeShareCount, updateMemeLikedState } = useMemesListState();
   const hasRecordedView = useRef(false);
+  const [shareUrl, setShareUrl] = useState('');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setShareUrl(`${window.location.origin}/meme/${slug}`);
+    }
+  }, [slug]);
 
   // Check if the current meme is liked by the user
   const checkLikeStatus = useCallback(async () => {
@@ -185,28 +198,45 @@ export default function MemeDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="min-h-screen bg-[#f7f4ee] dark:bg-gray-950">
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Skeleton Loading State */}
           <section className="max-w-4xl mx-auto">
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
-              {/* Image Skeleton */}
-              <div className="relative w-full bg-gray-100 dark:bg-gray-900">
-                <div className="relative w-full bg-gray-200 dark:bg-gray-700" style={{ height: '70vh', maxHeight: '70vh' }}>
-                  <div className="flex items-center justify-center h-full">
-                    <div className="animate-pulse">
-                      <div className="w-16 h-16 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
-                    </div>
+            <div className={`animate-pulse ${MEME_DETAIL_CARD}`}>
+              <div className="px-4 pt-4 pb-3 flex-shrink-0">
+                <div className="flex items-start gap-2">
+                  <div className="min-w-0 flex-1 space-y-2">
+                    <div className="h-7 bg-gray-200 dark:bg-gray-700 rounded-none" />
+                    <div className="h-7 bg-gray-200 dark:bg-gray-700 rounded-none w-4/5" />
+                  </div>
+                  <div className="flex-shrink-0 space-y-2 text-right">
+                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-none ml-auto w-20" />
+                    <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded-none ml-auto w-16" />
+                    <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded-none ml-auto w-14" />
                   </div>
                 </div>
+                <div className="mt-2 h-4 bg-gray-200 dark:bg-gray-700 rounded-none w-48 max-w-full" />
               </div>
 
-              {/* Info Skeleton */}
-              <div className="p-6 border-t border-gray-200 dark:border-gray-700">
-                <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded mb-4 w-3/4"></div>
-                <div className="flex items-center space-x-6">
-                  <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded-lg w-20"></div>
-                  <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded-lg w-20"></div>
+              <div
+                className={`${MEME_DETAIL_IMAGE_FRAME} bg-gray-200 dark:bg-gray-700`}
+              />
+
+              <div className="px-4 pb-4 pt-3 space-y-4">
+                <div className="flex flex-wrap gap-2">
+                  <div className="h-7 w-24 bg-gray-200 dark:bg-gray-700 rounded-none border border-zinc-700/40 dark:border-zinc-500/40" />
+                  <div className="h-7 w-20 bg-gray-200 dark:bg-gray-700 rounded-none border border-zinc-700/40 dark:border-zinc-500/40" />
+                </div>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="h-4 w-14 bg-gray-200 dark:bg-gray-700 rounded-none" />
+                    <div className="h-4 w-14 bg-gray-200 dark:bg-gray-700 rounded-none" />
+                    <div className="h-4 w-14 bg-gray-200 dark:bg-gray-700 rounded-none" />
+                  </div>
+                  <div className="h-7 w-28 bg-gray-200 dark:bg-gray-700 rounded-none border border-zinc-700 dark:border-zinc-400 self-start sm:self-auto" />
+                </div>
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch sm:gap-3">
+                  <div className="h-10 flex-1 bg-gray-200 dark:bg-gray-700 rounded-none border-2 border-zinc-700 dark:border-zinc-400 min-w-0" />
+                  <div className="h-10 w-full sm:w-28 bg-gray-200 dark:bg-gray-700 rounded-none border-2 border-zinc-700 dark:border-zinc-400 shrink-0" />
                 </div>
               </div>
             </div>
@@ -218,16 +248,19 @@ export default function MemeDetailPage() {
 
   if (error || !meme) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="min-h-screen bg-[#f7f4ee] dark:bg-gray-950">
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center py-20">
             <div className="text-4xl mb-4 flex justify-center">
               <ICONS.Star className="w-16 h-16 text-gray-400" />
             </div>
-            <h1 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">
+            <h1 className="text-2xl font-black uppercase tracking-tight mb-4 text-gray-900 dark:text-white">
               {error || 'Meme not found'}
             </h1>
-            <Button onClick={() => router.push('/memes')}>
+            <Button
+              onClick={() => router.push('/memes')}
+              className="rounded-none border-2 border-zinc-700 dark:border-zinc-400 uppercase tracking-wide font-bold"
+            >
               Back to Memes
             </Button>
           </div>
@@ -237,62 +270,55 @@ export default function MemeDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-[#f7f4ee] dark:bg-gray-950">
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-
-        {/* Meme Content - Image First, Info Below */}
         <section className="max-w-4xl mx-auto">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl overflow-hidden border border-gray-100 dark:border-gray-700">
-            {/* Meme Image - Full Focus */}
-            <div className="relative w-full bg-gray-50 dark:bg-gray-900">
-              <div className="relative w-full p-4" style={{ height: '75vh', maxHeight: '75vh' }}>
+          <article className={MEME_DETAIL_CARD}>
+            <header className="px-4 pt-4 pb-3 flex-shrink-0">
+              <div className="flex items-start gap-2">
+                <h1 className="font-black uppercase tracking-tight text-2xl md:text-3xl leading-tight flex-1 min-w-0">
+                  {meme.title}
+                </h1>
+                <div
+                  className="flex-shrink-0 text-right"
+                  title={formatFullDateTime(meme.created_at)}
+                >
+                  <div className="text-sm text-gray-700 dark:text-gray-300 font-semibold uppercase tracking-wide">
+                    {formatRelativeTime(meme.created_at)}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {formatTime(meme.created_at)}
+                  </div>
+                  <div className="text-xs text-gray-400">
+                    {new Date(meme.created_at).toLocaleDateString()}
+                  </div>
+                </div>
+              </div>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                by {meme.author?.display_name || meme.author?.username || 'Unknown'}
+              </p>
+            </header>
+
+            <div className={cn(MEME_DETAIL_IMAGE_FRAME, 'p-2 sm:p-4')}>
+              <div className="relative h-full w-full min-h-[120px]">
                 <Image
                   src={meme.image_url}
                   alt={meme.title}
                   fill
-                  className="object-contain rounded-lg"
+                  className="object-contain"
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 60vw"
                   priority
                 />
               </div>
             </div>
 
-            {/* Minimal Info Below Image */}
-            <div className="p-6 border-t border-gray-200 dark:border-gray-700">
-              {/* Title */}
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                {meme.title}
-              </h1>
-              
-                             {/* Minimal Meta Info */}
-               <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 dark:text-gray-400 mb-4">
-                 {/* Author */}
-                 <span className="font-medium text-gray-900 dark:text-white">
-                   {meme.author?.display_name || meme.author?.username || 'Unknown'}
-                 </span>
-                 
-                 {/* Time */}
-                 <span>{formatRelativeTime(meme.created_at)}</span>
-                 
-                 {/* Views */}
-                 <span>{meme.views.toLocaleString()} views</span>
-                 
-                 {/* Category */}
-                 {meme.category && (
-                   <div className="flex items-center space-x-1 px-2 py-1 bg-purple-100 dark:bg-purple-900/20 text-purple-800 dark:text-purple-200 rounded-full text-xs">
-                     {getCategoryIconOrEmoji(meme.category.name, meme.category.emoji)}
-                     <span>{meme.category.name}</span>
-                   </div>
-                 )}
-               </div>
-
-              {/* Tags - Only if they exist */}
-              {meme.tags.length > 0 && (
-                <div className="flex flex-wrap gap-2 mb-4">
+            <footer className="px-4 pb-4 pt-3 flex-shrink-0 space-y-4">
+              {meme.tags && meme.tags.length > 0 && (
+                <div className="flex flex-wrap gap-2">
                   {meme.tags.map((tag, index) => (
                     <span
                       key={index}
-                      className="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md"
+                      className="inline-flex items-center px-2.5 py-1 text-xs font-semibold uppercase tracking-wide bg-white text-gray-800 dark:bg-gray-900 dark:text-gray-200 border border-zinc-700 dark:border-zinc-400"
                     >
                       #{tag}
                     </span>
@@ -300,66 +326,80 @@ export default function MemeDetailPage() {
                 </div>
               )}
 
-              {/* Action Buttons */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  {/* Like Button */}
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between text-sm text-gray-600 dark:text-gray-300">
+                <div className="flex items-center gap-4 flex-wrap">
                   <button
                     type="button"
                     onClick={handleLike}
                     disabled={isCheckingLikeStatus || isLiking}
-                    className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-200 ${
-                      isLiked 
-                        ? 'bg-red-500 text-white' 
-                        : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                    } ${(isCheckingLikeStatus || isLiking) ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  >
-                    {isCheckingLikeStatus ? (
-                      <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                    ) : isLiking ? (
-                      <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                    ) : isLiked ? (
-                      <ICONS.Heart className="w-5 h-5 fill-current" />
-                    ) : (
-                      <ICONS.ThumbsUp className="w-5 h-5" />
+                    className={cn(
+                      'flex items-center gap-1 rounded-none border-2 border-transparent uppercase tracking-wide font-semibold hover:text-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed',
+                      isLiked && 'text-red-500'
                     )}
-                    <span className="font-medium">{likesCount.toLocaleString()}</span>
+                  >
+                    {isCheckingLikeStatus || isLiking ? (
+                      <span className="inline-flex h-4 w-4 shrink-0 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                    ) : isLiked ? (
+                      <ICONS.Heart className="w-4 h-4 fill-current shrink-0" />
+                    ) : (
+                      <ICONS.ThumbsUp className="w-4 h-4 shrink-0" />
+                    )}
+                    <span>{likesCount.toLocaleString()}</span>
                   </button>
-                  
-                  {/* Share Button */}
                   <button
                     type="button"
                     onClick={handleShare}
-                    className="flex items-center space-x-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                    className="flex items-center gap-1 rounded-none border-2 border-transparent uppercase tracking-wide font-semibold hover:text-purple-600 transition-colors"
                   >
-                    <ICONS.Share2 className="w-5 h-5" />
-                    <span className="font-medium">{sharesCount.toLocaleString()}</span>
+                    <ICONS.Share2 className="w-4 h-4 shrink-0" />
+                    <span>{sharesCount.toLocaleString()}</span>
                   </button>
+                  <div className="flex items-center gap-1 text-gray-500">
+                    <ICONS.Eye className="w-4 h-4 shrink-0" />
+                    <span>{meme.views.toLocaleString()}</span>
+                  </div>
                 </div>
-
-                {/* Share URL */}
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="text"
-                    value={`${window.location.origin}/meme/${meme.slug}`}
-                    readOnly
-                    className="px-3 py-2 text-sm bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-gray-600 dark:text-gray-300 w-48 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    onClick={(e) => (e.target as HTMLInputElement).select()}
-                  />
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      navigator.clipboard.writeText(`${window.location.origin}/meme/${meme.slug}`);
-                    }}
-                    className="px-3 py-2"
-                  >
-                    Copy
-                  </Button>
-                </div>
+                <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide font-semibold text-gray-600 dark:text-gray-300 border border-zinc-700 dark:border-zinc-400 px-2 py-0.5 bg-[#f7f4ee] dark:bg-gray-900 self-start sm:self-auto max-w-full min-w-0">
+                  {meme.category ? (
+                    <>
+                      {getCategoryIconOrEmoji(meme.category.name, meme.category.emoji)}
+                      <span className="truncate">{meme.category.name}</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>📁</span>
+                      <span className="truncate">Uncategorized</span>
+                    </>
+                  )}
+                </span>
               </div>
-            </div>
-          </div>
+
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch sm:gap-3">
+                <input
+                  type="text"
+                  value={shareUrl}
+                  readOnly
+                  className="min-w-0 flex-1 px-3 py-2 text-sm bg-[#f7f4ee] dark:bg-gray-900 border-2 border-zinc-700 dark:border-zinc-400 rounded-none text-gray-800 dark:text-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-500"
+                  onClick={(e) => (e.target as HTMLInputElement).select()}
+                />
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    const url =
+                      shareUrl ||
+                      (typeof window !== 'undefined'
+                        ? `${window.location.origin}/meme/${meme.slug}`
+                        : '');
+                    if (url) navigator.clipboard.writeText(url);
+                  }}
+                  className="rounded-none border-2 border-zinc-700 dark:border-zinc-400 uppercase tracking-wide font-bold shrink-0"
+                >
+                  Copy
+                </Button>
+              </div>
+            </footer>
+          </article>
         </section>
       </main>
     </div>
