@@ -1157,8 +1157,8 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
           {selectedTemplate &&
             !isLoadingTemplate &&
             allTextElements.length > 0 && (
-            <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-2 md:p-4 border border-gray-200 dark:border-gray-800">
-              <h2 className="text-base md:text-lg font-semibold mb-2 md:mb-4 flex items-center gap-2">
+            <div className="bg-white dark:bg-gray-900 rounded-none shadow-[8px_8px_0px_rgba(0,0,0,0.88)] dark:shadow-[8px_8px_0px_rgba(156,163,175,0.42)] p-2 md:p-4 border-2 border-zinc-700 dark:border-zinc-400">
+              <h2 className="text-base md:text-lg font-black uppercase tracking-tight mb-2 md:mb-4 flex items-center gap-2">
                 <Type className="w-4 h-4 md:w-5 md:h-5" />
                 Text Fields ({allTextElements.length})
               </h2>
@@ -1279,10 +1279,10 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                   return (
                     <div
                       key={index}
-                      className={`rounded-lg border-2 transition-colors ${
+                      className={`rounded-none border-2 transition-colors ${
                         isSelected
-                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                          : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                          ? 'border-zinc-700 dark:border-zinc-400 bg-[#f7f4ee] dark:bg-gray-950'
+                          : 'border-gray-300 dark:border-gray-700 hover:border-zinc-700 dark:hover:border-zinc-400'
                       }`}
                     >
                       {/* Header */}
@@ -1297,14 +1297,14 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                             }}
                             className="flex-1 text-left flex items-center gap-2 cursor-pointer"
                           >
-                            <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 bg-gray-200 dark:bg-gray-700 px-2 py-0.5 rounded">
+                            <span className="text-xs font-semibold uppercase tracking-wide text-gray-700 dark:text-gray-200 bg-[#f7f4ee] dark:bg-gray-800 px-2 py-0.5 border border-zinc-700 dark:border-zinc-400 rounded-none">
                               Text {index + 1}
                             </span>
                             <span className="text-xs text-gray-500 dark:text-gray-400">
                               {element.settings.font_family} • {Math.round(fontSize)}px
                             </span>
                             <span
-                              className={`block h-2 w-2 shrink-0 rounded-full ${isSelected ? 'bg-blue-500' : 'opacity-0'}`}
+                              className={`block h-2 w-2 shrink-0 rounded-none ${isSelected ? 'bg-zinc-700 dark:bg-zinc-300' : 'opacity-0'}`}
                               aria-hidden
                             />
                           </button>
@@ -1312,7 +1312,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                             <button
                               type="button"
                               onClick={toggleExpand}
-                              className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+                              className="p-1.5 rounded-none border border-transparent hover:border-zinc-700 dark:hover:border-zinc-400 hover:bg-[#f7f4ee] dark:hover:bg-gray-800 transition-colors cursor-pointer"
                               title={isExpanded ? 'Collapse' : 'Expand'}
                             >
                               {isExpanded ? (
@@ -1326,7 +1326,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                         
                         {/* Inline Text Input - border lives on wrapper so preview ↔ textarea swap cannot shift layout */}
                         <div
-                          className="w-full min-h-[2.25rem] box-border rounded-md border border-gray-300 bg-white px-2 py-1.5 text-xs transition-[border-color] md:px-3 md:py-2 md:text-sm hover:border-blue-500 focus-within:border-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:hover:border-blue-400 dark:focus-within:border-blue-400"
+                          className="w-full min-h-[2.25rem] box-border rounded-none border-2 border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-900 px-2 py-1.5 text-xs transition-colors md:px-3 md:py-2 md:text-sm hover:bg-[#f7f4ee] dark:hover:bg-gray-800 focus-within:bg-[#f7f4ee] dark:focus-within:bg-gray-800"
                         >
                           {isEditing ? (
                             <textarea
@@ -1399,7 +1399,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                                     controllerRef.current.updateElement(element, 'font_size', newSize);
                                   }
                                 }}
-                                className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-800 text-xs cursor-pointer"
+                                className="px-2 py-1 border-2 border-zinc-700 dark:border-zinc-400 rounded-none hover:bg-[#f7f4ee] dark:hover:bg-gray-800 text-xs cursor-pointer"
                               >
                                 −
                               </button>
@@ -1414,7 +1414,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                                     controllerRef.current.updateElement(element, 'font_size', Number(e.target.value));
                                   }
                                 }}
-                                className="flex-1 h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+                                className="flex-1 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-none appearance-none cursor-pointer"
                               />
                               <button
                                 type="button"
@@ -1424,7 +1424,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                                     controllerRef.current.updateElement(element, 'font_size', newSize);
                                   }
                                 }}
-                                className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-800 text-xs cursor-pointer"
+                                className="px-2 py-1 border-2 border-zinc-700 dark:border-zinc-400 rounded-none hover:bg-[#f7f4ee] dark:hover:bg-gray-800 text-xs cursor-pointer"
                               >
                                 +
                               </button>
@@ -1454,7 +1454,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                                   controllerRef.current.updateElement(element, 'font_family', e.target.value);
                                 }
                               }}
-                              className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 cursor-pointer"
+                              className="w-full px-2 py-1.5 text-xs border-2 border-zinc-700 dark:border-zinc-400 rounded-none bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none cursor-pointer"
                             >
                               <option value="Impact">Impact</option>
                               <option value="Arial">Arial</option>
@@ -1540,7 +1540,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                                     controllerRef.current.updateElement(element, 'stroke_width', newWidth);
                                   }
                                 }}
-                                className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-800 text-xs cursor-pointer"
+                                className="px-2 py-1 border-2 border-zinc-700 dark:border-zinc-400 rounded-none hover:bg-[#f7f4ee] dark:hover:bg-gray-800 text-xs cursor-pointer"
                               >
                                 −
                               </button>
@@ -1555,7 +1555,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                                     controllerRef.current.updateElement(element, 'stroke_width', Number(e.target.value));
                                   }
                                 }}
-                                className="flex-1 h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+                                className="flex-1 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-none appearance-none cursor-pointer"
                               />
                               <button
                                 type="button"
@@ -1565,7 +1565,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                                     controllerRef.current.updateElement(element, 'stroke_width', newWidth);
                                   }
                                 }}
-                                className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-800 text-xs cursor-pointer"
+                                className="px-2 py-1 border-2 border-zinc-700 dark:border-zinc-400 rounded-none hover:bg-[#f7f4ee] dark:hover:bg-gray-800 text-xs cursor-pointer"
                               >
                                 +
                               </button>
@@ -1597,7 +1597,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                                     controllerRef.current.updateElement(element, 'use_shadow', e.target.checked);
                                   }
                                 }}
-                                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                className="w-4 h-4 text-zinc-900 dark:text-zinc-100 border-zinc-700 dark:border-zinc-400 rounded-none"
                               />
                               <span className="text-xs font-medium">Use Shadow Instead of Stroke</span>
                             </label>
@@ -1651,7 +1651,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                                         controllerRef.current.updateElement(element, 'shadow_blur', newBlur);
                                       }
                                     }}
-                                    className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-800 text-xs cursor-pointer"
+                                    className="px-2 py-1 border-2 border-zinc-700 dark:border-zinc-400 rounded-none hover:bg-[#f7f4ee] dark:hover:bg-gray-800 text-xs cursor-pointer"
                                   >
                                     −
                                   </button>
@@ -1666,7 +1666,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                                         controllerRef.current.updateElement(element, 'shadow_blur', Number(e.target.value));
                                       }
                                     }}
-                                    className="flex-1 h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+                                    className="flex-1 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-none appearance-none cursor-pointer"
                                   />
                                   <button
                                     type="button"
@@ -1676,7 +1676,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                                         controllerRef.current.updateElement(element, 'shadow_blur', newBlur);
                                       }
                                     }}
-                                    className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-800 text-xs cursor-pointer"
+                                    className="px-2 py-1 border-2 border-zinc-700 dark:border-zinc-400 rounded-none hover:bg-[#f7f4ee] dark:hover:bg-gray-800 text-xs cursor-pointer"
                                   >
                                     +
                                   </button>
@@ -1714,7 +1714,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                                         controllerRef.current.updateElement(element, 'shadow_offset_x', newOffset);
                                       }
                                     }}
-                                    className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-800 text-xs cursor-pointer"
+                                    className="px-2 py-1 border-2 border-zinc-700 dark:border-zinc-400 rounded-none hover:bg-[#f7f4ee] dark:hover:bg-gray-800 text-xs cursor-pointer"
                                   >
                                     −
                                   </button>
@@ -1729,7 +1729,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                                         controllerRef.current.updateElement(element, 'shadow_offset_x', Number(e.target.value));
                                       }
                                     }}
-                                    className="flex-1 h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+                                    className="flex-1 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-none appearance-none cursor-pointer"
                                   />
                                   <button
                                     type="button"
@@ -1739,7 +1739,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                                         controllerRef.current.updateElement(element, 'shadow_offset_x', newOffset);
                                       }
                                     }}
-                                    className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-800 text-xs cursor-pointer"
+                                    className="px-2 py-1 border-2 border-zinc-700 dark:border-zinc-400 rounded-none hover:bg-[#f7f4ee] dark:hover:bg-gray-800 text-xs cursor-pointer"
                                   >
                                     +
                                   </button>
@@ -1777,7 +1777,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                                         controllerRef.current.updateElement(element, 'shadow_offset_y', newOffset);
                                       }
                                     }}
-                                    className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-800 text-xs cursor-pointer"
+                                    className="px-2 py-1 border-2 border-zinc-700 dark:border-zinc-400 rounded-none hover:bg-[#f7f4ee] dark:hover:bg-gray-800 text-xs cursor-pointer"
                                   >
                                     −
                                   </button>
@@ -1792,7 +1792,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                                         controllerRef.current.updateElement(element, 'shadow_offset_y', Number(e.target.value));
                                       }
                                     }}
-                                    className="flex-1 h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+                                    className="flex-1 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-none appearance-none cursor-pointer"
                                   />
                                   <button
                                     type="button"
@@ -1802,7 +1802,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                                         controllerRef.current.updateElement(element, 'shadow_offset_y', newOffset);
                                       }
                                     }}
-                                    className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-800 text-xs cursor-pointer"
+                                    className="px-2 py-1 border-2 border-zinc-700 dark:border-zinc-400 rounded-none hover:bg-[#f7f4ee] dark:hover:bg-gray-800 text-xs cursor-pointer"
                                   >
                                     +
                                   </button>
@@ -1841,10 +1841,10 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                                       });
                                     }
                                   }}
-                                  className={`px-2 py-1.5 border rounded text-xs font-medium transition-colors cursor-pointer ${
+                                  className={`px-2 py-1.5 border-2 rounded-none text-xs font-medium transition-colors cursor-pointer ${
                                     element.settings.horizontal_align.current === align
-                                      ? 'bg-blue-500 text-white border-blue-500'
-                                      : 'border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800'
+                                      ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 border-zinc-900 dark:border-zinc-100'
+                                      : 'border-zinc-700 dark:border-zinc-400 hover:bg-[#f7f4ee] dark:hover:bg-gray-800'
                                   }`}
                                 >
                                   {align.charAt(0).toUpperCase() + align.slice(1)}
@@ -1865,7 +1865,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                                   setExpandedElements(newExpanded);
                                 }
                               }}
-                              className="w-full px-3 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 border border-red-300 dark:border-red-700 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex items-center justify-center gap-1 cursor-pointer"
+                              className="w-full px-3 py-1.5 text-xs font-medium text-red-700 dark:text-red-300 border-2 border-red-700 dark:border-red-500 rounded-none hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex items-center justify-center gap-1 cursor-pointer"
                             >
                               <Trash2 className="w-3 h-3" />
                               Delete Text Field
