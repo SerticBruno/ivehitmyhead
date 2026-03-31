@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 
 import { FeaturedMemes } from '@/components/meme';
-import { Button, MemeCardStyleLab, MemeGeneratorShowcase } from '@/components/ui';
+import { Button, MemeGeneratorShowcase } from '@/components/ui';
 import { ICONS } from '@/lib/utils/categoryIcons';
 
 import { useCategories } from '@/lib/hooks/useCategories';
