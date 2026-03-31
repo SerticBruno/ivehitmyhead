@@ -617,7 +617,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
   return (
     <div
       ref={generatorRootRef}
-      className="max-w-7xl mx-auto p-2 md:p-4"
+      className="max-w-7xl mx-auto p-2 md:p-4 [&_button]:rounded-none [&_input]:rounded-none [&_select]:rounded-none [&_textarea]:rounded-none"
       style={{
         height: isMobileViewport ? 'auto' : containerHeight,
         maxHeight: isMobileViewport ? 'none' : containerHeight,

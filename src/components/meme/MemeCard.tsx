@@ -86,7 +86,7 @@ const MemeCard: React.FC<MemeCardProps> = ({
       >
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <div>
+            <div className="min-w-0 flex-1">
               <h3 className="font-black uppercase tracking-tight text-lg">{meme.title}</h3>
               <p className="text-sm text-gray-500">
                 by {meme.author?.display_name || meme.author?.username || 'Unknown'}
@@ -104,27 +104,23 @@ const MemeCard: React.FC<MemeCardProps> = ({
               </div>
             </div>
           </div>
-          <div className="flex flex-wrap gap-2 mt-2">
-            {meme.category && (
-              <span className="inline-flex items-center px-3 py-1.5 text-xs font-semibold uppercase tracking-wide bg-[#f7f4ee] text-gray-800 dark:bg-gray-900 dark:text-gray-200 border border-zinc-700 dark:border-zinc-400 transition-colors duration-200">
-                {getCategoryIconOrEmoji(meme.category.name, meme.category.emoji)}
-                <span className="ml-1.5 font-semibold">{meme.category.name}</span>
-              </span>
-            )}
-            {meme.tags && meme.tags.length > 0 && meme.tags.slice(0, 3).map((tag, index) => (
-              <span
-                key={index}
-                className="inline-flex items-center px-2.5 py-1 text-xs font-semibold uppercase tracking-wide bg-white text-gray-800 dark:bg-gray-900 dark:text-gray-200 border border-zinc-700 dark:border-zinc-400 transition-colors duration-200"
-              >
-                #{tag}
-              </span>
-            ))}
-            {meme.tags && meme.tags.length > 3 && (
-              <span className="inline-flex items-center px-2.5 py-1 text-xs font-semibold uppercase tracking-wide bg-[#f7f4ee] text-gray-700 dark:bg-gray-800 dark:text-gray-300 border border-zinc-700 dark:border-zinc-400">
-                +{meme.tags.length - 3} more
-              </span>
-            )}
-          </div>
+          {meme.tags && meme.tags.length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-2">
+              {meme.tags.slice(0, 3).map((tag, index) => (
+                <span
+                  key={index}
+                  className="inline-flex items-center px-2.5 py-1 text-xs font-semibold uppercase tracking-wide bg-white text-gray-800 dark:bg-gray-900 dark:text-gray-200 border border-zinc-700 dark:border-zinc-400 transition-colors duration-200"
+                >
+                  #{tag}
+                </span>
+              ))}
+              {meme.tags.length > 3 && (
+                <span className="inline-flex items-center px-2.5 py-1 text-xs font-semibold uppercase tracking-wide bg-[#f7f4ee] text-gray-700 dark:bg-gray-800 dark:text-gray-300 border border-zinc-700 dark:border-zinc-400">
+                  +{meme.tags.length - 3} more
+                </span>
+              )}
+            </div>
+          )}
         </CardHeader>
         
         <CardContent className="p-0">
@@ -174,8 +170,8 @@ const MemeCard: React.FC<MemeCardProps> = ({
           </div>
         </CardContent>
         
-        <CardFooter className="flex items-center justify-between pt-4">
-          <div className="flex items-center space-x-4">
+        <CardFooter className="flex items-center justify-between gap-3 pt-4">
+          <div className="flex min-w-0 items-center space-x-4">
             <Button
               variant="ghost"
               size="sm"
@@ -221,6 +217,12 @@ const MemeCard: React.FC<MemeCardProps> = ({
               <span>{meme.views}</span>
             </div>
           </div>
+          {meme.category && (
+            <span className="inline-flex shrink-0 items-center px-2.5 py-1 text-xs font-semibold uppercase tracking-wide bg-[#f7f4ee] text-gray-800 dark:bg-gray-900 dark:text-gray-200 border border-zinc-700 dark:border-zinc-400">
+              {getCategoryIconOrEmoji(meme.category.name, meme.category.emoji)}
+              <span className="ml-1.5">{meme.category.name}</span>
+            </span>
+          )}
         </CardFooter>
       </Card>
     </Link>
