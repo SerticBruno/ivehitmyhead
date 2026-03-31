@@ -29,6 +29,7 @@ const FiltersAndSortingInner: React.FC<FiltersAndSortingProps> = ({
 }) => {
   const [showBlurOverlay, setShowBlurOverlay] = React.useState(true);
   const [userInitiated, setUserInitiated] = React.useState(false);
+  const categoriesScrollRef = React.useRef<HTMLDivElement | null>(null);
   
   // Get the memes state context to update filters directly
   const { setFilters } = useMemesUIState();
@@ -41,11 +42,43 @@ const FiltersAndSortingInner: React.FC<FiltersAndSortingProps> = ({
     limit: 50
   });
 
+  const updateBlurOverlay = React.useCallback(() => {
+    const target = categoriesScrollRef.current;
+    if (!target) {
+      setShowBlurOverlay(false);
+      return;
+    }
+
+    const canScroll = target.scrollHeight > target.clientHeight + 1;
+    if (!canScroll) {
+      setShowBlurOverlay(false);
+      return;
+    }
+
+    const isAtBottom = target.scrollHeight - target.scrollTop <= target.clientHeight + 1;
+    setShowBlurOverlay(!isAtBottom);
+  }, []);
+
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const target = e.target as HTMLDivElement;
+    const canScroll = target.scrollHeight > target.clientHeight + 1;
+    if (!canScroll) {
+      setShowBlurOverlay(false);
+      return;
+    }
+
     const isAtBottom = target.scrollHeight - target.scrollTop <= target.clientHeight + 1;
     setShowBlurOverlay(!isAtBottom);
   };
+
+  React.useEffect(() => {
+    updateBlurOverlay();
+  }, [categories, updateBlurOverlay]);
+
+  React.useEffect(() => {
+    window.addEventListener('resize', updateBlurOverlay);
+    return () => window.removeEventListener('resize', updateBlurOverlay);
+  }, [updateBlurOverlay]);
 
   const scrollToTop = () => {
     // Only scroll if this is triggered by a user action
@@ -88,7 +121,7 @@ const FiltersAndSortingInner: React.FC<FiltersAndSortingProps> = ({
 
   if (loading) {
     return (
-      <div className={`sticky top-20 h-[calc(100vh-6rem)] bg-white dark:bg-gray-800 rounded-b-xl shadow-lg border border-gray-200 dark:border-gray-700 flex flex-col ${className}`}>
+      <div className={`sticky top-20 max-h-[calc(100vh-6rem)] bg-white dark:bg-gray-800 rounded-b-xl shadow-lg border border-gray-200 dark:border-gray-700 flex flex-col ${className}`}>
         {/* Header */}
         <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Narrow the scroll</h3>
@@ -138,7 +171,7 @@ const FiltersAndSortingInner: React.FC<FiltersAndSortingProps> = ({
   }
 
   return (
-    <div className={`sticky top-20 h-[calc(100vh-6rem)] bg-white dark:bg-gray-800 rounded-b-xl shadow-lg border border-gray-200 dark:border-gray-700 flex flex-col ${className}`}>
+    <div className={`sticky top-20 max-h-[calc(100vh-6rem)] bg-white dark:bg-gray-800 rounded-b-xl shadow-lg border border-gray-200 dark:border-gray-700 flex flex-col ${className}`}>
       {/* Header */}
       <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Narrow the scroll</h3>
@@ -235,7 +268,11 @@ const FiltersAndSortingInner: React.FC<FiltersAndSortingProps> = ({
       {/* Categories */}
       <div className="p-4 flex-1 flex flex-col min-h-0">
         <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Categories</h4>
-        <div className="flex-1 overflow-y-auto pr-4 relative categories-scroll-container" onScroll={handleScroll}>
+        <div
+          ref={categoriesScrollRef}
+          className="flex-1 overflow-y-auto pr-4 relative categories-scroll-container"
+          onScroll={handleScroll}
+        >
           <nav className="space-y-2">
             {/* All Categories Option */}
             <button
@@ -280,9 +317,11 @@ const FiltersAndSortingInner: React.FC<FiltersAndSortingProps> = ({
         </div>
         
         {/* Bottom blur overlay - positioned at the very bottom of the categories section */}
-        {showBlurOverlay && (
-          <div className="absolute bottom-0 left-4 right-4 h-8 bg-gradient-to-t from-white via-white/80 to-transparent dark:from-gray-800 dark:via-gray-800/80 pointer-events-none"></div>
-        )}
+        <div
+          className={`absolute bottom-0 left-4 right-4 h-8 bg-gradient-to-t from-white via-white/80 to-transparent dark:from-gray-800 dark:via-gray-800/80 pointer-events-none transition-opacity duration-300 ease-out ${
+            showBlurOverlay ? 'opacity-100' : 'opacity-0'
+          }`}
+        />
       </div>
 
       {/* Custom Scrollbar Styles */}

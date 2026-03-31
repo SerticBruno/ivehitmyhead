@@ -106,7 +106,7 @@ const MemeCard: React.FC<MemeCardProps> = ({
           </div>
           <div className="flex flex-wrap gap-2 mt-2">
             {meme.category && (
-              <span className="inline-flex items-center px-3 py-1.5 text-xs font-medium bg-purple-100 text-purple-800 rounded-full dark:bg-purple-900/30 dark:text-purple-200 border border-purple-200 dark:border-purple-700 hover:bg-purple-200 dark:hover:bg-purple-800/50 transition-colors duration-200">
+              <span className="inline-flex items-center px-3 py-1.5 text-xs font-medium bg-white text-gray-700 rounded-full dark:bg-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200">
                 {getCategoryIconOrEmoji(meme.category.name, meme.category.emoji)}
                 <span className="ml-1.5 font-semibold">{meme.category.name}</span>
               </span>
