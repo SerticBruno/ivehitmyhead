@@ -617,7 +617,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
   return (
     <div
       ref={generatorRootRef}
-      className="max-w-7xl mx-auto p-2 md:p-4 bg-[#f7f4ee] dark:bg-gray-950"
+      className="max-w-7xl mx-auto p-2 md:p-4"
       style={{
         height: isMobileViewport ? 'auto' : containerHeight,
         maxHeight: isMobileViewport ? 'none' : containerHeight,
@@ -1029,7 +1029,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                           : ''
                       }`}
                     >
-                      <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded border-2 border-dashed border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
+                      <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-none border-2 border-dashed border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
                         <Upload className="h-7 w-7 text-blue-600 dark:text-blue-400" />
                       </div>
                       <div className="min-w-0 flex-1 text-left">
@@ -1064,7 +1064,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                             alt={template.name}
                             width={64}
                             height={64}
-                            className="w-16 h-16 object-cover rounded flex-shrink-0 border border-gray-200 dark:border-gray-600"
+                            className="w-16 h-16 object-cover rounded-none flex-shrink-0 border border-gray-200 dark:border-gray-600"
                           />
                           <div className="flex-1 text-left min-w-0">
                             <div className="font-medium truncate text-gray-900 dark:text-white">
@@ -1097,9 +1097,9 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                   <button
                     type="button"
                     onClick={() => customPhotoFileInputRef.current?.click()}
-                    className="flex cursor-pointer items-center gap-3 p-3 rounded-lg border-2 border-dashed border-blue-300 dark:border-blue-700 hover:border-blue-500 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 bg-white dark:bg-gray-800 transition-all text-left"
+                    className="flex cursor-pointer items-center gap-3 p-3 rounded-none border-2 border-dashed border-blue-300 dark:border-blue-700 hover:border-blue-500 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 bg-white dark:bg-gray-800 transition-all text-left"
                   >
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-none border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
                       <Upload className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                     </div>
                     <div className="min-w-0 flex-1">
@@ -1119,14 +1119,14 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                         loadTemplate(template);
                         setIsTemplateDropdownOpen(false);
                       }}
-                      className="flex cursor-pointer items-center gap-3 p-3 rounded-lg border-2 border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 bg-white dark:bg-gray-800 transition-all text-left"
+                      className="flex cursor-pointer items-center gap-3 p-3 rounded-none border-2 border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 bg-white dark:bg-gray-800 transition-all text-left"
                     >
                       <TemplatePreviewImage
                         src={template.src}
                         alt={template.name}
                         width={48}
                         height={48}
-                        className="w-12 h-12 object-cover rounded flex-shrink-0 border border-gray-200 dark:border-gray-600"
+                        className="w-12 h-12 object-cover rounded-none flex-shrink-0 border border-gray-200 dark:border-gray-600"
                       />
                       <div className="flex-1 min-w-0">
                         <div className="font-medium text-sm text-gray-900 dark:text-white truncate">
