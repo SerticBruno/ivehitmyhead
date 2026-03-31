@@ -617,7 +617,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
   return (
     <div
       ref={generatorRootRef}
-      className="max-w-7xl mx-auto p-2 md:p-4"
+      className="max-w-7xl mx-auto p-2 md:p-4 bg-[#f7f4ee] dark:bg-gray-950"
       style={{
         height: isMobileViewport ? 'auto' : containerHeight,
         maxHeight: isMobileViewport ? 'none' : containerHeight,
@@ -626,8 +626,8 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
         flexDirection: 'column',
       }}
     >
-      <div className="text-center mb-2 md:mb-4 flex-shrink-0">
-        <h1 className="text-xl md:text-2xl lg:text-4xl font-bold text-gray-900 dark:text-white mb-1 md:mb-2">
+      <div className="text-center mb-3 md:mb-4 flex-shrink-0">
+        <h1 className="text-xl md:text-2xl lg:text-4xl font-black uppercase tracking-tight text-gray-900 dark:text-white mb-1 md:mb-2">
           Meme generator
         </h1>
         <p className="text-xs md:text-sm lg:text-base text-gray-600 dark:text-gray-400">
@@ -654,8 +654,8 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
       >
         {/* Template chooser - shown first on mobile, part of right panel on desktop */}
         <div className="flex flex-col min-h-0 lg:hidden order-1" style={{ minWidth: 0, maxWidth: '100%' }}>
-          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-2 md:p-4 border border-gray-200 dark:border-gray-800">
-            <h2 className="text-base md:text-lg font-semibold mb-2 md:mb-4">Templates</h2>
+          <div className="bg-white dark:bg-gray-900 rounded-none shadow-[8px_8px_0px_rgba(0,0,0,0.88)] dark:shadow-[8px_8px_0px_rgba(156,163,175,0.42)] p-2 md:p-4 border-2 border-zinc-700 dark:border-zinc-400">
+            <h2 className="text-base md:text-lg font-black uppercase tracking-tight mb-2 md:mb-4">Templates</h2>
             <Button
               type="button"
               variant="outline"
@@ -670,7 +670,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
               <button
                 type="button"
                 onClick={() => setIsTemplateDropdownOpen(!isTemplateDropdownOpen)}
-                className="w-full cursor-pointer flex items-center justify-between p-3 rounded-lg border-2 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-800 transition-all"
+                className="w-full cursor-pointer flex items-center justify-between p-3 rounded-none border-2 border-zinc-700 dark:border-zinc-400 hover:bg-[#f7f4ee] dark:hover:bg-gray-950 bg-white dark:bg-gray-900 transition-colors"
               >
                 <div className="flex items-center gap-3 flex-1 min-w-0">
                   {selectedTemplate ? (
@@ -680,7 +680,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                         alt={selectedTemplate.name}
                         width={48}
                         height={48}
-                        className="w-12 h-12 object-cover rounded flex-shrink-0"
+                        className="w-12 h-12 object-cover rounded-none flex-shrink-0 border-2 border-zinc-700 dark:border-zinc-400"
                       />
                       <span className="font-medium text-left truncate">{selectedTemplate.name}</span>
                     </>
@@ -706,7 +706,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                     className="fixed inset-0 z-10"
                     onClick={() => setIsTemplateDropdownOpen(false)}
                   />
-                  <div className="absolute z-20 w-full mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-[60vh] overflow-y-auto [scrollbar-gutter:stable]">
+                  <div className="absolute z-20 w-full mt-2 bg-white dark:bg-gray-900 border-2 border-zinc-700 dark:border-zinc-400 rounded-none shadow-[8px_8px_0px_rgba(0,0,0,0.88)] dark:shadow-[8px_8px_0px_rgba(156,163,175,0.42)] max-h-[60vh] overflow-y-auto [scrollbar-gutter:stable]">
                     <button
                       type="button"
                       onClick={(e) => {
@@ -720,7 +720,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                           : ''
                       }`}
                     >
-                      <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded border-2 border-dashed border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
+                      <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-none border-2 border-dashed border-zinc-700 dark:border-zinc-400 bg-[#f7f4ee] dark:bg-gray-950">
                         <Upload className="h-7 w-7 text-blue-600 dark:text-blue-400" />
                       </div>
                       <div className="min-w-0 flex-1 text-left">
@@ -755,7 +755,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                             alt={template.name}
                             width={64}
                             height={64}
-                            className="w-16 h-16 object-cover rounded flex-shrink-0 border border-gray-200 dark:border-gray-600"
+                            className="w-16 h-16 object-cover rounded-none flex-shrink-0 border-2 border-zinc-700 dark:border-zinc-400"
                           />
                           <div className="flex-1 text-left min-w-0">
                             <div className="font-medium truncate text-gray-900 dark:text-white">
@@ -788,9 +788,9 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                   <button
                     type="button"
                     onClick={() => customPhotoFileInputRef.current?.click()}
-                    className="flex cursor-pointer items-center gap-3 p-3 rounded-lg border-2 border-dashed border-blue-300 dark:border-blue-700 hover:border-blue-500 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 bg-white dark:bg-gray-800 transition-all text-left"
+                    className="flex cursor-pointer items-center gap-3 p-3 rounded-none border-2 border-dashed border-zinc-700 dark:border-zinc-400 hover:bg-[#f7f4ee] dark:hover:bg-gray-950 bg-white dark:bg-gray-900 transition-colors text-left"
                   >
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-none border-2 border-zinc-700 dark:border-zinc-400 bg-[#f7f4ee] dark:bg-gray-950">
                       <Upload className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                     </div>
                     <div className="min-w-0 flex-1">
@@ -810,14 +810,14 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                         loadTemplate(template);
                         setIsTemplateDropdownOpen(false);
                       }}
-                      className="flex cursor-pointer items-center gap-3 p-3 rounded-lg border-2 border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 bg-white dark:bg-gray-800 transition-all text-left"
+                      className="flex cursor-pointer items-center gap-3 p-3 rounded-none border-2 border-zinc-700 dark:border-zinc-400 hover:bg-[#f7f4ee] dark:hover:bg-gray-950 bg-white dark:bg-gray-900 transition-colors text-left"
                     >
                       <TemplatePreviewImage
                         src={template.src}
                         alt={template.name}
                         width={48}
                         height={48}
-                        className="w-12 h-12 object-cover rounded flex-shrink-0 border border-gray-200 dark:border-gray-600"
+                        className="w-12 h-12 object-cover rounded-none flex-shrink-0 border-2 border-zinc-700 dark:border-zinc-400"
                       />
                       <div className="flex-1 min-w-0">
                         <div className="font-medium text-sm text-gray-900 dark:text-white truncate">
@@ -847,9 +847,9 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
 
         {/* Left side - Canvas (shown second on mobile, left side on desktop) */}
         <div className="flex flex-col min-h-0 flex-[2] lg:flex-[2] order-2 lg:order-1" style={{ height: '100%', overflow: 'hidden', minWidth: 0 }}>
-          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-2 md:p-4 border border-gray-200 dark:border-gray-800 flex-1 flex flex-col min-h-0" style={{ height: '100%', overflow: 'hidden' }}>
+          <div className="bg-white dark:bg-gray-900 rounded-none shadow-[8px_8px_0px_rgba(0,0,0,0.88)] dark:shadow-[8px_8px_0px_rgba(156,163,175,0.42)] p-2 md:p-4 border-2 border-zinc-700 dark:border-zinc-400 flex-1 flex flex-col min-h-0" style={{ height: '100%', overflow: 'hidden' }}>
             <div 
-              className="flex justify-center items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-2 md:p-4 flex-1 min-h-0" 
+              className="flex justify-center items-center bg-[#f7f4ee] dark:bg-gray-950 rounded-none p-2 md:p-4 flex-1 min-h-0 border-2 border-zinc-700 dark:border-zinc-400" 
               style={{ 
                 height: '100%', 
                 width: '100%',
@@ -861,7 +861,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
               {/* Canvas - always rendered for proper initialization */}
               <canvas
                 ref={canvasRef}
-                className="border border-gray-300 dark:border-gray-700 rounded"
+                className="border-2 border-zinc-700 dark:border-zinc-400 rounded-none"
                 style={{ 
                   maxWidth: '100%', 
                   maxHeight: '100%', 
@@ -882,7 +882,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
               {/* Placeholder overlay when no template is selected */}
               {!selectedTemplate && (
                 <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 p-8 text-center">
-                  <div className="pointer-events-none w-20 h-20 mb-1 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                  <div className="pointer-events-none w-20 h-20 mb-1 rounded-none border-2 border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-900 flex items-center justify-center">
                     <svg
                       className="w-10 h-10 text-gray-400 dark:text-gray-500"
                       fill="none"
@@ -973,13 +973,13 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
             style={{ flex: '1 1 0%', minHeight: 0, WebkitOverflowScrolling: 'touch' }}
           >
           {/* Template selection - hidden on mobile, shown on desktop */}
-          <div className="hidden lg:block bg-white dark:bg-gray-900 rounded-lg shadow-lg p-2 md:p-4 border border-gray-200 dark:border-gray-800">
-            <h2 className="text-base md:text-lg font-semibold mb-2 md:mb-4">Templates</h2>
+          <div className="hidden lg:block bg-white dark:bg-gray-900 rounded-none shadow-[8px_8px_0px_rgba(0,0,0,0.88)] dark:shadow-[8px_8px_0px_rgba(156,163,175,0.42)] p-2 md:p-4 border-2 border-zinc-700 dark:border-zinc-400">
+            <h2 className="text-base md:text-lg font-black uppercase tracking-tight mb-2 md:mb-4">Templates</h2>
             <div className="relative">
               <button
                 type="button"
                 onClick={() => setIsTemplateDropdownOpen(!isTemplateDropdownOpen)}
-                className="w-full cursor-pointer flex items-center justify-between p-3 rounded-lg border-2 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-800 transition-all"
+                className="w-full cursor-pointer flex items-center justify-between p-3 rounded-none border-2 border-zinc-700 dark:border-zinc-400 hover:bg-[#f7f4ee] dark:hover:bg-gray-950 bg-white dark:bg-gray-900 transition-colors"
               >
                 <div className="flex items-center gap-3 flex-1 min-w-0">
                   {selectedTemplate ? (
@@ -989,7 +989,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                         alt={selectedTemplate.name}
                         width={48}
                         height={48}
-                        className="w-12 h-12 object-cover rounded flex-shrink-0"
+                        className="w-12 h-12 object-cover rounded-none flex-shrink-0 border-2 border-zinc-700 dark:border-zinc-400"
                       />
                       <span className="font-medium text-left truncate">{selectedTemplate.name}</span>
                     </>
@@ -1015,7 +1015,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                     className="fixed inset-0 z-10"
                     onClick={() => setIsTemplateDropdownOpen(false)}
                   />
-                  <div className="absolute z-20 w-full mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-[60vh] overflow-y-auto [scrollbar-gutter:stable]">
+                  <div className="absolute z-20 w-full mt-2 bg-white dark:bg-gray-900 border-2 border-zinc-700 dark:border-zinc-400 rounded-none shadow-[8px_8px_0px_rgba(0,0,0,0.88)] dark:shadow-[8px_8px_0px_rgba(156,163,175,0.42)] max-h-[60vh] overflow-y-auto [scrollbar-gutter:stable]">
                     <button
                       type="button"
                       onClick={(e) => {
