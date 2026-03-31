@@ -577,21 +577,13 @@ export function MemesFeedPanel({ memeGridRef, sidebar }: MemesFeedPanelProps) {
 
   return (
     <>
-      <section className="text-center mb-12">
-        <h1 className="text-4xl md:text-6xl font-bold mb-4">
-          {memesLoading && !isInitialized ? (
-            <div className="h-16 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse mx-auto max-w-md"></div>
-          ) : (
-            heroContent.categoryText
-          )}
+      <section className="text-center mb-12 border-2 border-black dark:border-gray-300 bg-white dark:bg-gray-900 p-8 shadow-[8px_8px_0px_rgba(0,0,0,0.9)] dark:shadow-[8px_8px_0px_rgba(156,163,175,0.42)]">
+        <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tight mb-4">
+          {heroContent.categoryText}
         </h1>
-        {memesLoading && !isInitialized ? (
-          <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse mx-auto max-w-lg mb-8"></div>
-        ) : (
-          <p className="text-xl text-gray-600 dark:text-gray-400 mb-8 max-w-2xl mx-auto">
-            {heroContent.description}
-          </p>
-        )}
+        <p className="text-xl text-gray-700 dark:text-gray-300 mb-8 max-w-2xl mx-auto min-h-[3.5rem]">
+          {heroContent.description}
+        </p>
       </section>
 
       <div className="flex flex-col lg:flex-row gap-8 max-w-7xl mx-auto">
@@ -610,11 +602,11 @@ export function MemesFeedPanel({ memeGridRef, sidebar }: MemesFeedPanelProps) {
           />
 
           {memesError ? (
-            <div className="text-center py-12">
+            <div className="text-center py-12 border-2 border-black dark:border-gray-300 bg-white dark:bg-gray-900 p-6 shadow-[6px_6px_0px_rgba(0,0,0,0.85)] dark:shadow-[6px_6px_0px_rgba(156,163,175,0.42)]">
               <div className="text-4xl mb-4 flex justify-center">
                 <ICONS.Star className="w-16 h-16 text-gray-400" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">Failed to load memes</h3>
+              <h3 className="text-xl font-black uppercase tracking-wide mb-2">Failed to load memes</h3>
               <p className="text-gray-500 dark:text-gray-400 mb-4">{memesError}</p>
             </div>
           ) : (

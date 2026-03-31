@@ -40,7 +40,7 @@ export default function MemesPage() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-[#f7f4ee] dark:bg-gray-950">
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <MemesFeedPanel memeGridRef={memeGridRef} sidebar={sidebar} />
       </main>

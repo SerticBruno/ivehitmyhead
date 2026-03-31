@@ -48,11 +48,11 @@ const FeaturedMemeCard: React.FC<FeaturedMemeCardProps> = ({
   return (
     <Link href={`/meme/${meme.slug}`} className="block h-full">
       <Card 
-        className={cn("overflow-hidden cursor-pointer h-full flex flex-col", className)}
+        className={cn("overflow-hidden cursor-pointer h-full flex flex-col rounded-none border-2 border-black dark:border-gray-300 shadow-[6px_6px_0px_rgba(0,0,0,0.85)] dark:shadow-[6px_6px_0px_rgba(156,163,175,0.42)]", className)}
       >
         <CardHeader className="px-4 pt-4 pb-3 flex-shrink-0">
           <div className="space-y-2">
-            <h3 className="font-semibold text-lg line-clamp-2 leading-tight">{meme.title}</h3>
+            <h3 className="font-black uppercase tracking-tight text-lg line-clamp-2 leading-tight">{meme.title}</h3>
             <p className="text-sm text-gray-500 dark:text-gray-400">
               by {meme.author?.display_name || meme.author?.username || 'Unknown'}
             </p>
@@ -60,7 +60,7 @@ const FeaturedMemeCard: React.FC<FeaturedMemeCardProps> = ({
               {meme.category ? (
                 <>
                   {getCategoryIconOrEmoji(meme.category.name, meme.category.emoji)}
-                  <span className="text-xs text-gray-500 dark:text-gray-400">{meme.category.name}</span>
+                  <span className="text-xs uppercase tracking-wide font-semibold text-gray-600 dark:text-gray-300">{meme.category.name}</span>
                 </>
               ) : (
                 <>
@@ -73,7 +73,7 @@ const FeaturedMemeCard: React.FC<FeaturedMemeCardProps> = ({
         </CardHeader>
         
         <CardContent className="p-0 flex-grow">
-          <div className="relative w-full h-56 sm:h-64 bg-gray-50 dark:bg-gray-900/50">
+          <div className="relative w-full h-56 sm:h-64 bg-[#f7f4ee] dark:bg-gray-950 border-y-2 border-black dark:border-gray-300">
             <Image
               src={meme.image_url}
               alt={meme.title}
@@ -85,7 +85,7 @@ const FeaturedMemeCard: React.FC<FeaturedMemeCardProps> = ({
         </CardContent>
         
         <div className="px-4 pb-4 pt-3 flex-shrink-0">
-          <div className="flex items-center justify-between text-sm text-gray-500">
+          <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-300">
             <div className="flex items-center gap-4">
               <button
                 onClick={handleLike}

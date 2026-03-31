@@ -18,6 +18,12 @@ export const MemeGrid: React.FC<MemeGridProps> = ({
   layout = 'vertical',
   emptyStateDescription,
 }) => {
+  const memeImageAreaStyle = {
+    height: 'calc(100vh - 300px)',
+    minHeight: '400px',
+    maxHeight: '800px'
+  };
+
   // Preload images for better performance when navigating back
   React.useEffect(() => {
     if (memes.length > 0) {
@@ -40,17 +46,36 @@ export const MemeGrid: React.FC<MemeGridProps> = ({
     return (
       <div className={`grid gap-6 ${className}`}>
         {[...Array(6)].map((_, i) => (
-          <div key={i} className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-            <div className="p-6">
-              <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse mb-4"></div>
-              <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse mb-2"></div>
-              <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse w-3/4"></div>
+          <div key={i} className="bg-white dark:bg-gray-900 border-2 border-black dark:border-gray-300 shadow-[8px_8px_0px_rgba(0,0,0,0.85)] dark:shadow-[8px_8px_0px_rgba(156,163,175,0.42)] overflow-hidden rounded-none">
+            <div className="px-6 pt-6 pb-3">
+              <div className="flex items-start justify-between gap-4 mb-3">
+                <div className="flex-1">
+                  <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded-none animate-pulse mb-2"></div>
+                  <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded-none animate-pulse w-2/3"></div>
+                </div>
+                <div className="w-24">
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-none animate-pulse mb-2"></div>
+                  <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded-none animate-pulse mb-2"></div>
+                  <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded-none animate-pulse"></div>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <div className="h-7 w-28 bg-gray-200 dark:bg-gray-700 rounded-none animate-pulse"></div>
+                <div className="h-6 w-20 bg-gray-200 dark:bg-gray-700 rounded-none animate-pulse"></div>
+                <div className="h-6 w-16 bg-gray-200 dark:bg-gray-700 rounded-none animate-pulse"></div>
+              </div>
             </div>
-            <div className="h-96 bg-gray-200 dark:bg-gray-700 animate-pulse"></div>
-            <div className="p-6">
-              <div className="flex justify-between items-center">
-                <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse w-20"></div>
-                <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse w-20"></div>
+            <div
+              className="bg-gray-200 dark:bg-gray-700 animate-pulse border-y-2 border-black dark:border-gray-300"
+              style={memeImageAreaStyle}
+            ></div>
+            <div className="p-6 pt-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded-none animate-pulse w-20"></div>
+                  <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded-none animate-pulse w-20"></div>
+                </div>
+                <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded-none animate-pulse w-16"></div>
               </div>
             </div>
           </div>
@@ -65,7 +90,7 @@ export const MemeGrid: React.FC<MemeGridProps> = ({
         <div className="text-6xl mb-4 flex justify-center">
           <ICONS.Star className="w-16 h-16 text-gray-400" />
         </div>
-        <h3 className="text-xl font-semibold mb-2">No memes found</h3>
+        <h3 className="text-xl font-black uppercase tracking-wide mb-2">No memes found</h3>
         <p className="text-gray-500 dark:text-gray-400 mx-auto max-w-md">
           {emptyStateDescription ??
             'Loosen the filters or wait for someone else to post. Both are valid coping strategies.'}
@@ -99,7 +124,7 @@ export const MemeGrid: React.FC<MemeGridProps> = ({
           {loading && (
             <div className="flex items-center space-x-2">
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-              <span className="text-gray-600 dark:text-gray-400">Loading more memes...</span>
+              <span className="text-gray-700 dark:text-gray-300 uppercase tracking-wide font-semibold">Loading more memes...</span>
             </div>
           )}
         </div>
@@ -110,7 +135,7 @@ export const MemeGrid: React.FC<MemeGridProps> = ({
         <div className="text-center pt-6">
           <button
             onClick={onLoadMore}
-            className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors duration-200"
+            className="px-8 py-3 bg-black hover:bg-gray-800 text-white dark:bg-white dark:text-black dark:hover:bg-gray-200 font-black uppercase tracking-wide border-2 border-black dark:border-white rounded-none transition-colors duration-200"
           >
             Load More
           </button>

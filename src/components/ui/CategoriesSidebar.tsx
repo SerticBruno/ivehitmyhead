@@ -121,10 +121,10 @@ const FiltersAndSortingInner: React.FC<FiltersAndSortingProps> = ({
 
   if (loading) {
     return (
-      <div className={`sticky top-20 max-h-[calc(100vh-6rem)] bg-white dark:bg-gray-800 rounded-b-xl shadow-lg border border-gray-200 dark:border-gray-700 flex flex-col ${className}`}>
+      <div className={`sticky top-20 max-h-[calc(100vh-6rem)] bg-white dark:bg-gray-900 shadow-[8px_8px_0px_rgba(0,0,0,0.85)] dark:shadow-[8px_8px_0px_rgba(156,163,175,0.42)] border-2 border-black dark:border-gray-300 flex flex-col ${className}`}>
         {/* Header */}
-        <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Narrow the scroll</h3>
+        <div className="p-4 border-b-2 border-black dark:border-gray-300 bg-[#f7f4ee] dark:bg-gray-950">
+          <h3 className="text-lg font-black uppercase tracking-wide text-gray-900 dark:text-white">Narrow the scroll</h3>
         </div>
 
         {/* Time Period Filter */}
@@ -171,10 +171,10 @@ const FiltersAndSortingInner: React.FC<FiltersAndSortingProps> = ({
   }
 
   return (
-    <div className={`sticky top-20 max-h-[calc(100vh-6rem)] bg-white dark:bg-gray-800 rounded-b-xl shadow-lg border border-gray-200 dark:border-gray-700 flex flex-col ${className}`}>
+    <div className={`sticky top-20 max-h-[calc(100vh-6rem)] bg-white dark:bg-gray-900 shadow-[8px_8px_0px_rgba(0,0,0,0.85)] dark:shadow-[8px_8px_0px_rgba(156,163,175,0.42)] border-2 border-black dark:border-gray-300 flex flex-col ${className}`}>
       {/* Header */}
-      <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Narrow the scroll</h3>
+      <div className="p-4 border-b-2 border-black dark:border-gray-300 bg-[#f7f4ee] dark:bg-gray-950">
+        <h3 className="text-lg font-black uppercase tracking-wide text-gray-900 dark:text-white">Narrow the scroll</h3>
       </div>
 
       {/* Time Period Filter */}
@@ -184,10 +184,10 @@ const FiltersAndSortingInner: React.FC<FiltersAndSortingProps> = ({
           <button
             type="button"
             onClick={() => handleTimePeriodChange('today')}
-            className={`flex flex-1 min-w-0 items-center justify-center text-center text-xs font-medium leading-tight px-1 py-2.5 rounded-lg border-2 cursor-pointer ${
+            className={`flex flex-1 min-w-0 items-center justify-center text-center text-xs font-bold uppercase tracking-wide leading-tight px-1 py-2.5 rounded-none border-2 cursor-pointer ${
               selectedTimePeriod === 'today'
-                ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-500 shadow-sm"
-                : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 hover:shadow-sm border-transparent"
+                ? "bg-black text-white border-black dark:bg-white dark:text-black dark:border-white"
+                : "bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-[#f7f4ee] dark:hover:bg-gray-800 border-black dark:border-white"
             }`}
           >
             Today
@@ -195,10 +195,10 @@ const FiltersAndSortingInner: React.FC<FiltersAndSortingProps> = ({
           <button
             type="button"
             onClick={() => handleTimePeriodChange('week')}
-            className={`flex flex-1 min-w-0 items-center justify-center text-center text-xs font-medium leading-tight px-1 py-2.5 rounded-lg border-2 cursor-pointer ${
+            className={`flex flex-1 min-w-0 items-center justify-center text-center text-xs font-bold uppercase tracking-wide leading-tight px-1 py-2.5 rounded-none border-2 cursor-pointer ${
               selectedTimePeriod === 'week'
-                ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-500 shadow-sm"
-                : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 hover:shadow-sm border-transparent"
+                ? "bg-black text-white border-black dark:bg-white dark:text-black dark:border-white"
+                : "bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-[#f7f4ee] dark:hover:bg-gray-800 border-black dark:border-white"
             }`}
           >
             Last week
@@ -206,10 +206,10 @@ const FiltersAndSortingInner: React.FC<FiltersAndSortingProps> = ({
           <button
             type="button"
             onClick={() => handleTimePeriodChange('month')}
-            className={`flex flex-1 min-w-0 items-center justify-center text-center text-xs font-medium leading-tight px-1 py-2.5 rounded-lg border-2 cursor-pointer ${
+            className={`flex flex-1 min-w-0 items-center justify-center text-center text-xs font-bold uppercase tracking-wide leading-tight px-1 py-2.5 rounded-none border-2 cursor-pointer ${
               selectedTimePeriod === 'month'
-                ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-500 shadow-sm"
-                : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 hover:shadow-sm border-transparent"
+                ? "bg-black text-white border-black dark:bg-white dark:text-black dark:border-white"
+                : "bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-[#f7f4ee] dark:hover:bg-gray-800 border-black dark:border-white"
             }`}
           >
             Last month
@@ -217,10 +217,10 @@ const FiltersAndSortingInner: React.FC<FiltersAndSortingProps> = ({
           <button
             type="button"
             onClick={() => handleTimePeriodChange('all')}
-            className={`flex flex-1 min-w-0 items-center justify-center text-center text-xs font-medium leading-tight px-1 py-2.5 rounded-lg border-2 cursor-pointer ${
+            className={`flex flex-1 min-w-0 items-center justify-center text-center text-xs font-bold uppercase tracking-wide leading-tight px-1 py-2.5 rounded-none border-2 cursor-pointer ${
               selectedTimePeriod === 'all'
-                ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-500 shadow-sm"
-                : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 hover:shadow-sm border-transparent"
+                ? "bg-black text-white border-black dark:bg-white dark:text-black dark:border-white"
+                : "bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-[#f7f4ee] dark:hover:bg-gray-800 border-black dark:border-white"
             }`}
           >
             All time
@@ -234,30 +234,30 @@ const FiltersAndSortingInner: React.FC<FiltersAndSortingProps> = ({
         <div className="flex justify-between gap-2">
           <button
             onClick={() => handleFilterChange('hottest')}
-            className={`flex flex-col items-center px-3 py-3 text-xs font-medium rounded-lg flex-1 border-2 cursor-pointer ${
+            className={`flex flex-col items-center px-3 py-3 text-xs font-bold uppercase tracking-wide rounded-none flex-1 border-2 cursor-pointer ${
               selectedFilter === 'hottest'
-                ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-500 shadow-sm"
-                : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 hover:shadow-sm border-transparent"
+                ? "bg-black text-white border-black dark:bg-white dark:text-black dark:border-white"
+                : "bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-[#f7f4ee] dark:hover:bg-gray-800 border-black dark:border-white"
             }`}
           >
             <span>Hottest</span>
           </button>
           <button
             onClick={() => handleFilterChange('trending')}
-            className={`flex flex-col items-center px-3 py-3 text-xs font-medium rounded-lg flex-1 border-2 cursor-pointer ${
+            className={`flex flex-col items-center px-3 py-3 text-xs font-bold uppercase tracking-wide rounded-none flex-1 border-2 cursor-pointer ${
               selectedFilter === 'trending'
-                ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-500 shadow-sm"
-                : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 hover:shadow-sm border-transparent"
+                ? "bg-black text-white border-black dark:bg-white dark:text-black dark:border-white"
+                : "bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-[#f7f4ee] dark:hover:bg-gray-800 border-black dark:border-white"
             }`}
           >
             <span>Trending</span>
           </button>
           <button
             onClick={() => handleFilterChange('newest')}
-            className={`flex flex-col items-center px-3 py-3 text-xs font-medium rounded-lg flex-1 border-2 cursor-pointer ${
+            className={`flex flex-col items-center px-3 py-3 text-xs font-bold uppercase tracking-wide rounded-none flex-1 border-2 cursor-pointer ${
               selectedFilter === 'newest'
-                ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-500 shadow-sm"
-                : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 hover:shadow-sm border-transparent"
+                ? "bg-black text-white border-black dark:bg-white dark:text-black dark:border-white"
+                : "bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-[#f7f4ee] dark:hover:bg-gray-800 border-black dark:border-white"
             }`}
           >
             <span>Newest</span>
@@ -277,10 +277,10 @@ const FiltersAndSortingInner: React.FC<FiltersAndSortingProps> = ({
             {/* All Categories Option */}
             <button
               onClick={() => handleCategorySelect('')}
-              className={`w-full flex items-center px-3 py-3 text-sm font-medium rounded-lg border-2 cursor-pointer ${
+              className={`w-full flex items-center px-3 py-3 text-sm font-semibold uppercase tracking-wide rounded-none border-2 cursor-pointer ${
                 !selectedCategory 
-                  ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-500 shadow-sm"
-                  : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 hover:shadow-sm border-transparent"
+                  ? "bg-black text-white border-black dark:bg-white dark:text-black dark:border-white"
+                  : "bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-[#f7f4ee] dark:hover:bg-gray-800 border-black dark:border-white"
               }`}
             >
               <span className="mr-3 flex-shrink-0">
@@ -298,10 +298,10 @@ const FiltersAndSortingInner: React.FC<FiltersAndSortingProps> = ({
                 <button
                   key={category.id}
                   onClick={() => handleCategorySelect(category.id)}
-                  className={`w-full flex items-center px-3 py-3 text-sm font-medium rounded-lg border-2 cursor-pointer ${
+                  className={`w-full flex items-center px-3 py-3 text-sm font-semibold uppercase tracking-wide rounded-none border-2 cursor-pointer ${
                     isSelected 
-                      ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-500 shadow-sm"
-                      : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 hover:shadow-sm border-transparent"
+                      ? "bg-black text-white border-black dark:bg-white dark:text-black dark:border-white"
+                      : "bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-[#f7f4ee] dark:hover:bg-gray-800 border-black dark:border-white"
                   }`}
                 >
                   <span className="mr-3 flex-shrink-0">

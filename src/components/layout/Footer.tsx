@@ -4,13 +4,13 @@ import { ICONS } from '@/lib/utils/categoryIcons';
 
 const Footer: React.FC = () => {
   return (
-    <footer className="border-t border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-950">
+    <footer className="border-t-2 border-black dark:border-white bg-[#f7f4ee] dark:bg-gray-950">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 border-2 border-black dark:border-gray-300 bg-white dark:bg-gray-900 p-6 shadow-[8px_8px_0px_rgba(0,0,0,0.85)] dark:shadow-[8px_8px_0px_rgba(156,163,175,0.42)]">
           {/* Brand Section */}
           <div className="col-span-1 md:col-span-2">
             <div className="flex items-center space-x-2 mb-4">
-              <span className="text-xl font-bold">IVEHITMYHEAD</span>
+              <span className="text-xl font-black uppercase tracking-tight">IVEHITMYHEAD</span>
             </div>
             <p className="text-gray-600 dark:text-gray-400 mb-4 max-w-md">
               Discover, share, and create the dullest memes on the internet. We said what we said.
@@ -33,7 +33,7 @@ const Footer: React.FC = () => {
 
           {/* Quick Links */}
           <div>
-            <h3 className="font-semibold mb-4">Quick Links</h3>
+            <h3 className="font-black uppercase tracking-wide mb-4">Quick Links</h3>
             <ul className="space-y-2">
               <li>
                 <Link href="/trending" className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 cursor-pointer">
@@ -55,7 +55,7 @@ const Footer: React.FC = () => {
 
           {/* Support */}
           <div>
-            <h3 className="font-semibold mb-4">Support</h3>
+            <h3 className="font-black uppercase tracking-wide mb-4">Support</h3>
             <ul className="space-y-2">
               <li>
                 <Link href="/help" className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 cursor-pointer">
@@ -81,7 +81,7 @@ const Footer: React.FC = () => {
           </div>
         </div>
 
-        <div className="border-t border-gray-200 dark:border-gray-800 mt-8 pt-8 text-center">
+        <div className="border-t-2 border-black dark:border-white mt-8 pt-8 text-center">
           <p className="text-gray-500 dark:text-gray-400 flex items-center justify-center">
             © 2024 IVEHITMYHEAD. All rights reserved. Held together with <ICONS.Heart className="w-4 h-4 mx-1 text-red-500" /> and mild denial.
           </p>

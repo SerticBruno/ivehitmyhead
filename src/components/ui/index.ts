@@ -12,3 +12,4 @@ export { Newsletter } from './Newsletter';
 export { Stats } from './Stats';
 export { TrendingTags } from './TrendingTags';
 export { MemeGeneratorShowcase } from './MemeGeneratorShowcase'; 
+export { MemeCardStyleLab } from './MemeCardStyleLab';

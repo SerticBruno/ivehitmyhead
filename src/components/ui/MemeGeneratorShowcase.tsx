@@ -221,7 +221,7 @@ function SwipeableScreenshotStack({
         {/* Back/stacked screenshot */}
         {backSrc && (
           <div
-            className="absolute inset-0 rounded-xl shadow-xl overflow-hidden border-4 border-white dark:border-gray-700 bg-white dark:bg-gray-800 opacity-90 z-0"
+            className="absolute inset-0 overflow-hidden border-2 border-black dark:border-gray-300 bg-white dark:bg-gray-900 opacity-95 z-0 shadow-[6px_6px_0px_rgba(0,0,0,0.85)] dark:shadow-[6px_6px_0px_rgba(156,163,175,0.36)]"
             style={{
               transform: `translate(${stackOffset}, ${stackOffset}) rotate(${rotationDeg}deg) scale(${backScale})`,
             }}
@@ -240,7 +240,7 @@ function SwipeableScreenshotStack({
 
         {/* Front screenshot (draggable) */}
         <div
-          className="absolute inset-0 rounded-xl shadow-2xl overflow-hidden border-4 border-white dark:border-gray-700 bg-white dark:bg-gray-800 z-10 will-change-transform"
+          className="absolute inset-0 overflow-hidden border-2 border-black dark:border-gray-300 bg-white dark:bg-gray-900 z-10 will-change-transform shadow-[10px_10px_0px_rgba(0,0,0,0.9)] dark:shadow-[10px_10px_0px_rgba(156,163,175,0.4)]"
           style={{
             transform: `translateX(${dragX}px) rotate(${-(rotationDeg * 0.5) + dragX * 0.02}deg)`,
             transition: isDragging ? 'none' : 'transform 220ms ease',
@@ -343,12 +343,12 @@ export function MemeGeneratorShowcase({ screenshots = [] }: MemeGeneratorShowcas
   ];
 
   return (
-    <section className="py-8 md:py-12 bg-white dark:bg-gray-800 rounded-2xl mb-12 overflow-hidden">
+    <section className="py-8 md:py-12 bg-white dark:bg-gray-900 mb-12 overflow-hidden">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-12">
           <div className="inline-block mb-4">
-            <span className="px-3 py-1 text-sm font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 rounded-full">
+              <span className="px-3 py-1 text-xs font-black uppercase tracking-wider text-black dark:text-white bg-[#f7f4ee] dark:bg-gray-800 border border-black dark:border-white">
               Still exists
             </span>
           </div>
@@ -383,7 +383,7 @@ export function MemeGeneratorShowcase({ screenshots = [] }: MemeGeneratorShowcas
 
               {/* Text content */}
               <div className={`${textOrder} space-y-6`}>
-                <h2 className="text-3xl md:text-4xl font-bold leading-tight">
+                <h2 className="text-3xl md:text-4xl font-black uppercase tracking-tight leading-tight">
                   {section.title}
                 </h2>
                 
@@ -402,17 +402,17 @@ export function MemeGeneratorShowcase({ screenshots = [] }: MemeGeneratorShowcas
 
                 {index === 0 && (
                   <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                    <Button 
+                    <Button
                       size="lg" 
-                      className="w-full sm:w-auto"
+                      className="w-full sm:w-auto rounded-none border-2 border-black dark:border-white uppercase tracking-wide font-bold"
                       onClick={() => window.location.href = '/meme-generator'}
                     >
                       Open the editor
                     </Button>
-                    <Button 
+                    <Button
                       variant="outline" 
                       size="lg" 
-                      className="w-full sm:w-auto"
+                      className="w-full sm:w-auto rounded-none border-2 border-black dark:border-white uppercase tracking-wide font-bold"
                       onClick={() => window.location.href = '/memes'}
                     >
                       Stare at the feed

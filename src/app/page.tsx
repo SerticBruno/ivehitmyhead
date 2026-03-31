@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 
 import { FeaturedMemes } from '@/components/meme';
-import { Button, MemeGeneratorShowcase } from '@/components/ui';
+import { Button, MemeCardStyleLab, MemeGeneratorShowcase } from '@/components/ui';
 import { ICONS } from '@/lib/utils/categoryIcons';
 
 import { useCategories } from '@/lib/hooks/useCategories';
@@ -116,18 +116,22 @@ export default function Home() {
   // Show loading state while fetching data
   if (loading || categoriesLoading) {
     return (
-      <div className="bg-gray-50 dark:bg-gray-900">
+      <div className="bg-[#f7f4ee] dark:bg-gray-950">
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Hero Section */}
-          <section className="text-center mb-12">
-            <h1 className="text-4xl md:text-6xl font-bold mb-4">
-              Welcome to <span className="text-blue-600">IVEHITMYHEAD</span>
+          <section className="text-center mb-12 border-2 border-black dark:border-gray-300 bg-white dark:bg-gray-900 p-8 shadow-[8px_8px_0px_rgba(0,0,0,0.9)] dark:shadow-[8px_8px_0px_rgba(156,163,175,0.42)]">
+            <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tight mb-4">
+              Welcome to <span className="text-blue-700 dark:text-blue-300">IVEHITMYHEAD</span>
             </h1>
-            <p className="text-xl text-gray-600 dark:text-gray-400 mb-8 max-w-2xl mx-auto">
+            <p className="text-xl text-gray-700 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
               Discover, share, and create the dullest memes on the internet.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="text-lg px-8" onClick={() => window.location.href = '/memes'}>
+              <Button
+                size="lg"
+                className="text-lg px-8 rounded-none border-2 border-black dark:border-gray-300 uppercase tracking-wide font-bold"
+                onClick={() => window.location.href = '/memes'}
+              >
                 Open the feed
               </Button>
             </div>
@@ -137,15 +141,15 @@ export default function Home() {
           <MemeGeneratorShowcase />
 
           {/* Hottest memes (last month) - loading */}
-          <section className="mb-12">
+          <section className="mb-12 bg-white dark:bg-gray-900 p-6">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h2 className="text-2xl font-bold">Hottest Memes - Last Month</h2>
+                <h2 className="text-2xl font-black uppercase tracking-tight">Hottest Memes - Last Month</h2>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                   Who hit like this month. That is the entire bar for inclusion.
                 </p>
               </div>
-              <Button variant="ghost" onClick={() => window.location.href = '/memes'}>
+              <Button variant="ghost" className="rounded-none border-2 border-transparent uppercase tracking-wide font-bold" onClick={() => window.location.href = '/memes'}>
                 <ICONS.ArrowRight className="w-4 h-4 mr-1" />
                 View All
               </Button>
@@ -188,7 +192,7 @@ export default function Home() {
   // Show error state if there's an issue
   if (error || categoriesError) {
     return (
-      <div className="bg-gray-50 dark:bg-gray-900">
+      <div className="bg-[#f7f4ee] dark:bg-gray-950">
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center py-20">
             <div className="text-4xl mb-4 flex justify-center">
@@ -208,18 +212,22 @@ export default function Home() {
   }
 
   return (
-    <div className="bg-gray-50 dark:bg-gray-900">
+    <div className="bg-[#f7f4ee] dark:bg-gray-950">
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Hero Section */}
-        <section className="text-center mb-12">
-          <h1 className="text-4xl md:text-6xl font-bold mb-4">
-            Welcome to <span className="text-blue-600">IVEHITMYHEAD</span>
+        <section className="text-center mb-12 border-2 border-black dark:border-gray-300 bg-white dark:bg-gray-900 p-8 shadow-[8px_8px_0px_rgba(0,0,0,0.9)] dark:shadow-[8px_8px_0px_rgba(156,163,175,0.42)]">
+          <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tight mb-4">
+            Welcome to <span className="text-blue-700 dark:text-blue-300">IVEHITMYHEAD</span>
           </h1>
-          <p className="text-xl text-gray-600 dark:text-gray-400 mb-8 max-w-2xl mx-auto">
+          <p className="text-xl text-gray-700 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
             Discover, share, and create the dullest memes on the internet.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="text-lg px-8" onClick={() => window.location.href = '/memes'}>
+            <Button
+              size="lg"
+              className="text-lg px-8 rounded-none border-2 border-black dark:border-gray-300 uppercase tracking-wide font-bold"
+              onClick={() => window.location.href = '/memes'}
+            >
               Open the feed
             </Button>
           </div>
@@ -229,15 +237,15 @@ export default function Home() {
         <MemeGeneratorShowcase />
 
         {/* Hottest memes (last month) */}
-        <section className="mb-12">
+        <section className="mb-12 bg-white dark:bg-gray-900 p-6">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-2xl font-bold">Hottest Memes - Last Month</h2>
+              <h2 className="text-2xl font-black uppercase tracking-tight">Hottest Memes - Last Month</h2>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                 Who hit like this month. That is the entire bar for inclusion.
               </p>
             </div>
-            <Button variant="ghost" onClick={() => window.location.href = '/memes'}>
+            <Button variant="ghost" className="rounded-none border-2 border-transparent uppercase tracking-wide font-bold" onClick={() => window.location.href = '/memes'}>
               <ICONS.ArrowRight className="w-4 h-4 mr-1" />
               View All
             </Button>
