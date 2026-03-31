@@ -237,7 +237,7 @@ export default function Home() {
         <MemeGeneratorShowcase />
 
         {/* Hottest memes (last month) */}
-        <section className="mb-12 bg-white dark:bg-gray-900 p-6">
+        <section className="mb-12">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="text-2xl font-black uppercase tracking-tight">Hottest Memes - Last Month</h2>

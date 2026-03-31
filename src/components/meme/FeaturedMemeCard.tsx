@@ -77,7 +77,9 @@ const FeaturedMemeCard: React.FC<FeaturedMemeCardProps> = ({
         </CardHeader>
         
         <CardContent className="p-0 flex-grow">
-          <div className="relative w-full h-56 sm:h-64 bg-[#f7f4ee] dark:bg-gray-950 border-y-2 border-zinc-700 dark:border-zinc-400">
+          <div
+            className="relative w-full h-[calc(100vh-300px)] min-h-[400px] max-h-[800px] sm:h-64 sm:min-h-0 sm:max-h-none bg-[#f7f4ee] dark:bg-gray-950 border-y-2 border-zinc-700 dark:border-zinc-400"
+          >
             <Image
               src={meme.image_url}
               alt={meme.title}
