@@ -221,7 +221,7 @@ function SwipeableScreenshotStack({
         {/* Back/stacked screenshot */}
         {backSrc && (
           <div
-            className="absolute inset-0 overflow-hidden border-2 border-black dark:border-gray-300 bg-white dark:bg-gray-900 opacity-95 z-0 shadow-[6px_6px_0px_rgba(0,0,0,0.85)] dark:shadow-[6px_6px_0px_rgba(156,163,175,0.36)]"
+            className="absolute inset-0 overflow-hidden border-2 border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-900 opacity-95 z-0 shadow-[6px_6px_0px_rgba(0,0,0,0.85)] dark:shadow-[6px_6px_0px_rgba(156,163,175,0.36)]"
             style={{
               transform: `translate(${stackOffset}, ${stackOffset}) rotate(${rotationDeg}deg) scale(${backScale})`,
             }}
@@ -240,7 +240,7 @@ function SwipeableScreenshotStack({
 
         {/* Front screenshot (draggable) */}
         <div
-          className="absolute inset-0 overflow-hidden border-2 border-black dark:border-gray-300 bg-white dark:bg-gray-900 z-10 will-change-transform shadow-[10px_10px_0px_rgba(0,0,0,0.9)] dark:shadow-[10px_10px_0px_rgba(156,163,175,0.4)]"
+          className="absolute inset-0 overflow-hidden border-2 border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-900 z-10 will-change-transform shadow-[10px_10px_0px_rgba(0,0,0,0.9)] dark:shadow-[10px_10px_0px_rgba(156,163,175,0.4)]"
           style={{
             transform: `translateX(${dragX}px) rotate(${-(rotationDeg * 0.5) + dragX * 0.02}deg)`,
             transition: isDragging ? 'none' : 'transform 220ms ease',
@@ -348,7 +348,7 @@ export function MemeGeneratorShowcase({ screenshots = [] }: MemeGeneratorShowcas
         {/* Header */}
         <div className="text-center mb-12">
           <div className="inline-block mb-4">
-              <span className="px-3 py-1 text-xs font-black uppercase tracking-wider text-black dark:text-white bg-[#f7f4ee] dark:bg-gray-800 border border-black dark:border-white">
+              <span className="px-3 py-1 text-xs font-black uppercase tracking-wider text-black dark:text-white bg-[#f7f4ee] dark:bg-gray-800 border border-zinc-700 dark:border-zinc-400">
               Still exists
             </span>
           </div>

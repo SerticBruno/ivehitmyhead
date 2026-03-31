@@ -46,7 +46,7 @@ export const MemeGrid: React.FC<MemeGridProps> = ({
     return (
       <div className={`grid gap-6 ${className}`}>
         {[...Array(6)].map((_, i) => (
-          <div key={i} className="bg-white dark:bg-gray-900 border-2 border-black dark:border-gray-300 shadow-[8px_8px_0px_rgba(0,0,0,0.85)] dark:shadow-[8px_8px_0px_rgba(156,163,175,0.42)] overflow-hidden rounded-none">
+          <div key={i} className="bg-white dark:bg-gray-900 border-2 border-zinc-700 dark:border-zinc-400 shadow-[8px_8px_0px_rgba(0,0,0,0.85)] dark:shadow-[8px_8px_0px_rgba(156,163,175,0.42)] overflow-hidden rounded-none">
             <div className="px-6 pt-6 pb-3">
               <div className="flex items-start justify-between gap-4 mb-3">
                 <div className="flex-1">
@@ -66,7 +66,7 @@ export const MemeGrid: React.FC<MemeGridProps> = ({
               </div>
             </div>
             <div
-              className="bg-gray-200 dark:bg-gray-700 animate-pulse border-y-2 border-black dark:border-gray-300"
+              className="bg-gray-200 dark:bg-gray-700 animate-pulse border-y-2 border-zinc-700 dark:border-zinc-400"
               style={memeImageAreaStyle}
             ></div>
             <div className="p-6 pt-4">

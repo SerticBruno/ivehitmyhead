@@ -577,7 +577,7 @@ export function MemesFeedPanel({ memeGridRef, sidebar }: MemesFeedPanelProps) {
 
   return (
     <>
-      <section className="text-center mb-12 border-2 border-black dark:border-gray-300 bg-white dark:bg-gray-900 p-8 shadow-[8px_8px_0px_rgba(0,0,0,0.9)] dark:shadow-[8px_8px_0px_rgba(156,163,175,0.42)]">
+      <section className="text-center mb-12 border-2 border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-900 p-8 shadow-[8px_8px_0px_rgba(0,0,0,0.9)] dark:shadow-[8px_8px_0px_rgba(156,163,175,0.42)]">
         <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tight mb-4">
           {heroContent.categoryText}
         </h1>
@@ -602,7 +602,7 @@ export function MemesFeedPanel({ memeGridRef, sidebar }: MemesFeedPanelProps) {
           />
 
           {memesError ? (
-            <div className="text-center py-12 border-2 border-black dark:border-gray-300 bg-white dark:bg-gray-900 p-6 shadow-[6px_6px_0px_rgba(0,0,0,0.85)] dark:shadow-[6px_6px_0px_rgba(156,163,175,0.42)]">
+            <div className="text-center py-12 border-2 border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-900 p-6 shadow-[6px_6px_0px_rgba(0,0,0,0.85)] dark:shadow-[6px_6px_0px_rgba(156,163,175,0.42)]">
               <div className="text-4xl mb-4 flex justify-center">
                 <ICONS.Star className="w-16 h-16 text-gray-400" />
               </div>

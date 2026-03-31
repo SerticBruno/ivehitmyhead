@@ -35,7 +35,7 @@ function getCardContainerClasses(look: Exclude<CardLook, 'all'>) {
   }
 
   if (look === 'editorial') {
-    return 'bg-white dark:bg-gray-900 border-2 border-black dark:border-gray-300 rounded-none p-0 shadow-[8px_8px_0px_rgba(0,0,0,0.9)] dark:shadow-[8px_8px_0px_rgba(156,163,175,0.42)]';
+    return 'bg-white dark:bg-gray-900 border-2 border-zinc-700 dark:border-zinc-400 rounded-none p-0 shadow-[8px_8px_0px_rgba(0,0,0,0.9)] dark:shadow-[8px_8px_0px_rgba(156,163,175,0.42)]';
   }
 
   return 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-3 shadow-md';
@@ -43,15 +43,15 @@ function getCardContainerClasses(look: Exclude<CardLook, 'all'>) {
 
 function getEditorialContainerClasses(variant: EditorialVariant) {
   if (variant === 'tabloid') {
-    return 'bg-white dark:bg-gray-900 border-4 border-black dark:border-white p-0 rounded-none shadow-[6px_6px_0px_rgba(245,158,11,0.9)]';
+    return 'bg-white dark:bg-gray-900 border-4 border-zinc-700 dark:border-zinc-400 p-0 rounded-none shadow-[6px_6px_0px_rgba(245,158,11,0.9)]';
   }
   if (variant === 'brutalist') {
-    return 'bg-[#fffdf7] dark:bg-gray-900 border-2 border-black dark:border-white p-0 rounded-none shadow-none';
+    return 'bg-[#fffdf7] dark:bg-gray-900 border-2 border-zinc-700 dark:border-zinc-400 p-0 rounded-none shadow-none';
   }
   if (variant === 'mono') {
     return 'bg-white dark:bg-black border border-gray-900 dark:border-gray-300 p-0 rounded-none shadow-[10px_10px_0px_rgba(17,24,39,0.55)]';
   }
-  return 'bg-white dark:bg-gray-900 border-2 border-black dark:border-gray-300 p-0 rounded-none shadow-[8px_8px_0px_rgba(0,0,0,0.9)] dark:shadow-[8px_8px_0px_rgba(156,163,175,0.42)]';
+  return 'bg-white dark:bg-gray-900 border-2 border-zinc-700 dark:border-zinc-400 p-0 rounded-none shadow-[8px_8px_0px_rgba(0,0,0,0.9)] dark:shadow-[8px_8px_0px_rgba(156,163,175,0.42)]';
 }
 
 function getTitleClasses(look: Exclude<CardLook, 'all'>, editorialVariant: EditorialVariant) {

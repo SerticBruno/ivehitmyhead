@@ -48,7 +48,7 @@ const Header: React.FC<HeaderProps> = ({ showSearch = true }) => {
   ];
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b-2 border-black dark:border-white bg-[#f7f4ee] dark:bg-gray-950">
+    <header className="sticky top-0 z-50 w-full border-b-2 border-zinc-700 dark:border-zinc-400 bg-[#f7f4ee] dark:bg-gray-950">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           {/* Logo and Brand */}
@@ -65,7 +65,7 @@ const Header: React.FC<HeaderProps> = ({ showSearch = true }) => {
                 <Input
                   name="search"
                   placeholder="Search the archive..."
-                  className="pr-10 rounded-none border-2 border-black dark:border-white bg-white dark:bg-gray-900"
+                  className="pr-10 rounded-none border-2 border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-900"
                 />
                 <Button
                   type="submit"
@@ -125,7 +125,7 @@ const Header: React.FC<HeaderProps> = ({ showSearch = true }) => {
           {/* Mobile Menu Button */}
           <button
             onClick={toggleMobileMenu}
-            className="md:hidden p-2 rounded-none border-2 border-black dark:border-white text-gray-700 hover:text-black hover:bg-white dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-900"
+            className="md:hidden p-2 rounded-none border-2 border-zinc-700 dark:border-zinc-400 text-gray-700 hover:text-black hover:bg-white dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-900"
             aria-label="Toggle mobile menu"
           >
             {isMobileMenuOpen ? (
@@ -139,7 +139,7 @@ const Header: React.FC<HeaderProps> = ({ showSearch = true }) => {
         {/* Mobile Navigation Menu */}
         {isMobileMenuOpen && (
           <div className="md:hidden">
-            <div className="px-2 pt-2 pb-3 space-y-1 border-t-2 border-black dark:border-white bg-[#f7f4ee] dark:bg-gray-950">
+            <div className="px-2 pt-2 pb-3 space-y-1 border-t-2 border-zinc-700 dark:border-zinc-400 bg-[#f7f4ee] dark:bg-gray-950">
               {/* Mobile Search Bar */}
               {showSearch && (
                 <div className="px-3 py-2">
@@ -147,7 +147,7 @@ const Header: React.FC<HeaderProps> = ({ showSearch = true }) => {
                     <Input
                       name="search"
                       placeholder="Search the archive..."
-                      className="pr-10 rounded-none border-2 border-black dark:border-white bg-white dark:bg-gray-900"
+                      className="pr-10 rounded-none border-2 border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-900"
                     />
                     <Button
                       type="submit"
@@ -171,7 +171,7 @@ const Header: React.FC<HeaderProps> = ({ showSearch = true }) => {
                     className={`block px-3 py-2 text-base font-bold uppercase tracking-wide rounded-none border-2 transition-colors duration-150 ${
                       isActive
                         ? 'bg-black text-white border-black dark:bg-white dark:text-black dark:border-white'
-                        : 'text-gray-800 border-black hover:bg-white dark:text-gray-200 dark:border-white dark:hover:bg-gray-900'
+                        : 'text-gray-800 border-zinc-700 hover:bg-white dark:text-gray-200 dark:border-zinc-400 dark:hover:bg-gray-900'
                     }`}
                     onClick={closeMobileMenu}
                   >
@@ -188,7 +188,7 @@ const Header: React.FC<HeaderProps> = ({ showSearch = true }) => {
                     className={`block px-3 py-2 text-base font-bold uppercase tracking-wide rounded-none border-2 transition-colors duration-150 flex items-center gap-2 ${
                       pathname?.startsWith('/admin')
                         ? 'bg-black text-white border-black dark:bg-white dark:text-black dark:border-white'
-                        : 'text-gray-800 border-black hover:bg-white dark:text-gray-200 dark:border-white dark:hover:bg-gray-900'
+                        : 'text-gray-800 border-zinc-700 hover:bg-white dark:text-gray-200 dark:border-zinc-400 dark:hover:bg-gray-900'
                     }`}
                     onClick={closeMobileMenu}
                   >
@@ -197,7 +197,7 @@ const Header: React.FC<HeaderProps> = ({ showSearch = true }) => {
                   </Link>
                   <button
                     onClick={handleLogout}
-                    className="w-full text-left px-3 py-2 text-base font-bold uppercase tracking-wide text-gray-800 border-2 border-black hover:bg-white dark:text-gray-200 dark:border-white dark:hover:bg-gray-900 rounded-none transition-colors duration-150 flex items-center gap-2"
+                    className="w-full text-left px-3 py-2 text-base font-bold uppercase tracking-wide text-gray-800 border-2 border-zinc-700 hover:bg-white dark:text-gray-200 dark:border-zinc-400 dark:hover:bg-gray-900 rounded-none transition-colors duration-150 flex items-center gap-2"
                   >
                     <LogOut className="h-4 w-4" />
                     <span>Logout</span>

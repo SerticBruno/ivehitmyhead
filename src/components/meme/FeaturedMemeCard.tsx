@@ -48,32 +48,36 @@ const FeaturedMemeCard: React.FC<FeaturedMemeCardProps> = ({
   return (
     <Link href={`/meme/${meme.slug}`} className="block h-full">
       <Card 
-        className={cn("overflow-hidden cursor-pointer h-full flex flex-col rounded-none border-2 border-black dark:border-gray-300 shadow-[6px_6px_0px_rgba(0,0,0,0.85)] dark:shadow-[6px_6px_0px_rgba(156,163,175,0.42)]", className)}
+        className={cn("overflow-hidden cursor-pointer h-full flex flex-col rounded-none border-2 border-zinc-700 dark:border-zinc-400 shadow-[6px_6px_0px_rgba(0,0,0,0.85)] dark:shadow-[6px_6px_0px_rgba(156,163,175,0.42)]", className)}
       >
         <CardHeader className="px-4 pt-4 pb-3 flex-shrink-0">
-          <div className="space-y-2">
-            <h3 className="font-black uppercase tracking-tight text-lg line-clamp-2 leading-tight">{meme.title}</h3>
+          <div className="space-y-0">
+            <div className="flex items-start gap-2">
+              <h3 className="font-black uppercase tracking-tight text-lg leading-tight flex-1 min-w-0 line-clamp-2">
+                {meme.title}
+              </h3>
+              <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide font-semibold text-gray-600 dark:text-gray-300 border border-zinc-700 dark:border-zinc-400 px-2 py-0.5 bg-[#f7f4ee] dark:bg-gray-900 flex-shrink-0">
+                {meme.category ? (
+                  <>
+                    {getCategoryIconOrEmoji(meme.category.name, meme.category.emoji)}
+                    <span>{meme.category.name}</span>
+                  </>
+                ) : (
+                  <>
+                    <span>📁</span>
+                    <span>Uncategorized</span>
+                  </>
+                )}
+              </span>
+            </div>
             <p className="text-sm text-gray-500 dark:text-gray-400">
               by {meme.author?.display_name || meme.author?.username || 'Unknown'}
             </p>
-            <div className="flex items-center gap-2 pt-1">
-              {meme.category ? (
-                <>
-                  {getCategoryIconOrEmoji(meme.category.name, meme.category.emoji)}
-                  <span className="text-xs uppercase tracking-wide font-semibold text-gray-600 dark:text-gray-300">{meme.category.name}</span>
-                </>
-              ) : (
-                <>
-                  <span className="text-xs text-gray-400">📁</span>
-                  <span className="text-xs text-gray-400">Uncategorized</span>
-                </>
-              )}
-            </div>
           </div>
         </CardHeader>
         
         <CardContent className="p-0 flex-grow">
-          <div className="relative w-full h-56 sm:h-64 bg-[#f7f4ee] dark:bg-gray-950 border-y-2 border-black dark:border-gray-300">
+          <div className="relative w-full h-56 sm:h-64 bg-[#f7f4ee] dark:bg-gray-950 border-y-2 border-zinc-700 dark:border-zinc-400">
             <Image
               src={meme.image_url}
               alt={meme.title}

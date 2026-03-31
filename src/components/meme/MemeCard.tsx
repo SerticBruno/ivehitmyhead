@@ -81,8 +81,8 @@ const MemeCard: React.FC<MemeCardProps> = ({
 
   return (
     <Link href={`/meme/${meme.slug}`} className="block">
-      <Card 
-        className={cn("overflow-hidden hover:translate-x-[-1px] hover:translate-y-[-1px] transition-transform cursor-pointer rounded-none border-2 border-black dark:border-gray-300 shadow-[8px_8px_0px_rgba(0,0,0,0.88)] dark:shadow-[8px_8px_0px_rgba(156,163,175,0.42)]", className)}
+      <Card
+        className={cn("overflow-hidden cursor-pointer rounded-none border-2 border-zinc-700 dark:border-zinc-400 shadow-[8px_8px_0px_rgba(0,0,0,0.88)] dark:shadow-[8px_8px_0px_rgba(156,163,175,0.42)]", className)}
       >
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
@@ -106,7 +106,7 @@ const MemeCard: React.FC<MemeCardProps> = ({
           </div>
           <div className="flex flex-wrap gap-2 mt-2">
             {meme.category && (
-              <span className="inline-flex items-center px-3 py-1.5 text-xs font-semibold uppercase tracking-wide bg-[#f7f4ee] text-gray-800 dark:bg-gray-900 dark:text-gray-200 border border-black dark:border-gray-300 transition-colors duration-200">
+              <span className="inline-flex items-center px-3 py-1.5 text-xs font-semibold uppercase tracking-wide bg-[#f7f4ee] text-gray-800 dark:bg-gray-900 dark:text-gray-200 border border-zinc-700 dark:border-zinc-400 transition-colors duration-200">
                 {getCategoryIconOrEmoji(meme.category.name, meme.category.emoji)}
                 <span className="ml-1.5 font-semibold">{meme.category.name}</span>
               </span>
@@ -114,13 +114,13 @@ const MemeCard: React.FC<MemeCardProps> = ({
             {meme.tags && meme.tags.length > 0 && meme.tags.slice(0, 3).map((tag, index) => (
               <span
                 key={index}
-                className="inline-flex items-center px-2.5 py-1 text-xs font-semibold uppercase tracking-wide bg-white text-gray-800 dark:bg-gray-900 dark:text-gray-200 border border-black dark:border-gray-300 transition-colors duration-200"
+                className="inline-flex items-center px-2.5 py-1 text-xs font-semibold uppercase tracking-wide bg-white text-gray-800 dark:bg-gray-900 dark:text-gray-200 border border-zinc-700 dark:border-zinc-400 transition-colors duration-200"
               >
                 #{tag}
               </span>
             ))}
             {meme.tags && meme.tags.length > 3 && (
-              <span className="inline-flex items-center px-2.5 py-1 text-xs font-semibold uppercase tracking-wide bg-[#f7f4ee] text-gray-700 dark:bg-gray-800 dark:text-gray-300 border border-black dark:border-gray-300">
+              <span className="inline-flex items-center px-2.5 py-1 text-xs font-semibold uppercase tracking-wide bg-[#f7f4ee] text-gray-700 dark:bg-gray-800 dark:text-gray-300 border border-zinc-700 dark:border-zinc-400">
                 +{meme.tags.length - 3} more
               </span>
             )}
@@ -129,7 +129,7 @@ const MemeCard: React.FC<MemeCardProps> = ({
         
         <CardContent className="p-0">
           <div 
-            className="relative w-full border-y-2 border-black dark:border-gray-300"
+            className="relative w-full border-y-2 border-zinc-700 dark:border-zinc-400"
             style={{ 
               height: 'calc(100vh - 300px)',
               minHeight: '400px',
