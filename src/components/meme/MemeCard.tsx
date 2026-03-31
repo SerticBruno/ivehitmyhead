@@ -81,19 +81,19 @@ const MemeCard: React.FC<MemeCardProps> = ({
 
   return (
     <Link href={`/meme/${meme.slug}`} className="block">
-      <Card 
-        className={cn("overflow-hidden hover:shadow-lg transition-shadow cursor-pointer", className)}
+      <Card
+        className={cn("overflow-hidden cursor-pointer rounded-none border-2 border-zinc-700 dark:border-zinc-400 shadow-[8px_8px_0px_rgba(0,0,0,0.88)] dark:shadow-[8px_8px_0px_rgba(156,163,175,0.42)]", className)}
       >
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <div>
-              <h3 className="font-semibold text-lg">{meme.title}</h3>
+            <div className="min-w-0 flex-1">
+              <h3 className="font-black uppercase tracking-tight text-lg">{meme.title}</h3>
               <p className="text-sm text-gray-500">
                 by {meme.author?.display_name || meme.author?.username || 'Unknown'}
               </p>
             </div>
             <div className="text-right">
-              <div className="text-sm text-gray-600 font-medium">
+              <div className="text-sm text-gray-700 dark:text-gray-300 font-semibold uppercase tracking-wide">
                 {formatRelativeTime(meme.created_at)}
               </div>
               <div className="text-xs text-gray-500">
@@ -104,32 +104,28 @@ const MemeCard: React.FC<MemeCardProps> = ({
               </div>
             </div>
           </div>
-          <div className="flex flex-wrap gap-2 mt-2">
-            {meme.category && (
-              <span className="inline-flex items-center px-3 py-1.5 text-xs font-medium bg-white text-gray-700 rounded-full dark:bg-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200">
-                {getCategoryIconOrEmoji(meme.category.name, meme.category.emoji)}
-                <span className="ml-1.5 font-semibold">{meme.category.name}</span>
-              </span>
-            )}
-            {meme.tags && meme.tags.length > 0 && meme.tags.slice(0, 3).map((tag, index) => (
-              <span
-                key={index}
-                className="inline-flex items-center px-2.5 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full dark:bg-blue-900/30 dark:text-blue-200 border border-blue-200 dark:border-blue-700 hover:bg-blue-100 dark:hover:bg-blue-800/50 transition-colors duration-200"
-              >
-                #{tag}
-              </span>
-            ))}
-            {meme.tags && meme.tags.length > 3 && (
-              <span className="inline-flex items-center px-2.5 py-1 text-xs font-medium bg-gray-100 text-gray-600 rounded-full dark:bg-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600">
-                +{meme.tags.length - 3} more
-              </span>
-            )}
-          </div>
+          {meme.tags && meme.tags.length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-2">
+              {meme.tags.slice(0, 3).map((tag, index) => (
+                <span
+                  key={index}
+                  className="inline-flex items-center px-2.5 py-1 text-xs font-semibold uppercase tracking-wide bg-white text-gray-800 dark:bg-gray-900 dark:text-gray-200 border border-zinc-700 dark:border-zinc-400 transition-colors duration-200"
+                >
+                  #{tag}
+                </span>
+              ))}
+              {meme.tags.length > 3 && (
+                <span className="inline-flex items-center px-2.5 py-1 text-xs font-semibold uppercase tracking-wide bg-[#f7f4ee] text-gray-700 dark:bg-gray-800 dark:text-gray-300 border border-zinc-700 dark:border-zinc-400">
+                  +{meme.tags.length - 3} more
+                </span>
+              )}
+            </div>
+          )}
         </CardHeader>
         
         <CardContent className="p-0">
           <div 
-            className="relative w-full" 
+            className="relative w-full border-y-2 border-zinc-700 dark:border-zinc-400"
             style={{ 
               height: 'calc(100vh - 300px)',
               minHeight: '400px',
@@ -174,8 +170,8 @@ const MemeCard: React.FC<MemeCardProps> = ({
           </div>
         </CardContent>
         
-        <CardFooter className="flex items-center justify-between pt-4">
-          <div className="flex items-center space-x-4">
+        <CardFooter className="flex items-center justify-between gap-3 pt-4">
+          <div className="flex min-w-0 items-center space-x-4">
             <Button
               variant="ghost"
               size="sm"
@@ -191,7 +187,7 @@ const MemeCard: React.FC<MemeCardProps> = ({
                 e.nativeEvent.stopImmediatePropagation();
               }}
               disabled={isLiking}
-              className={`flex items-center space-x-1 ${isActuallyLiked ? 'text-red-500' : ''} ${isLiking ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className={`flex items-center space-x-1 rounded-none border-2 border-transparent uppercase tracking-wide font-semibold ${isActuallyLiked ? 'text-red-500' : ''} ${isLiking ? 'opacity-50 cursor-not-allowed' : ''}`}
               style={{ zIndex: 10, position: 'relative' }}
             >
               <span>
@@ -210,7 +206,7 @@ const MemeCard: React.FC<MemeCardProps> = ({
               variant="ghost"
               size="sm"
               onClick={handleShare}
-              className="flex items-center space-x-1"
+              className="flex items-center space-x-1 rounded-none border-2 border-transparent uppercase tracking-wide font-semibold"
             >
               <span><ICONS.Share2 className="w-4 h-4" /></span>
               <span>{meme.shares_count}</span>
@@ -221,6 +217,12 @@ const MemeCard: React.FC<MemeCardProps> = ({
               <span>{meme.views}</span>
             </div>
           </div>
+          {meme.category && (
+            <span className="inline-flex shrink-0 items-center px-2.5 py-1 text-xs font-semibold uppercase tracking-wide bg-[#f7f4ee] text-gray-800 dark:bg-gray-900 dark:text-gray-200 border border-zinc-700 dark:border-zinc-400">
+              {getCategoryIconOrEmoji(meme.category.name, meme.category.emoji)}
+              <span className="ml-1.5">{meme.category.name}</span>
+            </span>
+          )}
         </CardFooter>
       </Card>
     </Link>
