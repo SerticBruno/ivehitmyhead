@@ -849,7 +849,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
         <div className="flex flex-col min-h-0 flex-[2] lg:flex-[2] order-2 lg:order-1" style={{ height: '100%', overflow: 'hidden', minWidth: 0 }}>
           <div className="bg-white dark:bg-gray-900 rounded-none shadow-[8px_8px_0px_rgba(0,0,0,0.88)] dark:shadow-[8px_8px_0px_rgba(156,163,175,0.42)] p-2 md:p-4 border-2 border-zinc-700 dark:border-zinc-400 flex-1 flex flex-col min-h-0" style={{ height: '100%', overflow: 'hidden' }}>
             <div 
-              className="flex justify-center items-center bg-[#f7f4ee] dark:bg-gray-950 rounded-none p-2 md:p-4 flex-1 min-h-0 border-2 border-zinc-700 dark:border-zinc-400" 
+              className="flex justify-center items-center bg-[#f7f4ee] dark:bg-gray-950 rounded-none p-2 md:p-4 flex-1 min-h-0" 
               style={{ 
                 height: '100%', 
                 width: '100%',
@@ -861,7 +861,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
               {/* Canvas - always rendered for proper initialization */}
               <canvas
                 ref={canvasRef}
-                className="border-2 border-zinc-700 dark:border-zinc-400 rounded-none"
+                className="rounded-none"
                 style={{ 
                   maxWidth: '100%', 
                   maxHeight: '100%', 
@@ -882,7 +882,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
               {/* Placeholder overlay when no template is selected */}
               {!selectedTemplate && (
                 <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 p-8 text-center">
-                  <div className="pointer-events-none w-20 h-20 mb-1 rounded-none border-2 border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-900 flex items-center justify-center">
+                  <div className="pointer-events-none w-20 h-20 mb-1 rounded-none bg-white dark:bg-gray-900 flex items-center justify-center">
                     <svg
                       className="w-10 h-10 text-gray-400 dark:text-gray-500"
                       fill="none"
