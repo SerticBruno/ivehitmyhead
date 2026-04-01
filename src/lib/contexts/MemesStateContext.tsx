@@ -4,14 +4,14 @@ import React, { createContext, useContext, useState, useRef, useEffect, useLayou
 import { usePathname } from 'next/navigation';
 import { Meme } from '@/lib/types/meme';
 
-/** sessionStorage key: epoch ms when list scroll restore stops applying (set when leaving `/memes` for a route other than `/memes/[slug]`). */
+/** sessionStorage key: epoch ms when list scroll restore stops applying (set when leaving `/memes` for a route other than `/meme/[slug]`). */
 export const MEMES_LIST_SCROLL_EXPIRY_AT_KEY = 'memesListScrollExpiryAt';
 
 /** How long scroll position is restored after leaving the memes grid for non–detail pages. */
 export const MEMES_LIST_SCROLL_TTL_MS = 0.5 * 60 * 1000;
 
 function isMemeDetailPath(pathname: string): boolean {
-  return /^\/memes\/[^/]+$/.test(pathname);
+  return /^\/meme\/[^/]+$/.test(pathname);
 }
 
 interface MemesState {
