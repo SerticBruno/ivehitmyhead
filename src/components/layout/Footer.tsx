@@ -83,7 +83,7 @@ const Footer: React.FC = () => {
 
         <div className="border-t-2 border-zinc-700 dark:border-zinc-400 mt-8 pt-8 text-center">
           <p className="text-gray-500 dark:text-gray-400 flex items-center justify-center">
-            © 2024 IVEHITMYHEAD. All rights reserved. Held together with <ICONS.Heart className="w-4 h-4 mx-1 text-red-500" /> and mild denial.
+            © 2026 IVEHITMYHEAD. All rights reserved. Held together with <ICONS.Heart className="w-4 h-4 mx-1 text-red-500" /> and mild denial.
           </p>
         </div>
       </div>
