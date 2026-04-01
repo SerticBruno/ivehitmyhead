@@ -49,6 +49,8 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const controllerRef = useRef<MemeCanvasController | null>(null);
   const unregisterRef = useRef<(() => void) | null>(null);
+  /** Invalidates in-flight loads when a new template is chosen or the component unmounts (avoids stuck “loading” and stale updates). */
+  const templateLoadGenRef = useRef(0);
   const [selectedTemplate, setSelectedTemplate] = useState<MemeTemplate | null>(
     null
   );
@@ -78,6 +80,14 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
   }, []);
 
   useEffect(() => () => revokeCustomPhotoIfAny(), [revokeCustomPhotoIfAny]);
+
+  useEffect(
+    () => () => {
+      templateLoadGenRef.current += 1;
+    },
+    []
+  );
+
   const stopEditing = useCallback(() => {
     editingElementRef.current = null;
     setEditingTextIndex(null);
@@ -277,6 +287,8 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
 
     return () => {
       unregister();
+      controllerRef.current = null;
+      unregisterRef.current = null;
       window.removeEventListener('resize', handleResize);
     };
   }, [stopEditing, focusAndSelectTextAreaAtIndex]);
@@ -384,10 +396,44 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
 
       // Immediately reset dirty state when starting to load a new template
       setNavigationDirty(false);
+      templateLoadGenRef.current += 1;
+      const loadGen = templateLoadGenRef.current;
       setIsLoadingTemplate(true);
+
+      const finalizeTemplateLoad = (
+        tmpl: MemeTemplate,
+        elements: TextElement[]
+      ) => {
+        if (loadGen !== templateLoadGenRef.current) return;
+        const newInputs: Record<number, string> = {};
+        elements.forEach((el, idx) => {
+          newInputs[idx] = el.settings.text.value || '';
+        });
+        setElementTextInputs(newInputs);
+        setInitialTemplateState(
+          JSON.stringify({
+            templateId: tmpl.id,
+            elements: elements.map((el) => ({
+              text: el.settings.text.value,
+              x: el.x,
+              y: el.y,
+              width: el.width,
+              height: el.height,
+              fontSize: el.settings.font_size,
+              fontFamily: el.settings.font_family,
+              color: el.settings.color,
+              stroke: el.settings.stroke,
+              strokeWidth: el.settings.stroke_width,
+              alignment: el.settings.horizontal_align.current,
+            })),
+          })
+        );
+        setIsLoadingTemplate(false);
+      };
 
       // Helper function to actually load the template
       const doLoadTemplate = () => {
+        if (loadGen !== templateLoadGenRef.current) return;
         if (!controllerRef.current) {
           console.warn('Canvas controller not initialized yet, retrying...');
           setTimeout(doLoadTemplate, 100);
@@ -400,133 +446,155 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
           img.crossOrigin = 'anonymous';
         }
         img.onload = () => {
-          if (!controllerRef.current) return;
-          controllerRef.current.changeImage(img);
+          if (loadGen !== templateLoadGenRef.current) return;
+          const ctrl = controllerRef.current;
+          if (!ctrl) {
+            if (loadGen === templateLoadGenRef.current) {
+              setIsLoadingTemplate(false);
+            }
+            return;
+          }
+
+          ctrl.changeImage(img);
           setSelectedTemplate(template);
-          // Dirty state already reset above, just ensure it stays false
           setNavigationDirty(false);
 
-          // Clear existing elements
-          controllerRef.current.clear();
+          const textFields = template.textFields ?? [];
+          const afterLayout = () => {
+            if (loadGen !== templateLoadGenRef.current) return;
+            const c2 = controllerRef.current;
+            if (!c2) {
+              if (loadGen === templateLoadGenRef.current) {
+                setIsLoadingTemplate(false);
+              }
+              return;
+            }
 
-              // Create text elements from template textFields
-              if (template.textFields && template.textFields.length > 0) {
-                // Wait for canvas to be ready
-                setTimeout(() => {
-                  if (!controllerRef.current) return;
+            if (textFields.length === 0) {
+              c2.emit('elementsListChanged');
+              c2.requestFrame();
+              finalizeTemplateLoad(template, []);
+              return;
+            }
 
-                  const canvas = controllerRef.current.canvas;
-                  const canvasWidth = canvas.width;
-                  const canvasHeight = canvas.height;
+            const { canvas } = c2;
+            const canvasWidth = canvas.width;
+            const canvasHeight = canvas.height;
 
-                  template.textFields.forEach((field, fieldIndex: number) => {
-                // Convert percentage positions to pixel positions
-                const x = (field.x / 100) * canvasWidth;
-                const y = (field.y / 100) * canvasHeight;
-                const width = (field.width / 100) * canvasWidth;
-                const height = (field.height / 100) * canvasHeight;
-                
-                // Convert fontSize from pixels (for base 600px height) to actual canvas pixels
-                // fontSize in template is in pixels for a 600px high image
-                const fontSize = field.fontSize * (canvasHeight / 600);
+            textFields.forEach((field, fieldIndex: number) => {
+              if (loadGen !== templateLoadGenRef.current) return;
+              if (!controllerRef.current) return;
+              const x = (field.x / 100) * canvasWidth;
+              const y = (field.y / 100) * canvasHeight;
+              const width = (field.width / 100) * canvasWidth;
+              const height = (field.height / 100) * canvasHeight;
+              const fontSize = field.fontSize * (canvasHeight / 600);
 
-                // Create text element
-                if (!controllerRef.current) return;
-                const textElement = new TextElement(controllerRef.current);
-                
-                // Set size FIRST before any other operations to prevent shifting
-                // Force the width/height to match template
-                textElement.width = Math.max(Math.round(width), 50);
-                textElement.height = Math.max(Math.round(height), 30);
-                // Mark that size has been set by template (prevents auto-resize)
-                textElement.markSizeAsUserSet();
-                
-                // Set position AFTER size is set
-                textElement.x = Math.round(x);
-                textElement.y = Math.round(y);
-                
-                // Set text properties (text will wrap within the set size)
-                // Add placeholder text based on field index (Text 1, Text 2, etc.)
-                const placeholderText = `Text ${fieldIndex + 1}`;
-                
-                controllerRef.current!.updateElement(textElement, 'text', {
-                  value: placeholderText,
-                  multiline: true,
-                });
-                
-                controllerRef.current!.updateElement(textElement, 'font_family', field.fontFamily || template.defaultFont || 'Impact');
-                controllerRef.current!.updateElement(textElement, 'font_size', fontSize);
-                controllerRef.current!.updateElement(textElement, 'color', field.color || template.defaultColor || '#ffffff');
-                controllerRef.current!.updateElement(textElement, 'stroke', field.strokeColor || '#000000');
-                controllerRef.current!.updateElement(textElement, 'stroke_width', ((field.strokeWidth ?? 6) * (canvasHeight / 600))); // Scale stroke width
-                // Apply shadow settings if specified
-                if (field.useShadow !== undefined) {
-                  controllerRef.current!.updateElement(textElement, 'use_shadow', field.useShadow);
-                  controllerRef.current!.updateElement(textElement, 'shadow_color', field.shadowColor || '#000000');
-                  controllerRef.current!.updateElement(textElement, 'shadow_blur', (field.shadowBlur ?? 10) * (canvasHeight / 600));
-                  controllerRef.current!.updateElement(textElement, 'shadow_offset_x', (field.shadowOffsetX ?? 2) * (canvasHeight / 600));
-                  controllerRef.current!.updateElement(textElement, 'shadow_offset_y', (field.shadowOffsetY ?? 2) * (canvasHeight / 600));
-                }
-                
-                // Set alignment
-                if (field.textAlign) {
-                  const alignMap: Record<string, 'left' | 'center' | 'right'> = {
-                    left: 'left',
-                    center: 'center',
-                    right: 'right',
-                  };
-                  controllerRef.current!.updateElement(textElement, 'horizontal_align', {
-                    valid: ['left', 'center', 'right'] as const,
-                    current: alignMap[field.textAlign] || 'center',
-                  });
-                }
-                
-                // Set rotation if specified
-                if (field.rotation) {
-                  textElement.rotation = field.rotation;
-                }
+              const textElement = new TextElement(controllerRef.current);
 
-                // Add to controller
-                controllerRef.current!.addElement(textElement);
+              textElement.width = Math.max(Math.round(width), 50);
+              textElement.height = Math.max(Math.round(height), 30);
+              textElement.markSizeAsUserSet();
+
+              textElement.x = Math.round(x);
+              textElement.y = Math.round(y);
+
+              const placeholderText = `Text ${fieldIndex + 1}`;
+
+              controllerRef.current.updateElement(textElement, 'text', {
+                value: placeholderText,
+                multiline: true,
               });
 
-              controllerRef.current!.emit('elementsListChanged');
-              controllerRef.current!.requestFrame();
-              
-              // Initialize text inputs after elements are created
-              setTimeout(() => {
-                const elements = controllerRef.current!.elements.filter(
-                  (e) => e instanceof TextElement
-                ) as TextElement[];
-                const newInputs: Record<number, string> = {};
-                elements.forEach((el, idx) => {
-                  newInputs[idx] = el.settings.text.value || '';
+              controllerRef.current.updateElement(
+                textElement,
+                'font_family',
+                field.fontFamily || template.defaultFont || 'Impact'
+              );
+              controllerRef.current.updateElement(
+                textElement,
+                'font_size',
+                fontSize
+              );
+              controllerRef.current.updateElement(
+                textElement,
+                'color',
+                field.color || template.defaultColor || '#ffffff'
+              );
+              controllerRef.current.updateElement(
+                textElement,
+                'stroke',
+                field.strokeColor || '#000000'
+              );
+              controllerRef.current.updateElement(
+                textElement,
+                'stroke_width',
+                (field.strokeWidth ?? 6) * (canvasHeight / 600)
+              );
+              if (field.useShadow !== undefined) {
+                controllerRef.current.updateElement(
+                  textElement,
+                  'use_shadow',
+                  field.useShadow
+                );
+                controllerRef.current.updateElement(
+                  textElement,
+                  'shadow_color',
+                  field.shadowColor || '#000000'
+                );
+                controllerRef.current.updateElement(
+                  textElement,
+                  'shadow_blur',
+                  (field.shadowBlur ?? 10) * (canvasHeight / 600)
+                );
+                controllerRef.current.updateElement(
+                  textElement,
+                  'shadow_offset_x',
+                  (field.shadowOffsetX ?? 2) * (canvasHeight / 600)
+                );
+                controllerRef.current.updateElement(
+                  textElement,
+                  'shadow_offset_y',
+                  (field.shadowOffsetY ?? 2) * (canvasHeight / 600)
+                );
+              }
+
+              if (field.textAlign) {
+                const alignMap: Record<string, 'left' | 'center' | 'right'> = {
+                  left: 'left',
+                  center: 'center',
+                  right: 'right',
+                };
+                controllerRef.current.updateElement(textElement, 'horizontal_align', {
+                  valid: ['left', 'center', 'right'] as const,
+                  current: alignMap[field.textAlign] || 'center',
                 });
-                setElementTextInputs(newInputs);
-                // Set initial state after all elements are created - this is the baseline
-                setInitialTemplateState(JSON.stringify({
-                  templateId: template.id,
-                  elements: elements.map(el => ({
-                    text: el.settings.text.value,
-                    x: el.x,
-                    y: el.y,
-                    width: el.width,
-                    height: el.height,
-                    fontSize: el.settings.font_size,
-                    fontFamily: el.settings.font_family,
-                    color: el.settings.color,
-                    stroke: el.settings.stroke,
-                    strokeWidth: el.settings.stroke_width,
-                    alignment: el.settings.horizontal_align.current
-                  }))
-                }));
-                // Mark loading as complete - now we can track changes
-                setIsLoadingTemplate(false);
-              }, 150);
-            }, 100);
-          }
+              }
+
+              if (field.rotation) {
+                textElement.rotation = field.rotation;
+              }
+
+              controllerRef.current.addElement(textElement);
+            });
+
+            if (loadGen !== templateLoadGenRef.current) return;
+            c2.emit('elementsListChanged');
+            c2.requestFrame();
+
+            const elements = c2.elements.filter(
+              (e) => e instanceof TextElement
+            ) as TextElement[];
+            finalizeTemplateLoad(template, elements);
+          };
+
+          // Two rAFs: let layout / canvas backing size settle after changeImage + resize
+          requestAnimationFrame(() => {
+            requestAnimationFrame(afterLayout);
+          });
         };
         img.onerror = () => {
+          if (loadGen !== templateLoadGenRef.current) return;
           console.error('Failed to load template image:', template.src);
           if (template.id === CUSTOM_PHOTO_TEMPLATE_ID) {
             revokeCustomPhotoIfAny();
@@ -878,6 +946,28 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                   touchAction: 'none' // Prevent default touch behaviors like scrolling/zooming
                 }}
               />
+
+              {selectedTemplate && isLoadingTemplate && (
+                <div
+                  role="status"
+                  aria-live="polite"
+                  aria-busy="true"
+                  className="absolute inset-0 z-[5] flex flex-col items-center justify-center gap-3 bg-[#f7f4ee]/90 px-6 text-center dark:bg-gray-950/90"
+                >
+                  <span
+                    className="h-9 w-9 animate-spin rounded-full border-2 border-zinc-700 border-t-transparent dark:border-zinc-300 dark:border-t-transparent"
+                    aria-hidden
+                  />
+                  <div className="space-y-1">
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                      Preparing template…
+                    </p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                      Text boxes will be clickable in a moment.
+                    </p>
+                  </div>
+                </div>
+              )}
               
               {/* Placeholder overlay when no template is selected */}
               {!selectedTemplate && (
