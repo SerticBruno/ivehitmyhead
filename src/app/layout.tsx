@@ -57,7 +57,7 @@ export default function RootLayout({
             <MemesStateProvider>
               <CategoriesStateProvider>
                 <Header showSearch={false} />
-                <main className="min-h-screen">
+                <main>
                   {children}
                 </main>
                 <Footer />

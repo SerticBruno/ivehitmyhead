@@ -88,7 +88,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
   const [initialTemplateState, setInitialTemplateState] = useState<string>('');
   const [isLoadingTemplate, setIsLoadingTemplate] = useState(false);
   const { setDirty: setNavigationDirty } = useNavigationWarning();
-  const [containerHeight, setContainerHeight] = useState('100vh');
+  const [containerHeight, setContainerHeight] = useState('calc(80vh - 4rem)');
   const [isMobileViewport, setIsMobileViewport] = useState(false);
   const [editingTextIndex, setEditingTextIndex] = useState<number | null>(null);
   const textAreaRefs = useRef<Record<number, HTMLTextAreaElement | null>>({});
@@ -190,9 +190,9 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
         const isMobile = window.innerWidth < 1024;
         setIsMobileViewport(isMobile);
 
-        // On desktop, account for header (64px = 4rem)
-        // On mobile, let content size naturally so we avoid nested scroll areas.
-        setContainerHeight(isMobile ? 'auto' : 'calc(100vh - 4rem)');
+        // On desktop/tablet (lg+), cap height so the canvas column is not full-viewport tall.
+        // On smaller widths, let content size naturally so we avoid nested scroll areas.
+        setContainerHeight(isMobile ? 'auto' : 'calc(80vh - 4rem)');
       }
     };
 
@@ -955,7 +955,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
               tabIndex={-1}
               role="region"
               aria-label="Meme preview"
-              className="flex justify-center items-center bg-[#f7f4ee] dark:bg-gray-950 rounded-none pt-5 pb-2 px-2 md:p-4 flex-1 min-h-[min(360px,50svh)] lg:min-h-0 outline-none focus-visible:ring-2 focus-visible:ring-zinc-600 dark:focus-visible:ring-zinc-400 focus-visible:ring-offset-2"
+              className="flex justify-center items-center bg-[#f7f4ee] dark:bg-gray-950 rounded-none pt-5 pb-2 px-2 md:p-4 flex-1 min-h-[min(280px,40svh)] md:min-h-[min(300px,36svh)] lg:min-h-0 outline-none focus-visible:ring-2 focus-visible:ring-zinc-600 dark:focus-visible:ring-zinc-400 focus-visible:ring-offset-2"
               style={{
                 height: '100%',
                 width: '100%',
