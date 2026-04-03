@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useCallback } from 'react';
+import React, { useRef, useCallback, Suspense } from 'react';
 import { FiltersAndSorting } from '@/components/ui';
 import { useMemesUIState } from '@/lib/contexts';
 import { MemesFeedPanel } from './MemesFeedPanel';
@@ -42,7 +42,15 @@ export default function MemesPage() {
   return (
     <div className="min-h-screen bg-[#f7f4ee] dark:bg-gray-950">
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <MemesFeedPanel memeGridRef={memeGridRef} sidebar={sidebar} />
+        <Suspense
+          fallback={
+            <div className="min-h-[40vh] flex items-center justify-center text-sm font-bold uppercase tracking-wide text-gray-500">
+              Loading feed…
+            </div>
+          }
+        >
+          <MemesFeedPanel memeGridRef={memeGridRef} sidebar={sidebar} />
+        </Suspense>
       </main>
     </div>
   );

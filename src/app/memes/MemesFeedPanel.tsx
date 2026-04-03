@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { MemeGrid } from '@/components/meme';
 import { MemesMobileFilterBars } from '@/components/ui/MemesMobileFilterBars';
 import { useMemes } from '@/lib/hooks/useMemes';
@@ -17,6 +18,8 @@ interface MemesFeedPanelProps {
 
 export function MemesFeedPanel({ memeGridRef, sidebar }: MemesFeedPanelProps) {
   const [likedMemes, setLikedMemes] = useState<Set<string>>(new Set());
+  const searchParams = useSearchParams();
+  const appliedUrlFiltersRef = useRef(false);
 
   const {
     filters,
@@ -25,6 +28,40 @@ export function MemesFeedPanel({ memeGridRef, sidebar }: MemesFeedPanelProps) {
     setScrollPosition,
     setFilters,
   } = useMemesUIState();
+
+  useEffect(() => {
+    if (appliedUrlFiltersRef.current) return;
+    appliedUrlFiltersRef.current = true;
+
+    const filterParam = searchParams.get('filter');
+    const timeParam = searchParams.get('time_period');
+    const categoryParam = searchParams.get('category_id');
+
+    const patch: Partial<{
+      filter: 'newest' | 'trending' | 'hottest';
+      time_period: 'all' | 'today' | 'week' | 'month';
+      category_id: string;
+    }> = {};
+
+    if (filterParam === 'newest' || filterParam === 'trending' || filterParam === 'hottest') {
+      patch.filter = filterParam;
+    }
+    if (
+      timeParam === 'all' ||
+      timeParam === 'today' ||
+      timeParam === 'week' ||
+      timeParam === 'month'
+    ) {
+      patch.time_period = timeParam;
+    }
+    if (categoryParam !== null && categoryParam !== '') {
+      patch.category_id = categoryParam;
+    }
+
+    if (Object.keys(patch).length > 0) {
+      setFilters(patch);
+    }
+  }, [searchParams, setFilters]);
 
   const {
     memes: listMemes,

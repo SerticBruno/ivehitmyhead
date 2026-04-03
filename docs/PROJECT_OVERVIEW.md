@@ -63,6 +63,10 @@ docs/
 | `/upload` | Upload flow |
 | `/categories` | Categories index |
 | `/about` | About |
+| `/help` | Help center |
+| `/contact` | Contact |
+| `/privacy` | Privacy policy (draft placeholder) |
+| `/terms` | Terms of service (draft placeholder) |
 | `/admin`, `/admin/login` | Admin / auth entry |
 | `/test*`, `/debug` | Dev / diagnostic pages (treat as non-production) |
 
@@ -79,6 +83,7 @@ docs/
 | `POST` `/api/memes/[slug]/like`, `/share`, `/view` | Interactions / counters |
 | `GET/POST` `/api/memes/[slug]/comments` | Comments |
 | `GET` `/api/categories` | Categories |
+| `POST` `/api/newsletter` | Newsletter signup (webhook or Resend audience; returns 503 if unconfigured) |
 | `/api/setup-admin`, `/api/test-*` | Operational / test endpoints — use with care |
 
 **Implementation note:** List queries join `author:profiles` and `category:categories` — schema expectations live in Supabase; keep types in `src/lib/types/meme.ts` aligned with real columns.
@@ -125,6 +130,10 @@ Do not commit secrets. Typical variables inferred from code:
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY` (if used on client — verify in `client.ts`)
 - `SUPABASE_SERVICE_ROLE_KEY` (server-only)
 - Cloudinary-related vars as required by `src/lib/cloudinary/config.ts` and upload routes
+- `NEXT_PUBLIC_SITE_URL` — canonical origin for Open Graph, sitemap, and `metadataBase` (e.g. `https://yourdomain.com`)
+- `NEXT_PUBLIC_INSTAGRAM_URL`, `NEXT_PUBLIC_FACEBOOK_URL` — optional footer social links
+- `NEXT_PUBLIC_CONTACT_EMAIL` — optional; defaults for mailto on `/contact`
+- Newsletter (optional): `NEWSLETTER_SIGNUP_WEBHOOK_URL` and optional `NEWSLETTER_WEBHOOK_SECRET`, **or** `RESEND_API_KEY` + `RESEND_AUDIENCE_ID` for Resend Audiences
 
 ---
 
@@ -133,6 +142,7 @@ Do not commit secrets. Typical variables inferred from code:
 Append a short bullet when you merge a meaningful change (date + one line).
 
 - *2026-04-01:* Initial `PROJECT_OVERVIEW.md` created from codebase scan.
+- *2026-04-01:* Marketing backlog: `/help`, `/contact`, `/privacy`, `/terms`; root OG/Twitter metadata + `metadataBase`; footer social env + trending query link; `sitemap.ts` / `robots.ts`; server `generateMetadata` for meme detail; `POST /api/newsletter` + wired `Newsletter` UI.
 
 ---
 
