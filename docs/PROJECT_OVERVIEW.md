@@ -6,7 +6,7 @@
 
 ## Product summary
 
-**IVEHITMYHEAD** is a Next.js app for discovering, browsing, and creating memes: editorial-style browsing (home, feeds, categories), meme detail views, user upload, and an in-browser **meme generator** (templates + canvas-style editing). Backend data and assets are backed by **Supabase** (Postgres + auth-related patterns) and **Cloudinary** (image hosting and delivery). The product voice in metadata emphasizes a self-aware, low-expectations tone.
+**IVEHITMYHEAD** is a Next.js app for discovering, browsing, and creating memes: editorial-style browsing (home, feeds, categories), meme detail views, **admin-only** library uploads, and an in-browser **meme generator** (templates + canvas-style editing). Backend data and assets are backed by **Supabase** (Postgres + auth-related patterns) and **Cloudinary** (image hosting and delivery). The product voice in metadata emphasizes a self-aware, low-expectations tone.
 
 ---
 
@@ -60,14 +60,13 @@ docs/
 | `/memes` | Main feed (filters, infinite scroll patterns) |
 | `/meme/[slug]` | Single meme detail / navigation |
 | `/meme-generator` | Advanced meme generator |
-| `/upload` | Upload flow |
 | `/categories` | Categories index |
 | `/about` | About |
 | `/help` | Help center |
 | `/contact` | Contact |
 | `/privacy` | Privacy policy (draft placeholder) |
 | `/terms` | Terms of service (draft placeholder) |
-| `/admin`, `/admin/login` | Admin / auth entry |
+| `/admin`, `/admin/login` | Admin dashboard (library upload via `MemeUpload`) / auth entry |
 | `/test*`, `/debug` | Dev / diagnostic pages (treat as non-production) |
 
 ---
@@ -78,7 +77,7 @@ docs/
 |-------|-------------------------|
 | `GET/POST` `/api/memes` | List/create memes; query params for pagination, `category_id`, `sort_by`, `time_period`, `search` |
 | `GET` `/api/memes/liked` | Liked memes for current context |
-| `POST` `/api/memes/upload` | Upload pipeline (Cloudinary + DB) |
+| `POST` `/api/memes/upload` | Upload pipeline (Cloudinary + DB); **admin auth required** (`verifyAdminAuth`) |
 | `GET/PATCH/DELETE` `/api/memes/[slug]` | Single meme CRUD-style operations |
 | `POST` `/api/memes/[slug]/like`, `/share`, `/view` | Interactions / counters |
 | `GET/POST` `/api/memes/[slug]/comments` | Comments |
@@ -143,6 +142,7 @@ Append a short bullet when you merge a meaningful change (date + one line).
 
 - *2026-04-01:* Initial `PROJECT_OVERVIEW.md` created from codebase scan.
 - *2026-04-01:* Marketing backlog: `/help`, `/contact`, `/privacy`, `/terms`; root OG/Twitter metadata + `metadataBase`; footer social env + trending query link; `sitemap.ts` / `robots.ts`; server `generateMetadata` for meme detail; `POST /api/newsletter` + wired `Newsletter` UI.
+- *2026-04-01:* Removed public `/upload` route; meme library uploads only via `/admin` + `POST /api/memes/upload` (admin-only, unchanged).
 
 ---
 

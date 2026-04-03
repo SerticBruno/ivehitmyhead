@@ -108,7 +108,7 @@ export default function TestPage() {
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
             <h2 className="text-xl font-semibold mb-4">Quick Links</h2>
             <div className="space-y-2">
-              <Link href="/upload" className="text-blue-500 hover:underline block">→ Upload Page</Link>
+              <Link href="/admin" className="text-blue-500 hover:underline block">→ Admin upload (auth required)</Link>
               <Link href="/memes" className="text-blue-500 hover:underline block">→ Memes Page</Link>
             </div>
           </div>

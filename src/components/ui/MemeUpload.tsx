@@ -125,7 +125,7 @@ export const MemeUpload: React.FC<MemeUploadProps> = ({
       const token = session?.access_token;
       
       if (!token) {
-        throw new Error('You must be logged in to upload memes');
+        throw new Error('Admin session required to publish memes to the library');
       }
 
       const response = await fetch('/api/memes/upload', {
