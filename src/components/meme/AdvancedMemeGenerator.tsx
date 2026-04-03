@@ -721,7 +721,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
         style={{ flex: '1 1 0%', minHeight: 0, overflow: isMobileViewport ? 'visible' : 'hidden' }}
       >
         {/* Template chooser - shown first on mobile, part of right panel on desktop */}
-        <div className="flex flex-col min-h-0 lg:hidden order-1" style={{ minWidth: 0, maxWidth: '100%' }}>
+        <div className="flex flex-col min-h-0 lg:hidden order-1 pb-6" style={{ minWidth: 0, maxWidth: '100%' }}>
           <div className="bg-white dark:bg-gray-900 rounded-none shadow-[8px_8px_0px_rgba(0,0,0,0.88)] dark:shadow-[8px_8px_0px_rgba(156,163,175,0.42)] p-2 md:p-4 border-2 border-zinc-700 dark:border-zinc-400">
             <h2 className="text-base md:text-lg font-black uppercase tracking-tight mb-2 md:mb-4">Templates</h2>
             <Button
