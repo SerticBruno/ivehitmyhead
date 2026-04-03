@@ -5,11 +5,61 @@ import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Menu, X, LogOut, Shield } from 'lucide-react';
+import { LogOut, Shield } from 'lucide-react';
 import { useAuth } from '@/lib/contexts/AuthContext';
 
 interface HeaderProps {
   showSearch?: boolean;
+}
+
+function HamburgerBar() {
+  return (
+    <svg
+      viewBox="0 0 20 4"
+      width={20}
+      height={4}
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className="block h-1 w-5 shrink-0"
+      aria-hidden
+    >
+      <line
+        x1={0}
+        y1={2}
+        x2={20}
+        y2={2}
+        stroke="currentColor"
+        strokeWidth={2}
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+/** Three stacked bar SVGs morph into an X when the menu opens. */
+function MobileMenuIcon({ open }: { open: boolean }) {
+  const dur = 'duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] motion-reduce:transition-none';
+
+  return (
+    <div
+      className="pointer-events-none flex h-[18px] w-5 flex-col justify-between"
+      aria-hidden
+    >
+      <div
+        className={`origin-center transition-transform ${dur} ${open ? 'translate-y-[7px] rotate-45' : 'translate-y-0 rotate-0'}`}
+      >
+        <HamburgerBar />
+      </div>
+      <div className={`transition-opacity duration-200 ease-out motion-reduce:transition-none ${open ? 'opacity-0' : 'opacity-100'}`}>
+        <HamburgerBar />
+      </div>
+      <div
+        className={`origin-center transition-transform ${dur} ${open ? '-translate-y-[7px] -rotate-45' : 'translate-y-0 rotate-0'}`}
+      >
+        <HamburgerBar />
+      </div>
+    </div>
+  );
 }
 
 const Header: React.FC<HeaderProps> = ({ showSearch = true }) => {
@@ -131,29 +181,41 @@ const Header: React.FC<HeaderProps> = ({ showSearch = true }) => {
             <button
               type="button"
               onClick={toggleMobileMenu}
-              className="md:hidden relative z-[70] p-2 rounded-none border-2 border-zinc-700 dark:border-zinc-400 text-gray-700 hover:text-black hover:bg-white dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-900"
+              className="md:hidden relative z-[70] h-10 w-10 inline-flex items-center justify-center p-0 rounded-none border-2 border-zinc-700 dark:border-zinc-400 text-gray-700 hover:text-black hover:bg-white dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-900"
               aria-expanded={isMobileMenuOpen}
               aria-controls="mobile-nav-panel"
               aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
             >
-              {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              <MobileMenuIcon open={isMobileMenuOpen} />
             </button>
           </div>
         </div>
 
-        {isMobileMenuOpen ? (
-          <>
-            <button
-              type="button"
-              aria-label="Close menu"
-              className="md:hidden fixed inset-0 top-16 z-[55] bg-black/25 dark:bg-black/40 border-0 cursor-pointer p-0 m-0 w-full"
-              onClick={closeMobileMenu}
-            />
-            <nav
-              id="mobile-nav-panel"
-              className="md:hidden absolute left-0 right-0 top-full z-[65] max-h-[min(75dvh,calc(100dvh-4rem))] overflow-y-auto overscroll-contain border-t-2 border-zinc-700 dark:border-zinc-400 bg-[#f7f4ee] dark:bg-gray-950 shadow-[0_16px_40px_rgba(0,0,0,0.18)] dark:shadow-[0_16px_40px_rgba(0,0,0,0.45)]"
-              aria-label="Mobile navigation"
-            >
+        <>
+          <button
+            type="button"
+            aria-label="Close menu"
+            className={`md:hidden fixed inset-0 top-16 z-[55] bg-black/25 dark:bg-black/40 border-0 cursor-pointer p-0 m-0 w-full transition-opacity duration-300 ease-out motion-reduce:transition-none ${
+              isMobileMenuOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
+            }`}
+            onClick={closeMobileMenu}
+            aria-hidden={!isMobileMenuOpen}
+          />
+          <nav
+            id="mobile-nav-panel"
+            className="md:hidden absolute left-0 right-0 top-full z-[65] grid border-t-2 border-zinc-700 dark:border-zinc-400 bg-[#f7f4ee] dark:bg-gray-950 shadow-[0_16px_40px_rgba(0,0,0,0.18)] dark:shadow-[0_16px_40px_rgba(0,0,0,0.45)] transition-[grid-template-rows] duration-300 ease-out motion-reduce:transition-none"
+            style={{ gridTemplateRows: isMobileMenuOpen ? '1fr' : '0fr' }}
+            aria-label="Mobile navigation"
+            aria-hidden={!isMobileMenuOpen}
+          >
+            <div className="min-h-0 overflow-hidden">
+              <div
+                className={`max-h-[min(75dvh,calc(100dvh-4rem))] overflow-y-auto overscroll-contain transition-[opacity,transform] duration-300 ease-out motion-reduce:transition-none ${
+                  isMobileMenuOpen
+                    ? 'translate-y-0 opacity-100'
+                    : 'pointer-events-none -translate-y-2 opacity-0'
+                }`}
+              >
               <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-3 pb-4 space-y-1">
                 {showSearch && (
                   <div className="px-1 py-2">
@@ -219,9 +281,10 @@ const Header: React.FC<HeaderProps> = ({ showSearch = true }) => {
                   </>
                 )}
               </div>
-            </nav>
-          </>
-        ) : null}
+              </div>
+            </div>
+          </nav>
+        </>
       </div>
     </header>
   );

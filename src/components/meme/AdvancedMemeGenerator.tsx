@@ -6,7 +6,7 @@ import MemeCanvasController from '@/lib/meme-canvas/MemeCanvasController';
 import TextElement from '@/lib/meme-canvas/TextElement';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Download, Plus, Trash2, Type, ChevronDown, ChevronUp, Upload } from 'lucide-react';
+import { Download, Plus, Trash2, Type, ChevronDown, Upload } from 'lucide-react';
 import {
   MEME_TEMPLATES,
   CUSTOM_PHOTO_TEMPLATE_ID,
@@ -757,8 +757,8 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                   )}
                 </div>
                 <svg
-                  className={`w-5 h-5 text-gray-400 transition-transform flex-shrink-0 ${
-                    isTemplateDropdownOpen ? 'transform rotate-180' : ''
+                  className={`w-5 h-5 text-gray-400 flex-shrink-0 transition-transform duration-200 ease-out motion-reduce:transition-none ${
+                    isTemplateDropdownOpen ? 'rotate-180' : 'rotate-0'
                   }`}
                   fill="none"
                   stroke="currentColor"
@@ -768,13 +768,22 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                 </svg>
               </button>
 
-              {isTemplateDropdownOpen && (
-                <>
-                  <div
-                    className="fixed inset-0 z-10"
-                    onClick={() => setIsTemplateDropdownOpen(false)}
-                  />
-                  <div className="absolute z-20 w-full mt-2 bg-white dark:bg-gray-900 border-2 border-zinc-700 dark:border-zinc-400 rounded-none shadow-[8px_8px_0px_rgba(0,0,0,0.88)] dark:shadow-[8px_8px_0px_rgba(156,163,175,0.42)] max-h-[60vh] overflow-y-auto [scrollbar-gutter:stable]">
+              <>
+                <div
+                  className={`fixed inset-0 z-10 transition-opacity duration-200 ease-out motion-reduce:transition-none ${
+                    isTemplateDropdownOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                  }`}
+                  onClick={() => setIsTemplateDropdownOpen(false)}
+                  aria-hidden={!isTemplateDropdownOpen}
+                />
+                <div
+                  className={`absolute z-20 w-full mt-2 bg-white dark:bg-gray-900 border-2 border-zinc-700 dark:border-zinc-400 rounded-none shadow-[8px_8px_0px_rgba(0,0,0,0.88)] dark:shadow-[8px_8px_0px_rgba(156,163,175,0.42)] max-h-[60vh] overflow-y-auto [scrollbar-gutter:stable] origin-top transition-[opacity,transform] duration-200 ease-out motion-reduce:transition-none ${
+                    isTemplateDropdownOpen
+                      ? 'opacity-100 scale-100 translate-y-0'
+                      : 'pointer-events-none opacity-0 scale-[0.98] -translate-y-1'
+                  }`}
+                  aria-hidden={!isTemplateDropdownOpen}
+                >
                     <button
                       type="button"
                       onClick={(e) => {
@@ -843,9 +852,8 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                         </button>
                       ))
                     )}
-                  </div>
-                </>
-              )}
+                </div>
+              </>
             </div>
             
             {/* Always visible template grid when no template is selected */}
@@ -1087,8 +1095,8 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                   )}
                 </div>
                 <svg
-                  className={`w-5 h-5 text-gray-400 transition-transform flex-shrink-0 ${
-                    isTemplateDropdownOpen ? 'transform rotate-180' : ''
+                  className={`w-5 h-5 text-gray-400 flex-shrink-0 transition-transform duration-200 ease-out motion-reduce:transition-none ${
+                    isTemplateDropdownOpen ? 'rotate-180' : 'rotate-0'
                   }`}
                   fill="none"
                   stroke="currentColor"
@@ -1098,13 +1106,22 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                 </svg>
               </button>
 
-              {isTemplateDropdownOpen && (
-                <>
-                  <div
-                    className="fixed inset-0 z-10"
-                    onClick={() => setIsTemplateDropdownOpen(false)}
-                  />
-                  <div className="absolute z-20 w-full mt-2 bg-white dark:bg-gray-900 border-2 border-zinc-700 dark:border-zinc-400 rounded-none shadow-[8px_8px_0px_rgba(0,0,0,0.88)] dark:shadow-[8px_8px_0px_rgba(156,163,175,0.42)] max-h-[60vh] overflow-y-auto [scrollbar-gutter:stable]">
+              <>
+                <div
+                  className={`fixed inset-0 z-10 transition-opacity duration-200 ease-out motion-reduce:transition-none ${
+                    isTemplateDropdownOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                  }`}
+                  onClick={() => setIsTemplateDropdownOpen(false)}
+                  aria-hidden={!isTemplateDropdownOpen}
+                />
+                <div
+                  className={`absolute z-20 w-full mt-2 bg-white dark:bg-gray-900 border-2 border-zinc-700 dark:border-zinc-400 rounded-none shadow-[8px_8px_0px_rgba(0,0,0,0.88)] dark:shadow-[8px_8px_0px_rgba(156,163,175,0.42)] max-h-[60vh] overflow-y-auto [scrollbar-gutter:stable] origin-top transition-[opacity,transform] duration-200 ease-out motion-reduce:transition-none ${
+                    isTemplateDropdownOpen
+                      ? 'opacity-100 scale-100 translate-y-0'
+                      : 'pointer-events-none opacity-0 scale-[0.98] -translate-y-1'
+                  }`}
+                  aria-hidden={!isTemplateDropdownOpen}
+                >
                     <button
                       type="button"
                       onClick={(e) => {
@@ -1173,9 +1190,8 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                         </button>
                       ))
                     )}
-                  </div>
-                </>
-              )}
+                </div>
+              </>
             </div>
             
             {/* Always visible template grid when no template is selected */}
@@ -1404,11 +1420,11 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                               className="p-1.5 rounded-none border border-transparent hover:border-zinc-700 dark:hover:border-zinc-400 hover:bg-[#f7f4ee] dark:hover:bg-gray-800 transition-colors cursor-pointer"
                               title={isExpanded ? 'Collapse' : 'Expand'}
                             >
-                              {isExpanded ? (
-                                <ChevronUp className="w-4 h-4 text-gray-500" />
-                              ) : (
-                                <ChevronDown className="w-4 h-4 text-gray-500" />
-                              )}
+                              <ChevronDown
+                                className={`w-4 h-4 text-gray-500 transition-transform duration-200 ease-out motion-reduce:transition-none ${
+                                  isExpanded ? 'rotate-180' : 'rotate-0'
+                                }`}
+                              />
                             </button>
                           </div>
                         </div>
@@ -1469,8 +1485,16 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                       </div>
 
                       {/* Expanded Properties */}
-                      {isExpanded && (
-                        <div className="px-2 md:px-3 pb-2 md:pb-3 space-y-2 md:space-y-3 border-t border-gray-200 dark:border-gray-700 pt-2 md:pt-3">
+                      <div
+                        className="grid transition-[grid-template-rows] duration-300 ease-out motion-reduce:transition-none"
+                        style={{ gridTemplateRows: isExpanded ? '1fr' : '0fr' }}
+                      >
+                        <div className="min-h-0 overflow-hidden">
+                          <div
+                            className={`px-2 md:px-3 pb-2 md:pb-3 space-y-2 md:space-y-3 border-t border-gray-200 dark:border-gray-700 pt-2 md:pt-3 transition-[opacity] duration-200 ease-out motion-reduce:transition-none ${
+                              isExpanded ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                            }`}
+                          >
                           {/* Font Size */}
                           <div>
                             <div className="flex items-center justify-between mb-2">
@@ -1960,8 +1984,9 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                               Delete Text Field
                             </button>
                           </div>
+                          </div>
                         </div>
-                      )}
+                      </div>
                     </div>
                   );
                 })}
