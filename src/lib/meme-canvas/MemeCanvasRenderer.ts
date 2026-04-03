@@ -32,7 +32,6 @@ class MemeCanvasRenderer {
   public draw() {
     this.drawBackground();
     this.drawElements();
-    this.drawSelectionBox();
     if (this.controller.showCustomPhotoWatermark && !this.controller.exporting) {
       this.drawWatermark();
     }
@@ -231,30 +230,6 @@ class MemeCanvasRenderer {
       this.ctx.fillStyle = 'white';
       this.ctx.fillText(text, 4, 16);
     }
-  }
-
-  private drawSelectionBox() {
-    if (this.controller.exporting || !this.controller.selecting) return;
-
-    const newX = Math.min(this.controller.offsetX, this.controller.mouseX);
-    const newY = Math.min(this.controller.offsetY, this.controller.mouseY);
-    const newWidth = Math.abs(
-      this.controller.offsetX - this.controller.mouseX
-    );
-    const newHeight = Math.abs(
-      this.controller.offsetY - this.controller.mouseY
-    );
-
-    this.ctx.save();
-    this.ctx.strokeStyle = '#f05050C8';
-    this.ctx.fillStyle = '#f0505080';
-    this.ctx.lineWidth = 1;
-    this.ctx.setLineDash([5, 2]);
-    this.ctx.beginPath();
-    this.ctx.roundRect(newX, newY, newWidth, newHeight, 5);
-    this.ctx.stroke();
-    this.ctx.fill();
-    this.ctx.restore();
   }
 }
 

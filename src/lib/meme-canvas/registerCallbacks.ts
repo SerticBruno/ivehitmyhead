@@ -184,7 +184,6 @@ export default function registerCallbacks(
           !controller.exporting &&
           !controller.dragging &&
           !controller.resizing &&
-          !controller.selecting &&
           !controller.isTouch
         ) {
           const at = controller.elementAt(x, y);
@@ -223,8 +222,6 @@ export default function registerCallbacks(
           } else if (element.intersects(x, y)) {
             cursor = 'move';
           }
-        } else if (controller.selecting) {
-          cursor = 'crosshair';
         }
 
         if (
@@ -232,7 +229,6 @@ export default function registerCallbacks(
           !controller.exporting &&
           !controller.dragging &&
           !controller.resizing &&
-          !controller.selecting &&
           !controller.isTouch
         ) {
           const at = controller.elementAt(x, y);

@@ -53,7 +53,6 @@ class MemeCanvasController {
 
   // User action state
   public dragging: boolean = false;
-  public selecting: boolean = false;
   public resizing: boolean = false;
   public pendingDrag: { element: MemeElement; x: number; y: number } | null = null;
   public readonly DRAG_THRESHOLD = 5; // pixels of movement before drag starts (for mouse)
@@ -191,12 +190,11 @@ class MemeCanvasController {
       return;
     }
 
-    // If clicking on empty space, clear selection or start selection box
+    // Empty canvas: clear selection only (no marquee — it confused meme-editor users)
     if (this.selectedElements.length > 0 && !this.holdingShift) {
       this.clearSelected();
     }
-    this.canvas.style.cursor = 'crosshair';
-    this.startSelectionBox(x, y);
+    this.canvas.style.cursor = 'default';
   }
 
   public onRelease(x: number, y: number) {
@@ -205,16 +203,6 @@ class MemeCanvasController {
     this.dragging = false;
     this.resizing = false;
     this.pendingDrag = null;
-
-    if (this.selecting === true) {
-      this.selecting = false;
-      this.selectAllElementsInArea(
-        this.offsetX,
-        this.offsetY,
-        x - this.offsetX,
-        y - this.offsetY
-      );
-    }
 
     // Reset cursor
     if (this.selectedElements.length === 1) {
@@ -304,35 +292,6 @@ class MemeCanvasController {
     this.requestFrame();
     // Emit event to notify UI of element changes
     this.emit('elementsUpdated');
-  }
-
-  // Other
-  private startSelectionBox(x: number, y: number) {
-    if (this.dragging === true) return;
-
-    this.offsetX = x;
-    this.offsetY = y;
-    this.selecting = true;
-  }
-
-  private selectAllElementsInArea(
-    x: number,
-    y: number,
-    width: number,
-    height: number
-  ) {
-    const newX = Math.min(x, x + width);
-    const newY = Math.min(y, y + height);
-    const newWidth = Math.abs(width);
-    const newHeight = Math.abs(height);
-
-    this.selectedElements = this.elementsInside(
-      newX,
-      newY,
-      newWidth,
-      newHeight
-    );
-    this.emit('selectedElementsChange');
   }
 
   // Utility
