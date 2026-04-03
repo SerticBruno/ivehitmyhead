@@ -966,7 +966,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
               {/* Canvas - always rendered for proper initialization */}
               <canvas
                 ref={canvasRef}
-                className="rounded-none"
+                className="rounded-none max-lg:touch-pan-y lg:touch-none"
                 style={{ 
                   maxWidth: '100%', 
                   maxHeight: '100%', 
@@ -980,7 +980,6 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                   pointerEvents:
                     selectedTemplate && !isLoadingTemplate ? 'auto' : 'none',
                   display: 'block',
-                  touchAction: 'none' // Prevent default touch behaviors like scrolling/zooming
                 }}
               />
 

@@ -10,12 +10,58 @@ type MouseEventSourceCapabilities = MouseEvent & {
   };
 };
 
+/** True while the current touch gesture should use canvas handlers instead of native scroll (text hit or resize handle). */
+function touchHitIsInteractive(
+  controller: MemeCanvasController,
+  x: number,
+  y: number
+): boolean {
+  for (const element of controller.selectedElements) {
+    if (element.handleAt(x, y) !== null) return true;
+  }
+  return controller.elementAt(x, y) !== null;
+}
+
+function readTouchCanvasCoords(
+  controller: MemeCanvasController,
+  event: TouchEvent
+): { x: number; y: number } | null {
+  const touch = event.touches[0] ?? event.changedTouches[0];
+  if (touch === undefined) return null;
+
+  const rect = controller.canvas.getBoundingClientRect();
+  const displayWidth = rect.width;
+  const displayHeight = rect.height;
+  if (displayWidth <= 0 || displayHeight <= 0) return null;
+
+  const mouseX = touch.clientX - rect.left;
+  const mouseY = touch.clientY - rect.top;
+
+  const scaleX = controller.canvas.width / displayWidth;
+  const scaleY = controller.canvas.height / displayHeight;
+
+  const x = MathHelper.clamp(
+    Math.round(mouseX * scaleX),
+    0,
+    controller.canvas.width
+  );
+  const y = MathHelper.clamp(
+    Math.round(mouseY * scaleY),
+    0,
+    controller.canvas.height
+  );
+
+  return { x, y };
+}
+
 export default function registerCallbacks(
   controller: MemeCanvasController
 ): UnregisterCallbacks {
   const TOUCH_DOUBLE_TAP_MS = 350;
   const TOUCH_DOUBLE_TAP_DISTANCE = 24; // in canvas coordinates
   let lastTouchTap: { time: number; x: number; y: number } | null = null;
+  /** Set on touchstart; when false, touchmove/touchend do not block native page scroll. */
+  let touchBlocksNativeScroll = false;
 
   /** Mouse down / up / dblclick: require primary button. */
   function mouseEvent(
@@ -64,58 +110,25 @@ export default function registerCallbacks(
     fn.call(controller, x, y);
   }
 
-  function touchEvent(
-    event: TouchEvent,
-    fn: (x: number, y: number) => void
-  ) {
-    if (event.changedTouches.length === 0) return;
-
-    controller.requestFrame();
-
-    const touch = event.touches[0] || event.changedTouches[0];
-    if (touch === undefined) return;
-
-    if (event.cancelable !== true) return;
-
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    event.stopPropagation();
-
-    const rect = controller.canvas.getBoundingClientRect();
-    // Get the actual displayed size (accounting for CSS scaling)
-    const displayWidth = rect.width;
-    const displayHeight = rect.height;
-    
-    // Calculate position relative to canvas element
-    const mouseX = touch.clientX - rect.left;
-    const mouseY = touch.clientY - rect.top;
-    
-    // Calculate scale factor between display size and internal canvas size
-    const scaleX = controller.canvas.width / displayWidth;
-    const scaleY = controller.canvas.height / displayHeight;
-
-    // Convert display coordinates to canvas coordinates
-    const x = MathHelper.clamp(
-      Math.round(mouseX * scaleX),
-      0,
-      controller.canvas.width
-    );
-    const y = MathHelper.clamp(
-      Math.round(mouseY * scaleY),
-      0,
-      controller.canvas.height
-    );
-
-    controller.isTouch = true;
-    controller.mouseX = x;
-    controller.mouseY = y;
-    fn.call(controller, x, y);
-  }
-
   const callbacks = {
     dblclick: (e: MouseEvent) => mouseEvent(e, controller.onDoubleClick),
-    touch: (e: TouchEvent) =>
-      touchEvent(e, (x, y) => {
+    touch: (e: TouchEvent) => {
+      const coords = readTouchCanvasCoords(controller, e);
+      if (coords === null) return;
+
+      const { x, y } = coords;
+      touchBlocksNativeScroll = touchHitIsInteractive(controller, x, y);
+
+      controller.requestFrame();
+      controller.isTouch = true;
+      controller.mouseX = x;
+      controller.mouseY = y;
+
+      if (touchBlocksNativeScroll && e.cancelable === true) {
+        e.preventDefault();
+      }
+
+      if (touchBlocksNativeScroll) {
         const now = Date.now();
         const last = lastTouchTap;
         const dx = last ? Math.abs(x - last.x) : Infinity;
@@ -133,31 +146,75 @@ export default function registerCallbacks(
         }
 
         lastTouchTap = { time: now, x, y };
-        controller.onPress(x, y);
-      }),
-    touchrelease: (e: TouchEvent) => touchEvent(e, controller.onRelease),
-    touchmove: (e: TouchEvent) =>
-      touchEvent(e, (x, y) => {
-        controller.mouseX = x;
-        controller.mouseY = y;
-        
-        // Check for pending drag and start it if threshold is met (for touch)
-        if (controller.pendingDrag && !controller.dragging && !controller.resizing) {
-          const pendingDrag = controller.pendingDrag;
-          const dx = Math.abs(x - pendingDrag.x);
-          const dy = Math.abs(y - pendingDrag.y);
-          const distance = Math.sqrt(dx * dx + dy * dy);
-          
-          if (distance >= controller.TOUCH_DRAG_THRESHOLD) {
-            // Start the drag now
-            controller.startDrag(pendingDrag.element, pendingDrag.x, pendingDrag.y);
-            controller.pendingDrag = null;
-          }
+      }
+
+      controller.onPress(x, y);
+    },
+    touchrelease: (e: TouchEvent) => {
+      const coords = readTouchCanvasCoords(controller, e);
+      if (touchBlocksNativeScroll && e.cancelable === true) {
+        e.preventDefault();
+      }
+      touchBlocksNativeScroll = false;
+
+      const rx = coords?.x ?? controller.mouseX;
+      const ry = coords?.y ?? controller.mouseY;
+      if (Number.isFinite(rx) && Number.isFinite(ry)) {
+        controller.onRelease(rx, ry);
+      }
+      controller.requestFrame();
+    },
+    touchmove: (e: TouchEvent) => {
+      const coords = readTouchCanvasCoords(controller, e);
+      if (coords === null) return;
+
+      const { x, y } = coords;
+
+      const blockScroll =
+        touchBlocksNativeScroll ||
+        controller.pendingDrag !== null ||
+        controller.dragging === true ||
+        controller.resizing === true;
+
+      if (blockScroll && e.cancelable === true) {
+        e.preventDefault();
+      }
+
+      controller.requestFrame();
+      controller.mouseX = x;
+      controller.mouseY = y;
+
+      if (
+        touchBlocksNativeScroll &&
+        controller.pendingDrag &&
+        !controller.dragging &&
+        !controller.resizing
+      ) {
+        const pendingDrag = controller.pendingDrag;
+        const dx = Math.abs(x - pendingDrag.x);
+        const dy = Math.abs(y - pendingDrag.y);
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        if (distance >= controller.TOUCH_DRAG_THRESHOLD) {
+          controller.startDrag(pendingDrag.element, pendingDrag.x, pendingDrag.y);
+          controller.pendingDrag = null;
         }
-        
-        if (controller.dragging === true || controller.resizing === true)
-          controller.onDrag(x, y);
-      }),
+      }
+
+      if (controller.dragging === true || controller.resizing === true) {
+        controller.onDrag(x, y);
+      }
+    },
+    touchcancel: () => {
+      touchBlocksNativeScroll = false;
+      if (
+        Number.isFinite(controller.mouseX) &&
+        Number.isFinite(controller.mouseY)
+      ) {
+        controller.onRelease(controller.mouseX, controller.mouseY);
+      }
+      controller.requestFrame();
+    },
     press: (e: MouseEvent) => mouseEvent(e, controller.onPress),
     release: (e: MouseEvent) => mouseEvent(e, controller.onRelease),
     mousemove: (e: MouseEvent) =>
@@ -266,9 +323,16 @@ export default function registerCallbacks(
   controller.canvas.addEventListener('mouseleave', callbacks.mouseleave);
   document.addEventListener('mouseup', callbacks.release);
   document.addEventListener('mousemove', callbacks.mousemove);
-  controller.canvas.addEventListener('touchstart', callbacks.touch);
-  controller.canvas.addEventListener('touchend', callbacks.touchrelease);
-  controller.canvas.addEventListener('touchmove', callbacks.touchmove);
+  controller.canvas.addEventListener('touchstart', callbacks.touch, {
+    passive: false,
+  });
+  controller.canvas.addEventListener('touchend', callbacks.touchrelease, {
+    passive: false,
+  });
+  controller.canvas.addEventListener('touchmove', callbacks.touchmove, {
+    passive: false,
+  });
+  controller.canvas.addEventListener('touchcancel', callbacks.touchcancel);
   document.addEventListener('keydown', callbacks.keydown);
   document.addEventListener('keyup', callbacks.keyup);
 
@@ -280,6 +344,11 @@ export default function registerCallbacks(
     document.removeEventListener('mousemove', callbacks.mousemove);
     document.removeEventListener('keydown', callbacks.keydown);
     document.removeEventListener('keyup', callbacks.keyup);
+    controller.canvas.removeEventListener('touchstart', callbacks.touch);
+    controller.canvas.removeEventListener('touchend', callbacks.touchrelease);
+    controller.canvas.removeEventListener('touchmove', callbacks.touchmove);
+    controller.canvas.removeEventListener('touchcancel', callbacks.touchcancel);
+    touchBlocksNativeScroll = false;
   };
 }
 
