@@ -81,9 +81,7 @@ export async function POST() {
     } else if (!existingCategories || existingCategories.length === 0) {
       console.log('No categories found, creating default ones...');
       const defaultCategories = [
-        { name: 'Funny', emoji: '😂', description: 'Humor and comedy memes' },
-        { name: 'Gaming', emoji: '🎮', description: 'Video game related memes' },
-        { name: 'Tech', emoji: '💻', description: 'Technology and programming memes' },
+        { name: 'Wholesome', emoji: '🌻', description: 'Feel-good, kind, and heartwarming memes' },
         { name: 'Animals', emoji: '🐕', description: 'Cute and funny animal memes' },
         { name: 'Movies', emoji: '🎬', description: 'Film and TV show memes' },
         { name: 'Sports', emoji: '⚽', description: 'Sports and athletic memes' },

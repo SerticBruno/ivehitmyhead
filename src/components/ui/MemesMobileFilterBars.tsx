@@ -1,7 +1,8 @@
 'use client';
 
-import React, { memo } from 'react';
+import React, { memo, useState, useCallback } from 'react';
 import { Category } from '@/lib/types/meme';
+import { cn } from '@/lib/utils';
 import { ICONS, getCategoryIconOrEmoji } from '@/lib/utils/categoryIcons';
 
 export interface MemesMobileFilterBarsProps {
@@ -16,13 +17,16 @@ export interface MemesMobileFilterBarsProps {
   onTimePeriodChange: (period: string) => void;
 }
 
-const PANEL_CLASS =
-  'lg:hidden mb-6 bg-white dark:bg-gray-900 rounded-none border-2 border-zinc-700 dark:border-zinc-400 shadow-[8px_8px_0px_rgba(0,0,0,0.85)] dark:shadow-[8px_8px_0px_rgba(156,163,175,0.42)] p-4';
+const WRAPPER_CLASS = 'lg:hidden mb-6';
+
+const PANEL_SHELL =
+  'bg-white dark:bg-gray-900 rounded-none border-2 border-zinc-700 dark:border-zinc-400 shadow-[8px_8px_0px_rgba(0,0,0,0.85)] dark:shadow-[8px_8px_0px_rgba(156,163,175,0.42)]';
 
 const BTN_ON =
   'bg-black text-white border-black dark:bg-white dark:text-black dark:border-white';
+/** Hover only when device supports hover (avoids sticky “hover” on touch while scrolling). */
 const BTN_OFF =
-  'bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-[#f7f4ee] dark:hover:bg-gray-800 border-zinc-700 dark:border-zinc-400';
+  'bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 border-zinc-700 dark:border-zinc-400 [@media(hover:hover)]:hover:bg-[#f7f4ee] dark:[@media(hover:hover)]:hover:bg-gray-800';
 
 const TIME_PERIODS = [
   { value: 'today', label: 'Today' },
@@ -37,6 +41,14 @@ const SORT_FILTERS = [
   { value: 'newest', label: 'Newest' },
 ] as const;
 
+type TabId = 'time' | 'sort' | 'categories';
+
+const TABS: { id: TabId; label: string }[] = [
+  { id: 'time', label: 'Time' },
+  { id: 'sort', label: 'Sort' },
+  { id: 'categories', label: 'Categories' },
+];
+
 function MemesMobileFilterBarsInner({
   showFilterSkeleton,
   categories,
@@ -48,11 +60,60 @@ function MemesMobileFilterBarsInner({
   onFilterChange,
   onTimePeriodChange,
 }: MemesMobileFilterBarsProps) {
+  const [activeTab, setActiveTab] = useState<TabId>('time');
+
+  const onTabKeyDown = useCallback((e: React.KeyboardEvent, tabId: TabId) => {
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    e.preventDefault();
+    const i = TABS.findIndex((t) => t.id === tabId);
+    const delta = e.key === 'ArrowRight' ? 1 : -1;
+    const next = TABS[(i + delta + TABS.length) % TABS.length];
+    setActiveTab(next.id);
+    const el = document.getElementById(`memes-filter-tab-${next.id}`);
+    el?.focus();
+  }, []);
+
   return (
-    <>
-      <div className={PANEL_CLASS}>
-        <div className="flex flex-col gap-3">
-          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Time Period</h4>
+    <div className={WRAPPER_CLASS}>
+      <div className={PANEL_SHELL}>
+        <div
+          role="tablist"
+          aria-label="Meme filters"
+          className="flex border-b-2 border-zinc-700 dark:border-zinc-400 bg-[#f7f4ee] dark:bg-gray-950"
+        >
+          {TABS.map((tab) => {
+            const selected = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                role="tab"
+                id={`memes-filter-tab-${tab.id}`}
+                aria-selected={selected}
+                aria-controls={`memes-filter-tabpanel-${tab.id}`}
+                tabIndex={selected ? 0 : -1}
+                onClick={() => setActiveTab(tab.id)}
+                onKeyDown={(e) => onTabKeyDown(e, tab.id)}
+                className={cn(
+                  'flex-1 min-w-0 px-1 py-3 text-center text-[10px] sm:text-xs font-black uppercase tracking-wide border-r-2 border-zinc-700 dark:border-zinc-400 last:border-r-0 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-zinc-500 active:opacity-90',
+                  selected
+                    ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white'
+                    : 'text-gray-600 dark:text-gray-400 [@media(hover:hover)]:hover:bg-white/80 dark:[@media(hover:hover)]:hover:bg-gray-900/50',
+                )}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+
+        <div
+          role="tabpanel"
+          id="memes-filter-tabpanel-time"
+          aria-labelledby="memes-filter-tab-time"
+          hidden={activeTab !== 'time'}
+          className="p-4"
+        >
           {showFilterSkeleton ? (
             <div className="flex w-full flex-nowrap gap-2">
               {[...Array(4)].map((_, i) => (
@@ -79,11 +140,14 @@ function MemesMobileFilterBarsInner({
             </div>
           )}
         </div>
-      </div>
 
-      <div className={PANEL_CLASS}>
-        <div className="flex flex-col gap-3">
-          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Sort By</h4>
+        <div
+          role="tabpanel"
+          id="memes-filter-tabpanel-sort"
+          aria-labelledby="memes-filter-tab-sort"
+          hidden={activeTab !== 'sort'}
+          className="p-4"
+        >
           {showFilterSkeleton ? (
             <div className="flex justify-between gap-2">
               {[...Array(3)].map((_, i) => (
@@ -110,12 +174,16 @@ function MemesMobileFilterBarsInner({
             </div>
           )}
         </div>
-      </div>
 
-      <div className={PANEL_CLASS}>
-        <div className="flex flex-col gap-3">
-          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Categories</h4>
-          <nav className="space-y-2">
+        <div
+          role="tabpanel"
+          id="memes-filter-tabpanel-categories"
+          aria-labelledby="memes-filter-tab-categories"
+          hidden={activeTab !== 'categories'}
+          className="min-h-0 max-h-[55vh] touch-pan-y overflow-y-auto p-4"
+          style={{ WebkitOverflowScrolling: 'touch' }}
+        >
+          <nav className="touch-pan-y space-y-2">
             <button
               type="button"
               onClick={() => onCategorySelect('')}
@@ -147,15 +215,13 @@ function MemesMobileFilterBarsInner({
                     <span className="mr-3 flex-shrink-0">
                       {getCategoryIconOrEmoji(category.name, category.emoji)}
                     </span>
-                    <span className="flex-1 text-left font-medium min-w-0 truncate">
-                      {category.name}
-                    </span>
+                    <span className="flex-1 text-left font-medium min-w-0 truncate">{category.name}</span>
                   </button>
                 ))}
           </nav>
         </div>
       </div>
-    </>
+    </div>
   );
 }
 

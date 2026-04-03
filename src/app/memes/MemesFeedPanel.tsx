@@ -623,9 +623,9 @@ export function MemesFeedPanel({ memeGridRef, sidebar }: MemesFeedPanelProps) {
         </p>
       </section>
 
-      <div className="flex flex-col lg:flex-row gap-8 max-w-7xl mx-auto">
+      <div className="flex min-h-0 min-w-0 flex-col gap-8 lg:flex-row max-w-7xl mx-auto">
         {sidebar}
-        <section className="flex-1">
+        <section className="flex-1 min-h-0 min-w-0">
           <MemesMobileFilterBars
             showFilterSkeleton={memesLoading && !isInitialized}
             categories={categories ?? []}

@@ -54,9 +54,7 @@ async function setupDatabase() {
     // Create default categories
     console.log('📝 Creating default categories...');
     const defaultCategories = [
-      { name: 'Funny', emoji: '😂', description: 'Humor and comedy memes' },
-      { name: 'Gaming', emoji: '🎮', description: 'Video game related memes' },
-      { name: 'Tech', emoji: '💻', description: 'Technology and programming memes' },
+      { name: 'Wholesome', emoji: '🌻', description: 'Feel-good, kind, and heartwarming memes' },
       { name: 'Animals', emoji: '🐕', description: 'Cute and funny animal memes' },
       { name: 'Movies', emoji: '🎬', description: 'Film and TV show memes' },
       { name: 'Sports', emoji: '⚽', description: 'Sports and athletic memes' },

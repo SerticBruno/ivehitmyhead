@@ -143,6 +143,7 @@ Append a short bullet when you merge a meaningful change (date + one line).
 - *2026-04-01:* Initial `PROJECT_OVERVIEW.md` created from codebase scan.
 - *2026-04-01:* Marketing backlog: `/help`, `/contact`, `/privacy`, `/terms`; root OG/Twitter metadata + `metadataBase`; footer social env + trending query link; `sitemap.ts` / `robots.ts`; server `generateMetadata` for meme detail; `POST /api/newsletter` + wired `Newsletter` UI.
 - *2026-04-01:* Removed public `/upload` route; meme library uploads only via `/admin` + `POST /api/memes/upload` (admin-only, unchanged).
+- *2026-04-03:* Default categories: removed Funny, Gaming, Tech; added Wholesome. Existing Supabase DBs: run `supabase/migrations/20260403_categories_wholesome.sql` once.
 
 ---
 

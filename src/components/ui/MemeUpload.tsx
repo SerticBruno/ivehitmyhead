@@ -428,7 +428,7 @@ export const MemeUpload: React.FC<MemeUploadProps> = ({
             type="text"
             value={tags}
             onChange={(e) => setTags(e.target.value)}
-            placeholder="funny, gaming, tech (comma separated)"
+            placeholder="wholesome, animals, random (comma separated)"
             disabled={isUploading}
           />
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">

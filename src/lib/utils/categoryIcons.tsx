@@ -1,8 +1,6 @@
 import React from 'react';
 import { 
-  Laugh, 
-  Gamepad2, 
-  Monitor, 
+  Flower2,
   Dog, 
   Film, 
   Trophy, 
@@ -33,10 +31,7 @@ import {
 // Map category names to Lucide React icons
 export const CATEGORY_ICONS: Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>>> = {
   // Common categories
-  'Funny': Laugh,
-  'Gaming': Gamepad2,
-  'Tech': Monitor,
-  'Technology': Monitor,
+  'Wholesome': Flower2,
   'Animals': Dog,
   'Movies': Film,
   'Film': Film,
@@ -66,10 +61,7 @@ export const CATEGORY_ICONS: Record<string, React.ComponentType<React.SVGProps<S
   'Contemporary': TrendingUp,
   
   // Fallback mappings for common variations
-  'funny': Laugh,
-  'gaming': Gamepad2,
-  'tech': Monitor,
-  'technology': Monitor,
+  'wholesome': Flower2,
   'animals': Dog,
   'movies': Film,
   'film': Film,
@@ -108,9 +100,7 @@ export const getCategoryIconOrEmoji = (
 
 // Export all icons for use in other components
 export const ICONS = {
-  Laugh,
-  Gamepad2,
-  Monitor,
+  Flower2,
   Dog,
   Film,
   Trophy,

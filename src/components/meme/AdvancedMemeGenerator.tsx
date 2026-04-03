@@ -917,13 +917,12 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
         <div className="flex flex-col min-h-0 flex-[2] lg:flex-[2] order-2 lg:order-1" style={{ height: '100%', overflow: 'hidden', minWidth: 0 }}>
           <div className="bg-white dark:bg-gray-900 rounded-none shadow-[8px_8px_0px_rgba(0,0,0,0.88)] dark:shadow-[8px_8px_0px_rgba(156,163,175,0.42)] p-2 md:p-4 border-2 border-zinc-700 dark:border-zinc-400 flex-1 flex flex-col min-h-0" style={{ height: '100%', overflow: 'hidden' }}>
             <div 
-              className="flex justify-center items-center bg-[#f7f4ee] dark:bg-gray-950 rounded-none p-2 md:p-4 flex-1 min-h-0" 
+              className="flex justify-center items-center bg-[#f7f4ee] dark:bg-gray-950 rounded-none pt-5 pb-2 px-2 md:p-4 flex-1 min-h-[min(360px,50svh)] lg:min-h-0" 
               style={{ 
                 height: '100%', 
                 width: '100%',
                 position: 'relative',
                 overflow: 'hidden',
-                minHeight: 0
               }}
             >
               {/* Canvas - always rendered for proper initialization */}

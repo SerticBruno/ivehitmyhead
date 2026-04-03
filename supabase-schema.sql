@@ -157,9 +157,7 @@ CREATE TRIGGER trigger_update_meme_comments_count
 
 -- Insert default categories
 INSERT INTO public.categories (name, emoji, description) VALUES
-  ('Funny', '😂', 'Humor and comedy memes'),
-  ('Gaming', '🎮', 'Video game related memes'),
-  ('Tech', '💻', 'Technology and programming memes'),
+  ('Wholesome', '🌻', 'Feel-good, kind, and heartwarming memes'),
   ('Animals', '🐕', 'Cute and funny animal memes'),
   ('Movies', '🎬', 'Film and TV show memes'),
   ('Sports', '⚽', 'Sports and athletic memes'),
