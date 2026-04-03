@@ -15,6 +15,30 @@ import {
 import type { MemeTemplate } from '@/lib/types/meme';
 import { useNavigationWarning } from '@/lib/contexts/NavigationWarningContext';
 
+const PREVIEW_SCROLL_GAP_BELOW_HEADER_PX = 24;
+
+/** After a template loads, align the preview below the sticky header and move focus for keyboard / assistive tech. */
+function scrollMemePreviewIntoView(el: HTMLElement | null) {
+  if (typeof window === 'undefined' || !el) return;
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      const header = document.querySelector('header');
+      const headerHeight =
+        header instanceof HTMLElement
+          ? Math.ceil(header.getBoundingClientRect().height)
+          : 64;
+      const rect = el.getBoundingClientRect();
+      const y =
+        rect.top +
+        window.scrollY -
+        headerHeight -
+        PREVIEW_SCROLL_GAP_BELOW_HEADER_PX;
+      window.scrollTo({ top: Math.max(0, y), behavior: 'auto' });
+      el.focus({ preventScroll: true });
+    });
+  });
+}
+
 interface AdvancedMemeGeneratorProps {
   templates?: MemeTemplate[];
 }
@@ -94,6 +118,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
   }, []);
 
   const generatorRootRef = useRef<HTMLDivElement>(null);
+  const memePreviewContainerRef = useRef<HTMLDivElement>(null);
 
   /** Clicks outside the canvas should blur sidebar fields and clear canvas selection (except on interactive controls). */
   useEffect(() => {
@@ -428,6 +453,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
             })),
           })
         );
+        scrollMemePreviewIntoView(memePreviewContainerRef.current);
         setIsLoadingTemplate(false);
       };
 
@@ -924,10 +950,14 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
         {/* Left side - Canvas (shown second on mobile, left side on desktop) */}
         <div className="flex flex-col min-h-0 flex-[2] lg:flex-[2] order-2 lg:order-1" style={{ height: '100%', overflow: 'hidden', minWidth: 0 }}>
           <div className="bg-white dark:bg-gray-900 rounded-none shadow-[8px_8px_0px_rgba(0,0,0,0.88)] dark:shadow-[8px_8px_0px_rgba(156,163,175,0.42)] p-2 md:p-4 border-2 border-zinc-700 dark:border-zinc-400 flex-1 flex flex-col min-h-0" style={{ height: '100%', overflow: 'hidden' }}>
-            <div 
-              className="flex justify-center items-center bg-[#f7f4ee] dark:bg-gray-950 rounded-none pt-5 pb-2 px-2 md:p-4 flex-1 min-h-[min(360px,50svh)] lg:min-h-0" 
-              style={{ 
-                height: '100%', 
+            <div
+              ref={memePreviewContainerRef}
+              tabIndex={-1}
+              role="region"
+              aria-label="Meme preview"
+              className="flex justify-center items-center bg-[#f7f4ee] dark:bg-gray-950 rounded-none pt-5 pb-2 px-2 md:p-4 flex-1 min-h-[min(360px,50svh)] lg:min-h-0 outline-none focus-visible:ring-2 focus-visible:ring-zinc-600 dark:focus-visible:ring-zinc-400 focus-visible:ring-offset-2"
+              style={{
+                height: '100%',
                 width: '100%',
                 position: 'relative',
                 overflow: 'hidden',
