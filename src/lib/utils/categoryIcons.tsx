@@ -25,7 +25,8 @@ import {
   Upload,
   Moon,
   Image,
-  AlertCircle
+  AlertCircle,
+  Joystick
 } from 'lucide-react';
 
 // Map category names to Lucide React icons
@@ -43,6 +44,8 @@ export const CATEGORY_ICONS: Record<string, React.ComponentType<React.SVGProps<S
   'Business': Briefcase,
   'Random': Dice5,
   'Misc': Dice5,
+  'Gaming': Joystick,
+  'Games': Joystick,
   
   // Specific categories
   'classic': Star,
@@ -73,29 +76,45 @@ export const CATEGORY_ICONS: Record<string, React.ComponentType<React.SVGProps<S
   'business': Briefcase,
   'random': Dice5,
   'misc': Dice5,
+  'gaming': Joystick,
+  'games': Joystick,
 };
 
-// Fallback icon for unknown categories
+// Fallback when no Lucide mapping exists (see getCategoryIcon)
 export const DEFAULT_CATEGORY_ICON = Star;
 
-// Function to get icon for a category
-export const getCategoryIcon = (categoryName: string): React.ComponentType<React.SVGProps<SVGSVGElement>> => {
-  return CATEGORY_ICONS[categoryName] || DEFAULT_CATEGORY_ICON;
-};
+function resolveCategoryIcon(
+  categoryName: string,
+): React.ComponentType<React.SVGProps<SVGSVGElement>> | undefined {
+  const trimmed = categoryName.trim();
+  if (!trimmed) return undefined;
+  const direct = CATEGORY_ICONS[trimmed];
+  if (direct) return direct;
+  const lower = trimmed.toLowerCase();
+  for (const key of Object.keys(CATEGORY_ICONS)) {
+    if (key.toLowerCase() === lower) {
+      return CATEGORY_ICONS[key];
+    }
+  }
+  return undefined;
+}
 
-// Function to get icon for a category with fallback to emoji
+/** Lucide icon for this category name, or undefined so callers can use DB emoji. */
+export const getCategoryIcon = (
+  categoryName: string,
+): React.ComponentType<React.SVGProps<SVGSVGElement>> | undefined =>
+  resolveCategoryIcon(categoryName);
+
+// Prefer Lucide when mapped; otherwise use emoji from Supabase; last resort folder emoji
 export const getCategoryIconOrEmoji = (
   categoryName: string, 
   emoji?: string
 ): React.ReactNode => {
-  const IconComponent = getCategoryIcon(categoryName);
-  
+  const IconComponent = resolveCategoryIcon(categoryName);
   if (IconComponent) {
     return <IconComponent className="w-5 h-5" />;
   }
-  
-  // Fallback to emoji if no icon mapping exists
-  return emoji || '📁';
+  return emoji?.trim() || '📁';
 };
 
 // Export all icons for use in other components
@@ -125,5 +144,6 @@ export const ICONS = {
   Upload,
   Moon,
   Image,
-  AlertCircle
+  AlertCircle,
+  Joystick
 };
