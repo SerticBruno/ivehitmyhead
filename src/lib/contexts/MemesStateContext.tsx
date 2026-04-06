@@ -1,23 +1,13 @@
 'use client';
 
 import React, { createContext, useContext, useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo } from 'react';
-import { usePathname } from 'next/navigation';
 import { Meme } from '@/lib/types/meme';
-
-/** sessionStorage key: epoch ms when list scroll restore stops applying (set when leaving `/memes` for a route other than `/meme/[slug]`). */
-export const MEMES_LIST_SCROLL_EXPIRY_AT_KEY = 'memesListScrollExpiryAt';
-
-/** How long scroll position is restored after leaving the memes grid for non–detail pages. */
-export const MEMES_LIST_SCROLL_TTL_MS = 0.5 * 60 * 1000;
-
-function isMemeDetailPath(pathname: string): boolean {
-  return /^\/meme\/[^/]+$/.test(pathname);
-}
 
 interface MemesState {
   memes: Meme[];
   hasMore: boolean;
   currentPage: number;
+  queryKey: string;
   scrollPosition: number;
   filters: {
     category_id: string;
@@ -32,10 +22,12 @@ export interface MemesListStateContextType {
   memes: Meme[];
   hasMore: boolean;
   currentPage: number;
+  queryKey: string;
   setMemes: (memes: Meme[]) => void;
   appendMemes: (memes: Meme[]) => void;
   setHasMore: (hasMore: boolean) => void;
   setCurrentPage: (page: number) => void;
+  setQueryKey: (queryKey: string) => void;
   updateMemeLikeCount: (memeSlug: string, newLikeCount: number) => void;
   updateMemeShareCount: (memeSlug: string, newShareCount: number) => void;
   updateMemeLikedState: (memeSlug: string, isLiked: boolean) => void;
@@ -61,6 +53,7 @@ const initialState: MemesState = {
   memes: [],
   hasMore: false,
   currentPage: 1,
+  queryKey: '',
   scrollPosition: 0,
   filters: {
     category_id: '',
@@ -102,6 +95,7 @@ function normalizeMemesStateSnapshot(raw: unknown): MemesState {
     },
     hasMore: typeof p.hasMore === 'boolean' ? p.hasMore : initialState.hasMore,
     currentPage: typeof p.currentPage === 'number' && p.currentPage >= 1 ? p.currentPage : initialState.currentPage,
+    queryKey: typeof p.queryKey === 'string' ? p.queryKey : initialState.queryKey,
     scrollPosition: typeof p.scrollPosition === 'number' ? p.scrollPosition : initialState.scrollPosition,
     isInitialized: typeof p.isInitialized === 'boolean' ? p.isInitialized : initialState.isInitialized,
   };
@@ -144,32 +138,6 @@ export const MemesStateProvider: React.FC<MemesStateProviderProps> = ({ children
   const [state, setState] = useState<MemesState>(initialState);
   const isInitialMount = useRef(true);
   const lastSavedState = useRef<string>('');
-  const pathname = usePathname();
-  const prevPathnameRef = useRef<string | null>(null);
-
-  // Memes list page unmounts on navigation - track route changes here so we know where the user went.
-  useEffect(() => {
-    const prev = prevPathnameRef.current;
-    prevPathnameRef.current = pathname;
-
-    if (prev !== '/memes' || typeof window === 'undefined') {
-      return;
-    }
-
-    if (pathname === '/memes') {
-      return;
-    }
-
-    if (isMemeDetailPath(pathname)) {
-      sessionStorage.removeItem(MEMES_LIST_SCROLL_EXPIRY_AT_KEY);
-      return;
-    }
-
-    sessionStorage.setItem(
-      MEMES_LIST_SCROLL_EXPIRY_AT_KEY,
-      String(Date.now() + MEMES_LIST_SCROLL_TTL_MS)
-    );
-  }, [pathname]);
 
   // Restore filters + list from session before child useEffects (e.g. /memes fetch) run.
   useLayoutEffect(() => {
@@ -294,6 +262,10 @@ export const MemesStateProvider: React.FC<MemesStateProviderProps> = ({ children
     setState(prev => ({ ...prev, currentPage: page }));
   }, []);
 
+  const setQueryKey = useCallback((queryKey: string) => {
+    setState(prev => ({ ...prev, queryKey }));
+  }, []);
+
   const setScrollPosition = useCallback((position: number) => {
     setState(prev => ({ ...prev, scrollPosition: position }));
   }, []);
@@ -315,6 +287,8 @@ export const MemesStateProvider: React.FC<MemesStateProviderProps> = ({ children
           // Reset memes when filters change (keep isInitialized so filter UI does not unmount)
           memes: [],
           currentPage: 1,
+          queryKey: '',
+          scrollPosition: 0,
           hasMore: true,
         };
       }
@@ -422,10 +396,12 @@ export const MemesStateProvider: React.FC<MemesStateProviderProps> = ({ children
       memes: state.memes,
       hasMore: state.hasMore,
       currentPage: state.currentPage,
+      queryKey: state.queryKey,
       setMemes,
       appendMemes,
       setHasMore,
       setCurrentPage,
+      setQueryKey,
       updateMemeLikeCount,
       updateMemeShareCount,
       updateMemeLikedState
@@ -434,10 +410,12 @@ export const MemesStateProvider: React.FC<MemesStateProviderProps> = ({ children
       state.memes,
       state.hasMore,
       state.currentPage,
+      state.queryKey,
       setMemes,
       appendMemes,
       setHasMore,
       setCurrentPage,
+      setQueryKey,
       updateMemeLikeCount,
       updateMemeShareCount,
       updateMemeLikedState

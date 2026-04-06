@@ -7,6 +7,7 @@ import { cn, formatDateDDMMYYYY, formatRelativeTime, formatTime } from '@/lib/ut
 import { MemeCardProps } from '@/lib/types/meme';
 import { ICONS, getCategoryIconOrEmoji } from '@/lib/utils/categoryIcons';
 import { imagePreloader } from '@/lib/utils/imagePreloader';
+import { useMemesUIState } from '@/lib/contexts';
 
 const MemeCard: React.FC<MemeCardProps> = ({
   meme,
@@ -15,6 +16,7 @@ const MemeCard: React.FC<MemeCardProps> = ({
   className,
   isLiked
 }) => {
+  const { setScrollPosition } = useMemesUIState();
   // Use the meme's is_liked field if available, otherwise fall back to the prop
   const isActuallyLiked = meme.is_liked !== undefined ? meme.is_liked : (isLiked || false);
   const [imageLoading, setImageLoading] = useState(true);
@@ -80,7 +82,15 @@ const MemeCard: React.FC<MemeCardProps> = ({
   };
 
   return (
-    <Link href={`/meme/${meme.slug}`} className="block">
+    <Link
+      href={`/meme/${meme.slug}`}
+      className="block"
+      onClick={() => {
+        if (typeof window !== 'undefined') {
+          setScrollPosition(window.scrollY);
+        }
+      }}
+    >
       <Card
         className={cn("overflow-hidden cursor-pointer rounded-none border-2 border-zinc-700 dark:border-zinc-400 shadow-[8px_8px_0px_rgba(0,0,0,0.88)] dark:shadow-[8px_8px_0px_rgba(156,163,175,0.42)]", className)}
       >

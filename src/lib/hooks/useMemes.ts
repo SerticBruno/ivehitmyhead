@@ -25,15 +25,18 @@ export const useMemes = (options: UseMemesOptions = {}): UseMemesReturn => {
   const [error, setError] = useState<string | null>(null);
   /** Drops stale fetch responses (e.g. all-memes request finishing after session restores category). */
   const fetchGenerationRef = useRef(0);
+  const isFetchingMoreRef = useRef(false);
 
   const {
     memes,
     hasMore,
     currentPage,
+    queryKey,
     setMemes,
     appendMemes,
     setHasMore,
     setCurrentPage,
+    setQueryKey,
   } = useMemesListState();
 
   const {
@@ -59,6 +62,13 @@ export const useMemes = (options: UseMemesOptions = {}): UseMemesReturn => {
   );
 
   const fetchMemes = useCallback(async (pageNum: number, append: boolean = false) => {
+    if (append) {
+      if (isFetchingMoreRef.current) {
+        return;
+      }
+      isFetchingMoreRef.current = true;
+    }
+
     const requestGeneration = append
       ? fetchGenerationRef.current
       : ++fetchGenerationRef.current;
@@ -104,6 +114,7 @@ export const useMemes = (options: UseMemesOptions = {}): UseMemesReturn => {
         setMemes(data.memes);
       }
 
+      setQueryKey(querySignature);
       setHasMore(data.pagination?.has_more || false);
       setCurrentPage(pageNum);
     } catch (err) {
@@ -112,16 +123,18 @@ export const useMemes = (options: UseMemesOptions = {}): UseMemesReturn => {
       }
     } finally {
       if (append) {
+        isFetchingMoreRef.current = false;
+      }
+      if (append) {
         setLoading(false);
       } else if (requestGeneration === fetchGenerationRef.current) {
         setLoading(false);
       }
     }
-  }, [category_id, search, sort_by, sort_order, time_period, limit, setMemes, appendMemes, setHasMore, setCurrentPage]);
+  }, [category_id, search, sort_by, sort_order, time_period, limit, setMemes, appendMemes, setHasMore, setCurrentPage, setQueryKey, querySignature]);
 
   const loadMore = useCallback(() => {
-    // Check if we can actually load more
-    if (!loading && hasMore && memes.length > 0) {
+    if (!loading && !isFetchingMoreRef.current && hasMore && memes.length > 0) {
       const nextPage = currentPage + 1;
       fetchMemes(nextPage, true);
     }
@@ -138,10 +151,18 @@ export const useMemes = (options: UseMemesOptions = {}): UseMemesReturn => {
   // Refetch whenever API query params change so session-restored filters match the list.
 
   useEffect(() => {
+    const hasMatchingCachedList = queryKey === querySignature && memes.length > 0;
+
+    if (hasMatchingCachedList) {
+      setLoading(false);
+      setError(null);
+      return;
+    }
+
     setCurrentPage(1);
     setHasMore(true);
     fetchMemes(1, false);
-  }, [querySignature, fetchMemes, setCurrentPage, setHasMore]);
+  }, [querySignature, queryKey, memes.length, fetchMemes, setCurrentPage, setHasMore]);
 
   return {
     memes,

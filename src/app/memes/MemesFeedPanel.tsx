@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { MemeGrid } from '@/components/meme';
 import { MemesMobileFilterBars } from '@/components/ui/MemesMobileFilterBars';
 import { useMemes } from '@/lib/hooks/useMemes';
 import { useCategories } from '@/lib/hooks/useCategories';
 import { useMemeInteractions } from '@/lib/hooks/useMemeInteractions';
-import { useMemesUIState, useMemesListState, MEMES_LIST_SCROLL_EXPIRY_AT_KEY } from '@/lib/contexts';
+import { useMemesUIState, useMemesListState } from '@/lib/contexts';
 import { ICONS } from '@/lib/utils/categoryIcons';
 import { shareMemeWithFallback } from '@/lib/utils/shareUtils';
 
@@ -65,7 +65,6 @@ export function MemesFeedPanel({ memeGridRef, sidebar }: MemesFeedPanelProps) {
 
   const {
     memes: listMemes,
-    currentPage,
     updateMemeLikeCount,
     updateMemeShareCount,
     updateMemeLikedState,
@@ -128,6 +127,8 @@ export function MemesFeedPanel({ memeGridRef, sidebar }: MemesFeedPanelProps) {
   const viewedMemesRef = useRef<Set<string>>(new Set());
   const processedMemesRef = useRef<Set<string>>(new Set());
   const processingMemesRef = useRef<Set<string>>(new Set());
+  const hasRestoredScrollRef = useRef(false);
+  const suppressLoadMoreUntilRef = useRef(0);
 
   const getViewedMemes = useCallback(() => {
     if (viewedMemesRef.current.size === 0 && typeof window !== 'undefined') {
@@ -150,22 +151,6 @@ export function MemesFeedPanel({ memeGridRef, sidebar }: MemesFeedPanelProps) {
   const { categories, loading: categoriesLoading } = useCategories({ limit: 50 });
 
   useEffect(() => {
-    if (scrollPosition > 0 && window.scrollY === 0) {
-      console.log('Restoring scroll position:', scrollPosition);
-
-      const timer = setTimeout(() => {
-        window.scrollTo({
-          top: scrollPosition,
-          behavior: 'instant'
-        });
-        console.log('Scroll position restored to:', scrollPosition);
-      }, 300);
-
-      return () => clearTimeout(timer);
-    }
-  }, [scrollPosition, isInitialized]);
-
-  useEffect(() => {
     const handleScroll = () => {
       if (typeof window !== 'undefined') {
         const currentScrollY = window.scrollY;
@@ -184,6 +169,7 @@ export function MemesFeedPanel({ memeGridRef, sidebar }: MemesFeedPanelProps) {
       sessionStorage.removeItem('viewedMemes');
       viewedMemesRef.current.clear();
       processedMemesRef.current.clear();
+      hasRestoredScrollRef.current = false;
     }
   }, [filters.filter, filters.category_id, filters.time_period]);
 
@@ -224,144 +210,41 @@ export function MemesFeedPanel({ memeGridRef, sidebar }: MemesFeedPanelProps) {
     setFilters({ category_id: categoryId });
   }, [setFilters]);
 
-  const { memes, loading: memesLoading, error: memesError, hasMore, loadMore, refresh } = useMemes({
+  const { memes, loading: memesLoading, error: memesError, hasMore, loadMore } = useMemes({
     category_id: filters.category_id || undefined,
     limit: 7,
     time_period: filters.time_period,
     ...getSortParams
   });
 
-  useLayoutEffect(() => {
+  const handleLoadMore = useCallback(() => {
+    if (Date.now() < suppressLoadMoreUntilRef.current) {
+      return;
+    }
+    loadMore();
+  }, [loadMore]);
+
+  useEffect(() => {
     if (typeof window === 'undefined') {
       return;
     }
-    const raw = sessionStorage.getItem(MEMES_LIST_SCROLL_EXPIRY_AT_KEY);
-    if (raw === null) {
+    if (hasRestoredScrollRef.current) {
       return;
     }
-    const expiresAt = parseInt(raw, 10);
-    if (Number.isNaN(expiresAt)) {
-      sessionStorage.removeItem(MEMES_LIST_SCROLL_EXPIRY_AT_KEY);
+    if (!isInitialized || memes.length === 0 || scrollPosition <= 0) {
       return;
     }
-    if (Date.now() <= expiresAt) {
+    if (window.scrollY > 0) {
+      hasRestoredScrollRef.current = true;
       return;
     }
-    sessionStorage.removeItem(MEMES_LIST_SCROLL_EXPIRY_AT_KEY);
-    setScrollPosition(0);
-    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-    refresh();
-  }, [setScrollPosition, refresh]);
 
-  useEffect(() => {
-    if (memes.length > 0 && scrollPosition > 0 && window.scrollY === 0) {
-      console.log('Memes loaded, restoring scroll position:', scrollPosition);
-
-      const timer = setTimeout(() => {
-        window.scrollTo({
-          top: scrollPosition,
-          behavior: 'instant'
-        });
-        console.log('Scroll position restored after memes loaded:', scrollPosition);
-      }, 200);
-
-      return () => clearTimeout(timer);
-    }
-  }, [memes.length, scrollPosition]);
-
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible' &&
-          scrollPosition > 0 &&
-          window.scrollY === 0) {
-        console.log('Page became visible, restoring scroll position:', scrollPosition);
-
-        setTimeout(() => {
-          window.scrollTo({
-            top: scrollPosition,
-            behavior: 'instant'
-          });
-          console.log('Scroll position restored on visibility change:', scrollPosition);
-        }, 500);
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [scrollPosition]);
-
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        console.log('Page became visible, refreshing meme data to get updated counts');
-        setTimeout(() => {
-          if (typeof window !== 'undefined' && window.location.pathname === '/memes') {
-            window.dispatchEvent(new CustomEvent('refreshMemes'));
-          }
-        }, 100);
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, []);
-
-  useEffect(() => {
-    const handleFocus = () => {
-      if (scrollPosition > 0 && window.scrollY === 0) {
-        console.log('Window focused, restoring scroll position:', scrollPosition);
-
-        setTimeout(() => {
-          window.scrollTo({
-            top: scrollPosition,
-            behavior: 'instant'
-          });
-          console.log('Scroll position restored on window focus:', scrollPosition);
-        }, 300);
-      }
-    };
-
-    window.addEventListener('focus', handleFocus);
-    return () => window.removeEventListener('focus', handleFocus);
-  }, [scrollPosition]);
-
-  useEffect(() => {
-    if (scrollPosition > 0) {
-      console.log('Component mounted, scheduling scroll restoration:', scrollPosition);
-
-      const timers = [
-        setTimeout(() => {
-          if (window.scrollY === 0) {
-            window.scrollTo({
-              top: scrollPosition,
-              behavior: 'instant'
-            });
-            console.log('Scroll restored on first attempt:', scrollPosition);
-          }
-        }, 100),
-        setTimeout(() => {
-          if (window.scrollY === 0) {
-            window.scrollTo({
-              top: scrollPosition,
-              behavior: 'instant'
-            });
-            console.log('Scroll restored on second attempt:', scrollPosition);
-          }
-        }, 500),
-        setTimeout(() => {
-          if (window.scrollY === 0) {
-            window.scrollTo({
-              top: scrollPosition,
-              behavior: 'instant'
-            });
-            console.log('Scroll restored on third attempt:', scrollPosition);
-          }
-        }, 1000)
-      ];
-
-      return () => timers.forEach(timer => clearTimeout(timer));
-    }
-  }, [scrollPosition]);
+    hasRestoredScrollRef.current = true;
+    suppressLoadMoreUntilRef.current = Date.now() + 1200;
+    requestAnimationFrame(() => {
+      window.scrollTo({ top: scrollPosition, left: 0, behavior: 'instant' });
+    });
+  }, [isInitialized, memes.length, scrollPosition]);
 
   const { likeMeme, recordView } = useMemeInteractions();
 
@@ -381,103 +264,6 @@ export function MemesFeedPanel({ memeGridRef, sidebar }: MemesFeedPanelProps) {
       });
     }
   }, [memes, addViewedMeme, recordView, getViewedMemes]);
-
-  useEffect(() => {
-    if (hasMore && !memesLoading && memes.length > 0) {
-      const isNearBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 800;
-
-      if (isNearBottom) {
-        console.log('Already near bottom of page, triggering load more');
-        setTimeout(() => {
-          loadMore();
-        }, 100);
-      }
-    }
-  }, [hasMore, memesLoading, memes.length, loadMore]);
-
-  useEffect(() => {
-    if (memes.length > 0 && hasMore && !memesLoading) {
-      const currentPageEstimate = Math.ceil(memes.length / 7);
-
-      if (currentPageEstimate > 1) {
-        console.log('Returned to memes page with existing memes, checking if we need to load more');
-
-        const isNearBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 800;
-
-        console.log('Scroll position check:', {
-          windowHeight: window.innerHeight,
-          scrollY: window.scrollY,
-          documentHeight: document.documentElement.scrollHeight,
-          isNearBottom
-        });
-
-        if (isNearBottom) {
-          console.log('Near bottom with existing memes, triggering load more');
-          setTimeout(() => {
-            loadMore();
-          }, 200);
-        }
-      }
-    }
-  }, [memes.length, hasMore, memesLoading, loadMore, filters, isInitialized, currentPage]);
-
-  useEffect(() => {
-    if (scrollPosition > 0 && memes.length > 0 && hasMore && !memesLoading) {
-      console.log('Scroll restored, checking if we need to load more memes');
-
-      const timer = setTimeout(() => {
-        const currentScrollY = window.scrollY;
-        const documentHeight = document.documentElement.scrollHeight;
-        const windowHeight = window.innerHeight;
-
-        const isNearBottom = currentScrollY + windowHeight >= documentHeight - 800;
-
-        console.log('Post-scroll restoration check:', {
-          currentScrollY,
-          documentHeight,
-          windowHeight,
-          isNearBottom,
-          savedPosition: scrollPosition
-        });
-
-        if (isNearBottom) {
-          console.log('Near bottom after scroll restoration, triggering load more');
-          loadMore();
-        }
-      }, 500);
-
-      return () => clearTimeout(timer);
-    }
-  }, [scrollPosition, memes.length, hasMore, memesLoading, loadMore]);
-
-  useEffect(() => {
-    if (scrollPosition > 0 && memes.length > 0 && hasMore && !memesLoading) {
-      console.log('Checking if we need to aggressively load more memes after returning to page');
-
-      const timers = [
-        setTimeout(() => {
-          if (window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 800) {
-            console.log('Aggressive check 1: Near bottom, loading more');
-            loadMore();
-          }
-        }, 300),
-        setTimeout(() => {
-          if (window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 800) {
-            console.log('Aggressive check 2: Near bottom, loading more');
-            loadMore();
-          }
-        }, 800),
-        setTimeout(() => {
-          if (window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 800) {
-            console.log('Aggressive check 3: Near bottom, loading more');
-            loadMore();
-          }
-        }, 1500)
-      ];
-
-      return () => timers.forEach(timer => clearTimeout(timer));
-    }
-  }, [scrollPosition, memes.length, hasMore, memesLoading, loadMore]);
 
   const displayMemes = useMemo(() => memes, [memes]);
 
@@ -659,7 +445,7 @@ export function MemesFeedPanel({ memeGridRef, sidebar }: MemesFeedPanelProps) {
                 onShare={handleShare}
                 loading={memesLoading}
                 showLoadMore={true}
-                onLoadMore={loadMore}
+                onLoadMore={handleLoadMore}
                 hasMore={hasMore}
                 layout="vertical"
                 emptyStateDescription={emptyMemesGridDescription}

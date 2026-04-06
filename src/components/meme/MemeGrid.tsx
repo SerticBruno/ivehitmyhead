@@ -37,7 +37,6 @@ export const MemeGrid: React.FC<MemeGridProps> = ({
     onLoadMore: onLoadMore || (() => {}),
     hasMore: hasMore && showLoadMore,
     loading,
-    batchSize: 5,
     itemCount: memes.length,
     rootMargin: '800px' // Trigger loading when 800px from bottom
   });
