@@ -142,17 +142,13 @@ export default function Home() {
 
           {/* Hottest memes (last month) - loading */}
           <section className="mb-12">
-            <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="mb-6">
               <div>
                 <h2 className="text-2xl font-black uppercase tracking-tight">Hottest Memes - Last Month</h2>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                   Who hit like this month. That is the entire bar for inclusion.
                 </p>
               </div>
-              <Button variant="ghost" className="self-start rounded-none border-2 border-transparent uppercase tracking-wide font-bold sm:self-auto" onClick={() => window.location.href = '/memes'}>
-                <ICONS.ArrowRight className="w-4 h-4 mr-1" />
-                View All
-              </Button>
             </div>
             
             {/* Skeleton Loading Grid */}
@@ -182,6 +178,12 @@ export default function Home() {
                   </div>
                 </div>
               ))}
+            </div>
+            <div className="mt-6 flex justify-center">
+              <Button variant="ghost" className="rounded-none border-2 border-transparent uppercase tracking-wide font-bold" onClick={() => window.location.href = '/memes'}>
+                View All
+                <ICONS.ArrowRight className="w-4 h-4 ml-1" />
+              </Button>
             </div>
           </section>
         </main>
@@ -238,17 +240,13 @@ export default function Home() {
 
         {/* Hottest memes (last month) */}
         <section className="mb-12">
-          <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="mb-6">
             <div>
               <h2 className="text-2xl font-black uppercase tracking-tight">Hottest Memes - Last Month</h2>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                 Who hit like this month. That is the entire bar for inclusion.
               </p>
             </div>
-            <Button variant="ghost" className="self-start rounded-none border-2 border-transparent uppercase tracking-wide font-bold sm:self-auto" onClick={() => window.location.href = '/memes'}>
-              <ICONS.ArrowRight className="w-4 h-4 mr-1" />
-              View All
-            </Button>
           </div>
           
           {displayMemes.length > 0 ? (
@@ -269,6 +267,12 @@ export default function Home() {
               </p>
             </div>
           )}
+          <div className="mt-6 flex justify-center">
+            <Button variant="ghost" className="rounded-none border-2 border-transparent uppercase tracking-wide font-bold" onClick={() => window.location.href = '/memes'}>
+              View All
+              <ICONS.ArrowRight className="w-4 h-4 ml-1" />
+            </Button>
+          </div>
         </section>
 
       </main>
