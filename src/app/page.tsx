@@ -180,26 +180,30 @@ export default function Home() {
             {/* Skeleton Loading Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {Array.from({ length: 8 }).map((_, index) => (
-                <div key={index} className="animate-pulse">
-                  <div className="bg-white dark:bg-gray-800 rounded-none shadow-md overflow-hidden">
-                    <div className="p-4 pb-3">
-                      <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded-none mb-2"></div>
-                      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-none mb-2"></div>
-                      <div className="flex items-center gap-2 mt-2">
-                        <div className="w-4 h-4 bg-gray-200 dark:bg-gray-700 rounded-none"></div>
-                        <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded-none w-20"></div>
+                <div key={index} className="animate-pulse bg-white dark:bg-gray-900 border-2 border-zinc-700 dark:border-zinc-400 shadow-[6px_6px_0px_rgba(0,0,0,0.85)] dark:shadow-[6px_6px_0px_rgba(156,163,175,0.42)] overflow-hidden h-full flex flex-col">
+                  <div className="px-4 pt-4 pb-3 flex-shrink-0">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="h-4 bg-gray-200 dark:bg-gray-700 mb-1.5"></div>
+                        <div className="h-4 bg-gray-200 dark:bg-gray-700 w-3/4 mb-2"></div>
+                        <div className="h-3 bg-gray-200 dark:bg-gray-700 w-1/2"></div>
+                      </div>
+                      <div className="w-16 flex-shrink-0">
+                        <div className="h-3 bg-gray-200 dark:bg-gray-700 mb-1"></div>
+                        <div className="h-2.5 bg-gray-200 dark:bg-gray-700 mb-1"></div>
+                        <div className="h-2.5 bg-gray-200 dark:bg-gray-700"></div>
                       </div>
                     </div>
-                    <div className="h-[calc(100vh-300px)] min-h-[400px] max-h-[800px] border-y-2 border-zinc-700 dark:border-zinc-400 bg-gray-200 dark:bg-gray-700 sm:h-64 sm:min-h-0 sm:max-h-none" />
-                    <div className="p-4 pt-2">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-none w-12"></div>
-                          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-none w-12"></div>
-                          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-none w-12"></div>
-                        </div>
-                        <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded-none w-16"></div>
+                  </div>
+                  <div className="h-[calc(100vh-300px)] min-h-[400px] max-h-[800px] sm:h-64 sm:min-h-0 sm:max-h-none border-y-2 border-zinc-700 dark:border-zinc-400 bg-gray-200/90 dark:bg-gray-800 flex-grow" />
+                  <div className="px-4 pb-4 pt-3 flex-shrink-0">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="h-4 w-10 bg-gray-200 dark:bg-gray-700"></div>
+                        <div className="h-4 w-10 bg-gray-200 dark:bg-gray-700"></div>
+                        <div className="h-4 w-10 bg-gray-200 dark:bg-gray-700"></div>
                       </div>
+                      <div className="h-3 w-16 bg-gray-200 dark:bg-gray-700"></div>
                     </div>
                   </div>
                 </div>

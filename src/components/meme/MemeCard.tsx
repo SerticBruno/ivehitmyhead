@@ -3,14 +3,14 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { cn, formatRelativeTime, formatTime } from '@/lib/utils';
+import { cn, formatDateDDMMYYYY, formatRelativeTime, formatTime } from '@/lib/utils';
 import { MemeCardProps } from '@/lib/types/meme';
 import { ICONS, getCategoryIconOrEmoji } from '@/lib/utils/categoryIcons';
 import { imagePreloader } from '@/lib/utils/imagePreloader';
 
 const MemeCard: React.FC<MemeCardProps> = ({
   meme,
-  onLike,
+  onLike, 
   onShare,
   className,
   isLiked
@@ -97,10 +97,7 @@ const MemeCard: React.FC<MemeCardProps> = ({
                 {formatRelativeTime(meme.created_at)}
               </div>
               <div className="text-xs text-gray-500">
-                {formatTime(meme.created_at)}
-              </div>
-              <div className="text-xs text-gray-400">
-                {new Date(meme.created_at).toLocaleDateString()}
+                {formatTime(meme.created_at)} • {formatDateDDMMYYYY(meme.created_at)}
               </div>
             </div>
           </div>

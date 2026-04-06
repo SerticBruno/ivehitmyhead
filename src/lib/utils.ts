@@ -85,6 +85,14 @@ export function formatTime(date: string | Date): string {
   });
 }
 
+export function formatDateDDMMYYYY(date: string | Date): string {
+  const targetDate = new Date(date);
+  const day = String(targetDate.getDate()).padStart(2, '0');
+  const month = String(targetDate.getMonth() + 1).padStart(2, '0');
+  const year = targetDate.getFullYear();
+  return `${day}/${month}/${year}`;
+}
+
 export function formatCompactTime(date: string | Date): string {
   const now = new Date();
   const targetDate = new Date(date);
