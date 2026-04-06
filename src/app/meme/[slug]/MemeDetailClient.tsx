@@ -32,6 +32,7 @@ export function MemeDetailClient({ slug }: MemeDetailClientProps) {
   const [sharesCount, setSharesCount] = useState(0);
   const [isCheckingLikeStatus, setIsCheckingLikeStatus] = useState(true);
   const [isLiking, setIsLiking] = useState(false);
+  const [isLoadingRandom, setIsLoadingRandom] = useState(false);
 
   const { likeMeme, recordView } = useMemeInteractions();
   const { memes: listMemes, updateMemeLikeCount, updateMemeShareCount, updateMemeLikedState } =
@@ -158,6 +159,80 @@ export function MemeDetailClient({ slug }: MemeDetailClientProps) {
       updateMemeShareCount(slug, newShareCount);
     }
   };
+
+  const handleRandom = useCallback(async () => {
+    if (isLoadingRandom) return;
+
+    const sessionKey = 'randomDetailSeenIds';
+    const parseStoredIds = (raw: string | null) => {
+      if (!raw) return [];
+      try {
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) return [];
+        return parsed.filter((value): value is string => typeof value === 'string');
+      } catch {
+        return [];
+      }
+    };
+
+    const fetchRandomMeme = async (excludeIds: string[]) => {
+      const params = new URLSearchParams({
+        mode: 'random',
+        limit: '1',
+      });
+
+      if (excludeIds.length > 0) {
+        params.set('exclude_ids', excludeIds.slice(0, 200).join(','));
+      }
+
+      const response = await fetch(`/api/memes?${params}`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch random meme: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      return Array.isArray(data.memes) ? data.memes[0] : null;
+    };
+
+    try {
+      setIsLoadingRandom(true);
+      const storedIds =
+        typeof window === 'undefined'
+          ? []
+          : parseStoredIds(sessionStorage.getItem(sessionKey));
+
+      const currentExclusions = new Set<string>(storedIds);
+      if (meme?.id) {
+        currentExclusions.add(meme.id);
+      }
+
+      let randomMeme = await fetchRandomMeme([...currentExclusions]);
+
+      // If exclusions are exhausted in a tiny dataset, reset once and try again.
+      if (!randomMeme && typeof window !== 'undefined') {
+        sessionStorage.removeItem(sessionKey);
+        randomMeme = await fetchRandomMeme(meme?.id ? [meme.id] : []);
+      }
+
+      if (!randomMeme?.slug) {
+        return;
+      }
+
+      if (typeof window !== 'undefined') {
+        const nextIds = [...currentExclusions];
+        if (randomMeme.id) {
+          nextIds.push(randomMeme.id);
+        }
+        sessionStorage.setItem(sessionKey, JSON.stringify(nextIds.slice(0, 500)));
+      }
+
+      router.push(`/meme/${randomMeme.slug}`);
+    } catch (err) {
+      console.error('Failed to load random meme:', err);
+    } finally {
+      setIsLoadingRandom(false);
+    }
+  }, [isLoadingRandom, meme?.id, router]);
 
   if (loading) {
     return (
@@ -312,6 +387,19 @@ export function MemeDetailClient({ slug }: MemeDetailClientProps) {
                   >
                     <ICONS.Share2 className="w-4 h-4 shrink-0" />
                     <span>{sharesCount.toLocaleString()}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleRandom}
+                    disabled={isLoadingRandom}
+                    className="flex items-center gap-1 rounded-none border-2 border-transparent uppercase tracking-wide font-semibold hover:text-emerald-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isLoadingRandom ? (
+                      <span className="inline-flex h-4 w-4 shrink-0 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <ICONS.Dice5 className="w-4 h-4 shrink-0" />
+                    )}
+                    <span>Random</span>
                   </button>
                   <div className="flex items-center gap-1 text-gray-500">
                     <ICONS.Eye className="w-4 h-4 shrink-0" />

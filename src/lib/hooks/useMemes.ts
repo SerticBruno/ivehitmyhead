@@ -9,6 +9,7 @@ interface UseMemesOptions {
   sort_order?: 'asc' | 'desc';
   time_period?: 'all' | 'today' | 'week' | 'month';
   limit?: number;
+  mode?: 'default' | 'random';
 }
 
 interface UseMemesReturn {
@@ -26,6 +27,7 @@ export const useMemes = (options: UseMemesOptions = {}): UseMemesReturn => {
   /** Drops stale fetch responses (e.g. all-memes request finishing after session restores category). */
   const fetchGenerationRef = useRef(0);
   const isFetchingMoreRef = useRef(false);
+  const randomSeenIdsRef = useRef<Set<string>>(new Set());
 
   const {
     memes,
@@ -45,8 +47,10 @@ export const useMemes = (options: UseMemesOptions = {}): UseMemesReturn => {
     sort_by = 'created_at',
     sort_order = 'desc',
     time_period,
-    limit = 20
+    limit = 20,
+    mode = 'default'
   } = options;
+  const isRandomMode = mode === 'random';
 
   const querySignature = useMemo(
     () =>
@@ -57,9 +61,37 @@ export const useMemes = (options: UseMemesOptions = {}): UseMemesReturn => {
         so: sort_order,
         se: search || '',
         lim: limit,
+        md: mode,
       }),
-    [category_id, time_period, sort_by, sort_order, search, limit]
+    [category_id, time_period, sort_by, sort_order, search, limit, mode]
   );
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !isRandomMode) {
+      randomSeenIdsRef.current.clear();
+      return;
+    }
+
+    const sessionKey = `randomMemesSeenIds:${querySignature}`;
+    const stored = sessionStorage.getItem(sessionKey);
+    if (!stored) {
+      randomSeenIdsRef.current.clear();
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed)) {
+        randomSeenIdsRef.current = new Set(
+          parsed.filter((value): value is string => typeof value === 'string')
+        );
+      } else {
+        randomSeenIdsRef.current.clear();
+      }
+    } catch {
+      randomSeenIdsRef.current.clear();
+    }
+  }, [isRandomMode, querySignature]);
 
   const fetchMemes = useCallback(async (pageNum: number, append: boolean = false) => {
     if (append) {
@@ -96,6 +128,14 @@ export const useMemes = (options: UseMemesOptions = {}): UseMemesReturn => {
         params.append('time_period', time_period);
       }
 
+      if (isRandomMode) {
+        params.append('mode', 'random');
+        const seenIds = [...randomSeenIdsRef.current].slice(0, 200);
+        if (seenIds.length > 0) {
+          params.append('exclude_ids', seenIds.join(','));
+        }
+      }
+
       const response = await fetch(`/api/memes?${params}`);
       
       if (!response.ok) {
@@ -103,15 +143,31 @@ export const useMemes = (options: UseMemesOptions = {}): UseMemesReturn => {
       }
 
       const data = await response.json();
+      const responseMemes = Array.isArray(data.memes) ? data.memes : [];
 
       if (requestGeneration !== fetchGenerationRef.current) {
         return;
       }
 
+      if (isRandomMode) {
+        for (const meme of responseMemes) {
+          if (meme?.id) {
+            randomSeenIdsRef.current.add(meme.id);
+          }
+        }
+        if (typeof window !== 'undefined') {
+          const sessionKey = `randomMemesSeenIds:${querySignature}`;
+          sessionStorage.setItem(
+            sessionKey,
+            JSON.stringify([...randomSeenIdsRef.current].slice(0, 500))
+          );
+        }
+      }
+
       if (append) {
-        appendMemes(data.memes);
+        appendMemes(responseMemes);
       } else {
-        setMemes(data.memes);
+        setMemes(responseMemes);
       }
 
       setQueryKey(querySignature);
@@ -131,7 +187,7 @@ export const useMemes = (options: UseMemesOptions = {}): UseMemesReturn => {
         setLoading(false);
       }
     }
-  }, [category_id, search, sort_by, sort_order, time_period, limit, setMemes, appendMemes, setHasMore, setCurrentPage, setQueryKey, querySignature]);
+  }, [category_id, search, sort_by, sort_order, time_period, limit, isRandomMode, setMemes, appendMemes, setHasMore, setCurrentPage, setQueryKey, querySignature]);
 
   const loadMore = useCallback(() => {
     if (!loading && !isFetchingMoreRef.current && hasMore && memes.length > 0) {
@@ -141,11 +197,18 @@ export const useMemes = (options: UseMemesOptions = {}): UseMemesReturn => {
   }, [loading, hasMore, currentPage, memes.length, fetchMemes]);
 
   const refresh = useCallback(() => {
+    if (isRandomMode) {
+      randomSeenIdsRef.current.clear();
+      if (typeof window !== 'undefined') {
+        const sessionKey = `randomMemesSeenIds:${querySignature}`;
+        sessionStorage.removeItem(sessionKey);
+      }
+    }
     setCurrentPage(1);
     setMemes([]);
     setHasMore(true);
     fetchMemes(1, false);
-  }, [fetchMemes, setCurrentPage, setMemes, setHasMore]);
+  }, [fetchMemes, isRandomMode, querySignature, setCurrentPage, setMemes, setHasMore]);
 
   // Filters are owned by MemesStateContext (sidebar / session restore).
   // Refetch whenever API query params change so session-restored filters match the list.
@@ -159,10 +222,12 @@ export const useMemes = (options: UseMemesOptions = {}): UseMemesReturn => {
       return;
     }
 
+    // Prevent showing stale list data from a different query/page mode.
+    setMemes([]);
     setCurrentPage(1);
     setHasMore(true);
     fetchMemes(1, false);
-  }, [querySignature, queryKey, memes.length, fetchMemes, setCurrentPage, setHasMore]);
+  }, [querySignature, queryKey, memes.length, fetchMemes, setCurrentPage, setHasMore, setMemes]);
 
   return {
     memes,
