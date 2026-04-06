@@ -67,30 +67,9 @@ export const useMemes = (options: UseMemesOptions = {}): UseMemesReturn => {
   );
 
   useEffect(() => {
-    if (typeof window === 'undefined' || !isRandomMode) {
-      randomSeenIdsRef.current.clear();
-      return;
-    }
-
-    const sessionKey = `randomMemesSeenIds:${querySignature}`;
-    const stored = sessionStorage.getItem(sessionKey);
-    if (!stored) {
-      randomSeenIdsRef.current.clear();
-      return;
-    }
-
-    try {
-      const parsed = JSON.parse(stored);
-      if (Array.isArray(parsed)) {
-        randomSeenIdsRef.current = new Set(
-          parsed.filter((value): value is string => typeof value === 'string')
-        );
-      } else {
-        randomSeenIdsRef.current.clear();
-      }
-    } catch {
-      randomSeenIdsRef.current.clear();
-    }
+    // Keep random exclusions in-memory only so opening /random starts fresh.
+    // This preserves non-duplicate behavior during one page session.
+    randomSeenIdsRef.current.clear();
   }, [isRandomMode, querySignature]);
 
   const fetchMemes = useCallback(async (pageNum: number, append: boolean = false) => {
@@ -155,13 +134,6 @@ export const useMemes = (options: UseMemesOptions = {}): UseMemesReturn => {
             randomSeenIdsRef.current.add(meme.id);
           }
         }
-        if (typeof window !== 'undefined') {
-          const sessionKey = `randomMemesSeenIds:${querySignature}`;
-          sessionStorage.setItem(
-            sessionKey,
-            JSON.stringify([...randomSeenIdsRef.current].slice(0, 500))
-          );
-        }
       }
 
       if (append) {
@@ -199,16 +171,12 @@ export const useMemes = (options: UseMemesOptions = {}): UseMemesReturn => {
   const refresh = useCallback(() => {
     if (isRandomMode) {
       randomSeenIdsRef.current.clear();
-      if (typeof window !== 'undefined') {
-        const sessionKey = `randomMemesSeenIds:${querySignature}`;
-        sessionStorage.removeItem(sessionKey);
-      }
     }
     setCurrentPage(1);
     setMemes([]);
     setHasMore(true);
     fetchMemes(1, false);
-  }, [fetchMemes, isRandomMode, querySignature, setCurrentPage, setMemes, setHasMore]);
+  }, [fetchMemes, isRandomMode, setCurrentPage, setMemes, setHasMore]);
 
   // Filters are owned by MemesStateContext (sidebar / session restore).
   // Refetch whenever API query params change so session-restored filters match the list.

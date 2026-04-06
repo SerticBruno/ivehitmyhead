@@ -44,6 +44,9 @@ function applyCommonFilters<
 ) {
   let nextQuery: T = query;
 
+  // Only return memes that can be opened on /meme/[slug].
+  nextQuery = nextQuery.not('slug', 'is', 'null');
+
   if (params.category_id) {
     nextQuery = nextQuery.eq('category_id', params.category_id);
   }
@@ -93,6 +96,7 @@ export async function GET(request: NextRequest) {
       const selectedIds = new Set(excludeIds);
 
       let countQuery = supabaseAdmin.from('memes').select('id', { count: 'exact', head: true });
+      countQuery = countQuery.not('slug', 'is', 'null');
       if (category_id) {
         countQuery = countQuery.eq('category_id', category_id);
       }
@@ -187,9 +191,25 @@ export async function GET(request: NextRequest) {
         }
       }
 
-      // In random mode we fetch one extra item (targetCount = limit + 1),
-      // so "has_more" should reflect whether that extra slot was filled.
-      const hasMore = selectedMemes.length > limit;
+      // Determine has_more via a one-row probe after excluding what we've already returned.
+      // This avoids false negatives from random sampling limits while preventing reload loops.
+      const probeExcludeIds = [...selectedIds];
+      let probeQuery = buildMemeSelectQuery();
+      probeQuery = applyCommonFilters(probeQuery, {
+        category_id,
+        search,
+        time_period,
+        excludeIds: probeExcludeIds
+      })
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      const { data: probeMemes, error: probeError } = await probeQuery;
+      if (probeError) {
+        throw probeError;
+      }
+
+      const hasMore = (probeMemes || []).length > 0;
       return NextResponse.json({
         memes: selectedMemes.slice(0, limit),
         pagination: {
