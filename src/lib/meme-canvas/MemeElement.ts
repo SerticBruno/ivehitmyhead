@@ -41,10 +41,10 @@ export const enum MemeElementHandle {
 }
 
 export const getHandleSize = (controller: MemeCanvasController) =>
-  scaled(controller.canvas, controller.isTouch ? 20 : 14);
+  scaled(controller.canvas, controller.isTouch ? 24 : 18);
 
 export const getRotationHandleSize = (controller: MemeCanvasController) =>
-  scaled(controller.canvas, controller.isTouch ? 28 : 22);
+  scaled(controller.canvas, controller.isTouch ? 32 : 26);
 
 export function getHandlePos(
   element: MemeElement,
@@ -285,25 +285,11 @@ abstract class MemeElement<T extends Settings = Settings> {
       MemeElementHandle.BOTTOM_RIGHT,
     ];
 
-    // Transform click coordinates to element's local coordinate system if rotated
-    let localX = x;
-    let localY = y;
-    
-    if (element.rotation !== 0) {
-      const centerX = element.x + element.width / 2;
-      const centerY = element.y + element.height / 2;
-      const angleRad = -(element.rotation * Math.PI) / 180; // Negative for inverse rotation
-      const cos = Math.cos(angleRad);
-      const sin = Math.sin(angleRad);
-      
-      // Translate to origin (center of element)
-      const dx = x - centerX;
-      const dy = y - centerY;
-      
-      // Apply inverse rotation
-      localX = dx * cos - dy * sin + centerX;
-      localY = dx * sin + dy * cos + centerY;
-    }
+    const { x: localX, y: localY } = MemeElement.toLocalCoordinates(
+      element,
+      x,
+      y
+    );
 
     for (const handle of handles) {
       const { x: handleX, y: handleY } = getHandlePos(element, handle);
@@ -312,10 +298,9 @@ abstract class MemeElement<T extends Settings = Settings> {
           ? getRotationHandleSize(element.controller)
           : getHandleSize(element.controller)
       );
-      // Increase hit area for better usability - much larger hit area for easier clicking
-      // Even larger hit area on touch devices for better mobile interaction
-      const baseOffset = handle === MemeElementHandle.ROTATION_HANDLE ? 15 : 25;
-      const touchMultiplier = element.controller.isTouch ? 1.5 : 1;
+      // Keep hit-area generous, but predictable across desktop and touch.
+      const baseOffset = handle === MemeElementHandle.ROTATION_HANDLE ? 14 : 12;
+      const touchMultiplier = element.controller.isTouch ? 1.45 : 1;
       const offset = size / 2 + (baseOffset * touchMultiplier);
 
       // All handles are drawn in the rotated coordinate system, so check in local space
@@ -333,14 +318,42 @@ abstract class MemeElement<T extends Settings = Settings> {
   }
 
   public static intersects(element: MemeElement, x: number, y: number): boolean {
-    // Add a small padding for touch devices to make selection easier
-    const padding = element.controller.isTouch ? scaled(element.controller.canvas, 5) : 0;
-    return (
-      x >= element.x - padding &&
-      x <= element.x + element.width + padding &&
-      y >= element.y - padding &&
-      y <= element.y + element.height + padding
+    const { x: localX, y: localY } = MemeElement.toLocalCoordinates(
+      element,
+      x,
+      y
     );
+    // Add extra tolerance so tapping/clicking text is more forgiving.
+    const padding = element.controller.isTouch
+      ? scaled(element.controller.canvas, 10)
+      : scaled(element.controller.canvas, 4);
+    return (
+      localX >= element.x - padding &&
+      localX <= element.x + element.width + padding &&
+      localY >= element.y - padding &&
+      localY <= element.y + element.height + padding
+    );
+  }
+
+  private static toLocalCoordinates(
+    element: MemeElement,
+    x: number,
+    y: number
+  ): { x: number; y: number } {
+    if (element.rotation === 0) return { x, y };
+
+    const centerX = element.x + element.width / 2;
+    const centerY = element.y + element.height / 2;
+    const angleRad = -(element.rotation * Math.PI) / 180;
+    const cos = Math.cos(angleRad);
+    const sin = Math.sin(angleRad);
+    const dx = x - centerX;
+    const dy = y - centerY;
+
+    return {
+      x: dx * cos - dy * sin + centerX,
+      y: dx * sin + dy * cos + centerY,
+    };
   }
 
   public static intersectsInside(

@@ -19,6 +19,13 @@ export interface EventCallbacks {
 
 export type Events = keyof EventCallbacks;
 
+const HANDLE_CURSORS: Record<number, string> = {
+  0: 'nw-resize',
+  1: 'ne-resize',
+  2: 'sw-resize',
+  3: 'se-resize',
+};
+
 class MemeCanvasController {
   // DOM
   private _image: HTMLImageElement | null = null;
@@ -144,7 +151,8 @@ class MemeCanvasController {
     for (const element of this.selectedElements) {
       const handle = element.handleAt(x, y);
       if (handle !== null) {
-        this.canvas.style.cursor = handle === 4 ? 'grabbing' : 'move';
+        this.canvas.style.cursor =
+          handle === 4 ? 'grabbing' : HANDLE_CURSORS[handle] ?? 'move';
         this.startResize(element, handle, x, y);
         return;
       }
@@ -296,8 +304,11 @@ class MemeCanvasController {
 
   // Utility
   public elementAt(x: number, y: number): MemeElement | null {
-    for (const element of this._elements)
-      if (element.intersects(x, y)) return element;
+    // Hit-test from topmost to bottom-most so overlapping text selects predictably.
+    for (let i = this._elements.length - 1; i >= 0; i--) {
+      const element = this._elements[i];
+      if (element && element.intersects(x, y)) return element;
+    }
 
     return null;
   }
