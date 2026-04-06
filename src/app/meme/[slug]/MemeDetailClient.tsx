@@ -4,7 +4,7 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Button } from '@/components/ui/Button';
-import { cn, formatFullDateTime, formatRelativeTime, formatTime } from '@/lib/utils';
+import { cn, formatDateDDMMYYYY, formatFullDateTime, formatRelativeTime, formatTime } from '@/lib/utils';
 import { Meme } from '@/lib/types/meme';
 import { useMemeInteractions } from '@/lib/hooks/useMemeInteractions';
 import { useMemesListState } from '@/lib/contexts';
@@ -15,7 +15,7 @@ const MEME_DETAIL_CARD =
   'bg-white dark:bg-gray-900 rounded-none border-2 border-zinc-700 dark:border-zinc-400 shadow-[8px_8px_0px_rgba(0,0,0,0.88)] dark:shadow-[8px_8px_0px_rgba(156,163,175,0.42)] overflow-hidden';
 
 const MEME_DETAIL_IMAGE_FRAME =
-  'relative w-full h-[calc(100vh-240px)] min-h-[360px] max-h-[800px] bg-[#f7f4ee] dark:bg-gray-950 border-y-2 border-zinc-700 dark:border-zinc-400';
+  'relative w-full h-[calc(100vh-300px)] min-h-[400px] max-h-[800px] bg-[#f7f4ee] dark:bg-gray-950 border-y-2 border-zinc-700 dark:border-zinc-400';
 
 export interface MemeDetailClientProps {
   slug: string;
@@ -111,7 +111,7 @@ export function MemeDetailClient({ slug }: MemeDetailClientProps) {
       fetchMeme();
     }
     hasRecordedView.current = false;
-  }, [slug, recordView, checkLikeStatus, listMemes]);
+  }, [slug, recordView, checkLikeStatus]);
 
   const handleLike = async (e?: React.MouseEvent) => {
     if (e) {
@@ -238,41 +238,39 @@ export function MemeDetailClient({ slug }: MemeDetailClientProps) {
     return (
       <div className="min-h-screen bg-[#f7f4ee] dark:bg-gray-950">
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <section className="max-w-4xl mx-auto">
+          <section className="max-w-5xl mx-auto">
             <div className={`animate-pulse ${MEME_DETAIL_CARD}`}>
-              <div className="px-4 pt-4 pb-3 flex-shrink-0">
-                <div className="flex items-start gap-2">
-                  <div className="min-w-0 flex-1 space-y-2">
-                    <div className="h-7 bg-gray-200 dark:bg-gray-700 rounded-none" />
-                    <div className="h-7 bg-gray-200 dark:bg-gray-700 rounded-none w-4/5" />
+              <div className="px-6 pt-6 pb-3">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="h-6 bg-gray-200 dark:bg-gray-700 mb-2" />
+                    <div className="h-4 bg-gray-200 dark:bg-gray-700 w-1/2" />
                   </div>
-                  <div className="flex-shrink-0 space-y-2 text-right">
-                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-none ml-auto w-20" />
-                    <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded-none ml-auto w-16" />
-                    <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded-none ml-auto w-14" />
+                  <div className="w-24 flex-shrink-0">
+                    <div className="h-4 bg-gray-200 dark:bg-gray-700 mb-2" />
+                    <div className="h-3 bg-gray-200 dark:bg-gray-700" />
                   </div>
                 </div>
-                <div className="mt-2 h-4 bg-gray-200 dark:bg-gray-700 rounded-none w-48 max-w-full" />
               </div>
 
-              <div className={`${MEME_DETAIL_IMAGE_FRAME} bg-gray-200 dark:bg-gray-700`} />
+              <div className={`${MEME_DETAIL_IMAGE_FRAME} bg-gray-200/90 dark:bg-gray-800`} />
 
-              <div className="px-4 pb-4 pt-3 space-y-4">
+              <div className="p-6 pt-4 space-y-4">
                 <div className="flex flex-wrap gap-2">
-                  <div className="h-7 w-24 bg-gray-200 dark:bg-gray-700 rounded-none border border-zinc-700/40 dark:border-zinc-500/40" />
-                  <div className="h-7 w-20 bg-gray-200 dark:bg-gray-700 rounded-none border border-zinc-700/40 dark:border-zinc-500/40" />
+                  <div className="h-7 w-24 bg-gray-200 dark:bg-gray-700 border border-zinc-700/40 dark:border-zinc-500/40" />
+                  <div className="h-7 w-20 bg-gray-200 dark:bg-gray-700 border border-zinc-700/40 dark:border-zinc-500/40" />
                 </div>
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex items-center gap-4">
-                    <div className="h-4 w-14 bg-gray-200 dark:bg-gray-700 rounded-none" />
-                    <div className="h-4 w-14 bg-gray-200 dark:bg-gray-700 rounded-none" />
-                    <div className="h-4 w-14 bg-gray-200 dark:bg-gray-700 rounded-none" />
+                    <div className="h-8 w-20 bg-gray-200 dark:bg-gray-700" />
+                    <div className="h-8 w-20 bg-gray-200 dark:bg-gray-700" />
+                    <div className="h-8 w-20 bg-gray-200 dark:bg-gray-700" />
                   </div>
-                  <div className="h-7 w-28 bg-gray-200 dark:bg-gray-700 rounded-none border border-zinc-700 dark:border-zinc-400 self-start sm:self-auto" />
+                  <div className="h-4 w-20 bg-gray-200 dark:bg-gray-700 self-start sm:self-auto" />
                 </div>
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch sm:gap-3">
-                  <div className="h-10 flex-1 bg-gray-200 dark:bg-gray-700 rounded-none border-2 border-zinc-700 dark:border-zinc-400 min-w-0" />
-                  <div className="h-10 w-full sm:w-28 bg-gray-200 dark:bg-gray-700 rounded-none border-2 border-zinc-700 dark:border-zinc-400 shrink-0" />
+                  <div className="h-10 flex-1 bg-gray-200 dark:bg-gray-700 border-2 border-zinc-700 dark:border-zinc-400 min-w-0" />
+                  <div className="h-10 w-full sm:w-28 bg-gray-200 dark:bg-gray-700 border-2 border-zinc-700 dark:border-zinc-400 shrink-0" />
                 </div>
               </div>
             </div>
@@ -308,9 +306,9 @@ export function MemeDetailClient({ slug }: MemeDetailClientProps) {
   return (
     <div className="min-h-screen bg-[#f7f4ee] dark:bg-gray-950">
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <section className="max-w-4xl mx-auto">
+        <section className="max-w-5xl mx-auto">
           <article className={MEME_DETAIL_CARD}>
-            <header className="px-4 pt-4 pb-3 flex-shrink-0">
+            <header className="px-6 pt-6 pb-2 flex-shrink-0">
               <div className="flex items-start gap-2">
                 <h1 className="font-black uppercase tracking-tight text-2xl md:text-3xl leading-tight flex-1 min-w-0">
                   {meme.title}
@@ -322,13 +320,12 @@ export function MemeDetailClient({ slug }: MemeDetailClientProps) {
                   <div className="text-sm text-gray-700 dark:text-gray-300 font-semibold uppercase tracking-wide">
                     {formatRelativeTime(meme.created_at)}
                   </div>
-                  <div className="text-xs text-gray-500">{formatTime(meme.created_at)}</div>
-                  <div className="text-xs text-gray-400">
-                    {new Date(meme.created_at).toLocaleDateString()}
+                  <div className="text-xs text-gray-500">
+                    {formatTime(meme.created_at)} • {formatDateDDMMYYYY(meme.created_at)}
                   </div>
                 </div>
               </div>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
                 by {meme.author?.display_name || meme.author?.username || 'Unknown'}
               </p>
             </header>
@@ -346,7 +343,7 @@ export function MemeDetailClient({ slug }: MemeDetailClientProps) {
               </div>
             </div>
 
-            <footer className="px-4 pb-4 pt-3 flex-shrink-0 space-y-4">
+            <footer className="p-6 pt-4 flex-shrink-0 space-y-4">
               {meme.tags && meme.tags.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   {meme.tags.map((tag, index) => (
@@ -365,25 +362,24 @@ export function MemeDetailClient({ slug }: MemeDetailClientProps) {
                   <button
                     type="button"
                     onClick={handleLike}
-                    disabled={isCheckingLikeStatus || isLiking}
+                    aria-disabled={isCheckingLikeStatus || isLiking}
                     className={cn(
-                      'flex items-center gap-1 rounded-none border-2 border-transparent uppercase tracking-wide font-semibold hover:text-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed',
+                      'flex items-center gap-1 rounded-none border-2 border-transparent uppercase tracking-wide font-semibold transition-colors cursor-pointer',
                       isLiked && 'text-red-500',
+                      !isLiked && 'hover:text-red-500',
                     )}
                   >
                     {isCheckingLikeStatus || isLiking ? (
                       <span className="inline-flex h-4 w-4 shrink-0 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                    ) : isLiked ? (
-                      <ICONS.Heart className="w-4 h-4 fill-current shrink-0" />
                     ) : (
-                      <ICONS.ThumbsUp className="w-4 h-4 shrink-0" />
+                      <ICONS.Heart className={cn('w-4 h-4 shrink-0', isLiked && 'fill-current')} />
                     )}
                     <span>{likesCount.toLocaleString()}</span>
                   </button>
                   <button
                     type="button"
                     onClick={handleShare}
-                    className="flex items-center gap-1 rounded-none border-2 border-transparent uppercase tracking-wide font-semibold hover:text-purple-600 transition-colors"
+                    className="flex items-center gap-1 rounded-none border-2 border-transparent uppercase tracking-wide font-semibold transition-colors cursor-pointer"
                   >
                     <ICONS.Share2 className="w-4 h-4 shrink-0" />
                     <span>{sharesCount.toLocaleString()}</span>
@@ -391,8 +387,13 @@ export function MemeDetailClient({ slug }: MemeDetailClientProps) {
                   <button
                     type="button"
                     onClick={handleRandom}
-                    disabled={isLoadingRandom}
-                    className="flex items-center gap-1 rounded-none border-2 border-transparent uppercase tracking-wide font-semibold hover:text-emerald-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    aria-disabled={isLoadingRandom}
+                    className={cn(
+                      'inline-flex items-center gap-2 rounded-none border-2 border-emerald-700 bg-emerald-600 text-white px-3 py-1 uppercase tracking-wide font-black shadow-[3px_3px_0px_rgba(6,78,59,0.7)] transition-colors cursor-pointer',
+                      isLoadingRandom
+                        ? 'opacity-50 shadow-none'
+                        : 'hover:bg-emerald-500 hover:border-emerald-600'
+                    )}
                   >
                     {isLoadingRandom ? (
                       <span className="inline-flex h-4 w-4 shrink-0 border-2 border-current border-t-transparent rounded-full animate-spin" />
@@ -406,16 +407,16 @@ export function MemeDetailClient({ slug }: MemeDetailClientProps) {
                     <span>{meme.views.toLocaleString()}</span>
                   </div>
                 </div>
-                <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide font-semibold text-gray-600 dark:text-gray-300 border border-zinc-700 dark:border-zinc-400 px-2 py-0.5 bg-[#f7f4ee] dark:bg-gray-900 self-start sm:self-auto max-w-full min-w-0">
+                <span className="inline-flex shrink-0 items-center text-xs text-gray-500 dark:text-gray-400 select-none cursor-default self-start sm:self-auto max-w-full min-w-0 pointer-events-none">
                   {meme.category ? (
                     <>
                       {getCategoryIconOrEmoji(meme.category.name, meme.category.emoji)}
-                      <span className="truncate">{meme.category.name}</span>
+                      <span className="ml-1 truncate">{meme.category.name}</span>
                     </>
                   ) : (
                     <>
                       <span>📁</span>
-                      <span className="truncate">Uncategorized</span>
+                      <span className="ml-1 truncate">Uncategorized</span>
                     </>
                   )}
                 </span>
