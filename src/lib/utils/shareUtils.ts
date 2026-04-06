@@ -17,7 +17,7 @@ export interface ShareData {
  */
 export const shareMeme = async (
   shareData: ShareData,
-  fallbackAction?: () => void,
+  fallbackAction?: () => boolean | Promise<boolean> | void,
   onShareSuccess?: () => void
 ): Promise<boolean> => {
   console.log('shareMeme called with:', { shareData, hasFallback: !!fallbackAction, hasSuccessCallback: !!onShareSuccess });
@@ -48,8 +48,15 @@ export const shareMeme = async (
     // Fallback for desktop or unsupported browsers
     if (fallbackAction) {
       console.log('Using custom fallback action');
-      fallbackAction();
-      return true; // Custom fallback executed
+      const fallbackResult = await fallbackAction();
+      if (fallbackResult === true) {
+        if (onShareSuccess) {
+          console.log('Calling success callback for custom fallback');
+          onShareSuccess();
+        }
+        return true;
+      }
+      return false;
     } else {
       // Default fallback: copy URL to clipboard
       console.log('Using default fallback: copy to clipboard');
@@ -67,7 +74,7 @@ export const shareMeme = async (
         // Final fallback: open in new window
         console.log('Final fallback: opening in new window');
         window.open(shareData.url, '_blank');
-        return true; // Opening in new window succeeded
+        return false; // Cannot verify actual share occurred
       }
     }
   }
