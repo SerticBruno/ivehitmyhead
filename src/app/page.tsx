@@ -44,7 +44,16 @@ export default function Home() {
         
         const data = await response.json();
         
-        setMemes(data.memes || []);
+        const homepageMemes: Meme[] = data.memes || [];
+        setMemes(homepageMemes);
+
+        // If API includes liked state, hydrate immediately.
+        const initiallyLiked = homepageMemes
+          .filter((meme) => meme.is_liked)
+          .map((meme) => meme.slug);
+        if (initiallyLiked.length > 0) {
+          setLikedMemes(new Set(initiallyLiked));
+        }
       } catch (err) {
         console.error('Homepage: Failed to fetch memes:', err);
         setError(err instanceof Error ? err.message : 'Failed to fetch memes');
@@ -55,6 +64,23 @@ export default function Home() {
     
     fetchHomepageMemes();
   }, []); // Empty dependency array - only run once on mount
+
+  // Keep homepage likes in sync with the logged-in user's likes across reloads.
+  useEffect(() => {
+    const fetchLikedMemes = async () => {
+      try {
+        const response = await fetch('/api/memes/liked');
+        if (!response.ok) return;
+        const data = await response.json();
+        const likedSlugs: string[] = data.likedMemes || [];
+        setLikedMemes(new Set(likedSlugs));
+      } catch (err) {
+        console.error('Homepage: Failed to fetch liked memes:', err);
+      }
+    };
+
+    fetchLikedMemes();
+  }, []);
 
   // Initialize local memes when memes change from the hook
   useEffect(() => {

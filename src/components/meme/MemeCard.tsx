@@ -187,7 +187,7 @@ const MemeCard: React.FC<MemeCardProps> = ({
                 e.nativeEvent.stopImmediatePropagation();
               }}
               disabled={isLiking}
-                className={`flex items-center space-x-1 rounded-none border-2 border-transparent uppercase tracking-wide font-semibold ${isActuallyLiked ? 'text-red-500' : ''} ${isLiking ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className={`flex items-center space-x-1 rounded-none border-2 border-transparent uppercase tracking-wide font-semibold ${isActuallyLiked ? 'text-red-500' : 'hover:text-red-500'} ${isLiking ? 'opacity-50 cursor-not-allowed' : ''}`}
               style={{ zIndex: 10, position: 'relative' }}
             >
               <span>
@@ -196,7 +196,7 @@ const MemeCard: React.FC<MemeCardProps> = ({
                 ) : isActuallyLiked ? (
                   <ICONS.Heart className="w-4 h-4 fill-current" />
                 ) : (
-                  <ICONS.ThumbsUp className="w-4 h-4" />
+                  <ICONS.Heart className="w-4 h-4" />
                 )}
               </span>
               <span>{meme.likes_count}</span>

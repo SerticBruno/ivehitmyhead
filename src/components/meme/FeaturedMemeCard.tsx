@@ -51,29 +51,29 @@ const FeaturedMemeCard: React.FC<FeaturedMemeCardProps> = ({
         className={cn("overflow-hidden cursor-pointer h-full flex flex-col rounded-none border-2 border-zinc-700 dark:border-zinc-400 shadow-[6px_6px_0px_rgba(0,0,0,0.85)] dark:shadow-[6px_6px_0px_rgba(156,163,175,0.42)]", className)}
       >
         <CardHeader className="px-4 pt-4 pb-3 flex-shrink-0">
-          <div className="space-y-0">
-            <div className="flex items-start gap-2">
-              <h3 className="font-black uppercase tracking-tight text-lg leading-tight flex-1 min-w-0 line-clamp-2">
+          <div className="flex items-start gap-2">
+            <div className="flex-1 min-w-0">
+              <h3 className="font-black uppercase tracking-tight text-lg leading-tight line-clamp-2">
                 {meme.title}
               </h3>
-              <div
-                className="flex-shrink-0 text-right"
-                title={formatFullDateTime(meme.created_at)}
-              >
-                <div className="text-sm text-gray-700 dark:text-gray-300 font-semibold uppercase tracking-wide">
-                  {formatRelativeTime(meme.created_at)}
-                </div>
-                <div className="text-xs text-gray-500">
-                  {formatTime(meme.created_at)}
-                </div>
-                <div className="text-xs text-gray-400">
-                  {new Date(meme.created_at).toLocaleDateString()}
-                </div>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                by {meme.author?.display_name || meme.author?.username || 'Unknown'}
+              </p>
+            </div>
+            <div
+              className="flex-shrink-0 text-right"
+              title={formatFullDateTime(meme.created_at)}
+            >
+              <div className="text-sm text-gray-700 dark:text-gray-300 font-semibold uppercase tracking-wide">
+                {formatRelativeTime(meme.created_at)}
+              </div>
+              <div className="text-xs text-gray-500">
+                {formatTime(meme.created_at)}
+              </div>
+              <div className="text-xs text-gray-400">
+                {new Date(meme.created_at).toLocaleDateString()}
               </div>
             </div>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              by {meme.author?.display_name || meme.author?.username || 'Unknown'}
-            </p>
           </div>
         </CardHeader>
         
@@ -96,18 +96,18 @@ const FeaturedMemeCard: React.FC<FeaturedMemeCardProps> = ({
             <div className="flex items-center gap-4">
               <button
                 onClick={handleLike}
-                className={`flex items-center gap-1 hover:text-blue-600 transition-colors ${isLiked ? 'text-red-500' : ''}`}
+                className={`flex items-center gap-1 px-1.5 py-0.5 cursor-pointer transition-colors ${isLiked ? 'text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30' : 'hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
               >
                 {isLiked ? (
                   <ICONS.Heart className="w-4 h-4 fill-current" />
                 ) : (
-                  <ICONS.ThumbsUp className="w-4 h-4" />
+                  <ICONS.Heart className="w-4 h-4" />
                 )}
                 <span>{meme.likes_count}</span>
               </button>
               <button
                 onClick={handleShare}
-                className="flex items-center gap-1 hover:text-purple-600 transition-colors"
+                className="flex items-center gap-1 px-1.5 py-0.5 cursor-pointer transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
               >
                 <ICONS.Share2 className="w-4 h-4" />
                 <span>{meme.shares_count}</span>
@@ -117,7 +117,7 @@ const FeaturedMemeCard: React.FC<FeaturedMemeCardProps> = ({
                 <span>{meme.views}</span>
               </div>
             </div>
-            <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide font-semibold text-gray-600 dark:text-gray-300 border border-zinc-700 dark:border-zinc-400 px-2 py-0.5 bg-[#f7f4ee] dark:bg-gray-900 flex-shrink-0 max-w-[50%] min-w-0">
+            <span className="inline-flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 flex-shrink-0 max-w-[50%] min-w-0 select-none cursor-default">
               {meme.category ? (
                 <>
                   {getCategoryIconOrEmoji(meme.category.name, meme.category.emoji)}
