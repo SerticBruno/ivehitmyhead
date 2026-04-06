@@ -61,61 +61,26 @@ export async function GET(request: NextRequest) {
       query = query.order('created_at', { ascending: sort_order === 'asc' });
     }
 
-    // Apply pagination
-    query = query.range(offset, offset + limit - 1);
+    // Fetch one extra row to detect whether there is another page
+    // without running an expensive count query.
+    query = query.range(offset, offset + limit);
 
-    const { data: memes, error, count } = await query;
+    const { data: memes, error } = await query;
 
     if (error) {
       throw error;
     }
-    // Get total count for pagination
-    let totalCount = 0;
-    if (count === null) {
-      console.log('Count is null, fetching total count separately');
-      
-      // Build count query with same filters
-      let countQuery = supabaseAdmin
-        .from('memes')
-        .select('*', { count: 'exact', head: true });
-
-      // Apply same filters to count query
-      if (category_id) {
-        countQuery = countQuery.eq('category_id', category_id);
-      }
-
-      if (search) {
-        countQuery = countQuery.or(`title.ilike.%${search}%,tags.cs.{${search}}`);
-      }
-
-      const countPeriodStart = getMemeTimePeriodStart(time_period);
-      if (countPeriodStart) {
-        countQuery = countQuery.gte('created_at', countPeriodStart.toISOString());
-      }
-
-      const { count: total } = await countQuery;
-      totalCount = total || 0;
-      console.log('Total count from separate query with filters:', totalCount);
-    } else {
-      totalCount = count;
-      console.log('Using count from query:', totalCount);
-    }
-
-    const hasMore = page * limit < totalCount;
-    console.log('Pagination calculation:', {
-      page,
-      limit,
-      totalCount,
-      hasMore
-    });
+    const rows = memes || [];
+    const hasMore = rows.length > limit;
+    const pagedMemes = hasMore ? rows.slice(0, limit) : rows;
 
     return NextResponse.json({
-      memes: memes || [],
+      memes: pagedMemes,
       pagination: {
         page,
         limit,
-        total: totalCount,
-        total_pages: Math.ceil(totalCount / limit),
+        total: null,
+        total_pages: null,
         has_more: hasMore
       }
     });

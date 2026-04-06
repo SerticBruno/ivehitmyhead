@@ -23,12 +23,28 @@ export const MemeGrid: React.FC<MemeGridProps> = ({
     minHeight: '400px',
     maxHeight: '800px'
   };
+  const previousMemeCountRef = React.useRef(0);
 
-  // Preload images for better performance when navigating back
+  // Preload only a tiny batch of newly appended images to avoid
+  // saturating bandwidth/memory during infinite scroll.
   React.useEffect(() => {
-    if (memes.length > 0) {
-      const imageUrls = memes.map(meme => meme.image_url);
-      imagePreloader.preloadImages(imageUrls, { priority: 'high' });
+    if (memes.length === 0) {
+      previousMemeCountRef.current = 0;
+      return;
+    }
+
+    const previousCount = previousMemeCountRef.current;
+    const isListReset = memes.length < previousCount;
+    const startIndex = isListReset ? 0 : previousCount;
+    const endIndex = Math.min(memes.length, startIndex + 2);
+    const nextBatch = memes.slice(startIndex, endIndex);
+    previousMemeCountRef.current = memes.length;
+
+    if (nextBatch.length > 0) {
+      imagePreloader.preloadImages(
+        nextBatch.map(meme => meme.image_url),
+        { priority: 'low' }
+      );
     }
   }, [memes]);
 
