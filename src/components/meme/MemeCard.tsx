@@ -218,9 +218,9 @@ const MemeCard: React.FC<MemeCardProps> = ({
             </div>
           </div>
           {meme.category && (
-            <span className="inline-flex shrink-0 items-center px-2.5 py-1 text-xs font-semibold uppercase tracking-wide bg-[#f7f4ee] text-gray-800 dark:bg-gray-900 dark:text-gray-200 border border-zinc-700 dark:border-zinc-400">
+            <span className="inline-flex shrink-0 items-center text-xs text-gray-500 dark:text-gray-400 select-none cursor-default">
               {getCategoryIconOrEmoji(meme.category.name, meme.category.emoji)}
-              <span className="ml-1.5">{meme.category.name}</span>
+              <span className="ml-1">{meme.category.name}</span>
             </span>
           )}
         </CardFooter>
