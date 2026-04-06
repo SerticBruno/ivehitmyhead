@@ -211,29 +211,12 @@ export const MemesStateProvider: React.FC<MemesStateProviderProps> = ({ children
 
   const appendMemes = useCallback((memes: Meme[]) => {
     setState(prev => {
-      console.log('appendMemes called:', {
-        newMemeCount: memes.length,
-        existingMemeCount: prev.memes.length,
-        currentFilters: prev.filters,
-        isInitialized: prev.isInitialized,
-        currentHasMore: prev.hasMore,
-        currentPage: prev.currentPage
-      });
-      
       // Always deduplicate when appending to prevent duplicates
       const existingMemeIds = new Set(prev.memes.map(meme => meme.id));
       const uniqueNewMemes = memes.filter(meme => !existingMemeIds.has(meme.id));
-      
-      console.log('Deduplication result:', {
-        originalCount: memes.length,
-        uniqueCount: uniqueNewMemes.length,
-        filteredOut: memes.length - uniqueNewMemes.length,
-        existingIds: Array.from(existingMemeIds).slice(0, 5) // Show first 5 IDs for debugging
-      });
-      
+
       // If no new unique memes, return the previous state unchanged
       if (uniqueNewMemes.length === 0) {
-        console.warn('No new unique memes to append - all were duplicates');
         return prev;
       }
       
@@ -242,13 +225,6 @@ export const MemesStateProvider: React.FC<MemesStateProviderProps> = ({ children
         memes: [...prev.memes, ...uniqueNewMemes],
         isInitialized: true 
       };
-      
-      console.log('New state after append:', {
-        totalMemes: newState.memes.length,
-        hasMore: newState.hasMore,
-        currentPage: newState.currentPage,
-        newMemeIds: uniqueNewMemes.map(m => m.id).slice(0, 5) // Show first 5 new IDs
-      });
       
       return newState;
     });
@@ -275,12 +251,6 @@ export const MemesStateProvider: React.FC<MemesStateProviderProps> = ({ children
       const newFilters = { ...prev.filters, ...filters };
       // Only reset if filters actually changed
       if (JSON.stringify(prev.filters) !== JSON.stringify(newFilters)) {
-        console.log('Filters changed, clearing memes:', {
-          oldFilters: prev.filters,
-          newFilters: newFilters,
-          currentMemeCount: prev.memes.length
-        });
-        
         return { 
           ...prev, 
           filters: newFilters,
@@ -305,17 +275,9 @@ export const MemesStateProvider: React.FC<MemesStateProviderProps> = ({ children
   }, []);
 
   const isSameFilters = useCallback((filters: Partial<MemesState['filters']>) => {
-    const result = Object.entries(filters).every(([key, value]) => 
+    return Object.entries(filters).every(([key, value]) => 
       state.filters[key as keyof MemesState['filters']] === value
     );
-    
-    console.log('isSameFilters check:', {
-      incomingFilters: filters,
-      currentContextFilters: state.filters,
-      result
-    });
-    
-    return result;
   }, [state.filters]);
 
   const updateMemeLikeCount = useCallback((memeSlug: string, newLikeCount: number) => {
@@ -330,15 +292,10 @@ export const MemesStateProvider: React.FC<MemesStateProviderProps> = ({ children
       });
     }
     
-    console.log('updateMemeLikeCount called:', { memeSlug, newLikeCount, safeLikeCount });
     setState(prev => {
       const updatedMemes = prev.memes.map(meme =>
         meme.slug === memeSlug ? { ...meme, likes_count: safeLikeCount } : meme
       );
-      console.log('Updated memes state:', {
-        before: prev.memes.find(m => m.slug === memeSlug)?.likes_count,
-        after: updatedMemes.find(m => m.slug === memeSlug)?.likes_count
-      });
       return {
         ...prev,
         memes: updatedMemes
@@ -358,15 +315,10 @@ export const MemesStateProvider: React.FC<MemesStateProviderProps> = ({ children
       });
     }
     
-    console.log('updateMemeShareCount called:', { memeSlug, newShareCount, safeShareCount });
     setState(prev => {
       const updatedMemes = prev.memes.map(meme =>
         meme.slug === memeSlug ? { ...meme, shares_count: safeShareCount } : meme
       );
-      console.log('Updated memes state:', {
-        before: prev.memes.find(m => m.slug === memeSlug)?.shares_count,
-        after: updatedMemes.find(m => m.slug === memeSlug)?.shares_count
-      });
       return {
         ...prev,
         memes: updatedMemes
@@ -375,15 +327,10 @@ export const MemesStateProvider: React.FC<MemesStateProviderProps> = ({ children
   }, []);
 
   const updateMemeLikedState = useCallback((memeSlug: string, isLiked: boolean) => {
-    console.log('updateMemeLikedState called:', { memeSlug, isLiked });
     setState(prev => {
       const updatedMemes = prev.memes.map(meme =>
         meme.slug === memeSlug ? { ...meme, is_liked: isLiked } : meme
       );
-      console.log('Updated memes liked state:', {
-        before: prev.memes.find(m => m.slug === memeSlug)?.is_liked,
-        after: updatedMemes.find(m => m.slug === memeSlug)?.is_liked
-      });
       return {
         ...prev,
         memes: updatedMemes

@@ -22,6 +22,7 @@ const FeaturedMemeCard: React.FC<FeaturedMemeCardProps> = ({
   className,
   isLiked
 }) => {
+  const RETURN_TO_MEMES_SCROLL_KEY = 'restoreMemesScrollFromDetail';
   const { recordView } = useMemeInteractions();
   const hasRecordedView = useRef(false);
 
@@ -46,7 +47,15 @@ const FeaturedMemeCard: React.FC<FeaturedMemeCardProps> = ({
   };
 
   return (
-    <Link href={`/meme/${meme.slug}`} className="block h-full">
+    <Link
+      href={`/meme/${meme.slug}`}
+      className="block h-full"
+      onClick={() => {
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem(RETURN_TO_MEMES_SCROLL_KEY, '1');
+        }
+      }}
+    >
       <Card 
         className={cn("overflow-hidden cursor-pointer h-full flex flex-col rounded-none border-2 border-zinc-700 dark:border-zinc-400 shadow-[6px_6px_0px_rgba(0,0,0,0.85)] dark:shadow-[6px_6px_0px_rgba(156,163,175,0.42)]", className)}
       >

@@ -17,6 +17,7 @@ interface MemesFeedPanelProps {
 }
 
 export function MemesFeedPanel({ memeGridRef, sidebar }: MemesFeedPanelProps) {
+  const RETURN_TO_MEMES_SCROLL_KEY = 'restoreMemesScrollFromDetail';
   const [likedMemes, setLikedMemes] = useState<Set<string>>(new Set());
   const searchParams = useSearchParams();
   const appliedUrlFiltersRef = useRef(false);
@@ -76,19 +77,16 @@ export function MemesFeedPanel({ memeGridRef, sidebar }: MemesFeedPanelProps) {
   useEffect(() => {
     const fetchLikedMemes = async () => {
       try {
-        console.log('Fetching user\'s liked memes...');
         const response = await fetch('/api/memes/liked');
 
         if (response.ok) {
           const data = await response.json();
           const likedSlugs = data.likedMemes || [];
 
-          console.log('Fetched liked memes:', likedSlugs);
           setLikedMemes(new Set(likedSlugs));
 
           const memesSnapshot = listMemesRef.current;
           if (memesSnapshot.length > 0) {
-            console.log('Updating memes in context with liked state...');
             memesSnapshot.forEach(meme => {
               const isLiked = likedSlugs.includes(meme.slug);
               if (meme.is_liked !== isLiked) {
@@ -97,7 +95,6 @@ export function MemesFeedPanel({ memeGridRef, sidebar }: MemesFeedPanelProps) {
             });
           }
         } else {
-          console.warn('Failed to fetch liked memes, using empty set');
           setLikedMemes(new Set());
         }
       } catch (error) {
@@ -114,7 +111,6 @@ export function MemesFeedPanel({ memeGridRef, sidebar }: MemesFeedPanelProps) {
 
   useEffect(() => {
     if (likedMemes.size > 0 && listMemes.length > 0) {
-      console.log('Updating memes in context with liked state...');
       listMemes.forEach(meme => {
         const isLiked = likedMemes.has(meme.slug);
         if (meme.is_liked !== isLiked) {
@@ -228,7 +224,13 @@ export function MemesFeedPanel({ memeGridRef, sidebar }: MemesFeedPanelProps) {
     if (typeof window === 'undefined') {
       return;
     }
+    const shouldRestoreFromDetail =
+      sessionStorage.getItem(RETURN_TO_MEMES_SCROLL_KEY) === '1';
     if (hasRestoredScrollRef.current) {
+      return;
+    }
+    if (!shouldRestoreFromDetail) {
+      hasRestoredScrollRef.current = true;
       return;
     }
     if (!isInitialized || memes.length === 0 || scrollPosition <= 0) {
@@ -236,6 +238,7 @@ export function MemesFeedPanel({ memeGridRef, sidebar }: MemesFeedPanelProps) {
     }
     if (window.scrollY > 0) {
       hasRestoredScrollRef.current = true;
+      sessionStorage.removeItem(RETURN_TO_MEMES_SCROLL_KEY);
       return;
     }
 
@@ -243,6 +246,7 @@ export function MemesFeedPanel({ memeGridRef, sidebar }: MemesFeedPanelProps) {
     suppressLoadMoreUntilRef.current = Date.now() + 1200;
     requestAnimationFrame(() => {
       window.scrollTo({ top: scrollPosition, left: 0, behavior: 'instant' });
+      sessionStorage.removeItem(RETURN_TO_MEMES_SCROLL_KEY);
     });
   }, [isInitialized, memes.length, scrollPosition]);
 
@@ -303,33 +307,20 @@ export function MemesFeedPanel({ memeGridRef, sidebar }: MemesFeedPanelProps) {
 
   const handleLike = useCallback(async (slug: string) => {
     if (processingMemesRef.current.has(slug)) {
-      console.log('Meme is already being processed, ignoring click:', slug);
       return;
     }
 
     try {
-      console.log('handleLike called with slug:', slug);
-
       processingMemesRef.current.add(slug);
 
       const originalMeme = listMemes.find(meme => meme.slug === slug);
       if (!originalMeme) {
-        console.warn('Meme not found in current state:', slug);
         return;
       }
 
       const originalLikeCount = Math.max(0, originalMeme.likes_count || 0);
 
-      if (originalMeme.likes_count < 0) {
-        console.warn('Found negative like count in database, clamping to 0:', {
-          slug,
-          databaseCount: originalMeme.likes_count,
-          clampedCount: originalLikeCount
-        });
-      }
-
       const actualIsLiked = await likeMeme(slug);
-      console.log('API returned isLiked:', actualIsLiked);
 
       let finalLikeCount: number;
 
@@ -340,20 +331,8 @@ export function MemesFeedPanel({ memeGridRef, sidebar }: MemesFeedPanelProps) {
       }
 
       if (finalLikeCount < 0) {
-        console.warn('Calculated negative like count, clamping to 0:', {
-          slug,
-          originalCount: originalLikeCount,
-          finalCount: finalLikeCount
-        });
         finalLikeCount = 0;
       }
-
-      console.log('Calculated final like count:', {
-        slug,
-        originalCount: originalLikeCount,
-        actualIsLiked,
-        finalCount: finalLikeCount
-      });
 
       updateMemeLikeCount(slug, finalLikeCount);
       updateMemeLikedState(slug, actualIsLiked);
@@ -365,15 +344,7 @@ export function MemesFeedPanel({ memeGridRef, sidebar }: MemesFeedPanelProps) {
         } else {
           newSet.delete(slug);
         }
-        console.log('Final likedMemes state after API call:', Array.from(newSet));
         return newSet;
-      });
-
-      console.log('Like operation completed successfully:', {
-        slug,
-        originalCount: originalLikeCount,
-        finalCount: finalLikeCount,
-        isLiked: actualIsLiked
       });
 
     } catch (error) {

@@ -16,6 +16,7 @@ const MemeCard: React.FC<MemeCardProps> = ({
   className,
   isLiked
 }) => {
+  const RETURN_TO_MEMES_SCROLL_KEY = 'restoreMemesScrollFromDetail';
   const { setScrollPosition } = useMemesUIState();
   // Use the meme's is_liked field if available, otherwise fall back to the prop
   const isActuallyLiked = meme.is_liked !== undefined ? meme.is_liked : (isLiked || false);
@@ -88,6 +89,7 @@ const MemeCard: React.FC<MemeCardProps> = ({
       onClick={() => {
         if (typeof window !== 'undefined') {
           setScrollPosition(window.scrollY);
+          sessionStorage.setItem(RETURN_TO_MEMES_SCROLL_KEY, '1');
         }
       }}
     >
