@@ -22,7 +22,7 @@ export default function Home() {
   const [likedMemes, setLikedMemes] = useState<Set<string>>(new Set());
   const [localMemes, setLocalMemes] = useState<Meme[]>([]);
 
-  // Fetch homepage memes - hottest by likes over the last month (rolling 30 days)
+  // Fetch homepage memes - hottest by likes and shares over the last month (rolling 30 days)
   useEffect(() => {
     const fetchHomepageMemes = async () => {
       try {
@@ -172,7 +172,7 @@ export default function Home() {
               <div>
                 <h2 className="text-2xl font-black uppercase tracking-tight">Hottest Memes - Last Month</h2>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  Who hit like this month. That is the entire bar for inclusion.
+                  Likes and shares both count this month. Peak internet judgment.
                 </p>
               </div>
             </div>
@@ -274,7 +274,7 @@ export default function Home() {
             <div>
               <h2 className="text-2xl font-black uppercase tracking-tight">Hottest Memes - Last Month</h2>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                Who hit like this month. That is the entire bar for inclusion.
+                Likes and shares both count this month. Peak internet judgment.
               </p>
             </div>
           </div>

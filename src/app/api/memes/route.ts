@@ -234,13 +234,15 @@ export async function GET(request: NextRequest) {
 
     // Apply primary sorting with proper tie-breaking
     if (sort_by === 'likes') {
-      // Sort by likes first, then views as tie-breaker, then date as final tie-breaker
+      // Sort by likes first, then shares, then views, then date as tie-breakers
       query = query.order('likes_count', { ascending: sort_order === 'asc' });
+      query = query.order('shares_count', { ascending: false }); // Always descending for shares as tie-breaker
       query = query.order('views', { ascending: false }); // Always descending for views as tie-breaker
       query = query.order('created_at', { ascending: false }); // Always descending for date as final tie-breaker
     } else if (sort_by === 'views') {
-      // Sort by views first, then likes as tie-breaker, then date as final tie-breaker
+      // Sort by views first, then shares, then likes, then date as tie-breakers
       query = query.order('views', { ascending: sort_order === 'asc' });
+      query = query.order('shares_count', { ascending: false }); // Always descending for shares as tie-breaker
       query = query.order('likes_count', { ascending: false }); // Always descending for likes as tie-breaker
       query = query.order('created_at', { ascending: false }); // Always descending for date as final tie-breaker
     } else if (sort_by === 'comments') {
