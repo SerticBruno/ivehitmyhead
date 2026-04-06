@@ -12,6 +12,40 @@ type MemeRow = {
   [key: string]: unknown;
 };
 
+function readNumber(value: unknown): number {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string') {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return 0;
+}
+
+function readDateTimestamp(value: unknown): number {
+  if (typeof value !== 'string') return 0;
+  const ts = Date.parse(value);
+  return Number.isFinite(ts) ? ts : 0;
+}
+
+function compareHotScore(a: MemeRow, b: MemeRow, ascending: boolean): number {
+  const aLikes = readNumber(a.likes_count);
+  const bLikes = readNumber(b.likes_count);
+  const aShares = readNumber(a.shares_count);
+  const bShares = readNumber(b.shares_count);
+  const aViews = readNumber(a.views);
+  const bViews = readNumber(b.views);
+  const aScore = aLikes + aShares;
+  const bScore = bLikes + bShares;
+
+  if (aScore !== bScore) {
+    return ascending ? aScore - bScore : bScore - aScore;
+  }
+  if (aViews !== bViews) {
+    return bViews - aViews;
+  }
+  return readDateTimestamp(b.created_at) - readDateTimestamp(a.created_at);
+}
+
 function parseExcludeIds(raw: string | null): string[] {
   if (!raw) return [];
 
@@ -234,11 +268,30 @@ export async function GET(request: NextRequest) {
 
     // Apply primary sorting with proper tie-breaking
     if (sort_by === 'likes') {
-      // Sort by likes first, then shares, then views, then date as tie-breakers
-      query = query.order('likes_count', { ascending: sort_order === 'asc' });
-      query = query.order('shares_count', { ascending: false }); // Always descending for shares as tie-breaker
-      query = query.order('views', { ascending: false }); // Always descending for views as tie-breaker
-      query = query.order('created_at', { ascending: false }); // Always descending for date as final tie-breaker
+      // "Hottest": likes + shares where each interaction counts as 1.
+      const { data: memes, error } = await query;
+      if (error) {
+        throw error;
+      }
+
+      const ascending = sort_order === 'asc';
+      const sorted = [...(memes || [])].sort((a, b) =>
+        compareHotScore(a as MemeRow, b as MemeRow, ascending)
+      );
+      const rows = sorted.slice(offset, offset + limit + 1);
+      const hasMore = rows.length > limit;
+      const pagedMemes = hasMore ? rows.slice(0, limit) : rows;
+
+      return NextResponse.json({
+        memes: pagedMemes,
+        pagination: {
+          page,
+          limit,
+          total: null,
+          total_pages: null,
+          has_more: hasMore
+        }
+      });
     } else if (sort_by === 'views') {
       // Sort by views first, then shares, then likes, then date as tie-breakers
       query = query.order('views', { ascending: sort_order === 'asc' });
