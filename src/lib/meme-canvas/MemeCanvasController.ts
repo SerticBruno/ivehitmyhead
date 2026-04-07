@@ -416,6 +416,16 @@ class MemeCanvasController {
     this.resize(newWidth, newHeight);
   }
 
+  /** Recompute backing canvas size from the loaded image plus current padding (e.g. after window resize). */
+  public resizeFromImageAndPadding() {
+    if (!this._image) return;
+    const p = this.padding;
+    this.resize(
+      this._image.width + p.left + p.right,
+      this._image.height + p.top + p.bottom
+    );
+  }
+
   public resize(width: number, height: number) {
     // Set actual canvas dimensions to original image size (no scaling)
     this.canvas.width = width;

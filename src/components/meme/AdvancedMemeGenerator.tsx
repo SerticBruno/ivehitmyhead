@@ -17,6 +17,19 @@ import { useNavigationWarning } from '@/lib/contexts/NavigationWarningContext';
 
 const PREVIEW_SCROLL_GAP_BELOW_HEADER_PX = 24;
 
+/** White caption strip height as a fraction of the source image height (not the full canvas). */
+const CAPTION_STRIP_RATIO = 0.3;
+
+function captionPaddingForImage(
+  imgHeight: number,
+  topOn: boolean,
+  bottomOn: boolean
+) {
+  const top = topOn ? Math.round(imgHeight * CAPTION_STRIP_RATIO) : 0;
+  const bottom = bottomOn ? Math.round(imgHeight * CAPTION_STRIP_RATIO) : 0;
+  return { top, left: 0, right: 0, bottom } as const;
+}
+
 /** After a template loads, align the preview below the sticky header and move focus for keyboard / assistive tech. */
 function scrollMemePreviewIntoView(el: HTMLElement | null) {
   if (typeof window === 'undefined' || !el) return;
@@ -95,6 +108,10 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
   const editingElementRef = useRef<TextElement | null>(null);
   const customPhotoObjectUrlRef = useRef<string | null>(null);
   const customPhotoFileInputRef = useRef<HTMLInputElement>(null);
+  const [addTopCaptionArea, setAddTopCaptionArea] = useState(false);
+  const addTopCaptionAreaRef = useRef(false);
+  const [addBottomCaptionArea, setAddBottomCaptionArea] = useState(false);
+  const addBottomCaptionAreaRef = useRef(false);
 
   const revokeCustomPhotoIfAny = useCallback(() => {
     if (customPhotoObjectUrlRef.current) {
@@ -111,6 +128,14 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
     },
     []
   );
+
+  useEffect(() => {
+    addTopCaptionAreaRef.current = addTopCaptionArea;
+  }, [addTopCaptionArea]);
+
+  useEffect(() => {
+    addBottomCaptionAreaRef.current = addBottomCaptionArea;
+  }, [addBottomCaptionArea]);
 
   const stopEditing = useCallback(() => {
     editingElementRef.current = null;
@@ -303,9 +328,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
 
     // Handle window resize to recalculate canvas size
     const handleResize = () => {
-      if (controller.image) {
-        controller.resize(controller.image.width, controller.image.height);
-      }
+      controller.resizeFromImageAndPadding();
     };
 
     window.addEventListener('resize', handleResize);
@@ -329,6 +352,8 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
     ) as TextElement[];
     const currentState = JSON.stringify({
       templateId: selectedTemplate.id,
+      addTopCaption: addTopCaptionArea,
+      addBottomCaption: addBottomCaptionArea,
       elements: elements.map(el => ({
         text: el.settings.text.value,
         x: el.x,
@@ -344,7 +369,13 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
       }))
     });
     return currentState !== initialTemplateState;
-  }, [selectedTemplate, initialTemplateState, isLoadingTemplate]);
+  }, [
+    selectedTemplate,
+    initialTemplateState,
+    isLoadingTemplate,
+    addTopCaptionArea,
+    addBottomCaptionArea,
+  ]);
 
   // Helper to mark as dirty
   const markDirty = useCallback(() => {
@@ -438,6 +469,8 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
         setInitialTemplateState(
           JSON.stringify({
             templateId: tmpl.id,
+            addTopCaption: addTopCaptionAreaRef.current,
+            addBottomCaption: addBottomCaptionAreaRef.current,
             elements: elements.map((el) => ({
               text: el.settings.text.value,
               x: el.x,
@@ -482,6 +515,14 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
           }
 
           ctrl.changeImage(img);
+          const capPad = captionPaddingForImage(
+            img.height,
+            addTopCaptionAreaRef.current,
+            addBottomCaptionAreaRef.current
+          );
+          if (capPad.top || capPad.bottom) {
+            ctrl.changePadding(capPad);
+          }
           setSelectedTemplate(template);
           setNavigationDirty(false);
 
@@ -503,18 +544,20 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
               return;
             }
 
-            const { canvas } = c2;
-            const canvasWidth = canvas.width;
-            const canvasHeight = canvas.height;
+            const img2 = c2.image;
+            if (!img2) return;
+            const topPad = c2.padding.top;
+            const imageW = img2.width;
+            const imageH = img2.height;
 
             textFields.forEach((field, fieldIndex: number) => {
               if (loadGen !== templateLoadGenRef.current) return;
               if (!controllerRef.current) return;
-              const x = (field.x / 100) * canvasWidth;
-              const y = (field.y / 100) * canvasHeight;
-              const width = (field.width / 100) * canvasWidth;
-              const height = (field.height / 100) * canvasHeight;
-              const fontSize = field.fontSize * (canvasHeight / 600);
+              const x = (field.x / 100) * imageW;
+              const y = topPad + (field.y / 100) * imageH;
+              const width = (field.width / 100) * imageW;
+              const height = (field.height / 100) * imageH;
+              const fontSize = field.fontSize * (imageH / 600);
 
               const textElement = new TextElement(controllerRef.current);
 
@@ -555,7 +598,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
               controllerRef.current.updateElement(
                 textElement,
                 'stroke_width',
-                (field.strokeWidth ?? 6) * (canvasHeight / 600)
+                (field.strokeWidth ?? 6) * (imageH / 600)
               );
               if (field.useShadow !== undefined) {
                 controllerRef.current.updateElement(
@@ -571,17 +614,17 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                 controllerRef.current.updateElement(
                   textElement,
                   'shadow_blur',
-                  (field.shadowBlur ?? 10) * (canvasHeight / 600)
+                  (field.shadowBlur ?? 10) * (imageH / 600)
                 );
                 controllerRef.current.updateElement(
                   textElement,
                   'shadow_offset_x',
-                  (field.shadowOffsetX ?? 2) * (canvasHeight / 600)
+                  (field.shadowOffsetX ?? 2) * (imageH / 600)
                 );
                 controllerRef.current.updateElement(
                   textElement,
                   'shadow_offset_y',
-                  (field.shadowOffsetY ?? 2) * (canvasHeight / 600)
+                  (field.shadowOffsetY ?? 2) * (imageH / 600)
                 );
               }
 
@@ -634,6 +677,35 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
     },
     [checkDirtyAndProceed, setNavigationDirty, revokeCustomPhotoIfAny]
   );
+
+  const handleTopCaptionAreaChange = useCallback((checked: boolean) => {
+    setAddTopCaptionArea(checked);
+    const c = controllerRef.current;
+    if (!c?.image) return;
+    const imgH = c.image.height;
+    const prevTop = c.padding.top;
+    const newTop = checked ? Math.round(imgH * CAPTION_STRIP_RATIO) : 0;
+    const bottom = c.padding.bottom;
+    const deltaY = newTop - prevTop;
+    c.changePadding({ top: newTop, left: 0, right: 0, bottom });
+    for (const el of c.elements) {
+      el.y += deltaY;
+    }
+    c.requestFrame();
+    c.emit('elementsUpdated');
+  }, []);
+
+  const handleBottomCaptionAreaChange = useCallback((checked: boolean) => {
+    setAddBottomCaptionArea(checked);
+    const c = controllerRef.current;
+    if (!c?.image) return;
+    const imgH = c.image.height;
+    const top = c.padding.top;
+    const newBottom = checked ? Math.round(imgH * CAPTION_STRIP_RATIO) : 0;
+    c.changePadding({ top, left: 0, right: 0, bottom: newBottom });
+    c.requestFrame();
+    c.emit('elementsUpdated');
+  }, []);
 
   const loadCustomPhotoFromFile = useCallback(
     (file: File) => {
@@ -1046,7 +1118,49 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
             </div>
 
             {/* Canvas controls */}
-            <div className="mt-2 md:mt-4 flex gap-1.5 md:gap-2 flex-wrap flex-shrink-0">
+            <div className="mt-2 md:mt-4 flex gap-1.5 md:gap-2 flex-wrap items-center flex-shrink-0">
+              <label
+                htmlFor="meme-top-caption-strip"
+                className={`flex cursor-pointer select-none items-center gap-2 border-2 border-zinc-700 bg-white px-2 py-1.5 text-xs dark:border-zinc-400 dark:bg-gray-900 md:px-3 md:text-sm ${
+                  !selectedTemplate
+                    ? 'cursor-not-allowed opacity-50'
+                    : ''
+                }`}
+              >
+                <input
+                  id="meme-top-caption-strip"
+                  type="checkbox"
+                  checked={addTopCaptionArea}
+                  disabled={!selectedTemplate}
+                  onChange={(e) => handleTopCaptionAreaChange(e.target.checked)}
+                  className="h-4 w-4 rounded-none border-2 border-zinc-700 accent-blue-600 dark:border-zinc-400"
+                />
+                <span className="font-medium text-gray-800 dark:text-gray-200">
+                  White caption bar on top (~30% of image height)
+                </span>
+              </label>
+              <label
+                htmlFor="meme-bottom-caption-strip"
+                className={`flex cursor-pointer select-none items-center gap-2 border-2 border-zinc-700 bg-white px-2 py-1.5 text-xs dark:border-zinc-400 dark:bg-gray-900 md:px-3 md:text-sm ${
+                  !selectedTemplate
+                    ? 'cursor-not-allowed opacity-50'
+                    : ''
+                }`}
+              >
+                <input
+                  id="meme-bottom-caption-strip"
+                  type="checkbox"
+                  checked={addBottomCaptionArea}
+                  disabled={!selectedTemplate}
+                  onChange={(e) =>
+                    handleBottomCaptionAreaChange(e.target.checked)
+                  }
+                  className="h-4 w-4 rounded-none border-2 border-zinc-700 accent-blue-600 dark:border-zinc-400"
+                />
+                <span className="font-medium text-gray-800 dark:text-gray-200">
+                  White caption bar on bottom (~30% of image height)
+                </span>
+              </label>
               <Button 
                 onClick={addText} 
                 variant="outline" 

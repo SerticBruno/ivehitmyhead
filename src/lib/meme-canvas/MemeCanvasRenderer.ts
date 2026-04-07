@@ -41,10 +41,16 @@ class MemeCanvasRenderer {
   public drawWatermark() {
     const { ctx } = this;
     const canvas = ctx.canvas;
-    const fontSize = scaled(canvas, 17);
-    const paddingX = scaled(canvas, 6);
-    const paddingY = scaled(canvas, 6);
-    const strokeWidth = Math.max(2, scaled(canvas, 2.25));
+    // Capped so wide/high-res exports do not get an oversized watermark.
+    const fontSize = Math.round(
+      Math.max(8, Math.min(18, scaled(canvas, 10)))
+    );
+    const paddingXY = Math.round(
+      Math.max(4, Math.min(10, scaled(canvas, 4)))
+    );
+    const paddingX = paddingXY;
+    const paddingY = paddingXY;
+    const strokeWidth = Math.max(1, Math.min(2.5, scaled(canvas, 1.2)));
     const text = 'ivehitmyhead.com';
 
     ctx.textAlign = 'left';
