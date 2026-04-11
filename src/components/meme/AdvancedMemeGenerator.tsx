@@ -1117,77 +1117,81 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
               )}
             </div>
 
-            {/* Canvas controls */}
-            <div className="mt-2 md:mt-4 flex gap-1.5 md:gap-2 flex-wrap items-center flex-shrink-0">
-              <label
-                htmlFor="meme-top-caption-strip"
-                className={`flex cursor-pointer select-none items-center gap-2 border-2 border-zinc-700 bg-white px-2 py-1.5 text-xs dark:border-zinc-400 dark:bg-gray-900 md:px-3 md:text-sm ${
-                  !selectedTemplate
-                    ? 'cursor-not-allowed opacity-50'
-                    : ''
-                }`}
-              >
-                <input
-                  id="meme-top-caption-strip"
-                  type="checkbox"
-                  checked={addTopCaptionArea}
+            {/* Canvas controls — single row (scroll on narrow widths) to keep preview taller */}
+            <div className="mt-1.5 md:mt-2 flex min-w-0 flex-shrink-0 items-center gap-1.5 md:gap-2">
+              <div className="flex min-w-0 flex-1 flex-nowrap items-center gap-1.5 overflow-x-auto pb-0.5 [scrollbar-gutter:stable] md:gap-2 md:pb-0">
+                <label
+                  htmlFor="meme-top-caption-strip"
+                  title="White caption bar on top (~30% of image height)"
+                  className={`flex shrink-0 cursor-pointer select-none items-center gap-1.5 whitespace-nowrap border-2 border-zinc-700 bg-white px-2 py-1 text-xs dark:border-zinc-400 dark:bg-gray-900 md:gap-2 md:px-2.5 md:py-1.5 md:text-sm ${
+                    !selectedTemplate
+                      ? 'cursor-not-allowed opacity-50'
+                      : ''
+                  }`}
+                >
+                  <input
+                    id="meme-top-caption-strip"
+                    type="checkbox"
+                    checked={addTopCaptionArea}
+                    disabled={!selectedTemplate}
+                    onChange={(e) => handleTopCaptionAreaChange(e.target.checked)}
+                    className="h-4 w-4 shrink-0 rounded-none border-2 border-zinc-700 accent-blue-600 dark:border-zinc-400"
+                  />
+                  <span className="font-medium text-gray-800 dark:text-gray-200">
+                    Top bar
+                  </span>
+                </label>
+                <label
+                  htmlFor="meme-bottom-caption-strip"
+                  title="White caption bar on bottom (~30% of image height)"
+                  className={`flex shrink-0 cursor-pointer select-none items-center gap-1.5 whitespace-nowrap border-2 border-zinc-700 bg-white px-2 py-1 text-xs dark:border-zinc-400 dark:bg-gray-900 md:gap-2 md:px-2.5 md:py-1.5 md:text-sm ${
+                    !selectedTemplate
+                      ? 'cursor-not-allowed opacity-50'
+                      : ''
+                  }`}
+                >
+                  <input
+                    id="meme-bottom-caption-strip"
+                    type="checkbox"
+                    checked={addBottomCaptionArea}
+                    disabled={!selectedTemplate}
+                    onChange={(e) =>
+                      handleBottomCaptionAreaChange(e.target.checked)
+                    }
+                    className="h-4 w-4 shrink-0 rounded-none border-2 border-zinc-700 accent-blue-600 dark:border-zinc-400"
+                  />
+                  <span className="font-medium text-gray-800 dark:text-gray-200">
+                    Bottom bar
+                  </span>
+                </label>
+                <Button
+                  onClick={addText}
+                  variant="outline"
+                  size="sm"
                   disabled={!selectedTemplate}
-                  onChange={(e) => handleTopCaptionAreaChange(e.target.checked)}
-                  className="h-4 w-4 rounded-none border-2 border-zinc-700 accent-blue-600 dark:border-zinc-400"
-                />
-                <span className="font-medium text-gray-800 dark:text-gray-200">
-                  White caption bar on top (~30% of image height)
-                </span>
-              </label>
-              <label
-                htmlFor="meme-bottom-caption-strip"
-                className={`flex cursor-pointer select-none items-center gap-2 border-2 border-zinc-700 bg-white px-2 py-1.5 text-xs dark:border-zinc-400 dark:bg-gray-900 md:px-3 md:text-sm ${
-                  !selectedTemplate
-                    ? 'cursor-not-allowed opacity-50'
-                    : ''
-                }`}
-              >
-                <input
-                  id="meme-bottom-caption-strip"
-                  type="checkbox"
-                  checked={addBottomCaptionArea}
-                  disabled={!selectedTemplate}
-                  onChange={(e) =>
-                    handleBottomCaptionAreaChange(e.target.checked)
-                  }
-                  className="h-4 w-4 rounded-none border-2 border-zinc-700 accent-blue-600 dark:border-zinc-400"
-                />
-                <span className="font-medium text-gray-800 dark:text-gray-200">
-                  White caption bar on bottom (~30% of image height)
-                </span>
-              </label>
-              <Button 
-                onClick={addText} 
-                variant="outline" 
-                size="sm"
-                disabled={!selectedTemplate}
-                className="text-xs md:text-sm"
-              >
-                <Plus className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
-                <span className="hidden sm:inline">Add Text</span>
-                <span className="sm:hidden">Add</span>
-              </Button>
-              <Button
-                onClick={deleteSelected}
-                variant="outline"
-                size="sm"
-                disabled={!selectedElement}
-                className="text-xs md:text-sm"
-              >
-                <Trash2 className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
-                <span className="hidden sm:inline">Delete</span>
-              </Button>
+                  className="shrink-0 text-xs md:text-sm"
+                >
+                  <Plus className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
+                  <span className="hidden sm:inline">Add Text</span>
+                  <span className="sm:hidden">Add</span>
+                </Button>
+                <Button
+                  onClick={deleteSelected}
+                  variant="outline"
+                  size="sm"
+                  disabled={!selectedElement}
+                  className="shrink-0 text-xs md:text-sm"
+                >
+                  <Trash2 className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
+                  <span className="hidden sm:inline">Delete</span>
+                </Button>
+              </div>
               <Button
                 onClick={downloadMeme}
                 variant="primary"
                 size="sm"
                 disabled={!selectedTemplate}
-                className="ml-auto text-xs md:text-sm"
+                className="shrink-0 text-xs md:text-sm"
               >
                 <Download className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
                 <span className="hidden sm:inline">Download</span>
