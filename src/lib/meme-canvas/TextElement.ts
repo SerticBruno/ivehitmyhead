@@ -141,9 +141,14 @@ class TextElement extends MemeElement<TextElementSettings> {
     const textHeight = Math.round(
       this._splitText.length * lineHeight
     );
-    // Ensure minimum height
+    // Ensure minimum height for content
     const minHeight = this.getMinHeight();
-    this._height = Math.max(textHeight + this.PADDING * 2, minHeight);
+    const needed = Math.max(textHeight + this.PADDING * 2, minHeight);
+    // When the user has sized the box (resize handles), never shrink below that
+    // height on text reflow / spurious updates — only grow if content needs it.
+    this._height = this._userHasSetSize
+      ? Math.max(this._height, needed)
+      : needed;
   }
 
   private getTextSize() {

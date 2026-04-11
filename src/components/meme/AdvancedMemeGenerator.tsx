@@ -773,11 +773,13 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
     c.requestFrame();
   }, [selectedTemplate?.id]);
 
-  // Handle text input change
+  // Handle text input change (skip when canvas text already matches — avoids
+  // redundant updates on re-selection that reflowed user-resized boxes).
   useEffect(() => {
-    if (selectedElement && showTextInput) {
-      updateText();
-    }
+    if (!selectedElement || !showTextInput) return;
+    if (!(selectedElement instanceof TextElement)) return;
+    if (selectedElement.settings.text.value === textInput) return;
+    updateText();
   }, [textInput, selectedElement, showTextInput, updateText]);
 
   return (
