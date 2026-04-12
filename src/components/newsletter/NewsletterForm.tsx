@@ -11,6 +11,8 @@ export interface NewsletterFormProps {
   className?: string;
   /** Layout: bordered card, compact horizontal band, or form fields only (you supply the shell). */
   variant?: NewsletterFormVariant;
+  /** Email field and submit button in a column (button below input) instead of side-by-side from `sm` up. */
+  stackButton?: boolean;
   title?: string;
   description?: string;
   placeholder?: string;
@@ -24,6 +26,7 @@ const fieldClass =
 export function NewsletterForm({
   className,
   variant = 'card',
+  stackButton = false,
   title = 'Meme spam, but legal',
   description =
     'Hand us your email and we might occasionally send something. Lower your expectations preemptively.',
@@ -67,7 +70,12 @@ export function NewsletterForm({
   const disabled = status === 'loading' || status === 'success';
 
   const emailRow = (
-    <div className="flex flex-col sm:flex-row gap-3">
+    <div
+      className={cn(
+        'flex gap-3',
+        stackButton ? 'flex-col' : 'flex-col sm:flex-row',
+      )}
+    >
       <Input
         type="email"
         placeholder={placeholder}

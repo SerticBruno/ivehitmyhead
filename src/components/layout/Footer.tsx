@@ -52,28 +52,6 @@ const Footer: React.FC = () => {
           </div>
 
           <div>
-            <h3 className="font-black uppercase tracking-wide mb-4">Quick Links</h3>
-            <ul className="space-y-2">
-              <li>
-                <Link
-                  href="/memes?filter=trending&time_period=month"
-                  className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 cursor-pointer"
-                >
-                  Trending Memes
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/about"
-                  className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 cursor-pointer"
-                >
-                  About
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          <div>
             <h3 className="font-black uppercase tracking-wide mb-4">Support</h3>
             <ul className="space-y-2">
               <li>
@@ -110,13 +88,38 @@ const Footer: React.FC = () => {
               </li>
             </ul>
           </div>
-        </div>
 
-        <div
-          className="mt-8 max-w-3xl mx-auto w-full border-2 border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-900 p-5 shadow-[6px_6px_0px_rgba(0,0,0,0.75)] dark:shadow-[6px_6px_0px_rgba(156,163,175,0.35)]"
-          aria-label="Newsletter signup"
-        >
-          <SiteNewsletterSignup variant="inline" />
+          <div className="flex flex-col">
+            <h3 className="font-black uppercase tracking-wide mb-4">Quick Links</h3>
+            <ul className="space-y-2">
+              <li>
+                <Link
+                  href="/memes?filter=trending&time_period=month"
+                  className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 cursor-pointer"
+                >
+                  Trending Memes
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/about"
+                  className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 cursor-pointer"
+                >
+                  About
+                </Link>
+              </li>
+            </ul>
+            <div
+              className="mt-6 pt-6 border-t-2 border-zinc-200 dark:border-zinc-700"
+              aria-label="Newsletter signup"
+            >
+              <h3 className="font-black uppercase tracking-wide mb-2">Newsletter</h3>
+              <p className="text-xs text-gray-600 dark:text-gray-400 mb-3 leading-snug">
+                Occasional updates. Lower your expectations preemptively.
+              </p>
+              <SiteNewsletterSignup variant="bare" stackButton />
+            </div>
+          </div>
         </div>
 
         <div className="border-t-2 border-zinc-700 dark:border-zinc-400 mt-8 pt-8 text-center">
