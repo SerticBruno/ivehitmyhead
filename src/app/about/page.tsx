@@ -2,8 +2,12 @@
 
 import React from 'react';
 import { Button } from '@/components/ui';
+import { getPublicFacebookUrl, getPublicInstagramUrl } from '@/lib/socialUrls';
 
 export default function AboutPage() {
+  const instagramUrl = getPublicInstagramUrl();
+  const facebookUrl = getPublicFacebookUrl();
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -103,18 +107,24 @@ export default function AboutPage() {
                 Bugs are just surprise features I didn&apos;t plan for, so don&apos;t feel bad about finding them. 
                 I try to find time to reply to each of the emails.
               </p>
-            <div className="flex justify-center space-x-4">
-              <Button 
+            <div className="flex flex-wrap justify-center gap-3">
+              <Button
                 variant="outline"
                 onClick={() => window.open('mailto:hello@ivehitmyhead.com', '_blank')}
               >
                 Email Me
               </Button>
-              <Button 
+              <Button
                 variant="outline"
-                onClick={() => window.open('https://twitter.com', '_blank')}
+                onClick={() => window.open(instagramUrl, '_blank')}
               >
-                X
+                Instagram
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => window.open(facebookUrl, '_blank')}
+              >
+                Facebook
               </Button>
             </div>
           </div>

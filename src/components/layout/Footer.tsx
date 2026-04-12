@@ -2,9 +2,10 @@ import React from 'react';
 import Link from 'next/link';
 import { Instagram, Facebook } from 'lucide-react';
 import { ICONS } from '@/lib/utils/categoryIcons';
+import { getPublicFacebookUrl, getPublicInstagramUrl } from '@/lib/socialUrls';
 
-const instagramUrl = process.env.NEXT_PUBLIC_INSTAGRAM_URL?.trim();
-const facebookUrl = process.env.NEXT_PUBLIC_FACEBOOK_URL?.trim();
+const instagramUrl = getPublicInstagramUrl();
+const facebookUrl = getPublicFacebookUrl();
 const year = new Date().getFullYear();
 
 const Footer: React.FC = () => {

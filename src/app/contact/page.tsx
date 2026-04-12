@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { LegalPageShell } from '@/components/legal/LegalPageShell';
+import { getPublicFacebookUrl, getPublicInstagramUrl } from '@/lib/socialUrls';
 
 export const metadata: Metadata = {
   title: 'Contact',
@@ -11,6 +12,8 @@ const CONTACT_EMAIL = process.env.NEXT_PUBLIC_CONTACT_EMAIL || 'hello@ivehitmyhe
 
 export default function ContactPage() {
   const mailto = `mailto:${CONTACT_EMAIL}`;
+  const instagramUrl = getPublicInstagramUrl();
+  const facebookUrl = getPublicFacebookUrl();
 
   return (
     <LegalPageShell title="Contact">
@@ -27,7 +30,25 @@ export default function ContactPage() {
         </a>
       </p>
       <p className="mt-6 text-gray-600 dark:text-gray-400">
-        Social links (when published) live in the site footer.
+        Find us on{' '}
+        <a
+          href={instagramUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-semibold text-gray-900 underline dark:text-white"
+        >
+          Instagram
+        </a>{' '}
+        and{' '}
+        <a
+          href={facebookUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-semibold text-gray-900 underline dark:text-white"
+        >
+          Facebook
+        </a>
+        , or use the icons in the site footer.
       </p>
       <p className="mt-4">
         <Link href="/help" className="font-semibold underline">
