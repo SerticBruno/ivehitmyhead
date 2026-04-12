@@ -138,64 +138,64 @@ export const MEME_TEMPLATES: MemeTemplate[] = [
     textFields: [
       {
         id: 'top',
-        x: 2, // center horizontally
-        y: 9, // 15% from top
-        width: 45, // 70% of image width
-        height: 15, // 12% of image height
+        x: 2,
+        y: 1.52,
+        width: 45.33,
+        height: 22.43,
         fontSize: 36,
         color: '#ffffff',
         fontFamily: 'Impact',
         fontWeight: 'bold',
         textAlign: 'center',
-        maxWidth: 70, // 70% of image width
+        maxWidth: 47,
         strokeColor: '#000000',
-        strokeWidth: 5
+        strokeWidth: 4,
       },
       {
         id: 'middle-left',
-        x: 2, // 20% from left
-        y: 33, // 45% from top
-        width: 45, // 25% of image width
-        height: 15, // 15% of image height
+        x: 2,
+        y: 26.52,
+        width: 46.13,
+        height: 23.38,
         fontSize: 36,
         color: '#ffffff',
         fontFamily: 'Impact',
         fontWeight: 'bold',
         textAlign: 'center',
-        maxWidth: 70, // 25% of image width
+        maxWidth: 48,
         strokeColor: '#000000',
-        strokeWidth: 4
+        strokeWidth: 4,
       },
       {
         id: 'middle-right',
-        x: 2, // 65% from left
-        y: 57, // 45% from top
-        width: 45, // 25% of image width
-        height: 15, // 15% of image height
+        x: 1.47,
+        y: 52.47,
+        width: 46,
+        height: 19.96,
         fontSize: 36,
         color: '#ffffff',
         fontFamily: 'Impact',
         fontWeight: 'bold',
         textAlign: 'center',
-        maxWidth: 70, // 25% of image width
+        maxWidth: 48,
         strokeColor: '#000000',
-        strokeWidth: 4
+        strokeWidth: 4,
       },
       {
         id: 'bottom',
-        x: 2, // center horizontally
-        y: 82, // 80% from top
-        width: 45, // 80% of image width
-        height: 15, // 15% of image height
+        x: 2,
+        y: 75.38,
+        width: 44.8,
+        height: 23.19,
         fontSize: 36,
         color: '#ffffff',
         fontFamily: 'Impact',
         fontWeight: 'bold',
         textAlign: 'center',
-        maxWidth: 70, // 80% of image width
+        maxWidth: 47,
         strokeColor: '#000000',
-        strokeWidth: 5
-      }
+        strokeWidth: 4,
+      },
     ],
     tags: ['complex', 'four-text', 'advanced'],
     category: 'advanced',
@@ -487,31 +487,31 @@ export const MEME_TEMPLATES: MemeTemplate[] = [
     textFields: [
       {
         id: 'top',
-        x: 12,
-        y: 12,
-        width: 90,
-        height: 22,
+        x: 29,
+        y: 4.04,
+        width: 68,
+        height: 39.01,
         fontSize: 60,
         color: '#ffffff',
         fontFamily: 'Impact',
         fontWeight: 'bold',
         textAlign: 'center',
-        maxWidth: 92,
+        maxWidth: 70,
         strokeColor: '#000000',
         strokeWidth: 5,
       },
       {
         id: 'button',
-        x: 0,
-        y: 52,
-        width: 56,
-        height: 18,
+        x: 8.33,
+        y: 46.41,
+        width: 39.33,
+        height: 27.35,
         fontSize: 60,
         color: '#ffffff',
         fontFamily: 'Impact',
         fontWeight: 'bold',
         textAlign: 'center',
-        maxWidth: 60,
+        maxWidth: 42,
         strokeColor: '#000000',
         strokeWidth: 5,
       },
