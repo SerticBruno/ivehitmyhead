@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Instagram, Facebook } from 'lucide-react';
+import { SiteNewsletterSignup } from '@/components/newsletter';
 import { ICONS } from '@/lib/utils/categoryIcons';
 import { getPublicFacebookUrl, getPublicInstagramUrl } from '@/lib/socialUrls';
 
@@ -109,6 +110,13 @@ const Footer: React.FC = () => {
               </li>
             </ul>
           </div>
+        </div>
+
+        <div
+          className="mt-8 max-w-3xl mx-auto w-full border-2 border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-900 p-5 shadow-[6px_6px_0px_rgba(0,0,0,0.75)] dark:shadow-[6px_6px_0px_rgba(156,163,175,0.35)]"
+          aria-label="Newsletter signup"
+        >
+          <SiteNewsletterSignup variant="inline" />
         </div>
 
         <div className="border-t-2 border-zinc-700 dark:border-zinc-400 mt-8 pt-8 text-center">

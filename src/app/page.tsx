@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 
 import { FeaturedMemes } from '@/components/meme';
-import { NewsletterForm } from '@/components/newsletter';
+import { SiteNewsletterSignup } from '@/components/newsletter';
 import { Button, MemeGeneratorShowcase } from '@/components/ui';
 import { ICONS } from '@/lib/utils/categoryIcons';
 
@@ -310,7 +310,7 @@ export default function Home() {
           className="mb-12 border-2 border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-900 p-6 shadow-[6px_6px_0px_rgba(0,0,0,0.85)] dark:shadow-[6px_6px_0px_rgba(156,163,175,0.42)]"
           aria-label="Newsletter signup"
         >
-          <NewsletterForm variant="inline" />
+          <SiteNewsletterSignup variant="inline" />
         </section>
 
       </main>

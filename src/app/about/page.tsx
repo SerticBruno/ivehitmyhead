@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { ContactForm } from '@/components/contact/ContactForm';
-import { NewsletterForm } from '@/components/newsletter';
+import { SiteNewsletterSignup } from '@/components/newsletter';
 import { Button } from '@/components/ui';
 import { PATREON_HALL_OF_FAME } from '@/lib/data/patreonHallOfFame';
 import {
@@ -231,7 +231,7 @@ export default function AboutPage() {
 
           {/* Newsletter */}
           <section className="max-w-xl mx-auto w-full" aria-label="Newsletter signup">
-            <NewsletterForm variant="card" className="w-full" />
+            <SiteNewsletterSignup variant="card" className="w-full" />
           </section>
 
           {/* Contact */}
