@@ -1,9 +1,10 @@
 import type MemeElement from './MemeElement';
 import type {
   MemeElementConstructor,
-  MemeElementHandle,
   ValidOptionTypes,
 } from './MemeElement';
+import { MemeElementHandle } from './MemeElement';
+import TextElement, { HTextAlignment } from './TextElement';
 import MemeCanvasRenderer from './MemeCanvasRenderer';
 import registerCallbacks from './registerCallbacks';
 
@@ -24,6 +25,9 @@ const HANDLE_CURSORS: Record<number, string> = {
   1: 'ne-resize',
   2: 'sw-resize',
   3: 'se-resize',
+  [MemeElementHandle.ALIGN_LEFT]: 'pointer',
+  [MemeElementHandle.ALIGN_CENTER]: 'pointer',
+  [MemeElementHandle.ALIGN_RIGHT]: 'pointer',
 };
 
 class MemeCanvasController {
@@ -151,8 +155,30 @@ class MemeCanvasController {
     for (const element of this.selectedElements) {
       const handle = element.handleAt(x, y);
       if (handle !== null) {
+        if (
+          element instanceof TextElement &&
+          (handle === MemeElementHandle.ALIGN_LEFT ||
+            handle === MemeElementHandle.ALIGN_CENTER ||
+            handle === MemeElementHandle.ALIGN_RIGHT)
+        ) {
+          const align =
+            handle === MemeElementHandle.ALIGN_LEFT
+              ? 'left'
+              : handle === MemeElementHandle.ALIGN_CENTER
+                ? 'center'
+                : 'right';
+          this.updateElement(element, 'horizontal_align', {
+            valid: HTextAlignment,
+            current: align,
+          });
+          this.canvas.style.cursor = 'pointer';
+          return;
+        }
+
         this.canvas.style.cursor =
-          handle === 4 ? 'grabbing' : HANDLE_CURSORS[handle] ?? 'move';
+          handle === MemeElementHandle.ROTATION_HANDLE
+            ? 'grabbing'
+            : HANDLE_CURSORS[handle] ?? 'move';
         this.startResize(element, handle, x, y);
         return;
       }
@@ -198,7 +224,7 @@ class MemeCanvasController {
       return;
     }
 
-    // Empty canvas: clear selection only (no marquee — it confused meme-editor users)
+    // Empty canvas: clear selection only (no marquee - it confused meme-editor users)
     if (this.selectedElements.length > 0 && !this.holdingShift) {
       this.clearSelected();
     }
@@ -217,7 +243,14 @@ class MemeCanvasController {
       const element = this.selectedElements[0];
       const handle = element.handleAt(x, y);
       if (handle !== null) {
-        this.canvas.style.cursor = handle === 4 ? 'grab' : 'pointer';
+        this.canvas.style.cursor =
+          handle === MemeElementHandle.ROTATION_HANDLE
+            ? 'grab'
+            : handle === MemeElementHandle.ALIGN_LEFT ||
+                handle === MemeElementHandle.ALIGN_CENTER ||
+                handle === MemeElementHandle.ALIGN_RIGHT
+              ? 'pointer'
+              : HANDLE_CURSORS[handle] ?? 'move';
       } else if (element.intersects(x, y)) {
         this.canvas.style.cursor = 'move';
       } else {

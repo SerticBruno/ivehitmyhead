@@ -26,7 +26,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const title = `${meme.title} | IVEHITMYHEAD`;
   const description =
     meme.tags && meme.tags.length > 0
-      ? `${meme.title} — tags: ${meme.tags.slice(0, 5).join(', ')}.`
+      ? `${meme.title} - tags: ${meme.tags.slice(0, 5).join(', ')}.`
       : `View “${meme.title}” on IVEHITMYHEAD.`;
 
   const ogImage =

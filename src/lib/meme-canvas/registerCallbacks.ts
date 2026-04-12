@@ -1,4 +1,5 @@
 import type MemeCanvasController from './MemeCanvasController';
+import { MemeElementHandle } from './MemeElement';
 import TextElement from './TextElement';
 import MathHelper from '@/lib/utils/math';
 
@@ -302,16 +303,20 @@ export default function registerCallbacks(
           const element = controller.selectedElements[0];
           const handle = element.handleAt(x, y);
           if (handle !== null) {
-            // Determine cursor based on handle type
-            if (handle === 4) { // ROTATION_HANDLE
+            if (handle === MemeElementHandle.ROTATION_HANDLE) {
               cursor = 'grab';
+            } else if (
+              handle === MemeElementHandle.ALIGN_LEFT ||
+              handle === MemeElementHandle.ALIGN_CENTER ||
+              handle === MemeElementHandle.ALIGN_RIGHT
+            ) {
+              cursor = 'pointer';
             } else {
-              // Resize handles
               const handles = [
-                'nw-resize', // TOP_LEFT
-                'ne-resize', // TOP_RIGHT
-                'sw-resize', // BOTTOM_LEFT
-                'se-resize', // BOTTOM_RIGHT
+                'nw-resize',
+                'ne-resize',
+                'sw-resize',
+                'se-resize',
               ];
               cursor = handles[handle] || 'move';
             }

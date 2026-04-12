@@ -785,7 +785,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
     c.requestFrame();
   }, [selectedTemplate?.id]);
 
-  // Handle text input change (skip when canvas text already matches — avoids
+  // Handle text input change (skip when canvas text already matches - avoids
   // redundant updates on re-selection that reflowed user-resized boxes).
   useEffect(() => {
     if (!selectedElement || !showTextInput) return;
@@ -1131,7 +1131,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
               )}
             </div>
 
-            {/* Canvas controls — single row (scroll on narrow widths) to keep preview taller */}
+            {/* Canvas controls - single row (scroll on narrow widths) to keep preview taller */}
             <div className="mt-1.5 md:mt-2 flex min-w-0 flex-shrink-0 items-center gap-1.5 md:gap-2">
               <div className="flex min-w-0 flex-1 flex-nowrap items-center gap-1.5 overflow-x-auto pb-0.5 [scrollbar-gutter:stable] md:gap-2 md:pb-0">
                 <label

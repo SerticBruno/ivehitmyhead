@@ -7,6 +7,36 @@ import MemeElement, {
   MemeElementHandle,
 } from './MemeElement';
 
+export function getTextAlignmentHandleSize(
+  controller: MemeCanvasController
+): number {
+  return scaled(controller.canvas, controller.isTouch ? 26 : 20);
+}
+
+/** Center of each alignment hit target, in the same local coords as {@link getHandlePos} (rotates with the text box). */
+export function getTextAlignmentHandleCenter(
+  element: TextElement,
+  handle:
+    | MemeElementHandle.ALIGN_LEFT
+    | MemeElementHandle.ALIGN_CENTER
+    | MemeElementHandle.ALIGN_RIGHT
+): { x: number; y: number } {
+  const s = getTextAlignmentHandleSize(element.controller);
+  const gapBelow = scaled(element.controller.canvas, 8);
+  const btnGap = scaled(element.controller.canvas, 4);
+  const rowW = 3 * s + 2 * btnGap;
+  const left = element.x + element.width / 2 - rowW / 2;
+  const yc = element.y + element.height + gapBelow + s / 2;
+  const idx =
+    handle === MemeElementHandle.ALIGN_LEFT
+      ? 0
+      : handle === MemeElementHandle.ALIGN_CENTER
+        ? 1
+        : 2;
+  const xc = left + s / 2 + idx * (s + btnGap);
+  return { x: xc, y: yc };
+}
+
 export const HTextAlignment = ['left', 'center', 'right'] as const;
 export const VTextAlignment = ['top', 'center', 'bottom'] as const;
 
@@ -154,7 +184,7 @@ class TextElement extends MemeElement<TextElementSettings> {
     const minHeight = this.getMinHeight();
     const needed = Math.max(textHeight + this.PADDING * 2, minHeight);
     // When the user has sized the box (resize handles), never shrink below that
-    // height on text reflow / spurious updates — only grow if content needs it.
+    // height on text reflow / spurious updates - only grow if content needs it.
     this._height = this._userHasSetSize
       ? Math.max(this._height, needed)
       : needed;
@@ -279,6 +309,31 @@ class TextElement extends MemeElement<TextElementSettings> {
   public override getMinSize() {
     // Return actual text size (not rotated bounds)
     return this.getTextSize();
+  }
+
+  public override handleAt(x: number, y: number): MemeElementHandle | null {
+    const fromBase = super.handleAt(x, y);
+    if (fromBase !== null) return fromBase;
+    if (this.locked) return null;
+
+    const { x: lx, y: ly } = MemeElement.toLocalCoordinates(this, x, y);
+    const touchMul = this.controller.isTouch ? 1.45 : 1;
+    const s = getTextAlignmentHandleSize(this.controller);
+    const basePad = 10 * touchMul;
+
+    for (const h of [
+      MemeElementHandle.ALIGN_LEFT,
+      MemeElementHandle.ALIGN_CENTER,
+      MemeElementHandle.ALIGN_RIGHT,
+    ] as const) {
+      const p = getTextAlignmentHandleCenter(this, h);
+      const dx = lx - p.x;
+      const dy = ly - p.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist <= s / 2 + basePad) return h;
+    }
+
+    return null;
   }
 
   public override handleInteraction(mouseX: number, mouseY: number): void {

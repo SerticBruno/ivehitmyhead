@@ -81,7 +81,7 @@ export const MEME_TEMPLATES: MemeTemplate[] = [
   {
     id: 'imonceagain',
     name: 'I\'m Once Again',
-    description: 'Bernie Sanders — top setup and bottom caption',
+    description: 'Bernie Sanders - top setup and bottom caption',
     src: '/images/templates/imonceagain.png',
     width: 800,
     height: 600,
@@ -204,7 +204,7 @@ export const MEME_TEMPLATES: MemeTemplate[] = [
   {
     id: 'hotlinebling',
     name: 'Hotline Bling',
-    description: 'Drake Hotline Bling — top panel (no) and bottom panel (yes)',
+    description: 'Drake Hotline Bling - top panel (no) and bottom panel (yes)',
     src: '/images/templates/drakehotlinebling.png',
     width: 800,
     height: 600,
@@ -417,7 +417,7 @@ export const MEME_TEMPLATES: MemeTemplate[] = [
   {
     id: 'epic-handshake',
     name: 'Epic Handshake',
-    description: 'Two sides agree on something in the middle — left label, shared agreement, right label',
+    description: 'Two sides agree on something in the middle - left label, shared agreement, right label',
     src: '/images/templates/epic-handshake.png',
     width: 800,
     height: 600,
@@ -569,7 +569,7 @@ export const MEME_TEMPLATES: MemeTemplate[] = [
   {
     id: 'is-this-a-pigeon',
     name: 'Is This a Pigeon?',
-    description: 'Anime newbie mislabels a butterfly — label the person, the object, and the wrong take',
+    description: 'Anime newbie mislabels a butterfly - label the person, the object, and the wrong take',
     src: '/images/templates/is-this-a-pigeon.jpg',
     width: 800,
     height: 600,
@@ -634,7 +634,7 @@ export const MEME_TEMPLATES: MemeTemplate[] = [
   {
     id: 'monkey-puppet',
     name: 'Monkey Puppet',
-    description: 'Awkward side-eye vs. staring — two full-width caption strips',
+    description: 'Awkward side-eye vs. staring - two full-width caption strips',
     src: '/images/templates/monkey-puppet.png',
     width: 800,
     height: 600,
@@ -678,7 +678,7 @@ export const MEME_TEMPLATES: MemeTemplate[] = [
   {
     id: 'scooby-doo-mask-reveal',
     name: 'Scooby-Doo Mask Reveal',
-    description: 'Four-panel unmasking — label each beat of the reveal',
+    description: 'Four-panel unmasking - label each beat of the reveal',
     src: '/images/templates/scooby-doo-mask-reveal.png',
     width: 800,
     height: 600,
@@ -755,7 +755,7 @@ export const MEME_TEMPLATES: MemeTemplate[] = [
   {
     id: 'sleeping-shaq',
     name: 'Sleeping Shaq',
-    description: 'Peaceful sleep vs. the thing that isn’t — top and bottom captions',
+    description: 'Peaceful sleep vs. the thing that isn’t - top and bottom captions',
     src: '/images/templates/sleeping-shaq.png',
     width: 800,
     height: 600,
@@ -864,7 +864,7 @@ export const MEME_TEMPLATES: MemeTemplate[] = [
   {
     id: 'think-about-it',
     name: 'Think About It',
-    description: 'Roll Safe / temple tap — matched top and bottom caption strips',
+    description: 'Roll Safe / temple tap - matched top and bottom caption strips',
     src: '/images/templates/think-about-it.png',
     width: 800,
     height: 600,
@@ -913,7 +913,7 @@ export const MEME_TEMPLATES: MemeTemplate[] = [
   {
     id: 'x-x-everywhere',
     name: 'X, X Everywhere',
-    description: 'Toy Story eyes — matched top and bottom caption strips',
+    description: 'Toy Story eyes - matched top and bottom caption strips',
     src: '/images/templates/x-x-everywhere.png',
     width: 800,
     height: 600,

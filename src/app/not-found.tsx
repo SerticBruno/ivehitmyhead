@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: '404 — Page not found',
+  title: '404 - Page not found',
   description:
     'That URL does not exist on IVEHITMYHEAD. Try the home page or the memes feed.',
 };
@@ -22,7 +22,7 @@ export default function NotFound() {
             Page not found
           </h1>
           <p className="mt-4 text-pretty leading-relaxed text-gray-600 dark:text-gray-300">
-            This path is empty—like the part of your brain that remembers why you opened this tab. Head back to
+            This path is empty-like the part of your brain that remembers why you opened this tab. Head back to
             somewhere that exists.
           </p>
           <div className="mt-8 flex w-full flex-col gap-3 sm:flex-row sm:justify-center">

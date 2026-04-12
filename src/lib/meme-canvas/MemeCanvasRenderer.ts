@@ -7,7 +7,10 @@ import {
   getRotationHandleSize,
   MemeElementHandle,
 } from './MemeElement';
-import TextElement from './TextElement';
+import TextElement, {
+  getTextAlignmentHandleCenter,
+  getTextAlignmentHandleSize,
+} from './TextElement';
 
 const HOVER_PREVIEW_ALPHA = 0.42;
 
@@ -69,10 +72,39 @@ class MemeCanvasRenderer {
     ctx.fillText(text, x, y);
   }
 
+  private drawAlignmentGlyph(
+    kind: 'left' | 'center' | 'right',
+    cx: number,
+    cy: number,
+    box: number,
+    stroke: string
+  ) {
+    const { ctx } = this;
+    const w = box * 0.42;
+    const gap = box * 0.11;
+    const lengths = [w * 0.42, w * 0.72, w] as const;
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = Math.max(1, box * 0.075);
+    ctx.lineCap = 'round';
+    for (let i = 0; i < 3; i++) {
+      const len = lengths[i]!;
+      const yy = cy - gap + i * gap;
+      let x0: number;
+      if (kind === 'left') x0 = cx - w / 2;
+      else if (kind === 'right') x0 = cx + w / 2 - len;
+      else x0 = cx - len / 2;
+      ctx.beginPath();
+      ctx.moveTo(x0, yy);
+      ctx.lineTo(x0 + len, yy);
+      ctx.stroke();
+    }
+  }
+
   private drawElementChrome(
     element: MemeElement,
     alpha: number,
-    showHandles: boolean
+    showHandles: boolean,
+    showTextAlignmentBar: boolean
   ) {
     const borderX = element.x;
     const borderY = element.y;
@@ -157,6 +189,55 @@ class MemeCanvasRenderer {
           this.ctx.stroke();
         }
       }
+
+      if (
+        showTextAlignmentBar &&
+        element instanceof TextElement &&
+        !element.locked
+      ) {
+        const s = getTextAlignmentHandleSize(this.controller);
+        const specs = [
+          {
+            handle: MemeElementHandle.ALIGN_LEFT,
+            kind: 'left' as const,
+          },
+          {
+            handle: MemeElementHandle.ALIGN_CENTER,
+            kind: 'center' as const,
+          },
+          {
+            handle: MemeElementHandle.ALIGN_RIGHT,
+            kind: 'right' as const,
+          },
+        ] as const;
+
+        for (const { handle, kind } of specs) {
+          const pos = getTextAlignmentHandleCenter(element, handle);
+          const bx = pos.x - s / 2;
+          const by = pos.y - s / 2;
+          const active = element.settings.horizontal_align.current === kind;
+
+          this.ctx.fillStyle = active ? '#1d4ed8' : '#ffffff';
+          this.ctx.strokeStyle = '#3b82f6';
+          this.ctx.lineWidth = 2;
+          this.ctx.beginPath();
+          if (this.ctx.roundRect) {
+            this.ctx.roundRect(bx, by, s, s, this.controller.isTouch ? s / 2 : 2);
+          } else {
+            this.ctx.rect(bx, by, s, s);
+          }
+          this.ctx.fill();
+          this.ctx.stroke();
+
+          this.drawAlignmentGlyph(
+            kind,
+            pos.x,
+            pos.y,
+            s,
+            active ? '#ffffff' : '#2563eb'
+          );
+        }
+      }
     }
 
     this.ctx.restore();
@@ -186,7 +267,12 @@ class MemeCanvasRenderer {
           !element.locked &&
           this.controller.holdingCtrl === false &&
           this.controller.selectedElements.length === 1;
-        this.drawElementChrome(element, 1, showHandles);
+        this.drawElementChrome(
+          element,
+          1,
+          showHandles,
+          showHandles && element instanceof TextElement
+        );
       }
     }
 
@@ -199,7 +285,7 @@ class MemeCanvasRenderer {
     ) {
       const showHandles =
         !hover.locked && this.controller.holdingCtrl === false;
-      this.drawElementChrome(hover, HOVER_PREVIEW_ALPHA, showHandles);
+      this.drawElementChrome(hover, HOVER_PREVIEW_ALPHA, showHandles, false);
     }
   }
 

@@ -1,4 +1,4 @@
-# IVEHITMYHEAD — Project overview (living document)
+# IVEHITMYHEAD - Project overview (living document)
 
 > **Purpose:** Single place to orient humans and AI assistants on what this app is, how it is built, and how to extend it. **Update this file** when you ship meaningful features (add a line under [Feature log](#feature-log) and adjust sections as needed).
 
@@ -18,7 +18,7 @@
 | Language | **TypeScript 5** |
 | Styling | **Tailwind CSS v4** (`@import "tailwindcss"` in `globals.css`), **clsx**, **tailwind-merge** |
 | Fonts | **Geist** / **Geist Mono** via `next/font/google` |
-| Data / BaaS | **Supabase** (`@supabase/supabase-js`) — server client uses service role for admin API routes |
+| Data / BaaS | **Supabase** (`@supabase/supabase-js`) - server client uses service role for admin API routes |
 | Media | **Cloudinary** + **next-cloudinary** |
 | Icons | **lucide-react** (also optimized via `next.config.ts` `optimizePackageImports`) |
 | Upload UX | **react-dropzone** |
@@ -83,9 +83,9 @@ docs/
 | `GET/POST` `/api/memes/[slug]/comments` | Comments |
 | `GET` `/api/categories` | Categories |
 | `POST` `/api/newsletter` | Newsletter signup (webhook or Resend audience; returns 503 if unconfigured) |
-| `/api/setup-admin`, `/api/test-*` | Operational / test endpoints — use with care |
+| `/api/setup-admin`, `/api/test-*` | Operational / test endpoints - use with care |
 
-**Implementation note:** List queries join `author:profiles` and `category:categories` — schema expectations live in Supabase; keep types in `src/lib/types/meme.ts` aligned with real columns.
+**Implementation note:** List queries join `author:profiles` and `category:categories` - schema expectations live in Supabase; keep types in `src/lib/types/meme.ts` aligned with real columns.
 
 ---
 
@@ -93,7 +93,7 @@ docs/
 
 - **Server:** Route handlers use `supabaseAdmin` from `src/lib/supabase/server.ts` (requires `SUPABASE_SERVICE_ROLE_KEY` in env).
 - **Client:** `MemesStateProvider`, `CategoriesStateProvider`, `AuthProvider`, `NavigationWarningProvider` wrap the app in `src/app/layout.tsx`.
-- **Hooks:** `useMemes`, `useCategories`, infinite scroll and scroll-restoration hooks encapsulate feed behavior — prefer extending these over duplicating fetch logic in pages.
+- **Hooks:** `useMemes`, `useCategories`, infinite scroll and scroll-restoration hooks encapsulate feed behavior - prefer extending these over duplicating fetch logic in pages.
 
 ---
 
@@ -126,12 +126,12 @@ The active visual direction is **“Broadsheet Editorial (Cleaner Shell)”**: h
 Do not commit secrets. Typical variables inferred from code:
 
 - `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY` (if used on client — verify in `client.ts`)
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` (if used on client - verify in `client.ts`)
 - `SUPABASE_SERVICE_ROLE_KEY` (server-only)
 - Cloudinary-related vars as required by `src/lib/cloudinary/config.ts` and upload routes
-- `NEXT_PUBLIC_SITE_URL` — canonical origin for Open Graph, sitemap, and `metadataBase` (e.g. `https://yourdomain.com`)
-- `NEXT_PUBLIC_INSTAGRAM_URL`, `NEXT_PUBLIC_FACEBOOK_URL` — optional footer social links
-- `NEXT_PUBLIC_CONTACT_EMAIL` — optional; defaults for mailto on `/contact`
+- `NEXT_PUBLIC_SITE_URL` - canonical origin for Open Graph, sitemap, and `metadataBase` (e.g. `https://yourdomain.com`)
+- `NEXT_PUBLIC_INSTAGRAM_URL`, `NEXT_PUBLIC_FACEBOOK_URL` - optional footer social links
+- `NEXT_PUBLIC_CONTACT_EMAIL` - optional; defaults for mailto on `/contact`
 - Newsletter (optional): `NEWSLETTER_SIGNUP_WEBHOOK_URL` and optional `NEWSLETTER_WEBHOOK_SECRET`, **or** `RESEND_API_KEY` + `RESEND_AUDIENCE_ID` for Resend Audiences
 
 ---
@@ -154,9 +154,9 @@ Use these when talking to an AI or onboarding a contributor so changes stay cons
 ### General project rules
 
 ```text
-Repo: ivehitmyhead — Next.js 15 App Router, React 19, TypeScript, Tailwind v4.
+Repo: ivehitmyhead - Next.js 15 App Router, React 19, TypeScript, Tailwind v4.
 Data: Supabase (admin client in API routes), images via Cloudinary.
-Domain types: src/lib/types/meme.ts — extend types and API handlers together.
+Domain types: src/lib/types/meme.ts - extend types and API handlers together.
 Prefer existing hooks (useMemes, useCategories) and contexts over new global state.
 Keep API logic in src/app/api; avoid putting secrets in client bundles.
 Match existing import aliases (@/…) and component organization (components/meme vs components/ui).
@@ -192,6 +192,6 @@ Preserve export behavior and text field model (percent-based layout in TextField
 
 ## Related docs
 
-- [`editorial-design-guidelines.md`](./editorial-design-guidelines.md) — UI/visual system and prompt template for design tasks.
-- [`src/components/meme/README.md`](../src/components/meme/README.md) — Meme component responsibilities.
-- [`src/app/memes/README.md`](../src/app/memes/README.md) — Memes feed notes (if present).
+- [`editorial-design-guidelines.md`](./editorial-design-guidelines.md) - UI/visual system and prompt template for design tasks.
+- [`src/components/meme/README.md`](../src/components/meme/README.md) - Meme component responsibilities.
+- [`src/app/memes/README.md`](../src/app/memes/README.md) - Memes feed notes (if present).

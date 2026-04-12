@@ -38,6 +38,10 @@ export const enum MemeElementHandle {
   BOTTOM_LEFT = 2,
   BOTTOM_RIGHT = 3,
   ROTATION_HANDLE = 4,
+  /** Text only: horizontal text alignment (canvas toolbar below the box). */
+  ALIGN_LEFT = 5,
+  ALIGN_CENTER = 6,
+  ALIGN_RIGHT = 7,
 }
 
 export const getHandleSize = (controller: MemeCanvasController) =>
@@ -76,6 +80,12 @@ export function getHandlePos(
         x: element.x + element.width / 2,
         y: element.y - getRotationHandleSize(element.controller) * 1.5,
       };
+    case MemeElementHandle.ALIGN_LEFT:
+    case MemeElementHandle.ALIGN_CENTER:
+    case MemeElementHandle.ALIGN_RIGHT:
+      throw new Error(
+        'Alignment handle positions come from getTextAlignmentHandleCenter (TextElement)'
+      );
   }
 }
 
@@ -335,7 +345,7 @@ abstract class MemeElement<T extends Settings = Settings> {
     );
   }
 
-  private static toLocalCoordinates(
+  public static toLocalCoordinates(
     element: MemeElement,
     x: number,
     y: number
