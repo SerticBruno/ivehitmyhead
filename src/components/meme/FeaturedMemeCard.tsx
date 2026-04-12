@@ -2,10 +2,17 @@ import React, { useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader } from '@/components/ui/Card';
-import { cn, formatDateDDMMYYYY, formatFullDateTime, formatRelativeTime, formatTime } from '@/lib/utils';
+import {
+  cn,
+  formatCompactCount,
+  formatDateDDMMYYYY,
+  formatFullDateTime,
+  formatRelativeTime,
+  formatTime,
+} from '@/lib/utils';
 import { Meme } from '@/lib/types/meme';
 import { useMemeInteractions } from '@/lib/hooks/useMemeInteractions';
-import { ICONS, getCategoryIconOrEmoji } from '@/lib/utils/categoryIcons';
+import { ICONS } from '@/lib/utils/categoryIcons';
 
 interface FeaturedMemeCardProps {
   meme: Meme;
@@ -62,7 +69,10 @@ const FeaturedMemeCard: React.FC<FeaturedMemeCardProps> = ({
         <CardHeader className="px-4 pt-4 pb-3 flex-shrink-0">
           <div className="flex items-start gap-2">
             <div className="flex-1 min-w-0">
-              <h3 className="font-black uppercase tracking-tight text-lg leading-tight line-clamp-2">
+              <h3
+                className="font-black uppercase tracking-tight text-lg leading-tight line-clamp-1 min-w-0"
+                title={meme.title}
+              >
                 {meme.title}
               </h3>
               <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
@@ -98,44 +108,34 @@ const FeaturedMemeCard: React.FC<FeaturedMemeCardProps> = ({
         </CardContent>
         
         <div className="px-4 pb-4 pt-3 flex-shrink-0">
-          <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-300">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={handleLike}
-                className={`flex items-center gap-1 px-1.5 py-0.5 cursor-pointer transition-colors ${isLiked ? 'text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30' : 'hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
-              >
-                {isLiked ? (
-                  <ICONS.Heart className="w-4 h-4 fill-current" />
-                ) : (
-                  <ICONS.Heart className="w-4 h-4" />
-                )}
-                <span>{meme.likes_count}</span>
-              </button>
-              <button
-                onClick={handleShare}
-                className="flex items-center gap-1 px-1.5 py-0.5 cursor-pointer transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
-              >
-                <ICONS.Share2 className="w-4 h-4" />
-                <span>{meme.shares_count}</span>
-              </button>
-              <div className="flex items-center gap-1 text-gray-500">
-                <ICONS.Eye className="w-4 h-4" />
-                <span>{meme.views}</span>
-              </div>
-            </div>
-            <span className="inline-flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 flex-shrink-0 max-w-[50%] min-w-0 select-none cursor-default">
-              {meme.category ? (
-                <>
-                  {getCategoryIconOrEmoji(meme.category.name, meme.category.emoji)}
-                  <span className="truncate">{meme.category.name}</span>
-                </>
+          <div className="flex min-w-0 items-center gap-2 sm:gap-3 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300">
+            <button
+              onClick={handleLike}
+              title={`${meme.likes_count.toLocaleString()} likes`}
+              className={`flex shrink-0 items-center gap-1 px-1.5 py-0.5 cursor-pointer transition-colors ${isLiked ? 'text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30' : 'hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
+            >
+              {isLiked ? (
+                <ICONS.Heart className="w-4 h-4 fill-current" />
               ) : (
-                <>
-                  <span>📁</span>
-                  <span className="truncate">Uncategorized</span>
-                </>
+                <ICONS.Heart className="w-4 h-4" />
               )}
-            </span>
+              <span>{formatCompactCount(meme.likes_count)}</span>
+            </button>
+            <button
+              onClick={handleShare}
+              title={`${meme.shares_count.toLocaleString()} shares`}
+              className="flex shrink-0 items-center gap-1 px-1.5 py-0.5 cursor-pointer transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
+            >
+              <ICONS.Share2 className="w-4 h-4" />
+              <span>{formatCompactCount(meme.shares_count)}</span>
+            </button>
+            <div
+              className="flex shrink-0 items-center gap-1 text-gray-500"
+              title={`${meme.views.toLocaleString()} views`}
+            >
+              <ICONS.Eye className="w-4 h-4" />
+              <span>{formatCompactCount(meme.views)}</span>
+            </div>
           </div>
         </div>
       </Card>

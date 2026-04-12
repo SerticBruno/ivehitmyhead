@@ -134,6 +134,15 @@ export function formatCompactTime(date: string | Date): string {
   });
 }
 
+/** Short counts for tight layouts (e.g. hottest meme cards): 1.2K, 45.5K, 1.2M. */
+export function formatCompactCount(value: number): string {
+  const n = Number.isFinite(value) ? Math.max(0, Math.trunc(value)) : 0;
+  return new Intl.NumberFormat('en', {
+    notation: 'compact',
+    maximumFractionDigits: 1,
+  }).format(n);
+}
+
 export function formatFullDateTime(date: string | Date): string {
   const targetDate = new Date(date);
   return targetDate.toLocaleString('en-US', {
