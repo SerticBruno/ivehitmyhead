@@ -147,6 +147,8 @@ export interface TextField {
   useShadow?: boolean; // whether to use shadow instead of stroke
   rotation?: number; // rotation in degrees
   letterSpacing?: string; // letter spacing (e.g., '0.05em')
+  /** When set, overrides {@link MemeTemplate.allCaps} for this field only. */
+  allCaps?: boolean;
   isDragging?: boolean;
   isResizing?: boolean;
 }
@@ -162,6 +164,8 @@ export interface MemeTemplate {
   defaultFont?: string;
   defaultFontSize?: number;
   defaultColor?: string;
+  /** When true, new text boxes render in ALL CAPS (can be toggled per box in the editor). */
+  allCaps?: boolean;
   tags?: string[];
   category?: string;
   difficulty?: 'easy' | 'medium' | 'hard';

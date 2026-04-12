@@ -365,7 +365,8 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
         color: el.settings.color,
         stroke: el.settings.stroke,
         strokeWidth: el.settings.stroke_width,
-        alignment: el.settings.horizontal_align.current
+        alignment: el.settings.horizontal_align.current,
+        allCaps: el.settings.all_caps,
       }))
     });
     return currentState !== initialTemplateState;
@@ -483,6 +484,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
               stroke: el.settings.stroke,
               strokeWidth: el.settings.stroke_width,
               alignment: el.settings.horizontal_align.current,
+              allCaps: el.settings.all_caps,
             })),
           })
         );
@@ -643,6 +645,16 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
               if (field.rotation) {
                 textElement.rotation = field.rotation;
               }
+
+              const allCapsEffective =
+                field.allCaps !== undefined
+                  ? field.allCaps
+                  : (template.allCaps ?? false);
+              controllerRef.current.updateElement(
+                textElement,
+                'all_caps',
+                allCapsEffective
+              );
 
               controllerRef.current.addElement(textElement);
             });
@@ -1727,6 +1739,26 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                               <option value="Georgia">Georgia</option>
                               <option value="Verdana">Verdana</option>
                             </select>
+                          </div>
+
+                          <div>
+                            <label className="flex items-center gap-2 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={element.settings.all_caps}
+                                onChange={(e) => {
+                                  if (controllerRef.current) {
+                                    controllerRef.current.updateElement(
+                                      element,
+                                      'all_caps',
+                                      e.target.checked
+                                    );
+                                  }
+                                }}
+                                className="w-4 h-4 text-zinc-900 dark:text-zinc-100 border-zinc-700 dark:border-zinc-400 rounded-none"
+                              />
+                              <span className="text-xs font-medium">All caps</span>
+                            </label>
                           </div>
 
                           {/* Text Color */}

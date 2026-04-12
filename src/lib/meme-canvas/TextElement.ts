@@ -22,6 +22,8 @@ export type TextElementSettings = ValidateOptions<{
   shadow_offset_x: number;
   shadow_offset_y: number;
   use_shadow: boolean;
+  /** Render and wrap text as uppercase; stored value stays as typed. */
+  all_caps: boolean;
   horizontal_align: Filterable<typeof HTextAlignment>;
   vertical_align: Filterable<typeof VTextAlignment>;
 }>;
@@ -48,6 +50,7 @@ class TextElement extends MemeElement<TextElementSettings> {
       shadow_offset_x: 0,
       shadow_offset_y: 0,
       use_shadow: false,
+      all_caps: false,
       horizontal_align: {
         valid: HTextAlignment,
         current: 'center',
@@ -66,9 +69,15 @@ class TextElement extends MemeElement<TextElementSettings> {
     }
   }
 
+  private linesFromValue(): string[] {
+    const lines = this.settings.text.value.split('\n');
+    if (!this.settings.all_caps) return lines;
+    return lines.map((line) => line.toUpperCase());
+  }
+
   private updateText() {
     // Split by newlines first, then wrap each line
-    const lines = this.settings.text.value.split('\n');
+    const lines = this.linesFromValue();
     
     // Always wrap text within current width (if width is set)
     this._splitText = this.wrapText(lines);
@@ -241,6 +250,7 @@ class TextElement extends MemeElement<TextElementSettings> {
     if (isSetting)
       switch (key) {
         case 'text':
+        case 'all_caps':
           this.updateText();
           break;
         case 'font_size':
@@ -250,7 +260,7 @@ class TextElement extends MemeElement<TextElementSettings> {
           const currentX = this.x;
           const currentY = this.y;
           
-          const lines = this.settings.text.value.split('\n');
+          const lines = this.linesFromValue();
           this._splitText = this.wrapText(lines);
           // If user has set size, only update height. Otherwise auto-size.
           if (this._userHasSetSize) {
@@ -380,7 +390,7 @@ class TextElement extends MemeElement<TextElementSettings> {
         this._width = newWidth;
         
         // Re-wrap text based on new width (this will create more lines if width is smaller)
-        const lines = this.settings.text.value.split('\n');
+        const lines = this.linesFromValue();
         this._splitText = this.wrapText(lines);
         
         // Calculate minimum height needed for wrapped text
