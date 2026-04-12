@@ -105,6 +105,7 @@ const Header: React.FC<HeaderProps> = ({ showSearch = true }) => {
     { href: '/memes', label: 'Memes' },
     { href: '/random', label: 'Random' },
     { href: '/meme-generator', label: 'Generator' },
+    { href: '/about', label: 'About' },
   ];
 
   return (

@@ -12,7 +12,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: base, lastModified: now, changeFrequency: 'daily', priority: 1 },
     { url: `${base}/memes`, lastModified: now, changeFrequency: 'daily', priority: 0.9 },
     { url: `${base}/meme-generator`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
-    { url: `${base}/categories`, lastModified: now, changeFrequency: 'weekly', priority: 0.7 },
     { url: `${base}/about`, lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
     { url: `${base}/help`, lastModified: now, changeFrequency: 'monthly', priority: 0.4 },
     { url: `${base}/contact`, lastModified: now, changeFrequency: 'monthly', priority: 0.4 },

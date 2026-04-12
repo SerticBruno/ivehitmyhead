@@ -1,6 +1,8 @@
 'use client';
 
 import React from 'react';
+import { ContactForm } from '@/components/contact/ContactForm';
+import { NewsletterForm } from '@/components/newsletter';
 import { Button } from '@/components/ui';
 import { PATREON_HALL_OF_FAME } from '@/lib/data/patreonHallOfFame';
 import {
@@ -227,24 +229,25 @@ export default function AboutPage() {
             </div>
           </section>
 
+          {/* Newsletter */}
+          <section className="max-w-xl mx-auto w-full" aria-label="Newsletter signup">
+            <NewsletterForm variant="card" className="w-full" />
+          </section>
+
           {/* Contact */}
           <section className="text-center pb-4">
             <h2 className="text-2xl font-black uppercase tracking-tight text-gray-900 dark:text-white mb-4">
               Get in touch
             </h2>
-            <p className="text-gray-700 dark:text-gray-300 mb-6 max-w-2xl mx-auto leading-relaxed">
-              Found a bug? Have a suggestion? Just want to say hi? I&apos;m here, I guess. Bugs are just surprise
-              features I didn&apos;t plan for, so don&apos;t feel bad about finding them. I try to find time to reply
-              to each of the emails.
+            <p className="text-gray-700 dark:text-gray-300 mb-8 max-w-2xl mx-auto leading-relaxed">
+              Found a bug? Have a suggestion? Just want to say hi? Send a message below. Bugs are just surprise
+              features I didn&apos;t plan for, so don&apos;t feel bad about finding them. I try to reply when I can.
             </p>
-            <div className="flex flex-wrap justify-center gap-3">
-              <Button
-                variant="outline"
-                className="rounded-none border-2 border-zinc-700 dark:border-zinc-400 font-bold uppercase tracking-wide"
-                onClick={() => window.open('mailto:hello@ivehitmyhead.com', '_blank')}
-              >
-                Email me
-              </Button>
+            <ContactForm
+              innerClassName={`p-6 md:p-8 ${frameClass}`}
+              className="max-w-2xl"
+            />
+            <div className="flex flex-wrap justify-center gap-3 mt-8">
               <Button
                 variant="outline"
                 className="rounded-none border-2 border-zinc-700 dark:border-zinc-400 font-bold uppercase tracking-wide"
