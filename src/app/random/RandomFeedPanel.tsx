@@ -124,7 +124,7 @@ export function RandomFeedPanel() {
         </p>
       </section>
 
-      <div className="max-w-5xl mx-auto w-full">
+      <div className="mx-auto w-full max-w-2xl">
       {error ? (
         <div className="text-center py-12 border-2 border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-900 p-6 shadow-[6px_6px_0px_rgba(0,0,0,0.85)] dark:shadow-[6px_6px_0px_rgba(156,163,175,0.42)]">
           <div className="text-4xl mb-4 flex justify-center">

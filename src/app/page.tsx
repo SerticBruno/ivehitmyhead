@@ -8,11 +8,6 @@ import { ICONS } from '@/lib/utils/categoryIcons';
 
 import { useCategories } from '@/lib/hooks/useCategories';
 import { useMemeInteractions } from '@/lib/hooks/useMemeInteractions';
-import {
-  HOMEPAGE_HOTTEST_MOCK_MEME,
-  HOMEPAGE_HOTTEST_MOCK_MEME_SLUG,
-  shouldPrependHomepageHottestMockMeme,
-} from '@/lib/data/homepageHottestMockMeme';
 import { Meme } from '@/lib/types/meme';
 import { shareMemeWithFallback } from '@/lib/utils/shareUtils';
 
@@ -49,10 +44,7 @@ export default function Home() {
         
         const data = await response.json();
         
-        let homepageMemes: Meme[] = data.memes || [];
-        if (shouldPrependHomepageHottestMockMeme()) {
-          homepageMemes = [HOMEPAGE_HOTTEST_MOCK_MEME, ...homepageMemes];
-        }
+        const homepageMemes: Meme[] = data.memes || [];
         setMemes(homepageMemes);
 
         // If API includes liked state, hydrate immediately.
@@ -101,27 +93,6 @@ export default function Home() {
 
 
   const handleLike = async (slug: string) => {
-    if (slug === HOMEPAGE_HOTTEST_MOCK_MEME_SLUG) {
-      const wasLiked = likedMemes.has(slug);
-      setLikedMemes((prev) => {
-        const next = new Set(prev);
-        if (wasLiked) next.delete(slug);
-        else next.add(slug);
-        return next;
-      });
-      setLocalMemes((prev) =>
-        prev.map((m) =>
-          m.slug === slug
-            ? {
-                ...m,
-                likes_count: wasLiked ? Math.max(0, m.likes_count - 1) : m.likes_count + 1,
-              }
-            : m
-        )
-      );
-      return;
-    }
-
     try {
       const isLiked = await likeMeme(slug);
       
