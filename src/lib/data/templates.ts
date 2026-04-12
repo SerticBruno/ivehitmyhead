@@ -81,31 +81,47 @@ export const MEME_TEMPLATES: MemeTemplate[] = [
   {
     id: 'imonceagain',
     name: 'I\'m Once Again',
-    description: 'Bernie Sanders template with bottom text area only',
+    description: 'Bernie Sanders — top setup and bottom caption',
     src: '/images/templates/imonceagain.png',
     width: 800,
     height: 600,
-    defaultFont: 'Impact',
-    defaultFontSize: 40, // 7% of image height
+    defaultFont: 'Arial',
+    defaultFontSize: 36,
     defaultColor: '#ffffff',
+    allCaps: false,
     textFields: [
       {
-        id: 'bottom',
-        x: 35, // center horizontally
-        y: 85, // 85% from top
-        width: 25, // 70% of image width
-        height: 15, // 15% of image height
-        fontSize: 42,
+        id: 'top',
+        x: 3,
+        y: 4,
+        width: 36,
+        height: 23,
+        fontSize: 36,
         color: '#ffffff',
-        fontFamily: 'Impact',
+        fontFamily: 'Arial',
         fontWeight: 'bold',
         textAlign: 'center',
-        maxWidth: 80, // 80% of image width
-        strokeColor: '#000000',
-        strokeWidth: 6
-      }
+        maxWidth: 36,
+        strokeWidth: 0,
+        allCaps: false,
+      },
+      {
+        id: 'bottom',
+        x: 10,
+        y: 82,
+        width: 82,
+        height: 16,
+        fontSize: 36,
+        color: '#ffffff',
+        fontFamily: 'Arial',
+        fontWeight: 'bold',
+        textAlign: 'center',
+        maxWidth: 92,
+        strokeWidth: 0,
+        allCaps: false,
+      },
     ],
-    tags: ['bernie', 'politics', 'single-text'],
+    tags: ['bernie', 'politics', 'two-text', 'arial-font'],
     category: 'politics',
     difficulty: 'easy'
   },
