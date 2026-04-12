@@ -132,7 +132,8 @@ export interface TextField {
   y: number; // percentage from top (0-100)
   width: number; // percentage of image width
   height: number; // percentage of image height
-  fontSize: number; // percentage of image height
+  /** Nominal px at 600px-tall reference; scaled by actual image height when loading. */
+  fontSize: number;
   color: string;
   fontFamily?: string;
   fontWeight?: string;

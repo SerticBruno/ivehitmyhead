@@ -30,33 +30,33 @@ export const MEME_TEMPLATES: MemeTemplate[] = [
         id: 'top-left',
         x: 7, // 10% from left
         y: 10, // 5% from top
-        width: 35, // 35% of image width
-        height: 35, // 20% of image height
+        width: 34.5, // 35% of image width
+        height: 12.2, // 20% of image height
         fontSize: 42, // Smaller font size (in pixels for base 600px height)
-        color: '#ffffff',
+        color: '#000000',
         rotation: -13,
-        fontFamily: 'Impact',
+        fontFamily: 'arial',
         fontWeight: 'bold',
         textAlign: 'center',
         maxWidth: 40, // 40% of image width
-        strokeColor: '#000000',
-        strokeWidth: 4
+        strokeColor: '#ffffff',
+        strokeWidth: 0
       },
       {
         id: 'top-right',
-        x: 43, // 55% from left (right side)
+        x: 41, // 55% from left (right side)
         y: 6, // 5% from top
         width: 35, // 35% of image width
-        height: 20, // 20% of image height
+        height: 10.4, // 20% of image height
         fontSize: 42, // Smaller font size
         rotation: -11,
-        color: '#ffffff',
-        fontFamily: 'Impact',
+        color: '#000000',
+        fontFamily: 'arial',
         fontWeight: 'bold',
         textAlign: 'center',
         maxWidth: 40, // 40% of image width
         strokeColor: '#000000',
-        strokeWidth: 4
+        strokeWidth: 0
       },
       {
         id: 'bottom',
