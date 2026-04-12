@@ -4,6 +4,45 @@ import MathHelper from '@/lib/utils/math';
 
 type UnregisterCallbacks = () => void;
 
+function activeElementIsTextInput(): boolean {
+  const el = document.activeElement;
+  if (!el) return false;
+  if (
+    el instanceof HTMLInputElement ||
+    el instanceof HTMLTextAreaElement ||
+    el instanceof HTMLSelectElement
+  ) {
+    return true;
+  }
+  if (el instanceof HTMLElement) {
+    if (el.isContentEditable) return true;
+    if (el.closest('[contenteditable="true"]')) return true;
+  }
+  return false;
+}
+
+/** Percent of image (0–100), same basis as templates.ts + MemeCanvasRenderer overlay. */
+function formatTextFieldLayoutForTemplate(
+  controller: MemeCanvasController,
+  element: TextElement
+): string | null {
+  const img = controller.image;
+  if (!img || img.width <= 0 || img.height <= 0) return null;
+
+  const pad = controller.padding;
+  const pctX = ((element.x - pad.left) / img.width) * 100;
+  const pctY = ((element.y - pad.top) / img.height) * 100;
+  const pctW = (element.width / img.width) * 100;
+  const pctH = (element.height / img.height) * 100;
+
+  const fmt = (n: number) => {
+    const v = Math.round(n * 100) / 100;
+    return String(v);
+  };
+
+  return `x: ${fmt(pctX)},\ny: ${fmt(pctY)},\nwidth: ${fmt(pctW)},\nheight: ${fmt(pctH)},`;
+}
+
 type MouseEventSourceCapabilities = MouseEvent & {
   sourceCapabilities?: {
     firesTouchEvents?: boolean;
@@ -306,6 +345,20 @@ export default function registerCallbacks(
     keydown: (e: KeyboardEvent) => {
       controller.holdingShift = e.shiftKey;
       controller.holdingCtrl = e.ctrlKey;
+
+      const wantsCopy =
+        (e.key === 'c' || e.key === 'C') && (e.ctrlKey || e.metaKey);
+      if (!wantsCopy || activeElementIsTextInput()) return;
+
+      if (controller.selectedElements.length !== 1) return;
+      const selected = controller.selectedElements[0];
+      if (!(selected instanceof TextElement)) return;
+
+      const layout = formatTextFieldLayoutForTemplate(controller, selected);
+      if (layout === null) return;
+
+      e.preventDefault();
+      void navigator.clipboard.writeText(layout).catch(() => {});
     },
     keyup: (e: KeyboardEvent) => {
       controller.holdingShift = e.shiftKey;
