@@ -1,14 +1,15 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { MemeUpload } from '@/components/ui/MemeUpload';
 import { Category, Meme } from '@/lib/types/meme';
 import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
 import { cn } from '@/lib/utils';
-import { ICONS } from '@/lib/utils/categoryIcons';
+import { getCategoryIconOrEmoji, ICONS } from '@/lib/utils/categoryIcons';
 
 export default function AdminDashboard() {
   const { user, session, isAdmin, loading: authLoading, signOut } = useAuth();
@@ -22,6 +23,44 @@ export default function AdminDashboard() {
   const [memesError, setMemesError] = useState<string | null>(null);
   const [deleteMessage, setDeleteMessage] = useState<string | null>(null);
   const [deletingMemeId, setDeletingMemeId] = useState<string | null>(null);
+  const [memeCategoryUpdatingId, setMemeCategoryUpdatingId] = useState<string | null>(null);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [newCategoryEmoji, setNewCategoryEmoji] = useState('');
+  const [newCategoryDescription, setNewCategoryDescription] = useState('');
+  const [categorySaving, setCategorySaving] = useState(false);
+  const [deletingCategoryId, setDeletingCategoryId] = useState<string | null>(null);
+  const [categoryManageError, setCategoryManageError] = useState<string | null>(null);
+  const [categoryManageMessage, setCategoryManageMessage] = useState<string | null>(null);
+
+  const loadCategories = useCallback(async (mode: 'initial' | 'refresh' = 'initial') => {
+    const isInitial = mode === 'initial';
+    try {
+      if (isInitial) {
+        setLoading(true);
+        setError(null);
+      }
+      const response = await fetch('/api/categories');
+      if (!response.ok) {
+        throw new Error('Failed to fetch categories');
+      }
+      const data = await response.json();
+      setCategories(data.categories || []);
+      if (isInitial) {
+        setError(null);
+      }
+    } catch (err) {
+      console.error('Error fetching categories:', err);
+      if (isInitial) {
+        setError('Failed to load categories');
+      } else {
+        setCategoryManageError('Could not refresh categories list');
+      }
+    } finally {
+      if (isInitial) {
+        setLoading(false);
+      }
+    }
+  }, []);
 
   const fetchMemes = async () => {
     try {
@@ -48,27 +87,11 @@ export default function AdminDashboard() {
   }, [user, isAdmin, authLoading, router]);
 
   useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const response = await fetch('/api/categories');
-        if (!response.ok) {
-          throw new Error('Failed to fetch categories');
-        }
-        const data = await response.json();
-        setCategories(data.categories || []);
-      } catch (err) {
-        console.error('Error fetching categories:', err);
-        setError('Failed to load categories');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     if (isAdmin) {
-      fetchCategories();
+      void loadCategories('initial');
       void fetchMemes();
     }
-  }, [isAdmin]);
+  }, [isAdmin, loadCategories]);
 
   const handleLogout = async () => {
     await signOut();
@@ -124,6 +147,157 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleMemeCategoryChange = async (meme: Meme, value: string) => {
+    if (!session?.access_token) {
+      setMemesError('Your admin session is missing. Please log in again.');
+      return;
+    }
+    const nextCategoryId = value === '' ? null : value;
+    const currentId = meme.category_id ?? null;
+    if (nextCategoryId === currentId) {
+      return;
+    }
+
+    const revertRow = { ...meme };
+    const nextCategory =
+      nextCategoryId === null
+        ? undefined
+        : categories.find((c) => c.id === nextCategoryId);
+
+    setMemesError(null);
+    setMemeCategoryUpdatingId(meme.id);
+    setMemes((prev) =>
+      prev.map((m) =>
+        m.id === meme.id
+          ? {
+              ...m,
+              category_id: nextCategoryId ?? undefined,
+              category: nextCategory,
+            }
+          : m
+      )
+    );
+
+    try {
+      const response = await fetch(`/api/admin/memes/${meme.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ category_id: nextCategoryId }),
+      });
+      const data = (await response.json().catch(() => ({}))) as {
+        error?: string;
+        meme?: Meme;
+      };
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to update category');
+      }
+      if (data.meme) {
+        setMemes((prev) =>
+          prev.map((m) => (m.id === meme.id ? data.meme! : m))
+        );
+      }
+    } catch (err) {
+      console.error('Error updating meme category:', err);
+      setMemes((prev) =>
+        prev.map((m) => (m.id === meme.id ? revertRow : m))
+      );
+      setMemesError(
+        err instanceof Error ? err.message : 'Failed to update category'
+      );
+    } finally {
+      setMemeCategoryUpdatingId(null);
+    }
+  };
+
+  const handleAddCategory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!session?.access_token) {
+      setCategoryManageError('Your admin session is missing. Please log in again.');
+      return;
+    }
+    setCategoryManageError(null);
+    setCategoryManageMessage(null);
+    setCategorySaving(true);
+    try {
+      const response = await fetch('/api/admin/categories', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          name: newCategoryName,
+          emoji: newCategoryEmoji,
+          description: newCategoryDescription || undefined,
+        }),
+      });
+      const data = (await response.json().catch(() => ({}))) as {
+        error?: string;
+        category?: Category;
+      };
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create category');
+      }
+      setNewCategoryName('');
+      setNewCategoryEmoji('');
+      setNewCategoryDescription('');
+      setCategoryManageMessage(
+        data.category?.name
+          ? `Added category “${data.category.name}”.`
+          : 'Category created.'
+      );
+      window.setTimeout(() => setCategoryManageMessage(null), 4000);
+      await loadCategories('refresh');
+    } catch (err) {
+      console.error('Error creating category:', err);
+      setCategoryManageError(
+        err instanceof Error ? err.message : 'Failed to create category'
+      );
+    } finally {
+      setCategorySaving(false);
+    }
+  };
+
+  const handleDeleteCategory = async (category: Category) => {
+    if (!session?.access_token) {
+      setCategoryManageError('Your admin session is missing. Please log in again.');
+      return;
+    }
+    const shouldDelete = window.confirm(
+      `Delete category “${category.name}”?\n\nMemes using it will have no category (not deleted).`
+    );
+    if (!shouldDelete) return;
+
+    setCategoryManageError(null);
+    setCategoryManageMessage(null);
+    setDeletingCategoryId(category.id);
+    try {
+      const response = await fetch(`/api/admin/categories/${category.id}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+      const data = (await response.json().catch(() => ({}))) as { error?: string };
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to delete category');
+      }
+      setCategories((prev) => prev.filter((c) => c.id !== category.id));
+      setCategoryManageMessage(`Deleted category “${category.name}”.`);
+      window.setTimeout(() => setCategoryManageMessage(null), 4000);
+    } catch (err) {
+      console.error('Error deleting category:', err);
+      setCategoryManageError(
+        err instanceof Error ? err.message : 'Failed to delete category'
+      );
+    } finally {
+      setDeletingCategoryId(null);
+    }
+  };
+
   if (authLoading || loading) {
     return (
       <div className="bg-[#f7f4ee] dark:bg-gray-950 min-h-screen">
@@ -170,21 +344,7 @@ export default function AdminDashboard() {
             <p className="text-gray-600 dark:text-gray-400 mb-6">{error}</p>
             <Button
               onClick={() => {
-                setError(null);
-                setLoading(true);
-                void (async () => {
-                  try {
-                    const response = await fetch('/api/categories');
-                    if (!response.ok) throw new Error('Failed to fetch categories');
-                    const data = await response.json();
-                    setCategories(data.categories || []);
-                    setError(null);
-                  } catch {
-                    setError('Failed to load categories');
-                  } finally {
-                    setLoading(false);
-                  }
-                })();
+                void loadCategories('initial');
               }}
               className="rounded-none border-2 border-zinc-700 dark:border-zinc-400 uppercase tracking-wide font-bold"
             >
@@ -276,10 +436,139 @@ export default function AdminDashboard() {
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
             <div>
               <h2 className="text-2xl font-black uppercase tracking-tight">
+                Manage categories
+              </h2>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                Add lanes for uploads, or remove ones you no longer use. Deleting a category clears it from memes (they stay published).
+              </p>
+            </div>
+          </div>
+
+          {categoryManageError && (
+            <div className="mb-4 border-2 border-red-700 dark:border-red-500 bg-red-50 dark:bg-red-950/40 px-4 py-3 text-sm text-red-900 dark:text-red-100">
+              {categoryManageError}
+            </div>
+          )}
+
+          {categoryManageMessage && (
+            <div className="mb-4 border-2 border-green-700 dark:border-green-500 bg-green-50 dark:bg-green-950/40 px-4 py-3 text-sm text-green-900 dark:text-green-100">
+              {categoryManageMessage}
+            </div>
+          )}
+
+          <form
+            onSubmit={handleAddCategory}
+            className="mb-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end border-2 border-zinc-200 dark:border-zinc-700 p-4 bg-[#f7f4ee]/60 dark:bg-gray-950/40"
+          >
+            <Input
+              label="Name"
+              value={newCategoryName}
+              onChange={(ev) => setNewCategoryName(ev.target.value)}
+              placeholder="e.g. Science"
+              required
+              maxLength={80}
+              disabled={categorySaving}
+              className="rounded-none border-2 border-zinc-700 dark:border-zinc-400"
+            />
+            <Input
+              label="Emoji"
+              value={newCategoryEmoji}
+              onChange={(ev) => setNewCategoryEmoji(ev.target.value)}
+              placeholder="🔬"
+              required
+              maxLength={16}
+              disabled={categorySaving}
+              className="rounded-none border-2 border-zinc-700 dark:border-zinc-400"
+            />
+            <div className="sm:col-span-2 lg:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Description (optional)
+              </label>
+              <textarea
+                value={newCategoryDescription}
+                onChange={(ev) => setNewCategoryDescription(ev.target.value)}
+                placeholder="Short blurb for the category page"
+                maxLength={500}
+                rows={2}
+                disabled={categorySaving}
+                className={cn(
+                  'flex w-full rounded-none border-2 border-zinc-700 dark:border-zinc-400 bg-white px-3 py-2 text-sm',
+                  'placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-gray-950',
+                  'disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-950 dark:placeholder:text-gray-400 dark:focus-visible:ring-gray-300'
+                )}
+              />
+            </div>
+            <div className="sm:col-span-2 lg:col-span-4 flex justify-end">
+              <Button
+                type="submit"
+                disabled={categorySaving}
+                className="rounded-none border-2 border-zinc-700 dark:border-zinc-400 uppercase tracking-wide font-bold"
+              >
+                {categorySaving ? 'Saving…' : 'Add category'}
+              </Button>
+            </div>
+          </form>
+
+          <div className="overflow-x-auto border-2 border-zinc-700 dark:border-zinc-400">
+            <table className="w-full text-sm">
+              <thead className="bg-[#f7f4ee] dark:bg-gray-950 border-b-2 border-zinc-700 dark:border-zinc-400">
+                <tr>
+                  <th className="text-left px-3 py-2 font-bold uppercase tracking-wide">Category</th>
+                  <th className="text-left px-3 py-2 font-bold uppercase tracking-wide hidden md:table-cell">
+                    Description
+                  </th>
+                  <th className="text-right px-3 py-2 font-bold uppercase tracking-wide">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {categories.length === 0 ? (
+                  <tr>
+                    <td colSpan={3} className="px-3 py-6 text-center text-gray-500 dark:text-gray-400">
+                      No categories yet. Add one above.
+                    </td>
+                  </tr>
+                ) : (
+                  categories.map((category) => (
+                    <tr key={category.id} className="border-t border-zinc-300 dark:border-zinc-700">
+                      <td className="px-3 py-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg shrink-0" aria-hidden>
+                            {getCategoryIconOrEmoji(category.name, category.emoji)}
+                          </span>
+                          <span className="font-medium">{category.name}</span>
+                        </div>
+                      </td>
+                      <td className="px-3 py-2 text-gray-600 dark:text-gray-400 max-w-md truncate hidden md:table-cell">
+                        {category.description || '—'}
+                      </td>
+                      <td className="px-3 py-2 text-right">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => void handleDeleteCategory(category)}
+                          disabled={deletingCategoryId === category.id}
+                          className="rounded-none border-2 border-red-700 dark:border-red-500 text-red-700 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/30 uppercase tracking-wide font-bold"
+                        >
+                          <ICONS.Trash2 className="w-4 h-4 mr-2" aria-hidden />
+                          {deletingCategoryId === category.id ? 'Deleting…' : 'Delete'}
+                        </Button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section className="border-2 border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-900 p-6 sm:p-8 shadow-[6px_6px_0px_rgba(0,0,0,0.85)] dark:shadow-[6px_6px_0px_rgba(156,163,175,0.35)] mb-10">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
+            <div>
+              <h2 className="text-2xl font-black uppercase tracking-tight">
                 Manage memes
               </h2>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                Delete recent memes directly from admin.
+                Reassign categories or delete recent memes.
               </p>
             </div>
             <Button
@@ -312,6 +601,9 @@ export default function AdminDashboard() {
                 <tr>
                   <th className="text-left px-3 py-2 font-bold uppercase tracking-wide">Title</th>
                   <th className="text-left px-3 py-2 font-bold uppercase tracking-wide">Slug</th>
+                  <th className="text-left px-3 py-2 font-bold uppercase tracking-wide min-w-[200px]">
+                    Category
+                  </th>
                   <th className="text-left px-3 py-2 font-bold uppercase tracking-wide">Created</th>
                   <th className="text-right px-3 py-2 font-bold uppercase tracking-wide">Actions</th>
                 </tr>
@@ -319,13 +611,13 @@ export default function AdminDashboard() {
               <tbody>
                 {memesLoading && memes.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="px-3 py-6 text-center text-gray-500 dark:text-gray-400">
+                    <td colSpan={5} className="px-3 py-6 text-center text-gray-500 dark:text-gray-400">
                       Loading memes...
                     </td>
                   </tr>
                 ) : memes.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="px-3 py-6 text-center text-gray-500 dark:text-gray-400">
+                    <td colSpan={5} className="px-3 py-6 text-center text-gray-500 dark:text-gray-400">
                       No memes found.
                     </td>
                   </tr>
@@ -334,6 +626,29 @@ export default function AdminDashboard() {
                     <tr key={meme.id} className="border-t border-zinc-300 dark:border-zinc-700">
                       <td className="px-3 py-2 max-w-[320px] truncate">{meme.title}</td>
                       <td className="px-3 py-2 max-w-[220px] truncate font-mono text-xs">{meme.slug}</td>
+                      <td className="px-3 py-2 align-middle">
+                        <select
+                          aria-label={`Category for ${meme.title}`}
+                          value={meme.category_id ?? ''}
+                          onChange={(ev) =>
+                            void handleMemeCategoryChange(meme, ev.target.value)
+                          }
+                          disabled={memeCategoryUpdatingId === meme.id}
+                          className={cn(
+                            'max-w-[220px] w-full rounded-none border-2 border-zinc-700 dark:border-zinc-400 bg-white px-2 py-1.5 text-xs',
+                            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-gray-950',
+                            'disabled:opacity-60 dark:bg-gray-950 dark:focus-visible:ring-gray-300'
+                          )}
+                        >
+                          <option value="">Uncategorized</option>
+                          {categories.map((c) => (
+                            <option key={c.id} value={c.id}>
+                              {c.emoji ? `${c.emoji} ` : ''}
+                              {c.name}
+                            </option>
+                          ))}
+                        </select>
+                      </td>
                       <td className="px-3 py-2 text-xs text-gray-600 dark:text-gray-400">
                         {new Date(meme.created_at).toLocaleString()}
                       </td>
