@@ -5,6 +5,8 @@ import { getMemeTimePeriodStart } from '@/lib/utils/memeTimePeriod';
 const MAX_LIMIT = 50;
 const MAX_EXCLUDE_IDS = 250;
 const RANDOM_SAMPLE_MULTIPLIER = 6;
+/** Random mode used to fetch one row per await; batching cuts wall time sharply. */
+const RANDOM_FETCH_CONCURRENCY = 8;
 
 type MemeRow = {
   id: string;
@@ -169,33 +171,66 @@ export async function GET(request: NextRequest) {
       const usedOffsets = new Set<number>();
 
       while (selectedMemes.length < targetCount && usedOffsets.size < maxRandomTries) {
-        const randomOffset = Math.floor(Math.random() * availableCount);
-        if (usedOffsets.has(randomOffset)) {
-          continue;
+        if (usedOffsets.size >= availableCount) {
+          break;
         }
-        usedOffsets.add(randomOffset);
 
-        const singleQuery = applyCommonFilters(buildMemeSelectQuery(), {
+        const batchOffsets: number[] = [];
+        let collisionStreak = 0;
+        while (
+          batchOffsets.length < RANDOM_FETCH_CONCURRENCY &&
+          usedOffsets.size < maxRandomTries &&
+          usedOffsets.size < availableCount
+        ) {
+          const randomOffset = Math.floor(Math.random() * availableCount);
+          if (usedOffsets.has(randomOffset)) {
+            collisionStreak += 1;
+            if (collisionStreak > availableCount * 8) {
+              break;
+            }
+            continue;
+          }
+          collisionStreak = 0;
+          usedOffsets.add(randomOffset);
+          batchOffsets.push(randomOffset);
+        }
+
+        if (batchOffsets.length === 0) {
+          break;
+        }
+
+        const excludeSnapshot = [...selectedIds];
+        const filterParams = {
           category_id,
           search,
           time_period,
-          excludeIds: [...selectedIds]
-        })
-          .order('created_at', { ascending: false })
-          .range(randomOffset, randomOffset);
+          excludeIds: excludeSnapshot
+        };
 
-        const { data: sampledMemes, error: sampleError } = await singleQuery;
-        if (sampleError) {
-          throw sampleError;
+        const batchResults = await Promise.all(
+          batchOffsets.map((randomOffset) =>
+            applyCommonFilters(buildMemeSelectQuery(), filterParams)
+              .order('created_at', { ascending: false })
+              .range(randomOffset, randomOffset)
+              .then(({ data: sampledMemes, error: sampleError }) => {
+                if (sampleError) {
+                  throw sampleError;
+                }
+                return sampledMemes?.[0] ?? null;
+              })
+          )
+        );
+
+        for (const sampledMeme of batchResults) {
+          if (!sampledMeme || selectedIds.has(sampledMeme.id)) {
+            continue;
+          }
+          selectedIds.add(sampledMeme.id);
+          selectedMemes.push(sampledMeme);
+          if (selectedMemes.length >= targetCount) {
+            break;
+          }
         }
-
-        const sampledMeme = sampledMemes?.[0];
-        if (!sampledMeme || selectedIds.has(sampledMeme.id)) {
-          continue;
-        }
-
-        selectedIds.add(sampledMeme.id);
-        selectedMemes.push(sampledMeme);
       }
 
       if (selectedMemes.length < targetCount) {
