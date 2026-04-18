@@ -2,6 +2,7 @@ import React from 'react';
 import { useCategories } from '@/lib/hooks/useCategories';
 import { useMemesUIState } from '@/lib/contexts';
 import { ICONS, renderCategoryIcon } from '@/lib/utils/categoryIcons';
+import { visibleMemeFilterCategories } from '@/lib/utils/memeCategoryFilter';
 
 /** Matches `sticky top-20` on the filter panel (5rem - align scroll-to-grid with sticky column). */
 const STICKY_FILTER_TOP_PX = 80;
@@ -35,12 +36,17 @@ const FiltersAndSortingInner: React.FC<FiltersAndSortingProps> = ({
   const { setFilters } = useMemesUIState();
   
   const {
-    categories,
+    categories: rawCategories,
     loading,
     error
   } = useCategories({
     limit: 50
   });
+
+  const categories = React.useMemo(
+    () => visibleMemeFilterCategories(rawCategories),
+    [rawCategories]
+  );
 
   const updateBlurOverlay = React.useCallback(() => {
     const target = categoriesScrollRef.current;
@@ -104,7 +110,7 @@ const FiltersAndSortingInner: React.FC<FiltersAndSortingProps> = ({
   };
 
   // Handle time period changes by updating the context
-  const handleTimePeriodChange = (period: 'all' | 'today' | 'week' | 'month') => {
+  const handleTimePeriodChange = (period: 'all' | 'week' | 'month') => {
     setUserInitiated(true);
     setFilters({ time_period: period });
     onTimePeriodChange?.(period);
@@ -131,7 +137,7 @@ const FiltersAndSortingInner: React.FC<FiltersAndSortingProps> = ({
         <div className="p-4 border-b border-gray-200 dark:border-gray-700">
           <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Time Period</h4>
           <div className="flex w-full flex-nowrap gap-2">
-            {[...Array(4)].map((_, i) => (
+            {[...Array(3)].map((_, i) => (
               <div key={i} className="h-12 flex-1 min-w-0 bg-gray-200 dark:bg-gray-700 rounded-none animate-pulse"></div>
             ))}
           </div>
@@ -181,17 +187,6 @@ const FiltersAndSortingInner: React.FC<FiltersAndSortingProps> = ({
       <div className="p-4 border-b border-gray-200 dark:border-gray-700">
         <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Time Period</h4>
         <div className="flex w-full flex-nowrap gap-2">
-          <button
-            type="button"
-            onClick={() => handleTimePeriodChange('today')}
-            className={`flex flex-1 min-w-0 items-center justify-center text-center text-xs font-bold uppercase tracking-wide leading-tight px-1 py-2.5 rounded-none border-2 cursor-pointer ${
-              selectedTimePeriod === 'today'
-                ? "bg-black text-white border-black dark:bg-white dark:text-black dark:border-white"
-                : "bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-[#f7f4ee] dark:hover:bg-gray-800 border-zinc-700 dark:border-zinc-400"
-            }`}
-          >
-            Today
-          </button>
           <button
             type="button"
             onClick={() => handleTimePeriodChange('week')}

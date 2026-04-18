@@ -10,6 +10,7 @@ import { useMemeInteractions } from '@/lib/hooks/useMemeInteractions';
 import { useMemesUIState, useMemesListState } from '@/lib/contexts';
 import { ICONS } from '@/lib/utils/categoryIcons';
 import { shareMemeWithFallback } from '@/lib/utils/shareUtils';
+import { visibleMemeFilterCategories } from '@/lib/utils/memeCategoryFilter';
 
 interface MemesFeedPanelProps {
   memeGridRef: React.RefObject<HTMLDivElement | null>;
@@ -40,19 +41,14 @@ export function MemesFeedPanel({ memeGridRef, sidebar }: MemesFeedPanelProps) {
 
     const patch: Partial<{
       filter: 'newest' | 'trending' | 'hottest';
-      time_period: 'all' | 'today' | 'week' | 'month';
+      time_period: 'all' | 'week' | 'month';
       category_id: string;
     }> = {};
 
     if (filterParam === 'newest' || filterParam === 'trending' || filterParam === 'hottest') {
       patch.filter = filterParam;
     }
-    if (
-      timeParam === 'all' ||
-      timeParam === 'today' ||
-      timeParam === 'week' ||
-      timeParam === 'month'
-    ) {
+    if (timeParam === 'all' || timeParam === 'week' || timeParam === 'month') {
       patch.time_period = timeParam;
     }
     if (categoryParam !== null && categoryParam !== '') {
@@ -144,7 +140,11 @@ export function MemesFeedPanel({ memeGridRef, sidebar }: MemesFeedPanelProps) {
     }
   }, [getViewedMemes]);
 
-  const { categories, loading: categoriesLoading } = useCategories({ limit: 50 });
+  const { categories: rawCategories, loading: categoriesLoading } = useCategories({ limit: 50 });
+  const categories = useMemo(
+    () => visibleMemeFilterCategories(rawCategories),
+    [rawCategories]
+  );
 
   useEffect(() => {
     const handleScroll = () => {
@@ -197,7 +197,7 @@ export function MemesFeedPanel({ memeGridRef, sidebar }: MemesFeedPanelProps) {
   }, [setFilters]);
 
   const handleTimePeriodChange = useCallback((period: string) => {
-    if (period === 'all' || period === 'today' || period === 'week' || period === 'month') {
+    if (period === 'all' || period === 'week' || period === 'month') {
       setFilters({ time_period: period });
     }
   }, [setFilters]);
@@ -276,11 +276,9 @@ export function MemesFeedPanel({ memeGridRef, sidebar }: MemesFeedPanelProps) {
   const emptyMemesGridDescription = useMemo(() => {
     const timeSuffix =
       time_period !== 'all'
-        ? time_period === 'today'
-          ? ' today'
-          : time_period === 'week'
-            ? ' in the last week'
-            : ' in the last month'
+        ? time_period === 'week'
+          ? ' in the last week'
+          : ' in the last month'
         : '';
     if (category_id) {
       return `No ${filter} memes found in this category${timeSuffix} yet.`;
@@ -292,11 +290,9 @@ export function MemesFeedPanel({ memeGridRef, sidebar }: MemesFeedPanelProps) {
     const categoryText = category_id ? 'Category Memes' : 'All Memes';
     const timePhrase =
       time_period !== 'all'
-        ? time_period === 'today'
-          ? ' from today'
-          : time_period === 'week'
-            ? ' from the last week'
-            : ' from the last month'
+        ? time_period === 'week'
+          ? ' from the last week'
+          : ' from the last month'
         : '';
     const description = category_id
       ? `${filter} memes in this category${timePhrase}. You picked the lane.`

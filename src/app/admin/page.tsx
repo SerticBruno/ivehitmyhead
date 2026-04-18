@@ -11,6 +11,8 @@ import { Input } from '@/components/ui/Input';
 import { cn } from '@/lib/utils';
 import { ICONS, renderCategoryIcon } from '@/lib/utils/categoryIcons';
 
+const MEMES_ADMIN_PAGE_SIZE = 50;
+
 export default function AdminDashboard() {
   const { user, session, isAdmin, loading: authLoading, signOut } = useAuth();
   const router = useRouter();
@@ -21,6 +23,11 @@ export default function AdminDashboard() {
   const [memes, setMemes] = useState<Meme[]>([]);
   const [memesLoading, setMemesLoading] = useState(false);
   const [memesError, setMemesError] = useState<string | null>(null);
+  const [memesPage, setMemesPage] = useState(1);
+  const [memesHasMore, setMemesHasMore] = useState(false);
+  const [memeSearchDraft, setMemeSearchDraft] = useState('');
+  const [memeSearch, setMemeSearch] = useState('');
+  const [memesListNonce, setMemesListNonce] = useState(0);
   const [deleteMessage, setDeleteMessage] = useState<string | null>(null);
   const [deletingMemeId, setDeletingMemeId] = useState<string | null>(null);
   const [memeCategoryUpdatingId, setMemeCategoryUpdatingId] = useState<string | null>(null);
@@ -61,23 +68,37 @@ export default function AdminDashboard() {
     }
   }, []);
 
-  const fetchMemes = async () => {
+  const loadMemeList = useCallback(async () => {
     try {
       setMemesLoading(true);
       setMemesError(null);
-      const response = await fetch('/api/memes?page=1&limit=20&sort_by=created_at&sort_order=desc');
+      const params = new URLSearchParams({
+        page: String(memesPage),
+        limit: String(MEMES_ADMIN_PAGE_SIZE),
+        sort_by: 'created_at',
+        sort_order: 'desc',
+      });
+      const q = memeSearch.trim();
+      if (q) {
+        params.set('search', q);
+      }
+      const response = await fetch(`/api/memes?${params.toString()}`);
       if (!response.ok) {
         throw new Error('Failed to fetch memes');
       }
-      const data = await response.json();
+      const data = (await response.json()) as {
+        memes?: Meme[];
+        pagination?: { has_more?: boolean };
+      };
       setMemes((data.memes || []) as Meme[]);
+      setMemesHasMore(Boolean(data.pagination?.has_more));
     } catch (err) {
       console.error('Error fetching memes:', err);
       setMemesError('Failed to load memes');
     } finally {
       setMemesLoading(false);
     }
-  };
+  }, [memesPage, memeSearch]);
 
   useEffect(() => {
     if (!authLoading && (!user || !isAdmin)) {
@@ -88,9 +109,28 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (isAdmin) {
       void loadCategories('initial');
-      void fetchMemes();
     }
   }, [isAdmin, loadCategories]);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    void loadMemeList();
+  }, [isAdmin, memesPage, memeSearch, memesListNonce, loadMemeList]);
+
+  const refreshMemeList = useCallback(() => {
+    setMemesListNonce((n) => n + 1);
+  }, []);
+
+  const applyMemeSearch = useCallback(() => {
+    setMemeSearch(memeSearchDraft.trim());
+    setMemesPage(1);
+  }, [memeSearchDraft]);
+
+  const clearMemeSearch = useCallback(() => {
+    setMemeSearchDraft('');
+    setMemeSearch('');
+    setMemesPage(1);
+  }, []);
 
   const handleLogout = async () => {
     await signOut();
@@ -99,7 +139,8 @@ export default function AdminDashboard() {
 
   const handleUploadSuccess = () => {
     setUploadSuccess(true);
-    void fetchMemes();
+    setMemesPage(1);
+    setMemesListNonce((n) => n + 1);
     window.setTimeout(() => setUploadSuccess(false), 5000);
   };
 
@@ -133,7 +174,13 @@ export default function AdminDashboard() {
         throw new Error(message);
       }
 
-      setMemes((prev) => prev.filter((m) => m.id !== meme.id));
+      setMemes((prev) => {
+        const next = prev.filter((m) => m.id !== meme.id);
+        if (next.length === 0 && memesPage > 1) {
+          setMemesPage((p) => p - 1);
+        }
+        return next;
+      });
       setDeleteMessage(`Deleted "${meme.title}".`);
       window.setTimeout(() => setDeleteMessage(null), 4000);
     } catch (err) {
@@ -546,6 +593,44 @@ export default function AdminDashboard() {
               </tbody>
             </table>
           </div>
+
+          <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-sm text-gray-600 dark:text-gray-400">
+            <p>
+              Page <span className="font-mono font-semibold text-gray-900 dark:text-gray-100">{memesPage}</span>
+              {memeSearch ? (
+                <>
+                  {' '}
+                  · filter &quot;{memeSearch}&quot;
+                </>
+              ) : null}
+              {memes.length > 0 ? (
+                <>
+                  {' '}
+                  · {memes.length} meme{memes.length === 1 ? '' : 's'} on this page
+                </>
+              ) : null}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setMemesPage((p) => Math.max(1, p - 1))}
+                disabled={memesLoading || memesPage <= 1}
+                className="rounded-none border-2 border-zinc-700 dark:border-zinc-400 uppercase tracking-wide font-bold"
+              >
+                Previous
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setMemesPage((p) => p + 1)}
+                disabled={memesLoading || !memesHasMore}
+                className="rounded-none border-2 border-zinc-700 dark:border-zinc-400 uppercase tracking-wide font-bold"
+              >
+                Next
+              </Button>
+            </div>
+          </div>
         </section>
 
         <section className="border-2 border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-900 p-6 sm:p-8 shadow-[6px_6px_0px_rgba(0,0,0,0.85)] dark:shadow-[6px_6px_0px_rgba(156,163,175,0.35)] mb-10">
@@ -555,13 +640,13 @@ export default function AdminDashboard() {
                 Manage memes
               </h2>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                Reassign categories or delete recent memes.
+                Reassign categories or delete memes. Page through the library or filter by title or tag.
               </p>
             </div>
             <Button
               type="button"
               variant="outline"
-              onClick={() => void fetchMemes()}
+              onClick={() => refreshMemeList()}
               disabled={memesLoading}
               className="rounded-none border-2 border-zinc-700 dark:border-zinc-400 uppercase tracking-wide font-bold"
             >
@@ -569,6 +654,44 @@ export default function AdminDashboard() {
               Refresh
             </Button>
           </div>
+
+          <form
+            className="mb-4 flex flex-col sm:flex-row gap-2 sm:items-center"
+            onSubmit={(e) => {
+              e.preventDefault();
+              applyMemeSearch();
+            }}
+          >
+            <Input
+              type="search"
+              value={memeSearchDraft}
+              onChange={(e) => setMemeSearchDraft(e.target.value)}
+              placeholder="Search title or tag…"
+              aria-label="Search memes"
+              className="max-w-md rounded-none border-2 border-zinc-300 dark:border-zinc-600 focus:border-zinc-700 dark:focus:border-zinc-400"
+            />
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="submit"
+                variant="outline"
+                disabled={memesLoading}
+                className="rounded-none border-2 border-zinc-700 dark:border-zinc-400 uppercase tracking-wide font-bold"
+              >
+                Search
+              </Button>
+              {memeSearch ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => clearMemeSearch()}
+                  disabled={memesLoading}
+                  className="rounded-none border-2 border-zinc-700 dark:border-zinc-400 uppercase tracking-wide font-bold"
+                >
+                  Clear
+                </Button>
+              ) : null}
+            </div>
+          </form>
 
           {memesError && (
             <div className="mb-4 border-2 border-red-700 dark:border-red-500 bg-red-50 dark:bg-red-950/40 px-4 py-3 text-sm text-red-900 dark:text-red-100">
@@ -655,6 +778,44 @@ export default function AdminDashboard() {
                 )}
               </tbody>
             </table>
+          </div>
+
+          <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-sm text-gray-600 dark:text-gray-400">
+            <p>
+              Page <span className="font-mono font-semibold text-gray-900 dark:text-gray-100">{memesPage}</span>
+              {memeSearch ? (
+                <>
+                  {' '}
+                  · filter &quot;{memeSearch}&quot;
+                </>
+              ) : null}
+              {memes.length > 0 ? (
+                <>
+                  {' '}
+                  · {memes.length} meme{memes.length === 1 ? '' : 's'} on this page
+                </>
+              ) : null}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setMemesPage((p) => Math.max(1, p - 1))}
+                disabled={memesLoading || memesPage <= 1}
+                className="rounded-none border-2 border-zinc-700 dark:border-zinc-400 uppercase tracking-wide font-bold"
+              >
+                Previous
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setMemesPage((p) => p + 1)}
+                disabled={memesLoading || !memesHasMore}
+                className="rounded-none border-2 border-zinc-700 dark:border-zinc-400 uppercase tracking-wide font-bold"
+              >
+                Next
+              </Button>
+            </div>
           </div>
         </section>
 

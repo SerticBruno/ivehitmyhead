@@ -1,7 +1,6 @@
 import React from 'react';
 import { 
   Flower2,
-  Dog, 
   Film, 
   Trophy, 
   Pizza, 
@@ -35,7 +34,6 @@ import {
 export const CATEGORY_ICONS: Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>>> = {
   // Common categories
   'Wholesome': Flower2,
-  'Animals': Dog,
   'Movies': Film,
   'Film': Film,
   'Sports': Trophy,
@@ -67,7 +65,6 @@ export const CATEGORY_ICONS: Record<string, React.ComponentType<React.SVGProps<S
   
   // Fallback mappings for common variations
   'wholesome': Flower2,
-  'animals': Dog,
   'movies': Film,
   'film': Film,
   'sports': Trophy,
@@ -119,7 +116,6 @@ export function renderCategoryIcon(
 // Export all icons for use in other components
 export const ICONS = {
   Flower2,
-  Dog,
   Film,
   Trophy,
   Pizza,

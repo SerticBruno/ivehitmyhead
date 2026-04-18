@@ -12,7 +12,7 @@ interface MemesState {
   filters: {
     category_id: string;
     filter: 'newest' | 'trending' | 'hottest';
-    time_period: 'all' | 'today' | 'week' | 'month';
+    time_period: 'all' | 'week' | 'month';
   };
   isInitialized: boolean;
 }
@@ -85,13 +85,12 @@ function normalizeMemesStateSnapshot(raw: unknown): MemesState {
         (f as MemesState['filters']).filter === 'newest'
           ? (f as MemesState['filters']).filter
           : initialState.filters.filter,
-      time_period:
-        (f as MemesState['filters']).time_period === 'today' ||
-        (f as MemesState['filters']).time_period === 'week' ||
-        (f as MemesState['filters']).time_period === 'month' ||
-        (f as MemesState['filters']).time_period === 'all'
-          ? (f as MemesState['filters']).time_period
-          : initialState.filters.time_period,
+      time_period: (() => {
+        const tp = (f as MemesState['filters']).time_period;
+        if (tp === 'week' || tp === 'month' || tp === 'all') return tp;
+        if (tp === 'today') return 'all';
+        return initialState.filters.time_period;
+      })(),
     },
     hasMore: typeof p.hasMore === 'boolean' ? p.hasMore : initialState.hasMore,
     currentPage: typeof p.currentPage === 'number' && p.currentPage >= 1 ? p.currentPage : initialState.currentPage,

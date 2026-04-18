@@ -1,6 +1,7 @@
 import React from 'react';
 import { useCategories } from '@/lib/hooks/useCategories';
 import { renderCategoryIcon } from '@/lib/utils/categoryIcons';
+import { visibleMemeFilterCategories } from '@/lib/utils/memeCategoryFilter';
 import { Star } from 'lucide-react';
 
 interface CategorySortingProps {
@@ -15,12 +16,17 @@ export const CategorySorting: React.FC<CategorySortingProps> = ({
   selectedCategory
 }) => {
   const {
-    categories,
+    categories: rawCategories,
     loading,
     error
   } = useCategories({
     limit: 50
   });
+
+  const categories = React.useMemo(
+    () => visibleMemeFilterCategories(rawCategories),
+    [rawCategories]
+  );
 
   if (loading) {
     return (

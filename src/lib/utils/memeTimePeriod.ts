@@ -1,6 +1,5 @@
 /** Rolling windows for meme list `time_period` query params (not calendar buckets). */
-const HOUR_MS = 60 * 60 * 1000;
-const DAY_MS = 24 * HOUR_MS;
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 /**
  * Returns ISO range start for memes created at or after this instant, or null for `all`.
@@ -14,7 +13,8 @@ export function getMemeTimePeriodStart(
   }
   switch (timePeriod) {
     case 'today':
-      return new Date(now.getTime() - 24 * HOUR_MS);
+      // Deprecated UI value; treat like "all time" for old bookmarks/query strings.
+      return null;
     case 'week':
       return new Date(now.getTime() - 7 * DAY_MS);
     case 'month':

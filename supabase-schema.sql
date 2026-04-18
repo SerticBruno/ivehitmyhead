@@ -158,7 +158,6 @@ CREATE TRIGGER trigger_update_meme_comments_count
 -- Insert default categories (emoji column legacy; UI uses Lucide from name)
 INSERT INTO public.categories (name, emoji, description) VALUES
   ('Wholesome', '', 'Feel-good, kind, and heartwarming memes'),
-  ('Animals', '', 'Cute and funny animal memes'),
   ('Movies', '', 'Film and TV show memes'),
   ('Sports', '', 'Sports and athletic memes'),
   ('Food', '', 'Food and cooking memes'),

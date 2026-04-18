@@ -34,6 +34,7 @@ export const MemeUpload: React.FC<MemeUploadProps> = ({
   const [dragActive] = useState(false);
   const [categoryMenuOpen, setCategoryMenuOpen] = useState(false);
   const categoryMenuRef = useRef<HTMLDivElement>(null);
+  const loadingSpinnerRef = useRef<HTMLDivElement>(null);
 
   // Create preview URL when image is selected
   useEffect(() => {
@@ -75,6 +76,18 @@ export const MemeUpload: React.FC<MemeUploadProps> = ({
       document.removeEventListener('keydown', onKeyDown);
     };
   }, [categoryMenuOpen]);
+
+  useEffect(() => {
+    if (!isUploading) return;
+    const id = window.setTimeout(() => {
+      loadingSpinnerRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+        inline: 'nearest',
+      });
+    }, 0);
+    return () => window.clearTimeout(id);
+  }, [isUploading]);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles.length > 0) {
@@ -180,8 +193,9 @@ export const MemeUpload: React.FC<MemeUploadProps> = ({
         >
           <div className="text-center">
             <div
+              ref={loadingSpinnerRef}
               className={cn(
-                'inline-block animate-spin h-12 w-12 border-4 border-gray-300 border-t-blue-600 dark:border-gray-600 dark:border-t-blue-500 mb-4',
+                'inline-block animate-spin h-12 w-12 border-4 border-gray-300 border-t-blue-600 dark:border-gray-600 dark:border-t-blue-500 mb-4 scroll-mt-20',
                 sharpCorners ? 'rounded-none' : 'rounded-full'
               )}
             />
@@ -428,7 +442,7 @@ export const MemeUpload: React.FC<MemeUploadProps> = ({
             type="text"
             value={tags}
             onChange={(e) => setTags(e.target.value)}
-            placeholder="wholesome, animals, random (comma separated)"
+            placeholder="wholesome, movies, random (comma separated)"
             disabled={isUploading}
           />
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">

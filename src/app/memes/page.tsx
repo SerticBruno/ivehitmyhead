@@ -20,7 +20,7 @@ export default function MemesPage() {
   }, [setFilters]);
 
   const handleTimePeriodChange = useCallback((period: string) => {
-    if (period === 'all' || period === 'today' || period === 'week' || period === 'month') {
+    if (period === 'all' || period === 'week' || period === 'month') {
       setFilters({ time_period: period });
     }
   }, [setFilters]);

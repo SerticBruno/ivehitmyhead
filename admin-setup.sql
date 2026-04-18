@@ -22,7 +22,6 @@ SELECT * FROM public.profiles WHERE username = 'admin';
 INSERT INTO public.categories (id, name, emoji, description, created_at)
 VALUES 
   ('00000000-0000-0000-0000-000000000001', 'Wholesome', '', 'Feel-good, kind, and heartwarming memes', now()),
-  ('00000000-0000-0000-0000-000000000004', 'Animals', '', 'Cute and funny animal memes', now()),
   ('00000000-0000-0000-0000-000000000005', 'Random', '', 'Miscellaneous and random memes', now())
 ON CONFLICT (id) DO UPDATE SET
   name = EXCLUDED.name,

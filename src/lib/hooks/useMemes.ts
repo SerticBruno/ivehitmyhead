@@ -7,7 +7,7 @@ interface UseMemesOptions {
   search?: string;
   sort_by?: 'created_at' | 'likes' | 'views' | 'comments';
   sort_order?: 'asc' | 'desc';
-  time_period?: 'all' | 'today' | 'week' | 'month';
+  time_period?: 'all' | 'week' | 'month';
   limit?: number;
   mode?: 'default' | 'random';
 }

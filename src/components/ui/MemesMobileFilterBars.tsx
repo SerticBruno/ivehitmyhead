@@ -29,7 +29,6 @@ const BTN_OFF =
   'bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 border-zinc-700 dark:border-zinc-400 [@media(hover:hover)]:hover:bg-[#f7f4ee] dark:[@media(hover:hover)]:hover:bg-gray-800';
 
 const TIME_PERIODS = [
-  { value: 'today', label: 'Today' },
   { value: 'week', label: 'Last week' },
   { value: 'month', label: 'Last month' },
   { value: 'all', label: 'All time' },
@@ -116,7 +115,7 @@ function MemesMobileFilterBarsInner({
         >
           {showFilterSkeleton ? (
             <div className="flex w-full flex-nowrap gap-2">
-              {[...Array(4)].map((_, i) => (
+              {[...Array(3)].map((_, i) => (
                 <div
                   key={i}
                   className="h-12 min-w-0 flex-1 bg-gray-200 dark:bg-gray-700 rounded-none animate-pulse"
