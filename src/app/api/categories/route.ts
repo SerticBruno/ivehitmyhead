@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
 
     let query = supabaseAdmin
       .from('categories')
-      .select('*');
+      .select('id, name, description, created_at');
 
     // Apply category filter if specified
     if (category_id) {

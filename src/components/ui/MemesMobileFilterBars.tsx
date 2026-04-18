@@ -3,7 +3,7 @@
 import React, { memo, useState, useCallback } from 'react';
 import { Category } from '@/lib/types/meme';
 import { cn } from '@/lib/utils';
-import { ICONS, getCategoryIconOrEmoji } from '@/lib/utils/categoryIcons';
+import { ICONS, renderCategoryIcon } from '@/lib/utils/categoryIcons';
 
 export interface MemesMobileFilterBarsProps {
   showFilterSkeleton: boolean;
@@ -213,7 +213,7 @@ function MemesMobileFilterBarsInner({
                     }`}
                   >
                     <span className="mr-3 flex-shrink-0">
-                      {getCategoryIconOrEmoji(category.name, category.emoji)}
+                      {renderCategoryIcon(category.name, 'w-5 h-5')}
                     </span>
                     <span className="flex-1 text-left font-medium min-w-0 truncate">{category.name}</span>
                   </button>

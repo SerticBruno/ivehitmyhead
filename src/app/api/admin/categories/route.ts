@@ -33,10 +33,6 @@ export async function POST(request: NextRequest) {
       typeof (body as { name?: unknown }).name === 'string'
         ? (body as { name: string }).name.trim()
         : '';
-    const emoji =
-      typeof (body as { emoji?: unknown }).emoji === 'string'
-        ? (body as { emoji: string }).emoji.trim()
-        : '';
     const descriptionRaw = (body as { description?: unknown }).description;
     const description =
       typeof descriptionRaw === 'string' ? descriptionRaw.trim() : '';
@@ -53,18 +49,6 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    if (!emoji) {
-      return NextResponse.json(
-        { error: 'Emoji is required' },
-        { status: 400 }
-      );
-    }
-    if (emoji.length > 16) {
-      return NextResponse.json(
-        { error: 'Emoji must be 16 characters or fewer' },
-        { status: 400 }
-      );
-    }
     if (description.length > 500) {
       return NextResponse.json(
         { error: 'Description must be 500 characters or fewer' },
@@ -76,7 +60,7 @@ export async function POST(request: NextRequest) {
       .from('categories')
       .insert({
         name,
-        emoji,
+        emoji: '',
         description: description || null,
       })
       .select()

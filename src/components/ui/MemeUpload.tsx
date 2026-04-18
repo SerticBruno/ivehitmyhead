@@ -7,7 +7,7 @@ import { Button } from './Button';
 import { Input } from './Input';
 import { cn } from '@/lib/utils';
 import { Category } from '@/lib/types/meme';
-import { getCategoryIconOrEmoji, ICONS } from '@/lib/utils/categoryIcons';
+import { ICONS, renderCategoryIcon } from '@/lib/utils/categoryIcons';
 import { useAuth } from '@/lib/contexts/AuthContext';
 
 interface MemeUploadProps {
@@ -280,8 +280,8 @@ export const MemeUpload: React.FC<MemeUploadProps> = ({
             >
               <input {...getInputProps()} disabled={isUploading} />
               <div className="space-y-2">
-                <div className="text-gray-400 dark:text-gray-500">
-                  📁
+                <div className="flex justify-center text-gray-400 dark:text-gray-500">
+                  <ICONS.FolderOpen className="h-10 w-10" aria-hidden />
                 </div>
                 <div className="text-sm text-gray-600 dark:text-gray-400">
                   {isDragActive
@@ -343,7 +343,7 @@ export const MemeUpload: React.FC<MemeUploadProps> = ({
               {(() => {
                 const cat = categories.find((c) => c.id === selectedCategory);
                 return cat ? (
-                  getCategoryIconOrEmoji(cat.name, cat.emoji)
+                  renderCategoryIcon(cat.name, 'h-5 w-5')
                 ) : (
                   <ICONS.FolderOpen className="h-5 w-5 text-gray-400" aria-hidden />
                 );
@@ -408,7 +408,7 @@ export const MemeUpload: React.FC<MemeUploadProps> = ({
                     }}
                   >
                     <span className="flex h-5 w-5 shrink-0 items-center justify-center">
-                      {getCategoryIconOrEmoji(category.name, category.emoji)}
+                      {renderCategoryIcon(category.name, 'h-5 w-5')}
                     </span>
                     <span className="min-w-0 truncate">{category.name}</span>
                   </button>

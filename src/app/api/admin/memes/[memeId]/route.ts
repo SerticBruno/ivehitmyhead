@@ -3,11 +3,8 @@ import { supabaseAdmin } from '@/lib/supabase/server';
 import { verifyAdminAuth } from '@/lib/utils/auth';
 import cloudinary from '@/lib/cloudinary/config';
 
-const MEME_ADMIN_SELECT = `
-  *,
-  author:profiles(username, display_name, avatar_url),
-  category:categories(id, name, emoji)
-`;
+const MEME_ADMIN_SELECT =
+  '*, author:profiles(username, display_name, avatar_url), category:categories(id, name)';
 
 function isUuid(value: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);

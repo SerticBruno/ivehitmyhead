@@ -21,7 +21,7 @@ export async function GET(
       .select(`
         *,
         author:profiles(username, display_name, avatar_url),
-        category:categories(name, emoji, description)
+        category:categories(name, description)
       `)
       .eq('slug', slug)
       .single();

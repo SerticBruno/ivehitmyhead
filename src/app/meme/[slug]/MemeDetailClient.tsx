@@ -8,7 +8,7 @@ import { cn, formatDateDDMMYYYY, formatFullDateTime, formatRelativeTime, formatT
 import { Meme } from '@/lib/types/meme';
 import { useMemeInteractions } from '@/lib/hooks/useMemeInteractions';
 import { useMemesListState } from '@/lib/contexts';
-import { ICONS, getCategoryIconOrEmoji } from '@/lib/utils/categoryIcons';
+import { ICONS, renderCategoryIcon } from '@/lib/utils/categoryIcons';
 import { shareMemeWithFallback } from '@/lib/utils/shareUtils';
 
 const MEME_DETAIL_CARD =
@@ -410,12 +410,12 @@ export function MemeDetailClient({ slug }: MemeDetailClientProps) {
                 <span className="inline-flex shrink-0 items-center text-xs text-gray-500 dark:text-gray-400 select-none cursor-default self-start sm:self-auto max-w-full min-w-0 pointer-events-none">
                   {meme.category ? (
                     <>
-                      {getCategoryIconOrEmoji(meme.category.name, meme.category.emoji)}
+                      {renderCategoryIcon(meme.category.name, 'w-4 h-4 shrink-0')}
                       <span className="ml-1 truncate">{meme.category.name}</span>
                     </>
                   ) : (
                     <>
-                      <span>📁</span>
+                      <ICONS.FolderOpen className="w-4 h-4 shrink-0" aria-hidden />
                       <span className="ml-1 truncate">Uncategorized</span>
                     </>
                   )}

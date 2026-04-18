@@ -1,6 +1,6 @@
 import React from 'react';
 import { useCategories } from '@/lib/hooks/useCategories';
-import { getCategoryIconOrEmoji } from '@/lib/utils/categoryIcons';
+import { renderCategoryIcon } from '@/lib/utils/categoryIcons';
 import { Star } from 'lucide-react';
 
 interface CategorySortingProps {
@@ -92,7 +92,7 @@ export const CategorySorting: React.FC<CategorySortingProps> = ({
                 }`}
               >
                 <span className="text-lg mr-3 flex-shrink-0">
-                  {getCategoryIconOrEmoji(category.name, category.emoji)}
+                  {renderCategoryIcon(category.name, 'w-6 h-6')}
                 </span>
                 <div className="flex-1 text-left">
                   <div className="font-medium">{category.name}</div>

@@ -19,7 +19,7 @@ export async function fetchMemeBySlug(slug: string): Promise<FetchMemeResult> {
       `
         *,
         author:profiles(username, display_name, avatar_url),
-        category:categories(name, emoji, description)
+        category:categories(name, description)
       `,
     )
     .eq('slug', slug)

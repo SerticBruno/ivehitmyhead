@@ -108,7 +108,7 @@ function buildMemeSelectQuery() {
     .select(`
       *,
       author:profiles(username, display_name, avatar_url),
-      category:categories(id, name, emoji)
+      category:categories(id, name)
     `);
 }
 

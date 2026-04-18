@@ -82,9 +82,6 @@ export const CATEGORY_ICONS: Record<string, React.ComponentType<React.SVGProps<S
   'games': Joystick,
 };
 
-// Fallback when no Lucide mapping exists (see getCategoryIcon)
-export const DEFAULT_CATEGORY_ICON = Star;
-
 function resolveCategoryIcon(
   categoryName: string,
 ): React.ComponentType<React.SVGProps<SVGSVGElement>> | undefined {
@@ -101,23 +98,23 @@ function resolveCategoryIcon(
   return undefined;
 }
 
-/** Lucide icon for this category name, or undefined so callers can use DB emoji. */
+/** Lucide icon component for this category name, or undefined if unmapped. */
 export const getCategoryIcon = (
   categoryName: string,
 ): React.ComponentType<React.SVGProps<SVGSVGElement>> | undefined =>
   resolveCategoryIcon(categoryName);
 
-// Prefer Lucide when mapped; otherwise use emoji from Supabase; last resort folder emoji
-export const getCategoryIconOrEmoji = (
-  categoryName: string, 
-  emoji?: string
-): React.ReactNode => {
-  const IconComponent = resolveCategoryIcon(categoryName);
-  if (IconComponent) {
-    return <IconComponent className="w-5 h-5" />;
-  }
-  return emoji?.trim() || '📁';
-};
+/**
+ * Renders a Lucide icon for a category. Unmapped names use {@link FolderOpen}.
+ * We intentionally do not render emoji anywhere in the app UI.
+ */
+export function renderCategoryIcon(
+  categoryName: string,
+  className = 'w-5 h-5',
+): React.ReactNode {
+  const IconComponent = resolveCategoryIcon(categoryName) ?? FolderOpen;
+  return <IconComponent className={className} aria-hidden />;
+}
 
 // Export all icons for use in other components
 export const ICONS = {

@@ -9,7 +9,7 @@ import { Category, Meme } from '@/lib/types/meme';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { cn } from '@/lib/utils';
-import { getCategoryIconOrEmoji, ICONS } from '@/lib/utils/categoryIcons';
+import { ICONS, renderCategoryIcon } from '@/lib/utils/categoryIcons';
 
 export default function AdminDashboard() {
   const { user, session, isAdmin, loading: authLoading, signOut } = useAuth();
@@ -25,7 +25,6 @@ export default function AdminDashboard() {
   const [deletingMemeId, setDeletingMemeId] = useState<string | null>(null);
   const [memeCategoryUpdatingId, setMemeCategoryUpdatingId] = useState<string | null>(null);
   const [newCategoryName, setNewCategoryName] = useState('');
-  const [newCategoryEmoji, setNewCategoryEmoji] = useState('');
   const [newCategoryDescription, setNewCategoryDescription] = useState('');
   const [categorySaving, setCategorySaving] = useState(false);
   const [deletingCategoryId, setDeletingCategoryId] = useState<string | null>(null);
@@ -230,7 +229,6 @@ export default function AdminDashboard() {
         },
         body: JSON.stringify({
           name: newCategoryName,
-          emoji: newCategoryEmoji,
           description: newCategoryDescription || undefined,
         }),
       });
@@ -242,7 +240,6 @@ export default function AdminDashboard() {
         throw new Error(data.error || 'Failed to create category');
       }
       setNewCategoryName('');
-      setNewCategoryEmoji('');
       setNewCategoryDescription('');
       setCategoryManageMessage(
         data.category?.name
@@ -439,7 +436,7 @@ export default function AdminDashboard() {
                 Manage categories
               </h2>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                Add lanes for uploads, or remove ones you no longer use. Deleting a category clears it from memes (they stay published).
+                Add lanes for uploads, or remove ones you no longer use. Deleting a category clears it from memes (they stay published). Icons are inferred from the name (folder icon when there is no dedicated mapping).
               </p>
             </div>
           </div>
@@ -458,7 +455,7 @@ export default function AdminDashboard() {
 
           <form
             onSubmit={handleAddCategory}
-            className="mb-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end border-2 border-zinc-200 dark:border-zinc-700 p-4 bg-[#f7f4ee]/60 dark:bg-gray-950/40"
+            className="mb-8 grid grid-cols-1 md:grid-cols-2 gap-4 items-end border-2 border-zinc-200 dark:border-zinc-700 p-4 bg-[#f7f4ee]/60 dark:bg-gray-950/40"
           >
             <Input
               label="Name"
@@ -470,17 +467,7 @@ export default function AdminDashboard() {
               disabled={categorySaving}
               className="rounded-none border-2 border-zinc-700 dark:border-zinc-400"
             />
-            <Input
-              label="Emoji"
-              value={newCategoryEmoji}
-              onChange={(ev) => setNewCategoryEmoji(ev.target.value)}
-              placeholder="🔬"
-              required
-              maxLength={16}
-              disabled={categorySaving}
-              className="rounded-none border-2 border-zinc-700 dark:border-zinc-400"
-            />
-            <div className="sm:col-span-2 lg:col-span-2">
+            <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Description (optional)
               </label>
@@ -498,7 +485,7 @@ export default function AdminDashboard() {
                 )}
               />
             </div>
-            <div className="sm:col-span-2 lg:col-span-4 flex justify-end">
+            <div className="md:col-span-2 flex justify-end">
               <Button
                 type="submit"
                 disabled={categorySaving}
@@ -533,7 +520,7 @@ export default function AdminDashboard() {
                       <td className="px-3 py-2">
                         <div className="flex items-center gap-2">
                           <span className="text-lg shrink-0" aria-hidden>
-                            {getCategoryIconOrEmoji(category.name, category.emoji)}
+                            {renderCategoryIcon(category.name, 'w-5 h-5')}
                           </span>
                           <span className="font-medium">{category.name}</span>
                         </div>
@@ -643,7 +630,6 @@ export default function AdminDashboard() {
                           <option value="">Uncategorized</option>
                           {categories.map((c) => (
                             <option key={c.id} value={c.id}>
-                              {c.emoji ? `${c.emoji} ` : ''}
                               {c.name}
                             </option>
                           ))}

@@ -10,7 +10,7 @@ WHERE category_id IN (
 DELETE FROM public.categories WHERE name IN ('Funny', 'Gaming', 'Tech');
 
 INSERT INTO public.categories (name, emoji, description)
-VALUES ('Wholesome', '🌻', 'Feel-good, kind, and heartwarming memes')
+VALUES ('Wholesome', '', 'Feel-good, kind, and heartwarming memes')
 ON CONFLICT (name) DO UPDATE SET
   emoji = EXCLUDED.emoji,
   description = EXCLUDED.description;

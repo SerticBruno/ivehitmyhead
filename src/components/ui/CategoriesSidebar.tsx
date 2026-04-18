@@ -1,7 +1,7 @@
 import React from 'react';
 import { useCategories } from '@/lib/hooks/useCategories';
 import { useMemesUIState } from '@/lib/contexts';
-import { getCategoryIconOrEmoji, ICONS } from '@/lib/utils/categoryIcons';
+import { ICONS, renderCategoryIcon } from '@/lib/utils/categoryIcons';
 
 /** Matches `sticky top-20` on the filter panel (5rem - align scroll-to-grid with sticky column). */
 const STICKY_FILTER_TOP_PX = 80;
@@ -305,7 +305,7 @@ const FiltersAndSortingInner: React.FC<FiltersAndSortingProps> = ({
                   }`}
                 >
                   <span className="mr-3 flex-shrink-0">
-                    {getCategoryIconOrEmoji(category.name, category.emoji)}
+                    {renderCategoryIcon(category.name, 'w-5 h-5')}
                   </span>
                   <div className="flex-1 text-left">
                     <div className="font-medium">{category.name}</div>

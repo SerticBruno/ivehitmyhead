@@ -13,7 +13,8 @@ export interface User {
 export interface Category {
   id: string;
   name: string;
-  emoji: string;
+  /** Legacy DB column; UI uses Lucide icons from name via `renderCategoryIcon`. */
+  emoji?: string;
   description?: string;
   created_at: string;
   count?: number; // For display purposes
