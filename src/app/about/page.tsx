@@ -57,17 +57,15 @@ export default function AboutPage() {
                 organized, I guess. I&apos;m not sure when it got out of hand.
               </p>
               <p>
-                I&apos;m mostly resharing stuff I find or that friends send me. Just a guy who likes organizing
-                things in a way that doesn&apos;t make sense.
+                Most of what you see here comes from internet chaos, friend group drops, and the occasional
+                &quot;you need to see this&quot; message at 1 AM. I just clean it up, tag it, and pretend there&apos;s a system.
               </p>
               <p>
-                The meme generator? That was born from pure spite. I was using some random meme page and
-                couldn&apos;t do any of the basic stuff, and then someone told me &quot;you can&apos;t make a meme
-                generator that&apos;s actually usable&quot; and I took that personally. And he was kinda right.
+                I built meme generator as the tool I would like to be using myself and I'm still implementing features that I find helpful, or that friends ask for. (no one asked for anything)
               </p>
               <p>
-                Built with Next.js, React, and enough caffeine to power a small city. Also, I may have talked to
-                my 2 dogs and a cat while debugging.
+                Built with Next.js, React, and an unhealthy amount of trial-and-error. QA team includes 2 dogs, 1 cat,
+                and friends who break features faster than I can patch them.
               </p>
             </div>
           </section>
@@ -85,9 +83,11 @@ export default function AboutPage() {
               </p>
               <p>
                 Your support really means so much to me. I&apos;m genuinely thankful to all the people who have
-                supported me and who will continue to support this ridiculous project. It&apos;s amazing to see people
-                actually using something I built, even if it&apos;s just for organizing and creating memes. Thanks
-                again, from the bottom of my heart.
+                supported me and who will continue to support this ridiculous project.
+              </p>
+              <p>
+              I'm still implementing ideas that I have in mind as I find time and I'm also always reading feedbacks and suggestions and trying
+              to improve this somehow weird project. Thanks again, from the bottom of my heart.
               </p>
               <p>
                 Shoutout to the actual meme creators, the developers who inspired me, my pets and my family who has
