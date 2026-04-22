@@ -16,6 +16,7 @@ import type { MemeTemplate } from '@/lib/types/meme';
 import { useNavigationWarning } from '@/lib/contexts/NavigationWarningContext';
 
 const PREVIEW_SCROLL_GAP_BELOW_HEADER_PX = 24;
+const DESKTOP_MAX_GENERATOR_HEIGHT_PX = 860;
 
 /** White caption strip height as a fraction of the source image height (not the full canvas). */
 const CAPTION_STRIP_RATIO = 0.3;
@@ -101,8 +102,11 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
   const [initialTemplateState, setInitialTemplateState] = useState<string>('');
   const [isLoadingTemplate, setIsLoadingTemplate] = useState(false);
   const { setDirty: setNavigationDirty } = useNavigationWarning();
-  const [containerHeight, setContainerHeight] = useState('calc(100dvh - 2rem)');
+  const [containerHeight, setContainerHeight] = useState(
+    `min(calc(100dvh - 2rem), ${DESKTOP_MAX_GENERATOR_HEIGHT_PX}px)`
+  );
   const [isMobileViewport, setIsMobileViewport] = useState(false);
+  const [controlsPanelNeedsScroll, setControlsPanelNeedsScroll] = useState(false);
   const [editingTextIndex, setEditingTextIndex] = useState<number | null>(null);
   const textAreaRefs = useRef<Record<number, HTMLTextAreaElement | null>>({});
   const editingElementRef = useRef<TextElement | null>(null);
@@ -144,6 +148,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
 
   const generatorRootRef = useRef<HTMLDivElement>(null);
   const memePreviewContainerRef = useRef<HTMLDivElement>(null);
+  const controlsPanelRef = useRef<HTMLDivElement>(null);
 
   /** Clicks outside the canvas should blur sidebar fields and clear canvas selection (except on interactive controls). */
   useEffect(() => {
@@ -217,7 +222,11 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
 
         // On desktop (lg+), nearly full viewport height (100dvh tracks mobile browser UI; tiny offset avoids clipping).
         // On smaller widths, let content size naturally so we avoid nested scroll areas.
-        setContainerHeight(isMobile ? 'auto' : 'calc(100dvh - 2rem)');
+        setContainerHeight(
+          isMobile
+            ? 'auto'
+            : `min(calc(100dvh - 2rem), ${DESKTOP_MAX_GENERATOR_HEIGHT_PX}px)`
+        );
       }
     };
 
@@ -225,6 +234,37 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
     window.addEventListener('resize', updateHeight);
     return () => window.removeEventListener('resize', updateHeight);
   }, []);
+
+  // Only show a desktop scrollbar for the controls panel when content truly overflows.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const panel = controlsPanelRef.current;
+    if (!panel) return;
+
+    const updateControlsOverflow = () => {
+      const nextNeedsScroll = panel.scrollHeight > panel.clientHeight + 1;
+      setControlsPanelNeedsScroll(nextNeedsScroll);
+    };
+
+    updateControlsOverflow();
+
+    const resizeObserver = new ResizeObserver(() => {
+      updateControlsOverflow();
+    });
+    resizeObserver.observe(panel);
+
+    window.addEventListener('resize', updateControlsOverflow);
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener('resize', updateControlsOverflow);
+    };
+  }, [
+    isMobileViewport,
+    isTemplateDropdownOpen,
+    selectedTemplate,
+    allTextElements.length,
+    expandedElements,
+  ]);
 
   // Initialize canvas - re-run when canvas becomes available
   useEffect(() => {
@@ -891,8 +931,8 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                 <div
                   className={`absolute z-20 w-full mt-2 bg-white dark:bg-gray-900 border-2 border-zinc-700 dark:border-zinc-400 rounded-none shadow-[8px_8px_0px_rgba(0,0,0,0.88)] dark:shadow-[8px_8px_0px_rgba(156,163,175,0.42)] max-h-[60vh] overflow-y-auto [scrollbar-gutter:stable] origin-top transition-[opacity,transform] duration-200 ease-out motion-reduce:transition-none ${
                     isTemplateDropdownOpen
-                      ? 'opacity-100 scale-100 translate-y-0'
-                      : 'pointer-events-none opacity-0 scale-[0.98] -translate-y-1'
+                      ? 'block opacity-100 scale-100 translate-y-0'
+                      : 'hidden pointer-events-none opacity-0 scale-[0.98] -translate-y-1'
                   }`}
                   aria-hidden={!isTemplateDropdownOpen}
                 >
@@ -1227,7 +1267,10 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
           }}
         >
           <div
-            className="space-y-2 md:space-y-4 flex-1 min-h-0 pb-2 md:pb-4 overflow-x-hidden lg:overflow-y-auto lg:[scrollbar-gutter:stable]"
+            ref={controlsPanelRef}
+            className={`space-y-2 md:space-y-4 flex-1 min-h-0 pb-2 md:pb-4 lg:pb-0 overflow-x-hidden ${
+              controlsPanelNeedsScroll ? 'lg:overflow-y-auto' : 'lg:overflow-y-hidden'
+            }`}
             style={{ flex: '1 1 0%', minHeight: 0, WebkitOverflowScrolling: 'touch' }}
           >
           {/* Template selection - hidden on mobile, shown on desktop */}
@@ -1278,8 +1321,8 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                 <div
                   className={`absolute z-20 w-full mt-2 bg-white dark:bg-gray-900 border-2 border-zinc-700 dark:border-zinc-400 rounded-none shadow-[8px_8px_0px_rgba(0,0,0,0.88)] dark:shadow-[8px_8px_0px_rgba(156,163,175,0.42)] max-h-[60vh] overflow-y-auto [scrollbar-gutter:stable] origin-top transition-[opacity,transform] duration-200 ease-out motion-reduce:transition-none ${
                     isTemplateDropdownOpen
-                      ? 'opacity-100 scale-100 translate-y-0'
-                      : 'pointer-events-none opacity-0 scale-[0.98] -translate-y-1'
+                      ? 'block opacity-100 scale-100 translate-y-0'
+                      : 'hidden pointer-events-none opacity-0 scale-[0.98] -translate-y-1'
                   }`}
                   aria-hidden={!isTemplateDropdownOpen}
                 >
