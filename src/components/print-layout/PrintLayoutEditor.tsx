@@ -2,7 +2,7 @@
 
 import React, { useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/ui/Button';
-import { A4_PORTRAIT_MM, A4_PORTRAIT_PX, GUIDE_CORNER_RADIUS_PX, GUIDE_SIZES_MM, mmToPx, pxToMm } from '@/lib/printLayout/constants';
+import { A4_PORTRAIT_PX, GUIDE_CORNER_RADIUS_PX, GUIDE_SIZES_MM, mmToPx } from '@/lib/printLayout/constants';
 
 type LayoutSlot = {
   id: string;
@@ -141,9 +141,11 @@ export default function PrintLayoutEditor() {
   );
   const [showGuides, setShowGuides] = useState(true);
   const [activeSlotId, setActiveSlotId] = useState<string>('');
+  const [selectedSlotIds, setSelectedSlotIds] = useState<string[]>([]);
   const [dragging, setDragging] = useState(false);
   const [resizing, setResizing] = useState(false);
   const stageRef = useRef<HTMLDivElement | null>(null);
+  const uploadInputRef = useRef<HTMLInputElement | null>(null);
   const dragState = useRef<{ startX: number; startY: number; startOffsetX: number; startOffsetY: number } | null>(null);
   const resizeState = useRef<{
     centerX: number;
@@ -158,6 +160,13 @@ export default function PrintLayoutEditor() {
   );
   const activePlacement = placements[activeSlotId];
   const activeSlot = slots.find((slot) => slot.id === activeSlotId);
+  const targetSlotIds = selectedSlotIds.length > 0 ? selectedSlotIds : (activeSlotId ? [activeSlotId] : []);
+  const assignedImageValue = (() => {
+    if (targetSlotIds.length === 0) return '';
+    const first = placements[targetSlotIds[0]]?.imageId ?? '';
+    const allSame = targetSlotIds.every((id) => (placements[id]?.imageId ?? '') === first);
+    return allSame ? first : '__mixed__';
+  })();
 
   const assignImagesSequentially = (imageIds: string[]) => {
     setPlacements((prev) => {
@@ -215,14 +224,22 @@ export default function PrintLayoutEditor() {
     }));
   };
 
-  const onPickImageForActive = (imageId: string) => {
-    if (!activeSlotId) return;
-    setPlacement(activeSlotId, {
-      imageId: imageId || undefined,
-      scale: 1,
-      offsetX: 0,
-      offsetY: 0,
-      rotationDeg: 0,
+  const onPickImageForSelection = (imageId: string) => {
+    const ids = targetSlotIds;
+    if (ids.length === 0) return;
+    setPlacements((prev) => {
+      const next = { ...prev };
+      ids.forEach((id) => {
+        next[id] = {
+          ...next[id],
+          imageId: imageId || undefined,
+          scale: 1,
+          offsetX: 0,
+          offsetY: 0,
+          rotationDeg: 0,
+        };
+      });
+      return next;
     });
   };
 
@@ -245,11 +262,30 @@ export default function PrintLayoutEditor() {
 
     if (clickedSlotId && clickedSlotId !== activeSlotId) {
       setActiveSlotId(clickedSlotId);
+      if (event.ctrlKey || event.metaKey) {
+        setSelectedSlotIds((prev) =>
+          prev.includes(clickedSlotId)
+            ? prev.filter((id) => id !== clickedSlotId)
+            : [...prev, clickedSlotId]
+        );
+      } else {
+        setSelectedSlotIds([clickedSlotId]);
+      }
+      return;
+    }
+
+    if (clickedSlotId && clickedSlotId === activeSlotId && (event.ctrlKey || event.metaKey)) {
+      setSelectedSlotIds((prev) =>
+        prev.includes(clickedSlotId)
+          ? prev.filter((id) => id !== clickedSlotId)
+          : [...prev, clickedSlotId]
+      );
       return;
     }
 
     if (event.target === event.currentTarget) {
       setActiveSlotId('');
+      setSelectedSlotIds([]);
       return;
     }
     if (resizeState.current) return;
@@ -395,24 +431,25 @@ export default function PrintLayoutEditor() {
     <div className="grid grid-cols-1 xl:grid-cols-[320px_1fr] gap-6">
       <aside className="border-2 border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-900 p-4">
         <h2 className="text-lg font-black uppercase tracking-wide mb-3">Print Controls</h2>
-        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-          A4 portrait ({A4_PORTRAIT_MM.width}x{A4_PORTRAIT_MM.height}mm), export at 300 DPI.
-        </p>
-        <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
-          Outer guide: 49x69mm, Inner guide: 40x60mm
-        </p>
-        <p className="text-xs text-gray-600 dark:text-gray-400 mb-4">
-          Print tip: use Actual Size (100%) and disable any fit-to-page option.
-        </p>
-
-        <label className="block text-sm font-bold mb-2">Upload images</label>
-        <input
-          type="file"
-          accept="image/*"
-          multiple
-          onChange={onUpload}
-          className="mb-4 block w-full text-sm cursor-pointer"
-        />
+        <div className="mb-4">
+          <label className="block text-sm font-bold mb-2">Upload images</label>
+          <input
+            ref={uploadInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={onUpload}
+            className="hidden"
+          />
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => uploadInputRef.current?.click()}
+            className="w-full rounded-none border-2 border-zinc-700 dark:border-zinc-400 uppercase tracking-wide font-bold"
+          >
+            Choose images
+          </Button>
+        </div>
 
         <div className="mb-4">
           <label className="inline-flex items-center gap-2 text-sm">
@@ -431,7 +468,11 @@ export default function PrintLayoutEditor() {
           <select
             className="w-full border-2 border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-950 px-2 py-1.5 text-sm cursor-pointer"
             value={activeSlotId}
-            onChange={(event) => setActiveSlotId(event.target.value)}
+            onChange={(event) => {
+              const value = event.target.value;
+              setActiveSlotId(value);
+              setSelectedSlotIds(value ? [value] : []);
+            }}
           >
             <option value="">No slot selected</option>
             {slots.map((slot) => (
@@ -441,15 +482,100 @@ export default function PrintLayoutEditor() {
             ))}
           </select>
         </div>
+        <div className="mb-4">
+          <div className="flex items-center justify-between mb-2">
+            <label className="block text-sm font-bold">Target slots</label>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                className="text-xs font-semibold underline cursor-pointer"
+                onClick={() => {
+                  const all = slots.map((slot) => slot.id);
+                  setSelectedSlotIds(all);
+                  setActiveSlotId(all[0] ?? '');
+                }}
+              >
+                Select all
+              </button>
+              <button
+                type="button"
+                className="text-xs font-semibold underline cursor-pointer"
+                onClick={() => setSelectedSlotIds([])}
+              >
+                Clear
+              </button>
+            </div>
+          </div>
+          <div className="grid grid-cols-4 gap-1 border-2 border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-950 p-2">
+            {slots.map((slot) => {
+              const checked = selectedSlotIds.includes(slot.id);
+              return (
+                <label key={slot.id} className="inline-flex items-center gap-1 text-xs cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={(event) => {
+                      const isChecked = event.target.checked;
+                      setSelectedSlotIds((prev) =>
+                        isChecked ? [...prev, slot.id] : prev.filter((id) => id !== slot.id)
+                      );
+                      if (isChecked) {
+                        setActiveSlotId(slot.id);
+                      } else if (activeSlotId === slot.id) {
+                        setActiveSlotId('');
+                      }
+                    }}
+                    className="cursor-pointer"
+                  />
+                  {slot.id}
+                </label>
+              );
+            })}
+          </div>
+          <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+            Tip: Ctrl/Cmd+click slots on canvas to multi-select quickly.
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={!activeSlotId || !activePlacement?.imageId || targetSlotIds.length === 0}
+            onClick={() => {
+              if (!activeSlotId) return;
+              const source = placements[activeSlotId];
+              if (!source?.imageId) return;
+              setPlacements((prev) => {
+                const next = { ...prev };
+                targetSlotIds.forEach((id) => {
+                  if (id === activeSlotId) return;
+                  next[id] = {
+                    ...next[id],
+                    imageId: source.imageId,
+                    scale: source.scale,
+                    offsetX: source.offsetX,
+                    offsetY: source.offsetY,
+                    rotationDeg: source.rotationDeg,
+                  };
+                });
+                return next;
+              });
+            }}
+            className="mt-2 w-full rounded-none border-2 border-zinc-700 dark:border-zinc-400 uppercase tracking-wide font-bold"
+          >
+            Copy active image setup to targets
+          </Button>
+        </div>
 
         <div className="mb-4">
           <label className="block text-sm font-bold mb-2">Assigned image</label>
           <select
             className="w-full border-2 border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-950 px-2 py-1.5 text-sm cursor-pointer"
-            value={activePlacement?.imageId ?? ''}
-            onChange={(event) => onPickImageForActive(event.target.value)}
-            disabled={!activeSlotId}
+            value={assignedImageValue}
+            onChange={(event) => onPickImageForSelection(event.target.value)}
+            disabled={targetSlotIds.length === 0}
           >
+            <option value="__mixed__" disabled>
+              Mixed selection
+            </option>
             <option value="">No image</option>
             {assets.map((asset) => (
               <option key={asset.id} value={asset.id}>
@@ -499,23 +625,26 @@ export default function PrintLayoutEditor() {
             <Button
               type="button"
               variant="outline"
-              disabled={!activeSlotId}
+              disabled={targetSlotIds.length === 0}
               onClick={() =>
                 setPlacements((prev) => {
-                  const slot = slots.find((item) => item.id === activeSlotId);
-                  const current = prev[activeSlotId];
-                  if (!slot || !current) return prev;
-                  const nextPlacement = {
-                    ...current,
-                    rotationDeg: ((current.rotationDeg + 90) % 360 + 360) % 360,
-                  };
-                  return {
-                    ...prev,
-                    [activeSlotId]: {
+                  const ids = targetSlotIds;
+                  if (ids.length === 0) return prev;
+                  const next = { ...prev };
+                  ids.forEach((id) => {
+                    const slot = slots.find((item) => item.id === id);
+                    const current = next[id];
+                    if (!slot || !current) return;
+                    const nextPlacement = {
+                      ...current,
+                      rotationDeg: ((current.rotationDeg + 90) % 360 + 360) % 360,
+                    };
+                    next[id] = {
                       ...nextPlacement,
                       ...clampOffsetForSlot(slot, nextPlacement),
-                    },
-                  };
+                    };
+                  });
+                  return next;
                 })
               }
               className="rounded-none border-2 border-zinc-700 dark:border-zinc-400 uppercase tracking-wide font-bold"
@@ -551,13 +680,6 @@ export default function PrintLayoutEditor() {
             className="w-full cursor-pointer"
           />
         </div>
-
-        {activeSlot && activePlacement ? (
-          <p className="text-xs text-gray-600 dark:text-gray-400 mb-4">
-            Offset X: {pxToMm(activePlacement.offsetX).toFixed(1)}mm, Offset Y:{' '}
-            {pxToMm(activePlacement.offsetY).toFixed(1)}mm
-          </p>
-        ) : null}
 
         <Button
           onClick={exportPng}
@@ -654,7 +776,7 @@ export default function PrintLayoutEditor() {
                 {showGuides ? (
                   <>
                     <div className="absolute left-1 bottom-1 z-10 pointer-events-none px-1.5 py-0.5 text-[10px] font-semibold text-zinc-700">
-                      49x69mm
+                      50x70mm
                     </div>
                     <svg
                       className="absolute inset-0 pointer-events-none"

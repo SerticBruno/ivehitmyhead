@@ -25,8 +25,8 @@ export const GUIDE_SIZES_MM = {
     height: 60,
   },
   large: {
-    width: 49,
-    height: 69,
+    width: 50,
+    height: 70,
   },
 } as const;
 

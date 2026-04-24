@@ -40,7 +40,7 @@ export default function AdminPrintLayoutPage() {
             <div>
               <h1 className="text-3xl font-black uppercase tracking-tight">A4 Print Composer</h1>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                Place images in 40x60mm and 49x69mm guides, then export a print-ready A4 PNG.
+                Place images in 40x60mm and 50x70mm guides, then export a print-ready A4 PNG.
               </p>
             </div>
             <Link href="/admin">
