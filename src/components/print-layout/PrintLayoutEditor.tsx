@@ -39,6 +39,10 @@ const slots: LayoutSlot[] = (() => {
   const slotH = mmToPx(GUIDE_SIZES_MM.large.height);
   const cols = 4;
   const rows = 4;
+  const gridW = cols * slotW + (cols - 1) * gapPx;
+  const gridH = rows * slotH + (rows - 1) * gapPx;
+  const startX = Math.round((A4_PORTRAIT_PX.width - gridW) / 2);
+  const startY = Math.round((A4_PORTRAIT_PX.height - gridH) / 2);
 
   const builtSlots: LayoutSlot[] = [];
   for (let row = 0; row < rows; row += 1) {
@@ -46,8 +50,8 @@ const slots: LayoutSlot[] = (() => {
       const rowLabel = String.fromCharCode(65 + row);
       builtSlots.push({
         id: `${rowLabel}${col + 1}`,
-        x: Math.round(col * (slotW + gapPx)),
-        y: Math.round(row * (slotH + gapPx)),
+        x: Math.round(startX + col * (slotW + gapPx)),
+        y: Math.round(startY + row * (slotH + gapPx)),
         width: slotW,
         height: slotH,
       });
