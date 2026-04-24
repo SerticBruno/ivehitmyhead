@@ -428,6 +428,17 @@ export default function AdminDashboard() {
             </div>
             <div className="flex flex-col sm:flex-row gap-3 shrink-0">
               <Link
+                href="/admin/print-layout"
+                className={cn(
+                  'inline-flex h-10 items-center justify-center px-4 py-2 text-sm font-medium transition-colors',
+                  'rounded-none border-2 border-zinc-700 dark:border-zinc-400 uppercase tracking-wide font-bold',
+                  'hover:bg-gray-100 dark:hover:bg-gray-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400'
+                )}
+              >
+                <ICONS.Image className="w-4 h-4 mr-2" aria-hidden />
+                Print layout
+              </Link>
+              <Link
                 href="/"
                 className={cn(
                   'inline-flex h-10 items-center justify-center px-4 py-2 text-sm font-medium transition-colors',
