@@ -375,7 +375,7 @@ export default function PrintLayoutEditor() {
       roundedRectPath(ctx, slot.x, slot.y, slot.width, slot.height, GUIDE_CORNER_RADIUS_PX);
       ctx.strokeStyle = '#ea580c';
       ctx.lineWidth = 2;
-      ctx.setLineDash([66, 22]);
+      ctx.setLineDash([]);
       ctx.stroke();
       ctx.restore();
     }
@@ -617,8 +617,7 @@ export default function PrintLayoutEditor() {
                   height: `${(slot.height / A4_PORTRAIT_PX.height) * 100}%`,
                   borderRadius: `${(GUIDE_CORNER_RADIUS_PX / slot.width) * 100}%`,
                   border: 'none',
-                  outline: isActive ? '3px solid #16a34a' : 'none',
-                  outlineOffset: '-3px',
+                  boxShadow: isActive ? 'inset 0 0 0 3px #16a34a' : 'none',
                   background: '#fff',
                 }}
               >
@@ -657,24 +656,35 @@ export default function PrintLayoutEditor() {
                     <div className="absolute left-1 bottom-1 z-10 pointer-events-none px-1.5 py-0.5 text-[10px] font-semibold text-zinc-700">
                       49x69mm
                     </div>
-                    <div
+                    <svg
                       className="absolute inset-0 pointer-events-none"
-                      style={{
-                        borderRadius: `${(GUIDE_CORNER_RADIUS_PX / slot.width) * 100}%`,
-                        border: '1px dashed #ea580c',
-                      }}
-                    />
-                    <div
-                      className="absolute pointer-events-none"
-                      style={{
-                        left: `${(altLeft / slot.width) * 100}%`,
-                        top: `${(altTop / slot.height) * 100}%`,
-                        width: `${(altW / slot.width) * 100}%`,
-                        height: `${(altH / slot.height) * 100}%`,
-                        borderRadius: `${(GUIDE_CORNER_RADIUS_PX / Math.max(altW, 1)) * 100}%`,
-                        border: '1px dashed #1d4ed8',
-                      }}
-                    />
+                      viewBox={`0 0 ${slot.width} ${slot.height}`}
+                      preserveAspectRatio="none"
+                    >
+                      <rect
+                        x="1"
+                        y="1"
+                        width={Math.max(slot.width - 2, 0)}
+                        height={Math.max(slot.height - 2, 0)}
+                        rx={GUIDE_CORNER_RADIUS_PX}
+                        ry={GUIDE_CORNER_RADIUS_PX}
+                        fill="none"
+                        stroke="#ea580c"
+                        strokeWidth="2"
+                      />
+                      <rect
+                        x={altLeft}
+                        y={altTop}
+                        width={altW}
+                        height={altH}
+                        rx={GUIDE_CORNER_RADIUS_PX}
+                        ry={GUIDE_CORNER_RADIUS_PX}
+                        fill="none"
+                        stroke="#1d4ed8"
+                        strokeWidth="2"
+                        strokeDasharray="44 22"
+                      />
+                    </svg>
                   </>
                 ) : null}
                 {isActive && asset ? (

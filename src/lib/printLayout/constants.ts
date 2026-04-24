@@ -41,5 +41,5 @@ export const GUIDE_SIZES_PX = {
   },
 } as const;
 
-export const GUIDE_CORNER_RADIUS_MM = 5;
+export const GUIDE_CORNER_RADIUS_MM = 4;
 export const GUIDE_CORNER_RADIUS_PX = mmToPx(GUIDE_CORNER_RADIUS_MM);
