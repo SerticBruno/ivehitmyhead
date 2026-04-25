@@ -255,11 +255,11 @@ export function MemeDetailClient({ slug }: MemeDetailClientProps) {
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <section className="max-w-5xl mx-auto">
             <div className={`animate-pulse ${MEME_DETAIL_CARD}`}>
-              <div className="px-6 pt-6 pb-3">
+              <div className="px-6 pt-6 pb-2">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
-                    <div className="h-6 bg-gray-200 dark:bg-gray-700 mb-2" />
-                    <div className="h-4 bg-gray-200 dark:bg-gray-700 w-1/2" />
+                    <div className="h-8 md:h-9 bg-gray-200 dark:bg-gray-700 mb-2 w-[70%]" />
+                    <div className="h-4 bg-gray-200 dark:bg-gray-700 w-40" />
                   </div>
                   <div className="w-24 flex-shrink-0">
                     <div className="h-4 bg-gray-200 dark:bg-gray-700 mb-2" />
@@ -270,22 +270,18 @@ export function MemeDetailClient({ slug }: MemeDetailClientProps) {
 
               <div className={`${MEME_DETAIL_IMAGE_FRAME} bg-gray-200/90 dark:bg-gray-800`} />
 
-              <div className="p-6 pt-4 space-y-4">
-                <div className="flex flex-wrap gap-2">
-                  <div className="h-7 w-24 bg-gray-200 dark:bg-gray-700 border border-zinc-700/40 dark:border-zinc-500/40" />
-                  <div className="h-7 w-20 bg-gray-200 dark:bg-gray-700 border border-zinc-700/40 dark:border-zinc-500/40" />
-                </div>
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="h-8 w-20 bg-gray-200 dark:bg-gray-700" />
-                    <div className="h-8 w-20 bg-gray-200 dark:bg-gray-700" />
-                    <div className="h-8 w-20 bg-gray-200 dark:bg-gray-700" />
+              <div className="p-6 pt-4">
+                <div className="flex items-center gap-3 overflow-x-auto whitespace-nowrap">
+                  <div className="flex items-center gap-4 shrink-0">
+                    <div className="h-8 w-16 bg-gray-200 dark:bg-gray-700" />
+                    <div className="h-8 w-16 bg-gray-200 dark:bg-gray-700" />
+                    <div className="h-8 w-16 bg-gray-200 dark:bg-gray-700" />
                   </div>
-                  <div className="h-4 w-20 bg-gray-200 dark:bg-gray-700 self-start sm:self-auto" />
-                </div>
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch sm:gap-3">
-                  <div className="h-10 flex-1 bg-gray-200 dark:bg-gray-700 border-2 border-zinc-700 dark:border-zinc-400 min-w-0" />
-                  <div className="h-10 w-full sm:w-28 bg-gray-200 dark:bg-gray-700 border-2 border-zinc-700 dark:border-zinc-400 shrink-0" />
+                  <div className="flex items-center justify-center gap-2 flex-1 min-w-max">
+                    <div className="h-8 w-28 bg-gray-200 dark:bg-gray-700 border-2 border-zinc-700 dark:border-zinc-400 shrink-0" />
+                    <div className="h-10 w-28 bg-gray-200 dark:bg-gray-700 border-2 border-zinc-700 dark:border-zinc-400 shrink-0" />
+                  </div>
+                  <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 shrink-0" />
                 </div>
               </div>
             </div>
