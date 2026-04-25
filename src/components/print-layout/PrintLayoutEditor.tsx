@@ -776,7 +776,7 @@ export default function PrintLayoutEditor() {
                 {showGuides ? (
                   <>
                     <div className="absolute left-1 bottom-1 z-10 pointer-events-none px-1.5 py-0.5 text-[10px] font-semibold text-zinc-700">
-                      50x70mm
+                      51x70mm
                     </div>
                     <svg
                       className="absolute inset-0 pointer-events-none"
