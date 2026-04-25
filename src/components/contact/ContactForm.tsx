@@ -48,7 +48,7 @@ export function ContactForm({ className, innerClassName }: ContactFormProps) {
       setEmail('');
       setMessage('');
     } catch {
-      setErrorMessage('Network error — try again in a moment');
+      setErrorMessage('Network error - try again in a moment');
       setStatus('error');
     }
   };
@@ -124,7 +124,7 @@ export function ContactForm({ className, innerClassName }: ContactFormProps) {
 
         {status === 'success' ? (
           <p className="text-sm text-green-700 dark:text-green-400 font-medium" role="status">
-            Sent — thanks! I&apos;ll get back to you when I can.
+            Sent - thanks! I&apos;ll get back to you when I can.
           </p>
         ) : null}
 

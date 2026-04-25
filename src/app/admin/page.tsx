@@ -584,7 +584,7 @@ export default function AdminDashboard() {
                         </div>
                       </td>
                       <td className="px-3 py-2 text-gray-600 dark:text-gray-400 max-w-md truncate hidden md:table-cell">
-                        {category.description || '—'}
+                        {category.description || '-'}
                       </td>
                       <td className="px-3 py-2 text-right">
                         <Button
