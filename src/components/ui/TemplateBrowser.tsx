@@ -58,11 +58,6 @@ export const TemplateBrowser: React.FC<TemplateBrowserProps> = ({
                   
                   <div>
                     <h4 className="font-semibold">{template.name}</h4>
-                    {template.description && (
-                      <p className="text-sm text-gray-600 line-clamp-2">
-                        {template.description}
-                      </p>
-                    )}
                     
                     <div className="flex items-center justify-between mt-2">
                       <div className="flex items-center space-x-2">

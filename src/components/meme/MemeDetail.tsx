@@ -183,6 +183,7 @@ const MemeDetail: React.FC<MemeDetailProps> = ({
                       {/* Action buttons */}
                       <div className="flex items-center space-x-2">
                         <button
+                          type="button"
                           onClick={handleLike}
                           disabled={isLoading}
                           className="flex flex-col items-center justify-center w-14 h-14 bg-gradient-to-br from-red-50 to-pink-50 hover:from-red-100 hover:to-pink-100 dark:from-red-900/20 dark:to-pink-900/20 dark:hover:from-red-900/30 dark:hover:to-pink-900/30 rounded-lg border border-red-200 hover:border-red-300 dark:border-red-800 transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed group p-2 shadow-md"
@@ -191,6 +192,7 @@ const MemeDetail: React.FC<MemeDetailProps> = ({
                           <div className="text-xs font-medium text-red-600 dark:text-red-400">Like</div>
                         </button>
                         <button
+                          type="button"
                           onClick={handleShare}
                           disabled={isLoading}
                           className="flex flex-col items-center justify-center w-14 h-14 bg-gradient-to-br from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 dark:from-green-900/20 dark:to-emerald-900/20 dark:hover:from-green-900/30 dark:hover:to-emerald-900/30 rounded-lg border border-green-200 hover:border-green-300 dark:border-green-800 transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed group p-2 shadow-md"

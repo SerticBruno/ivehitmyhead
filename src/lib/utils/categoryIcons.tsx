@@ -27,7 +27,8 @@ import {
   AlertCircle,
   Joystick,
   Trash2,
-  RefreshCw
+  RefreshCw,
+  Copy
 } from 'lucide-react';
 
 // Map category names to Lucide React icons
@@ -142,5 +143,6 @@ export const ICONS = {
   AlertCircle,
   Joystick,
   Trash2,
-  RefreshCw
+  RefreshCw,
+  Copy
 };

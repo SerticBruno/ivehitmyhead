@@ -990,11 +990,6 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                             <div className="font-medium truncate text-gray-900 dark:text-white">
                               {template.name}
                             </div>
-                            {template.description && (
-                              <div className="text-sm text-gray-500 dark:text-gray-400 truncate mt-0.5">
-                                {template.description}
-                              </div>
-                            )}
                             {selectedTemplate?.id === template.id && (
                               <div className="text-xs text-blue-600 dark:text-blue-400 mt-0.5">
                                 Selected
@@ -1051,11 +1046,6 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                         <div className="font-medium text-sm text-gray-900 dark:text-white truncate">
                           {template.name}
                         </div>
-                        {template.description && (
-                          <div className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
-                            {template.description}
-                          </div>
-                        )}
                       </div>
                     </button>
                   ))}
@@ -1380,11 +1370,6 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                             <div className="font-medium truncate text-gray-900 dark:text-white">
                               {template.name}
                             </div>
-                            {template.description && (
-                              <div className="text-sm text-gray-500 dark:text-gray-400 truncate mt-0.5">
-                                {template.description}
-                              </div>
-                            )}
                             {selectedTemplate?.id === template.id && (
                               <div className="text-xs text-blue-600 dark:text-blue-400 mt-0.5">
                                 Selected
@@ -1441,11 +1426,6 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                         <div className="font-medium text-sm text-gray-900 dark:text-white truncate">
                           {template.name}
                         </div>
-                        {template.description && (
-                          <div className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
-                            {template.description}
-                          </div>
-                        )}
                       </div>
                     </button>
                   ))}

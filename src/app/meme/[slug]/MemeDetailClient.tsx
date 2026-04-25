@@ -9,7 +9,7 @@ import { Meme } from '@/lib/types/meme';
 import { useMemeInteractions } from '@/lib/hooks/useMemeInteractions';
 import { useMemesListState } from '@/lib/contexts';
 import { ICONS, renderCategoryIcon } from '@/lib/utils/categoryIcons';
-import { shareMemeWithFallback } from '@/lib/utils/shareUtils';
+import { recordShare, shareMemeWithFallback } from '@/lib/utils/shareUtils';
 
 const MEME_DETAIL_CARD =
   'bg-white dark:bg-gray-900 rounded-none border-2 border-zinc-700 dark:border-zinc-400 shadow-[8px_8px_0px_rgba(0,0,0,0.88)] dark:shadow-[8px_8px_0px_rgba(156,163,175,0.42)] overflow-hidden';
@@ -157,6 +157,28 @@ export function MemeDetailClient({ slug }: MemeDetailClientProps) {
       const newShareCount = sharesCount + 1;
       setSharesCount(newShareCount);
       updateMemeShareCount(slug, newShareCount);
+    }
+  };
+
+  const handleCopyLink = async () => {
+    if (!meme) return;
+
+    const url =
+      shareUrl ||
+      (typeof window !== 'undefined'
+        ? `${window.location.origin}/meme/${meme.slug}`
+        : '');
+
+    if (!url) return;
+
+    try {
+      await navigator.clipboard.writeText(url);
+      const newShareCount = sharesCount + 1;
+      setSharesCount(newShareCount);
+      updateMemeShareCount(slug, newShareCount);
+      void recordShare(slug);
+    } catch (err) {
+      console.error('Failed to copy meme link:', err);
     }
   };
 
@@ -357,8 +379,8 @@ export function MemeDetailClient({ slug }: MemeDetailClientProps) {
                 </div>
               )}
 
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between text-sm text-gray-600 dark:text-gray-300">
-                <div className="flex items-center gap-4 flex-wrap">
+              <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-300 overflow-x-auto whitespace-nowrap">
+                <div className="flex items-center gap-4 shrink-0">
                   <button
                     type="button"
                     onClick={handleLike}
@@ -384,15 +406,30 @@ export function MemeDetailClient({ slug }: MemeDetailClientProps) {
                     <ICONS.Share2 className="w-4 h-4 shrink-0" />
                     <span>{sharesCount.toLocaleString()}</span>
                   </button>
+                  <div className="flex items-center gap-1 text-gray-500">
+                    <ICONS.Eye className="w-4 h-4 shrink-0" />
+                    <span>{meme.views.toLocaleString()}</span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-center gap-2 flex-1 min-w-max">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleCopyLink}
+                    className="rounded-none border-2 border-zinc-700 dark:border-zinc-400 uppercase tracking-wide font-bold shrink-0 inline-flex items-center justify-center gap-2"
+                  >
+                    <ICONS.Copy className="w-4 h-4 shrink-0" />
+                    Copy link
+                  </Button>
                   <button
                     type="button"
                     onClick={handleRandom}
                     aria-disabled={isLoadingRandom}
                     className={cn(
-                      'inline-flex items-center gap-2 rounded-none border-2 border-emerald-700 bg-emerald-600 text-white px-3 py-1 uppercase tracking-wide font-black shadow-[3px_3px_0px_rgba(6,78,59,0.7)] transition-colors cursor-pointer',
+                      'inline-flex items-center justify-center gap-2 rounded-none border-2 border-blue-700 bg-blue-600 text-white px-4 py-2 uppercase tracking-wide font-black shadow-[3px_3px_0px_rgba(29,78,216,0.7)] transition-colors cursor-pointer shrink-0',
                       isLoadingRandom
                         ? 'opacity-50 shadow-none'
-                        : 'hover:bg-emerald-500 hover:border-emerald-600'
+                        : 'hover:bg-blue-500 hover:border-blue-600'
                     )}
                   >
                     {isLoadingRandom ? (
@@ -402,12 +439,8 @@ export function MemeDetailClient({ slug }: MemeDetailClientProps) {
                     )}
                     <span>Random</span>
                   </button>
-                  <div className="flex items-center gap-1 text-gray-500">
-                    <ICONS.Eye className="w-4 h-4 shrink-0" />
-                    <span>{meme.views.toLocaleString()}</span>
-                  </div>
                 </div>
-                <span className="inline-flex shrink-0 items-center text-xs text-gray-500 dark:text-gray-400 select-none cursor-default self-start sm:self-auto max-w-full min-w-0 pointer-events-none">
+                <span className="inline-flex shrink-0 items-center text-xs text-gray-500 dark:text-gray-400 select-none cursor-default pointer-events-none">
                   {meme.category ? (
                     <>
                       {renderCategoryIcon(meme.category.name, 'w-4 h-4 shrink-0')}
@@ -422,30 +455,6 @@ export function MemeDetailClient({ slug }: MemeDetailClientProps) {
                 </span>
               </div>
 
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch sm:gap-3">
-                <input
-                  type="text"
-                  value={shareUrl}
-                  readOnly
-                  className="min-w-0 flex-1 px-3 py-2 text-sm bg-[#f7f4ee] dark:bg-gray-900 border-2 border-zinc-700 dark:border-zinc-400 rounded-none text-gray-800 dark:text-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-500"
-                  onClick={(e) => (e.target as HTMLInputElement).select()}
-                />
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    const url =
-                      shareUrl ||
-                      (typeof window !== 'undefined'
-                        ? `${window.location.origin}/meme/${meme.slug}`
-                        : '');
-                    if (url) navigator.clipboard.writeText(url);
-                  }}
-                  className="rounded-none border-2 border-zinc-700 dark:border-zinc-400 uppercase tracking-wide font-bold shrink-0"
-                >
-                  Copy
-                </Button>
-              </div>
             </footer>
           </article>
         </section>
