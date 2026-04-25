@@ -111,7 +111,7 @@ export function MemeDetailClient({ slug }: MemeDetailClientProps) {
       fetchMeme();
     }
     hasRecordedView.current = false;
-  }, [slug, recordView, checkLikeStatus]);
+  }, [slug, recordView, checkLikeStatus, listMemes]);
 
   const handleLike = async (e?: React.MouseEvent) => {
     if (e) {
