@@ -35,8 +35,7 @@ export function MemeDetailClient({ slug }: MemeDetailClientProps) {
   const [isLoadingRandom, setIsLoadingRandom] = useState(false);
 
   const { likeMeme, recordView } = useMemeInteractions();
-  const { memes: listMemes, updateMemeLikeCount, updateMemeShareCount, updateMemeLikedState } =
-    useMemesListState();
+  const { updateMemeLikeCount, updateMemeShareCount, updateMemeLikedState } = useMemesListState();
   const hasRecordedView = useRef(false);
   const [shareUrl, setShareUrl] = useState('');
 
@@ -84,14 +83,8 @@ export function MemeDetailClient({ slug }: MemeDetailClientProps) {
         const data = await response.json();
         setMeme(data.meme);
 
-        const contextMeme = listMemes.find((m) => m.slug === slug);
-        if (contextMeme) {
-          setLikesCount(contextMeme.likes_count || 0);
-          setSharesCount(contextMeme.shares_count || 0);
-        } else {
-          setLikesCount(data.meme.likes_count || 0);
-          setSharesCount(data.meme.shares_count || 0);
-        }
+        setLikesCount(data.meme.likes_count || 0);
+        setSharesCount(data.meme.shares_count || 0);
 
         await checkLikeStatus();
 
@@ -111,7 +104,7 @@ export function MemeDetailClient({ slug }: MemeDetailClientProps) {
       fetchMeme();
     }
     hasRecordedView.current = false;
-  }, [slug, recordView, checkLikeStatus, listMemes]);
+  }, [slug, recordView, checkLikeStatus]);
 
   const handleLike = async (e?: React.MouseEvent) => {
     if (e) {
