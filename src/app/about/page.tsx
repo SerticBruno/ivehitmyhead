@@ -61,7 +61,8 @@ export default function AboutPage() {
                 &quot;you need to see this&quot; message at 1 AM. I just clean it up, tag it, and pretend there&apos;s a system.
               </p>
               <p>
-                I built meme generator as the tool I would like to be using myself and I'm still implementing features that I find helpful, or that friends ask for. (no one asked for anything)
+                I built meme generator as the tool I would like to be using myself and I&apos;m still implementing
+                features that I find helpful, or that friends ask for. (no one asked for anything)
               </p>
               <p>
                 Built with Next.js, React, and an unhealthy amount of trial-and-error. QA team includes 2 dogs, 1 cat,
@@ -86,8 +87,9 @@ export default function AboutPage() {
                 supported me and who will continue to support this ridiculous project.
               </p>
               <p>
-              I'm still implementing ideas that I have in mind as I find time and I'm also always reading feedbacks and suggestions and trying
-              to improve this somehow weird project. Thanks again, from the bottom of my heart.
+                I&apos;m still implementing ideas that I have in mind as I find time and I&apos;m also always reading
+                feedbacks and suggestions and trying to improve this somehow weird project. Thanks again, from the
+                bottom of my heart.
               </p>
               <p>
                 Shoutout to the actual meme creators, the developers who inspired me, my pets and my family who has

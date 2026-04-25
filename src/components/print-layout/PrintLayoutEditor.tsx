@@ -750,6 +750,8 @@ export default function PrintLayoutEditor() {
                       borderRadius: `${(GUIDE_CORNER_RADIUS_PX / slot.width) * 100}%`,
                     }}
                   >
+                    {/* Intentional raw img for freeform editor transforms and drag behavior */}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={asset.src}
                       alt={asset.name}
