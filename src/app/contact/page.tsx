@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import { ContactForm } from '@/components/contact/ContactForm';
 import { LegalPageShell } from '@/components/legal/LegalPageShell';
 import { getPublicFacebookUrl, getPublicInstagramUrl } from '@/lib/socialUrls';
@@ -42,11 +41,6 @@ export default function ContactPage() {
           Facebook
         </a>
         , or use the icons in the site footer.
-      </p>
-      <p className="mt-4">
-        <Link href="/help" className="font-semibold underline">
-          Help center
-        </Link>
       </p>
     </LegalPageShell>
   );

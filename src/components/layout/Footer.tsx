@@ -28,67 +28,72 @@ const Footer: React.FC = () => {
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 max-w-md leading-relaxed">
               Discover, share, and create the dullest memes.
             </p>
-            {showSocial ? (
-              <div className="flex items-center gap-4">
-                {instagramUrl ? (
-                  <a
-                    href={instagramUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-100"
-                  >
-                    <span className="sr-only">Instagram</span>
-                    <Instagram className="w-5 h-5" aria-hidden />
-                  </a>
-                ) : null}
-                {facebookUrl ? (
-                  <a
-                    href={facebookUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-100"
-                  >
-                    <span className="sr-only">Facebook</span>
-                    <Facebook className="w-5 h-5" aria-hidden />
-                  </a>
-                ) : null}
-              </div>
-            ) : null}
+            <div>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                Find us on social media as well.
+              </p>
+              {showSocial ? (
+                <div className="flex items-center gap-4">
+                  {instagramUrl ? (
+                    <a
+                      href={instagramUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-100"
+                    >
+                      <span className="sr-only">Instagram</span>
+                      <Instagram className="w-5 h-5" aria-hidden />
+                    </a>
+                  ) : null}
+                  {facebookUrl ? (
+                    <a
+                      href={facebookUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-100"
+                    >
+                      <span className="sr-only">Facebook</span>
+                      <Facebook className="w-5 h-5" aria-hidden />
+                    </a>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
           </div>
 
           <div>
-            <h3 className="font-black uppercase tracking-wide mb-4">Support</h3>
+            <h3 className="font-black uppercase tracking-wide mb-4">Quick Links</h3>
             <ul className="space-y-2">
               <li>
                 <Link
-                  href="/help"
+                  href="/"
                   className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 cursor-pointer"
                 >
-                  Help Center
+                  Home
                 </Link>
               </li>
               <li>
                 <Link
-                  href="/contact"
+                  href="/memes"
                   className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 cursor-pointer"
                 >
-                  Contact Us
+                  Memes
                 </Link>
               </li>
               <li>
                 <Link
-                  href="/privacy"
+                  href="/random"
                   className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 cursor-pointer"
                 >
-                  Privacy Policy
+                  Random
                 </Link>
               </li>
               <li>
                 <Link
-                  href="/terms"
+                  href="/meme-generator"
                   className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 cursor-pointer"
                 >
-                  Terms of Service
+                  Generator
                 </Link>
               </li>
               <li>
@@ -97,6 +102,22 @@ const Footer: React.FC = () => {
                   className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 cursor-pointer"
                 >
                   About
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/contact"
+                  className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 cursor-pointer"
+                >
+                  Contact
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/privacy"
+                  className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 cursor-pointer"
+                >
+                  Privacy
                 </Link>
               </li>
             </ul>
