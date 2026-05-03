@@ -20,7 +20,7 @@ const Footer: React.FC = () => {
             <div className="flex items-center space-x-2 mb-4">
               <span className="text-xl font-black uppercase tracking-tight">IVEHITMYHEAD</span>
             </div>
-            <p className="text-gray-600 dark:text-gray-400 mb-4 max-w-md">
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 max-w-md leading-relaxed">
               Discover, share, and create the dullest memes on the internet. We said what we said.
             </p>
             {showSocial ? (
@@ -114,7 +114,7 @@ const Footer: React.FC = () => {
               aria-label="Newsletter signup"
             >
               <h3 className="font-black uppercase tracking-wide mb-2">Newsletter</h3>
-              <p className="text-xs text-gray-600 dark:text-gray-400 mb-3 leading-snug">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 leading-relaxed">
                 Occasional updates. Lower your expectations preemptively.
               </p>
               <SiteNewsletterSignup variant="bare" stackButton />
