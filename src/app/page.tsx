@@ -150,9 +150,14 @@ export default function Home() {
             <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tight mb-4">
               Welcome to <span className="text-blue-700 dark:text-blue-300">IVEHITMYHEAD</span>
             </h1>
-            <p className="text-xl text-gray-700 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
-              Discover, share, and create the dullest memes on the internet.
-            </p>
+            <div className="relative mb-8 max-w-3xl mx-auto">
+              <p className="text-xl text-gray-700 dark:text-gray-300 leading-relaxed">
+                Discover, share, and create the dullest memes.
+              </p>
+              <span className="hidden md:inline-block absolute md:-right-24 top-1/2 -translate-y-1/2 -rotate-3 border-2 border-zinc-700 dark:border-zinc-300 bg-yellow-200 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-[0.16em] text-zinc-900 shadow-[3px_3px_0px_rgba(0,0,0,0.8)] dark:bg-yellow-300">
+                do it for the meme
+              </span>
+            </div>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button
                 size="lg"
@@ -252,9 +257,14 @@ export default function Home() {
           <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tight mb-4">
             Welcome to <span className="text-blue-700 dark:text-blue-300">IVEHITMYHEAD</span>
           </h1>
-          <p className="text-xl text-gray-700 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
-            Discover, share, and create the dullest memes on the internet.
-          </p>
+          <div className="relative mb-8 max-w-3xl mx-auto">
+            <p className="text-xl text-gray-700 dark:text-gray-300 leading-relaxed">
+              Discover, share, and create the dullest memes.
+            </p>
+            <span className="hidden md:inline-block absolute md:-right-24 top-1/2 -translate-y-1/2 -rotate-3 border-2 border-zinc-700 dark:border-zinc-300 bg-yellow-200 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-[0.16em] text-zinc-900 shadow-[3px_3px_0px_rgba(0,0,0,0.8)] dark:bg-yellow-300">
+              do it for the meme
+            </span>
+          </div>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button
               size="lg"

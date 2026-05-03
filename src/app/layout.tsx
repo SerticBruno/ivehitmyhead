@@ -8,7 +8,7 @@ import { getSiteUrl } from "@/lib/siteUrl";
 
 const siteUrl = getSiteUrl();
 const siteDescription =
-  "Discover, share, and create the dullest memes on the internet. Lower your expectations accordingly.";
+  "Discover, share, and create the dullest memes. Lower your expectations accordingly.";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

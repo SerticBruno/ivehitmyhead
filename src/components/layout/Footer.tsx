@@ -20,8 +20,13 @@ const Footer: React.FC = () => {
             <div className="flex items-center space-x-2 mb-4">
               <span className="text-xl font-black uppercase tracking-tight">IVEHITMYHEAD</span>
             </div>
+            <div className="mb-3">
+              <span className="inline-block -rotate-2 border-2 border-zinc-700 dark:border-zinc-300 bg-yellow-200 px-3 py-1 text-[11px] font-black uppercase tracking-[0.2em] text-zinc-900 shadow-[3px_3px_0px_rgba(0,0,0,0.85)] dark:bg-yellow-300">
+                do it for the meme
+              </span>
+            </div>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 max-w-md leading-relaxed">
-              Discover, share, and create the dullest memes on the internet. We said what we said.
+              Discover, share, and create the dullest memes.
             </p>
             {showSocial ? (
               <div className="flex items-center gap-4">
@@ -86,20 +91,6 @@ const Footer: React.FC = () => {
                   Terms of Service
                 </Link>
               </li>
-            </ul>
-          </div>
-
-          <div className="flex flex-col">
-            <h3 className="font-black uppercase tracking-wide mb-4">Quick Links</h3>
-            <ul className="space-y-2">
-              <li>
-                <Link
-                  href="/memes?filter=trending&time_period=month"
-                  className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 cursor-pointer"
-                >
-                  Trending Memes
-                </Link>
-              </li>
               <li>
                 <Link
                   href="/about"
@@ -109,8 +100,11 @@ const Footer: React.FC = () => {
                 </Link>
               </li>
             </ul>
+          </div>
+
+          <div className="flex flex-col">
             <div
-              className="mt-6 pt-6 border-t-2 border-zinc-200 dark:border-zinc-700"
+              className="pt-1"
               aria-label="Newsletter signup"
             >
               <h3 className="font-black uppercase tracking-wide mb-2">Newsletter</h3>
