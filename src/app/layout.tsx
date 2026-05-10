@@ -22,6 +22,9 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   metadataBase: siteUrl,
+  icons: {
+    icon: '/favicon.ico',
+  },
   title: {
     default: "IVEHITMYHEAD",
     template: "%s",
