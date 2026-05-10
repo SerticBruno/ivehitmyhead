@@ -3,11 +3,35 @@
 import React, { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { LogIn } from 'lucide-react';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
 import { ICONS } from '@/lib/utils/categoryIcons';
 import { cn } from '@/lib/utils';
+
+/** Google “G” mark for branded sign-in (colors per Google brand guidelines). */
+function GoogleGMark({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" aria-hidden>
+      <path
+        fill="#4285F4"
+        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+      />
+      <path
+        fill="#34A853"
+        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+      />
+      <path
+        fill="#EA4335"
+        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+      />
+    </svg>
+  );
+}
 
 function safeNextParam(raw: string | null): string {
   if (!raw || !raw.startsWith('/') || raw.startsWith('//')) return '/';
@@ -20,9 +44,12 @@ function LoginPageInner() {
   const next = safeNextParam(searchParams.get('next'));
   const oauthError = searchParams.get('error') === 'oauth';
 
-  const { signInWithGoogle, user, loading: authLoading } = useAuth();
+  const { signIn, signInWithGoogle, user, loading: authLoading } = useAuth();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [emailSubmitting, setEmailSubmitting] = useState(false);
+  const [googleSubmitting, setGoogleSubmitting] = useState(false);
 
   useEffect(() => {
     if (!authLoading && user) {
@@ -30,9 +57,25 @@ function LoginPageInner() {
     }
   }, [user, authLoading, router, next]);
 
+  const handleEmailSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setEmailSubmitting(true);
+    try {
+      const { error: err } = await signIn(email, password);
+      if (err) {
+        setError(err.message || 'Invalid email or password');
+      }
+    } catch {
+      setError('An unexpected error occurred. Please try again.');
+    } finally {
+      setEmailSubmitting(false);
+    }
+  };
+
   const handleGoogle = async () => {
     setError(null);
-    setLoading(true);
+    setGoogleSubmitting(true);
     try {
       const { error: err } = await signInWithGoogle(next);
       if (err) {
@@ -41,9 +84,11 @@ function LoginPageInner() {
     } catch {
       setError('An unexpected error occurred. Please try again.');
     } finally {
-      setLoading(false);
+      setGoogleSubmitting(false);
     }
   };
+
+  const busy = emailSubmitting || googleSubmitting;
 
   if (authLoading) {
     return (
@@ -63,17 +108,7 @@ function LoginPageInner() {
   return (
     <div className="bg-[#f7f4ee] dark:bg-gray-950 py-20 px-4 sm:px-6 flex flex-col items-center justify-start">
       <div className="w-full max-w-md">
-        <div className="mb-6 text-center">
-          <div className="inline-flex h-16 w-16 items-center justify-center border-2 border-zinc-700 dark:border-zinc-400 bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-200 mb-4 shadow-[4px_4px_0px_rgba(0,0,0,0.85)] dark:shadow-[4px_4px_0px_rgba(156,163,175,0.35)]">
-            <LogIn className="w-8 h-8" aria-hidden />
-          </div>
-          <p className="text-xs font-bold uppercase tracking-widest text-blue-700 dark:text-blue-300 mb-2">
-            Account
-          </p>
-          <h1 className="text-3xl sm:text-4xl font-black uppercase tracking-tight text-gray-900 dark:text-white">
-            Sign in
-          </h1>
-        </div>
+        <h1 className="sr-only">Sign in</h1>
 
         <div className="border-2 border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-900 p-6 sm:p-8 shadow-[8px_8px_0px_rgba(0,0,0,0.9)] dark:shadow-[8px_8px_0px_rgba(156,163,175,0.42)] space-y-5">
           {(oauthError || error) && (
@@ -83,22 +118,75 @@ function LoginPageInner() {
             >
               <ICONS.AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" aria-hidden />
               <p className="text-sm text-red-900 dark:text-red-100">
-                {error ?? (oauthError ? 'Google sign-in failed. Please try again.' : '')}
+                {error ??
+                  (oauthError ? 'Google sign-in didn’t finish. Please try Sign in with Google again.' : '')}
               </p>
             </div>
           )}
 
-          <Button
+          <form className="space-y-4" onSubmit={handleEmailSubmit} noValidate>
+            <Input
+              id="login-email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              required
+              label="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+              className="rounded-none border-2 border-zinc-300 dark:border-zinc-600 focus:border-zinc-700 dark:focus:border-zinc-400"
+            />
+            <Input
+              id="login-password"
+              name="password"
+              type="password"
+              autoComplete="current-password"
+              required
+              label="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              className="rounded-none border-2 border-zinc-300 dark:border-zinc-600 focus:border-zinc-700 dark:focus:border-zinc-400"
+            />
+            <Button
+              type="submit"
+              disabled={busy}
+              className={cn(
+                'w-full h-11 rounded-none border-2 border-zinc-700 dark:border-zinc-400',
+                'uppercase tracking-wide font-bold'
+              )}
+            >
+              {emailSubmitting ? 'Signing in…' : 'Sign in with email'}
+            </Button>
+          </form>
+
+          <div className="relative flex items-center gap-3 py-1">
+            <span className="h-px flex-1 bg-zinc-300 dark:bg-zinc-600" aria-hidden />
+            <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+              Or
+            </span>
+            <span className="h-px flex-1 bg-zinc-300 dark:bg-zinc-600" aria-hidden />
+          </div>
+
+          {/* Google-branded button: light surface + multicolor mark (recognizable as Google OAuth). */}
+          <button
             type="button"
-            disabled={loading}
+            disabled={busy}
             onClick={handleGoogle}
+            aria-label={googleSubmitting ? 'Opening Google sign-in' : 'Sign in with Google'}
             className={cn(
-              'w-full h-11 rounded-none border-2 border-zinc-700 dark:border-zinc-400',
-              'uppercase tracking-wide font-bold flex items-center justify-center gap-2'
+              'flex h-11 w-full cursor-pointer items-center justify-center gap-3 rounded-md border border-[#747775]',
+              'bg-white px-4 text-sm font-medium text-[#1f1f1f] shadow-[0_1px_2px_rgba(0,0,0,0.08)]',
+              'transition-colors hover:bg-[#f8f9fa] hover:shadow-[0_1px_3px_rgba(0,0,0,0.12)]',
+              'disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50',
+              // Keep Google’s recognizable light treatment in dark mode
+              'dark:border-[#8e918f] dark:bg-white dark:text-[#1f1f1f] dark:hover:bg-[#f8f9fa]'
             )}
           >
-            {loading ? 'Redirecting…' : 'Continue with Google'}
-          </Button>
+            <GoogleGMark className="h-5 w-5 shrink-0" />
+            <span>{googleSubmitting ? 'Redirecting…' : 'Sign in with Google'}</span>
+          </button>
         </div>
 
         <p className="mt-8 text-center text-sm text-gray-600 dark:text-gray-400">
