@@ -2,11 +2,12 @@
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import MemeCanvasController from '@/lib/meme-canvas/MemeCanvasController';
 import TextElement from '@/lib/meme-canvas/TextElement';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Download, Plus, Trash2, Type, ChevronDown, Upload } from 'lucide-react';
+import { Download, Plus, Trash2, Type, ChevronDown, Upload, BookmarkPlus } from 'lucide-react';
 import {
   MEME_TEMPLATES,
   CUSTOM_PHOTO_TEMPLATE_ID,
@@ -14,6 +15,7 @@ import {
 } from '@/lib/data/templates';
 import type { MemeTemplate } from '@/lib/types/meme';
 import { useNavigationWarning } from '@/lib/contexts/NavigationWarningContext';
+import { useAuth } from '@/lib/contexts/AuthContext';
 
 const PREVIEW_SCROLL_GAP_BELOW_HEADER_PX = 24;
 const DESKTOP_MAX_GENERATOR_HEIGHT_PX = 860;
@@ -102,6 +104,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
   const [initialTemplateState, setInitialTemplateState] = useState<string>('');
   const [isLoadingTemplate, setIsLoadingTemplate] = useState(false);
   const { setDirty: setNavigationDirty } = useNavigationWarning();
+  const { user } = useAuth();
   const [containerHeight, setContainerHeight] = useState(
     `min(calc(100dvh - 2rem), ${DESKTOP_MAX_GENERATOR_HEIGHT_PX}px)`
   );
@@ -116,6 +119,8 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
   const addTopCaptionAreaRef = useRef(false);
   const [addBottomCaptionArea, setAddBottomCaptionArea] = useState(false);
   const addBottomCaptionAreaRef = useRef(false);
+  const [isSavingToGallery, setIsSavingToGallery] = useState(false);
+  const [saveGalleryMessage, setSaveGalleryMessage] = useState<string | null>(null);
 
   const revokeCustomPhotoIfAny = useCallback(() => {
     if (customPhotoObjectUrlRef.current) {
@@ -806,15 +811,84 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
     }
   }, []);
 
+  const getExportBlob = useCallback(async () => {
+    const controller = controllerRef.current;
+    if (!controller) return null;
+
+    const includeWatermark = selectedTemplate?.id === CUSTOM_PHOTO_TEMPLATE_ID;
+
+    return new Promise<Blob | null>((resolve) => {
+      controller.exporting = true;
+      controller.requestFrame(() => {
+        if (includeWatermark) {
+          controller.renderer.drawWatermark();
+        }
+        controller.canvas.toBlob((blob) => {
+          controller.exporting = false;
+          controller.requestFrame();
+          resolve(blob);
+        }, 'image/png');
+      });
+    });
+  }, [selectedTemplate?.id]);
+
   // Download meme (custom uploads include site watermark in file)
-  const downloadMeme = useCallback(() => {
-    if (!controllerRef.current) return;
+  const downloadMeme = useCallback(async () => {
+    const blob = await getExportBlob();
+    if (!blob) return;
 
     const name = selectedTemplate?.name || 'meme';
-    const includeWatermark =
-      selectedTemplate?.id === CUSTOM_PHOTO_TEMPLATE_ID;
-    controllerRef.current.export(name, 'png', includeWatermark);
-  }, [selectedTemplate]);
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${name}.png`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [getExportBlob, selectedTemplate?.name]);
+
+  const saveToGallery = useCallback(async () => {
+    if (!selectedTemplate) return;
+    if (!user) return;
+
+    setIsSavingToGallery(true);
+    setSaveGalleryMessage(null);
+
+    try {
+      const blob = await getExportBlob();
+      if (!blob) {
+        setSaveGalleryMessage('Could not export image. Please try again.');
+        return;
+      }
+
+      const file = new File([blob], `${selectedTemplate.name || 'generated-meme'}.png`, {
+        type: 'image/png',
+      });
+      const formData = new FormData();
+      formData.append('image', file);
+      formData.append('title', selectedTemplate.name || 'Generated meme');
+      formData.append('template_name', selectedTemplate.name || 'Custom');
+
+      const response = await fetch('/api/memes/generated', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null);
+        throw new Error(
+          typeof payload?.error === 'string' ? payload.error : 'Failed to save meme'
+        );
+      }
+
+      setSaveGalleryMessage('Saved to your gallery.');
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Could not save meme. Please try again.';
+      setSaveGalleryMessage(message);
+    } finally {
+      setIsSavingToGallery(false);
+    }
+  }, [getExportBlob, selectedTemplate, user]);
 
   // Keep canvas preview watermark in sync with template (custom photo only)
   useEffect(() => {
@@ -1241,7 +1315,44 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                 <span className="hidden sm:inline">Download</span>
                 <span className="sm:hidden">Save</span>
               </Button>
+              <Button
+                onClick={saveToGallery}
+                variant="outline"
+                size="sm"
+                disabled={!selectedTemplate || !user || isSavingToGallery}
+                className="shrink-0 text-xs md:text-sm"
+              >
+                <BookmarkPlus className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
+                <span className="hidden sm:inline">
+                  {isSavingToGallery ? 'Saving...' : 'Save to Gallery'}
+                </span>
+                <span className="sm:hidden">{isSavingToGallery ? 'Saving' : 'Gallery'}</span>
+              </Button>
             </div>
+            {!user && (
+              <div className="mt-3 border-2 border-zinc-700 dark:border-zinc-400 bg-[#f7f4ee] dark:bg-gray-950 p-3">
+                <p className="text-xs md:text-sm font-semibold text-gray-700 dark:text-gray-300">
+                  Save to gallery requires an account.
+                </p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <Link href="/login?next=%2Fmeme-generator">
+                    <Button variant="outline" size="sm" className="text-xs md:text-sm">
+                      Sign in
+                    </Button>
+                  </Link>
+                  <Link href="/login?next=%2Fmeme-generator">
+                    <Button variant="outline" size="sm" className="text-xs md:text-sm">
+                      Sign up
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            )}
+            {saveGalleryMessage && (
+              <p className="mt-3 text-xs md:text-sm font-semibold text-gray-700 dark:text-gray-300">
+                {saveGalleryMessage}
+              </p>
+            )}
           </div>
         </div>
 

@@ -17,6 +17,7 @@ export const MemeGrid: React.FC<MemeGridProps> = ({
   hasMore = false,
   layout = 'vertical',
   emptyStateDescription,
+  hideLikeCount = false,
 }) => {
   const memeImageAreaStyle = {
     height: 'calc(100vh - 300px)',
@@ -120,6 +121,7 @@ export const MemeGrid: React.FC<MemeGridProps> = ({
             onShare={onShare}
             onComment={onComment}
             className={layout === 'grid' ? 'lg:col-span-1' : ''}
+            hideLikeCount={hideLikeCount}
           />
         ))}
       </div>

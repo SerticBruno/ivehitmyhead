@@ -14,7 +14,8 @@ const MemeCard: React.FC<MemeCardProps> = ({
   onLike, 
   onShare,
   className,
-  isLiked
+  isLiked,
+  hideLikeCount = false,
 }) => {
   const RETURN_TO_MEMES_SCROLL_KEY = 'restoreMemesScrollFromDetail';
   const { setScrollPosition } = useMemesUIState();
@@ -208,7 +209,7 @@ const MemeCard: React.FC<MemeCardProps> = ({
                   <ICONS.Heart className="w-4 h-4" />
                 )}
               </span>
-              <span>{meme.likes_count}</span>
+              {!hideLikeCount && <span>{meme.likes_count}</span>}
             </Button>
             
             <Button

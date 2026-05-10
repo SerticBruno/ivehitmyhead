@@ -68,6 +68,16 @@ export interface MemeView {
   viewed_at: string;
 }
 
+export interface GeneratedMeme {
+  id: string;
+  user_id: string;
+  title: string;
+  template_name?: string | null;
+  image_url: string;
+  cloudinary_public_id?: string;
+  created_at: string;
+}
+
 // Component Props
 export interface MemeCardProps {
   meme: Meme;
@@ -76,6 +86,8 @@ export interface MemeCardProps {
   onComment?: (id: string) => void;
   className?: string;
   isLiked?: boolean; // Optional for backward compatibility, but MemeCard now uses meme.is_liked
+  /** Hide numeric like count (e.g. profile Liked tab). */
+  hideLikeCount?: boolean;
 }
 
 export interface MemeDetailProps {
@@ -101,6 +113,8 @@ export interface MemeGridProps {
   layout?: 'grid' | 'vertical';
   /** Optional body copy when the grid is empty (e.g. filter-aware message on /memes). */
   emptyStateDescription?: ReactNode;
+  /** Passed through to each {@link MemeCard}. */
+  hideLikeCount?: boolean;
 }
 
 // API Types

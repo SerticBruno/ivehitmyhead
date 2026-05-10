@@ -2,10 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { LogOut, Shield } from 'lucide-react';
+import { LogOut, Shield, User } from 'lucide-react';
 import { useAuth } from '@/lib/contexts/AuthContext';
 
 interface HeaderProps {
@@ -67,6 +68,20 @@ const Header: React.FC<HeaderProps> = ({ showSearch = true }) => {
   const pathname = usePathname();
   const { user, isAdmin, signOut } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const loginHref =
+    pathname &&
+    pathname !== '/login' &&
+    !pathname.startsWith('/auth/')
+      ? `/login?next=${encodeURIComponent(pathname)}`
+      : '/login';
+
+  const avatarUrl =
+    user &&
+    typeof user.user_metadata?.avatar_url === 'string' &&
+    user.user_metadata.avatar_url
+      ? user.user_metadata.avatar_url
+      : null;
 
   useEffect(() => {
     if (!isMobileMenuOpen) return;
@@ -155,6 +170,61 @@ const Header: React.FC<HeaderProps> = ({ showSearch = true }) => {
                   </Link>
                 );
               })}
+
+              {!user && (
+                <Link href={loginHref} className="cursor-pointer">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="rounded-none border-2 border-transparent uppercase tracking-wide font-bold"
+                  >
+                    Sign in
+                  </Button>
+                </Link>
+              )}
+
+              {user && (
+                <Link href="/profile" className="cursor-pointer">
+                  <Button
+                    variant={pathname === '/profile' ? 'primary' : 'ghost'}
+                    size="sm"
+                    className="flex items-center gap-1.5 rounded-none border-2 border-transparent uppercase tracking-wide font-bold"
+                  >
+                    <User className="h-4 w-4" />
+                    <span>Profile</span>
+                  </Button>
+                </Link>
+              )}
+
+              {user && !isAdmin && (
+                <>
+                  {avatarUrl ? (
+                    <Image
+                      src={avatarUrl}
+                      alt=""
+                      width={32}
+                      height={32}
+                      className="h-8 w-8 border-2 border-zinc-700 dark:border-zinc-400 object-cover shrink-0"
+                    />
+                  ) : (
+                    <span
+                      className="inline-flex h-8 w-8 items-center justify-center border-2 border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 shrink-0"
+                      aria-hidden
+                    >
+                      <User className="h-4 w-4" />
+                    </span>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleLogout}
+                    className="flex items-center gap-1.5 rounded-none border-2 border-transparent uppercase tracking-wide font-bold"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    <span>Sign out</span>
+                  </Button>
+                </>
+              )}
 
               {user && isAdmin && (
                 <>
@@ -258,6 +328,62 @@ const Header: React.FC<HeaderProps> = ({ showSearch = true }) => {
                     </Link>
                   );
                 })}
+
+                {!user && (
+                  <Link
+                    href={loginHref}
+                    className="block px-3 py-2 text-base font-bold uppercase tracking-wide rounded-none border-2 transition-colors duration-150 text-gray-800 border-zinc-700 hover:bg-white dark:text-gray-200 dark:border-zinc-400 dark:hover:bg-gray-900"
+                    onClick={closeMobileMenu}
+                  >
+                    Sign in
+                  </Link>
+                )}
+
+                {user && (
+                  <Link
+                    href="/profile"
+                    className={`block px-3 py-2 text-base font-bold uppercase tracking-wide rounded-none border-2 transition-colors duration-150 flex items-center gap-2 ${
+                      pathname === '/profile'
+                        ? 'bg-black text-white border-black dark:bg-white dark:text-black dark:border-white'
+                        : 'text-gray-800 border-zinc-700 hover:bg-white dark:text-gray-200 dark:border-zinc-400 dark:hover:bg-gray-900'
+                    }`}
+                    onClick={closeMobileMenu}
+                  >
+                    <User className="h-4 w-4" />
+                    <span>Profile</span>
+                  </Link>
+                )}
+
+                {user && !isAdmin && (
+                  <div className="flex flex-col gap-2 px-1 py-2 border-2 border-zinc-700 dark:border-zinc-400 bg-white/50 dark:bg-gray-900/50">
+                    <div className="flex items-center gap-3 px-2">
+                      {avatarUrl ? (
+                        <Image
+                          src={avatarUrl}
+                          alt=""
+                          width={40}
+                          height={40}
+                          className="h-10 w-10 border-2 border-zinc-700 dark:border-zinc-400 object-cover shrink-0"
+                        />
+                      ) : (
+                        <span className="inline-flex h-10 w-10 items-center justify-center border-2 border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-900">
+                          <User className="h-5 w-5" aria-hidden />
+                        </span>
+                      )}
+                      <span className="text-sm font-bold text-gray-800 dark:text-gray-200 truncate">
+                        {user.email ?? 'Signed in'}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="w-full text-left px-3 py-2 text-base font-bold uppercase tracking-wide text-gray-800 border-2 border-zinc-700 hover:bg-white dark:text-gray-200 dark:border-zinc-400 dark:hover:bg-gray-900 rounded-none transition-colors duration-150 flex items-center gap-2"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      <span>Sign out</span>
+                    </button>
+                  </div>
+                )}
 
                 {user && isAdmin && (
                   <>
