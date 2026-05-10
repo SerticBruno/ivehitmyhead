@@ -47,7 +47,7 @@ function LoginPageInner() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-[#f7f4ee] dark:bg-gray-950 flex items-center justify-center px-4">
+      <div className="bg-[#f7f4ee] dark:bg-gray-950 flex items-center justify-center px-4 py-12">
         <div className="w-full max-w-md border-2 border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-900 p-10 shadow-[8px_8px_0px_rgba(0,0,0,0.9)] dark:shadow-[8px_8px_0px_rgba(156,163,175,0.42)] animate-pulse">
           <div className="h-8 bg-zinc-200 dark:bg-zinc-700 w-3/4 mx-auto mb-4" />
           <div className="h-12 bg-zinc-100 dark:bg-zinc-800" />
@@ -61,7 +61,7 @@ function LoginPageInner() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f7f4ee] dark:bg-gray-950 py-12 px-4 sm:px-6 flex flex-col items-center justify-center">
+    <div className="bg-[#f7f4ee] dark:bg-gray-950 py-20 px-4 sm:px-6 flex flex-col items-center justify-start">
       <div className="w-full max-w-md">
         <div className="mb-6 text-center">
           <div className="inline-flex h-16 w-16 items-center justify-center border-2 border-zinc-700 dark:border-zinc-400 bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-200 mb-4 shadow-[4px_4px_0px_rgba(0,0,0,0.85)] dark:shadow-[4px_4px_0px_rgba(156,163,175,0.35)]">
@@ -73,9 +73,6 @@ function LoginPageInner() {
           <h1 className="text-3xl sm:text-4xl font-black uppercase tracking-tight text-gray-900 dark:text-white">
             Sign in
           </h1>
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-            Use your Google account. More sign-in options may be added later.
-          </p>
         </div>
 
         <div className="border-2 border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-900 p-6 sm:p-8 shadow-[8px_8px_0px_rgba(0,0,0,0.9)] dark:shadow-[8px_8px_0px_rgba(156,163,175,0.42)] space-y-5">
@@ -102,14 +99,6 @@ function LoginPageInner() {
           >
             {loading ? 'Redirecting…' : 'Continue with Google'}
           </Button>
-
-          <p className="text-xs text-center text-gray-500 dark:text-gray-500">
-            Admins can still use email and password on{' '}
-            <Link href="/admin/login" className="font-bold underline text-gray-800 dark:text-gray-300">
-              Admin login
-            </Link>
-            .
-          </p>
         </div>
 
         <p className="mt-8 text-center text-sm text-gray-600 dark:text-gray-400">
@@ -128,7 +117,7 @@ function LoginPageInner() {
 
 function LoginFallback() {
   return (
-    <div className="min-h-screen bg-[#f7f4ee] dark:bg-gray-950 flex items-center justify-center px-4">
+    <div className="bg-[#f7f4ee] dark:bg-gray-950 flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md border-2 border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-900 p-10 shadow-[8px_8px_0px_rgba(0,0,0,0.9)] dark:shadow-[8px_8px_0px_rgba(156,163,175,0.42)] animate-pulse">
         <div className="h-8 bg-zinc-200 dark:bg-zinc-700 w-3/4 mx-auto mb-4" />
         <div className="h-12 bg-zinc-100 dark:bg-zinc-800" />
