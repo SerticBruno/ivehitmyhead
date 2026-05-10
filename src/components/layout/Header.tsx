@@ -263,7 +263,7 @@ const Header: React.FC<HeaderProps> = ({ showSearch = true }) => {
                           clearProfileMenuCloseTimer();
                           setIsProfileMenuOpen(false);
                         }}
-                        className={`flex items-center justify-center gap-1.5 rounded-none border-2 px-3 py-2 text-sm uppercase tracking-wide font-bold whitespace-nowrap transition-colors ${
+                        className={`flex h-10 w-full items-center justify-center gap-1.5 rounded-none border-2 px-3 text-sm leading-none uppercase tracking-wide font-bold whitespace-nowrap transition-colors ${
                           pathname === '/profile'
                             ? 'border-black bg-black text-white dark:border-white dark:bg-white dark:text-black'
                             : 'border-zinc-700 bg-white text-gray-800 hover:bg-gray-50 dark:border-zinc-400 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800'
@@ -284,7 +284,7 @@ const Header: React.FC<HeaderProps> = ({ showSearch = true }) => {
                           clearProfileMenuCloseTimer();
                           setIsProfileMenuOpen(false);
                         }}
-                        className="flex items-center justify-center gap-1.5 rounded-none border-2 border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-900 uppercase tracking-wide font-bold whitespace-nowrap"
+                        className="h-10 w-full shrink-0 rounded-none border-2 border-zinc-700 bg-white px-3 text-sm leading-none uppercase tracking-wide font-bold whitespace-nowrap dark:border-zinc-400 dark:bg-gray-900"
                       >
                         <LogOut className="h-4 w-4" />
                         <span>Sign out</span>

@@ -9,6 +9,16 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signUp: (
+    email: string,
+    password: string,
+    options: { username: string; nextPath: string }
+  ) => Promise<{ error: Error | null; session: Session | null }>;
+  resetPasswordForEmail: (
+    email: string,
+    options: { redirectPath: string }
+  ) => Promise<{ error: Error | null }>;
+  updatePassword: (newPassword: string) => Promise<{ error: Error | null }>;
   signInWithGoogle: (next?: string) => Promise<{ error: Error | null }>;
   signInWithDiscord: (next?: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
@@ -24,7 +34,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
@@ -32,7 +41,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
     });
 
-    // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -51,15 +59,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // Check if user has admin role in metadata or check profiles table
     const isAdminFromMetadata = user.user_metadata?.role === 'admin';
-    
+
     if (isAdminFromMetadata) {
       setIsAdmin(true);
       return;
     }
 
-    // Also check profiles table for admin status (if column exists)
     try {
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
@@ -67,25 +73,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .eq('id', user.id)
         .single();
 
-      // Check if error is due to missing column (PostgreSQL error code 42703)
       if (profileError) {
         const errorCode = profileError.code?.toString();
         if (errorCode === '42703' || profileError.message?.includes('does not exist')) {
-          // Column doesn't exist, rely on metadata
           setIsAdmin(isAdminFromMetadata);
           return;
         }
       }
 
-      // If profile exists and has is_admin field, use it
       if (!profileError && profile) {
         setIsAdmin(profile.is_admin === true);
       } else {
-        // If profile doesn't exist or other error, rely on metadata
         setIsAdmin(isAdminFromMetadata);
       }
     } catch {
-      // If profiles table check fails, rely on metadata
       setIsAdmin(isAdminFromMetadata);
     }
   };
@@ -106,6 +107,62 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       return { error: null };
+    } catch (error) {
+      return { error: error as Error };
+    }
+  };
+
+  const signUp = async (
+    email: string,
+    password: string,
+    options: { username: string; nextPath: string }
+  ): Promise<{ error: Error | null; session: Session | null }> => {
+    try {
+      const emailRedirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(options.nextPath)}`;
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo,
+          data: {
+            username: options.username,
+          },
+        },
+      });
+
+      if (error) {
+        return { error, session: null };
+      }
+
+      if (data.session && data.user) {
+        await checkAdminStatus(data.user);
+      }
+
+      return { error: null, session: data.session ?? null };
+    } catch (error) {
+      return { error: error as Error, session: null };
+    }
+  };
+
+  const resetPasswordForEmail = async (
+    email: string,
+    options: { redirectPath: string }
+  ): Promise<{ error: Error | null }> => {
+    try {
+      const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(options.redirectPath)}`;
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo,
+      });
+      return { error: error ?? null };
+    } catch (error) {
+      return { error: error as Error };
+    }
+  };
+
+  const updatePassword = async (newPassword: string): Promise<{ error: Error | null }> => {
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      return { error: error ?? null };
     } catch (error) {
       return { error: error as Error };
     }
@@ -144,6 +201,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         session,
         loading,
         signIn,
+        signUp,
+        resetPasswordForEmail,
+        updatePassword,
         signInWithGoogle,
         signInWithDiscord,
         signOut,
@@ -162,4 +222,3 @@ export function useAuth() {
   }
   return context;
 }
-

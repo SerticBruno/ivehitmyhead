@@ -4,6 +4,7 @@ import { cookies } from 'next/headers';
 import { createServerSupabase, supabaseAdmin } from '@/lib/supabase/server';
 import type { GeneratedMeme, Meme } from '@/lib/types/meme';
 import { ProfileTabs } from '@/components/profile/ProfileTabs';
+import { ProfileAccountSettings } from '@/components/profile/ProfileAccountSettings';
 
 type ProfileRow = {
   username: string | null;
@@ -140,6 +141,8 @@ export default async function ProfilePage() {
             </div>
           </div>
         </section>
+
+        <ProfileAccountSettings userEmail={user.email ?? ''} />
 
         <ProfileTabs
           likedMemes={likedMemes}

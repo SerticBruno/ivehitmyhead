@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import MemeCanvasController from '@/lib/meme-canvas/MemeCanvasController';
 import TextElement from '@/lib/meme-canvas/TextElement';
 import { Button } from '@/components/ui/Button';
@@ -16,6 +16,12 @@ import {
 import type { MemeTemplate } from '@/lib/types/meme';
 import { useNavigationWarning } from '@/lib/contexts/NavigationWarningContext';
 import { useAuth } from '@/lib/contexts/AuthContext';
+import { supabase } from '@/lib/supabase/client';
+import {
+  clearPendingGalleryMeme,
+  getPendingGalleryMeme,
+  setPendingGalleryMeme,
+} from '@/lib/persistence/pendingGalleryMeme';
 
 const PREVIEW_SCROLL_GAP_BELOW_HEADER_PX = 24;
 const DESKTOP_MAX_GENERATOR_HEIGHT_PX = 860;
@@ -104,7 +110,8 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
   const [initialTemplateState, setInitialTemplateState] = useState<string>('');
   const [isLoadingTemplate, setIsLoadingTemplate] = useState(false);
   const { setDirty: setNavigationDirty } = useNavigationWarning();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const router = useRouter();
   const [containerHeight, setContainerHeight] = useState(
     `min(calc(100dvh - 2rem), ${DESKTOP_MAX_GENERATOR_HEIGHT_PX}px)`
   );
@@ -121,6 +128,8 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
   const addBottomCaptionAreaRef = useRef(false);
   const [isSavingToGallery, setIsSavingToGallery] = useState(false);
   const [saveGalleryMessage, setSaveGalleryMessage] = useState<string | null>(null);
+  const galleryPendingFlushBusyRef = useRef(false);
+  const pendingGalleryFlushTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const revokeCustomPhotoIfAny = useCallback(() => {
     if (customPhotoObjectUrlRef.current) {
@@ -846,31 +855,21 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
     URL.revokeObjectURL(url);
   }, [getExportBlob, selectedTemplate?.name]);
 
-  const saveToGallery = useCallback(async () => {
-    if (!selectedTemplate) return;
-    if (!user) return;
-
-    setIsSavingToGallery(true);
-    setSaveGalleryMessage(null);
-
-    try {
-      const blob = await getExportBlob();
-      if (!blob) {
-        setSaveGalleryMessage('Could not export image. Please try again.');
-        return;
-      }
-
-      const file = new File([blob], `${selectedTemplate.name || 'generated-meme'}.png`, {
-        type: 'image/png',
-      });
+  const postGeneratedMeme = useCallback(
+    async (blob: Blob, title: string, templateDisplayName: string | null) => {
+      const safeName =
+        `${title.replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').slice(0, 60)}` ||
+        'generated-meme';
+      const file = new File([blob], `${safeName}.png`, { type: 'image/png' });
       const formData = new FormData();
       formData.append('image', file);
-      formData.append('title', selectedTemplate.name || 'Generated meme');
-      formData.append('template_name', selectedTemplate.name || 'Custom');
+      formData.append('title', title || 'Generated meme');
+      if (templateDisplayName) formData.append('template_name', templateDisplayName);
 
       const response = await fetch('/api/memes/generated', {
         method: 'POST',
         body: formData,
+        credentials: 'same-origin',
       });
 
       if (!response.ok) {
@@ -881,6 +880,43 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
       }
 
       setSaveGalleryMessage('Saved to your gallery.');
+    },
+    []
+  );
+
+  const saveToGallery = useCallback(async () => {
+    if (!selectedTemplate) return;
+
+    setSaveGalleryMessage(null);
+
+    const blob = await getExportBlob();
+    if (!blob) {
+      setSaveGalleryMessage('Could not export image. Please try again.');
+      return;
+    }
+
+    const title = selectedTemplate.name || 'Generated meme';
+    const templateName = selectedTemplate.name || 'Custom';
+
+    if (!user) {
+      try {
+        await setPendingGalleryMeme({
+          blob,
+          title,
+          templateName,
+        });
+        router.push(`/login?next=${encodeURIComponent('/meme-generator')}`);
+      } catch {
+        setSaveGalleryMessage(
+          'Could not store your meme for sign-in. Try again or save with Download.'
+        );
+      }
+      return;
+    }
+
+    setIsSavingToGallery(true);
+    try {
+      await postGeneratedMeme(blob, title, templateName);
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Could not save meme. Please try again.';
@@ -888,7 +924,92 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
     } finally {
       setIsSavingToGallery(false);
     }
-  }, [getExportBlob, selectedTemplate, user]);
+  }, [getExportBlob, postGeneratedMeme, router, selectedTemplate, user]);
+
+  const tryFlushPendingGallery = useCallback(async () => {
+    if (typeof indexedDB === 'undefined') return;
+    if (galleryPendingFlushBusyRef.current || authLoading || !user?.id) return;
+
+    let pending: Awaited<ReturnType<typeof getPendingGalleryMeme>>;
+    try {
+      pending = await getPendingGalleryMeme();
+    } catch {
+      return;
+    }
+
+    if (!pending) return;
+
+    const raw = pending.blob;
+    const blob = raw instanceof Blob ? raw : null;
+    if (!blob || blob.size < 48) {
+      await clearPendingGalleryMeme().catch(() => undefined);
+      setSaveGalleryMessage('Could not restore your meme after sign-in. Try Save to Gallery again.');
+      return;
+    }
+
+    galleryPendingFlushBusyRef.current = true;
+    setIsSavingToGallery(true);
+    setSaveGalleryMessage(null);
+
+    try {
+      await supabase.auth.getSession();
+
+      await postGeneratedMeme(
+        blob,
+        pending.title || 'Generated meme',
+        pending.templateName
+      );
+      await clearPendingGalleryMeme();
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Could not save meme. Tap Save to Gallery to retry.';
+      setSaveGalleryMessage(message);
+    } finally {
+      galleryPendingFlushBusyRef.current = false;
+      setIsSavingToGallery(false);
+    }
+  }, [authLoading, postGeneratedMeme, user?.id]);
+
+  const scheduleFlushPendingGallery = useCallback((delayMs: number) => {
+    if (typeof window === 'undefined') return;
+    if (pendingGalleryFlushTimerRef.current !== null) {
+      clearTimeout(pendingGalleryFlushTimerRef.current);
+    }
+    pendingGalleryFlushTimerRef.current = window.setTimeout(() => {
+      pendingGalleryFlushTimerRef.current = null;
+      void tryFlushPendingGallery();
+    }, delayMs);
+  }, [tryFlushPendingGallery]);
+
+  useEffect(() => {
+    return () => {
+      if (pendingGalleryFlushTimerRef.current !== null) {
+        clearTimeout(pendingGalleryFlushTimerRef.current);
+        pendingGalleryFlushTimerRef.current = null;
+      }
+    };
+  }, []);
+
+  /** After OAuth / reload, auth hydrates asynchronously — defer flush until session + IndexedDB pending are ready. */
+  useEffect(() => {
+    if (authLoading || !user?.id || typeof indexedDB === 'undefined') return;
+    scheduleFlushPendingGallery(120);
+    return undefined;
+  }, [authLoading, scheduleFlushPendingGallery, user?.id]);
+
+  /** Supabase client may populate session shortly after INITIAL_SESSION / SIGNED_IN (common right after redirect from Google). */
+  useEffect(() => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION')) {
+        scheduleFlushPendingGallery(200);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [scheduleFlushPendingGallery]);
 
   // Keep canvas preview watermark in sync with template (custom photo only)
   useEffect(() => {
@@ -1235,13 +1356,13 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
               )}
             </div>
 
-            {/* Canvas controls - single row (scroll on narrow widths) to keep preview taller */}
+            {/* Canvas controls - single row; fixed height keeps Top/Bottom bars + buttons aligned */}
             <div className="mt-1.5 md:mt-2 flex min-w-0 flex-shrink-0 items-center gap-1.5 md:gap-2">
               <div className="flex min-w-0 flex-1 flex-nowrap items-center gap-1.5 overflow-x-auto pb-0.5 [scrollbar-gutter:stable] md:gap-2 md:pb-0">
                 <label
                   htmlFor="meme-top-caption-strip"
                   title="White caption bar on top (~30% of image height)"
-                  className={`flex shrink-0 cursor-pointer select-none items-center gap-1.5 whitespace-nowrap border-2 border-zinc-700 bg-white px-2 py-1 text-xs dark:border-zinc-400 dark:bg-gray-900 md:gap-2 md:px-2.5 md:py-1.5 md:text-sm ${
+                  className={`inline-flex h-9 shrink-0 cursor-pointer select-none items-center gap-1.5 whitespace-nowrap rounded-none border-2 border-zinc-700 bg-white px-2.5 text-xs font-medium leading-none text-gray-800 dark:border-zinc-400 dark:bg-gray-900 dark:text-gray-200 md:gap-2 md:px-3 md:text-sm ${
                     !selectedTemplate
                       ? 'cursor-not-allowed opacity-50'
                       : ''
@@ -1255,14 +1376,12 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                     onChange={(e) => handleTopCaptionAreaChange(e.target.checked)}
                     className="h-4 w-4 shrink-0 rounded-none border-2 border-zinc-700 accent-blue-600 dark:border-zinc-400"
                   />
-                  <span className="font-medium text-gray-800 dark:text-gray-200">
-                    Top bar
-                  </span>
+                  <span>Top bar</span>
                 </label>
                 <label
                   htmlFor="meme-bottom-caption-strip"
                   title="White caption bar on bottom (~30% of image height)"
-                  className={`flex shrink-0 cursor-pointer select-none items-center gap-1.5 whitespace-nowrap border-2 border-zinc-700 bg-white px-2 py-1 text-xs dark:border-zinc-400 dark:bg-gray-900 md:gap-2 md:px-2.5 md:py-1.5 md:text-sm ${
+                  className={`inline-flex h-9 shrink-0 cursor-pointer select-none items-center gap-1.5 whitespace-nowrap rounded-none border-2 border-zinc-700 bg-white px-2.5 text-xs font-medium leading-none text-gray-800 dark:border-zinc-400 dark:bg-gray-900 dark:text-gray-200 md:gap-2 md:px-3 md:text-sm ${
                     !selectedTemplate
                       ? 'cursor-not-allowed opacity-50'
                       : ''
@@ -1278,16 +1397,14 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                     }
                     className="h-4 w-4 shrink-0 rounded-none border-2 border-zinc-700 accent-blue-600 dark:border-zinc-400"
                   />
-                  <span className="font-medium text-gray-800 dark:text-gray-200">
-                    Bottom bar
-                  </span>
+                  <span>Bottom bar</span>
                 </label>
                 <Button
                   onClick={addText}
                   variant="outline"
                   size="sm"
                   disabled={!selectedTemplate}
-                  className="shrink-0 text-xs md:text-sm"
+                  className="h-9 shrink-0 justify-center px-3 text-xs font-medium leading-none md:text-sm"
                 >
                   <Plus className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
                   <span className="hidden sm:inline">Add Text</span>
@@ -1298,7 +1415,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                   variant="outline"
                   size="sm"
                   disabled={!selectedElement}
-                  className="shrink-0 text-xs md:text-sm"
+                  className="h-9 shrink-0 justify-center px-3 text-xs font-medium leading-none md:text-sm"
                 >
                   <Trash2 className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
                   <span className="hidden sm:inline">Delete</span>
@@ -1309,7 +1426,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                 variant="primary"
                 size="sm"
                 disabled={!selectedTemplate}
-                className="shrink-0 text-xs md:text-sm"
+                className="h-9 shrink-0 justify-center px-3 text-xs font-medium leading-none md:text-sm"
               >
                 <Download className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
                 <span className="hidden sm:inline">Download</span>
@@ -1319,8 +1436,8 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                 onClick={saveToGallery}
                 variant="outline"
                 size="sm"
-                disabled={!selectedTemplate || !user || isSavingToGallery}
-                className="shrink-0 text-xs md:text-sm"
+                disabled={!selectedTemplate || isSavingToGallery}
+                className="h-9 shrink-0 justify-center px-3 text-xs font-medium leading-none md:text-sm"
               >
                 <BookmarkPlus className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
                 <span className="hidden sm:inline">
@@ -1329,25 +1446,6 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                 <span className="sm:hidden">{isSavingToGallery ? 'Saving' : 'Gallery'}</span>
               </Button>
             </div>
-            {!user && (
-              <div className="mt-3 border-2 border-zinc-700 dark:border-zinc-400 bg-[#f7f4ee] dark:bg-gray-950 p-3">
-                <p className="text-xs md:text-sm font-semibold text-gray-700 dark:text-gray-300">
-                  Save to gallery requires an account.
-                </p>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  <Link href="/login?next=%2Fmeme-generator">
-                    <Button variant="outline" size="sm" className="text-xs md:text-sm">
-                      Sign in
-                    </Button>
-                  </Link>
-                  <Link href="/login?next=%2Fmeme-generator">
-                    <Button variant="outline" size="sm" className="text-xs md:text-sm">
-                      Sign up
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            )}
             {saveGalleryMessage && (
               <p className="mt-3 text-xs md:text-sm font-semibold text-gray-700 dark:text-gray-300">
                 {saveGalleryMessage}

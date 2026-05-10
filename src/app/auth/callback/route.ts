@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createRouteHandlerSupabase } from '@/lib/supabase/server';
+import type { EmailOtpType } from '@supabase/supabase-js';
 
 function safeNextPath(next: string | null, origin: string): string {
   if (!next || !next.startsWith('/') || next.startsWith('//')) {
     return '/';
   }
-  // Disallow redirect to another origin via encoded tricks
   try {
     const u = new URL(next, origin);
     if (u.origin !== new URL(origin).origin) return '/';
@@ -15,23 +15,63 @@ function safeNextPath(next: string | null, origin: string): string {
   return next;
 }
 
+function profileUsernameFromUser(user: {
+  email?: string | null;
+  user_metadata?: Record<string, unknown>;
+  id: string;
+}) {
+  const meta = user.user_metadata?.username;
+  const fromMeta =
+    typeof meta === 'string' && meta.trim() ? meta.trim() : null;
+  const fromEmail =
+    user.email?.split('@')[0]?.trim() ||
+    user.id.replace(/-/g, '').slice(0, 8);
+  return fromMeta ?? fromEmail;
+}
+
+/** Valid values from email templates (signup, recovery, etc.). */
+function parseOtpType(raw: string): EmailOtpType | null {
+  const allowed = new Set<EmailOtpType>([
+    'signup',
+    'invite',
+    'magiclink',
+    'recovery',
+    'email_change',
+    'email',
+  ]);
+  return allowed.has(raw as EmailOtpType) ? (raw as EmailOtpType) : null;
+}
+
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
+  const token_hash = searchParams.get('token_hash');
+  const otpTypeRaw = searchParams.get('type');
   const next = safeNextPath(searchParams.get('next'), origin);
-
-  if (!code) {
-    return NextResponse.redirect(`${origin}/login?error=oauth`);
-  }
-
   const redirectUrl = `${origin}${next}`;
   const response = NextResponse.redirect(redirectUrl);
 
   const supabase = createRouteHandlerSupabase(request, response);
-  const { error } = await supabase.auth.exchangeCodeForSession(code);
 
-  if (error) {
-    return NextResponse.redirect(`${origin}/login?error=oauth`);
+  if (code) {
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    if (error) {
+      return NextResponse.redirect(`${origin}/login?error=auth`);
+    }
+  } else if (token_hash && otpTypeRaw) {
+    const otpType = parseOtpType(otpTypeRaw);
+    if (!otpType) {
+      return NextResponse.redirect(`${origin}/login?error=auth`);
+    }
+    const { error } = await supabase.auth.verifyOtp({
+      type: otpType,
+      token_hash,
+    });
+    if (error) {
+      return NextResponse.redirect(`${origin}/login?error=auth`);
+    }
+  } else {
+    return NextResponse.redirect(`${origin}/login?error=auth`);
   }
 
   const {
@@ -39,12 +79,15 @@ export async function GET(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   if (user) {
+    const username = profileUsernameFromUser(user);
+    const fullName = user.user_metadata?.full_name;
+    const avatarUrl = user.user_metadata?.avatar_url;
     const { error: profileError } = await supabase.from('profiles').upsert(
       {
         id: user.id,
-        username: user.email?.split('@')[0] ?? user.id.slice(0, 8),
-        display_name: (user.user_metadata?.full_name as string | undefined) ?? null,
-        avatar_url: (user.user_metadata?.avatar_url as string | undefined) ?? null,
+        username,
+        display_name: typeof fullName === 'string' ? fullName : null,
+        avatar_url: typeof avatarUrl === 'string' ? avatarUrl : null,
       },
       { onConflict: 'id', ignoreDuplicates: true }
     );
