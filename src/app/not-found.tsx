@@ -22,8 +22,8 @@ export default function NotFound() {
             Page not found
           </h1>
           <p className="mt-4 text-pretty leading-relaxed text-gray-600 dark:text-gray-300">
-            This path is empty-like the part of your brain that remembers why you opened this tab. Head back to
-            somewhere that exists.
+            That URL is not in the archive—no memes, no dignity, no page. Try home or the feed and lower your
+            expectations there instead.
           </p>
           <div className="mt-8 flex w-full flex-col gap-3 sm:flex-row sm:justify-center">
             <Link

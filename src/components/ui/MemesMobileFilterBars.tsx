@@ -179,45 +179,53 @@ function MemesMobileFilterBarsInner({
           id="memes-filter-tabpanel-categories"
           aria-labelledby="memes-filter-tab-categories"
           hidden={activeTab !== 'categories'}
-          className="min-h-0 max-h-[55vh] touch-pan-y overflow-y-auto p-4"
-          style={{ WebkitOverflowScrolling: 'touch' }}
+          className="p-4"
         >
-          <nav className="touch-pan-y space-y-2">
-            <button
-              type="button"
-              onClick={() => onCategorySelect('')}
-              className={`w-full flex items-center px-3 py-3 text-sm font-semibold uppercase tracking-wide rounded-none border-2 cursor-pointer transition-colors duration-150 ${
-                !selectedCategoryId ? BTN_ON : BTN_OFF
-              }`}
+          {categoriesLoading ? (
+            <div className="flex w-full flex-nowrap gap-2 overflow-hidden">
+              {[...Array(8)].map((_, i) => (
+                <div
+                  key={i}
+                  className="h-12 min-w-0 flex-shrink-0 basis-[6.5rem] bg-gray-200 dark:bg-gray-700 rounded-none animate-pulse"
+                />
+              ))}
+            </div>
+          ) : (
+            <nav
+              aria-label="Categories"
+              className="flex flex-nowrap gap-2 overflow-x-auto overscroll-x-contain pb-1 -mx-1 px-1 touch-pan-x [scrollbar-width:thin]"
             >
-              <span className="mr-3 flex-shrink-0">
-                <ICONS.Star className="w-5 h-5" />
-              </span>
-              <span className="flex-1 text-left font-medium">All Categories</span>
-            </button>
-            {categoriesLoading
-              ? [...Array(6)].map((_, i) => (
-                  <div
-                    key={i}
-                    className="h-12 w-full bg-gray-200 dark:bg-gray-700 rounded-none animate-pulse"
-                  />
-                ))
-              : categories?.map((category) => (
-                  <button
-                    key={category.id}
-                    type="button"
-                    onClick={() => onCategorySelect(category.id)}
-                    className={`w-full flex items-center px-3 py-3 text-sm font-semibold uppercase tracking-wide rounded-none border-2 cursor-pointer transition-colors duration-150 ${
-                      selectedCategoryId === category.id ? BTN_ON : BTN_OFF
-                    }`}
-                  >
-                    <span className="mr-3 flex-shrink-0">
-                      {renderCategoryIcon(category.name, 'w-5 h-5')}
-                    </span>
-                    <span className="flex-1 text-left font-medium min-w-0 truncate">{category.name}</span>
-                  </button>
-                ))}
-          </nav>
+              <button
+                type="button"
+                title="All categories"
+                onClick={() => onCategorySelect('')}
+                className={`flex max-w-[10rem] flex-shrink-0 items-center gap-2 px-2.5 py-2.5 text-left text-[10px] font-bold uppercase tracking-wide rounded-none border-2 cursor-pointer transition-colors duration-150 sm:text-xs ${
+                  !selectedCategoryId ? BTN_ON : BTN_OFF
+                }`}
+              >
+                <span className="flex-shrink-0">
+                  <ICONS.Star className="h-4 w-4 sm:h-5 sm:w-5" />
+                </span>
+                <span className="min-w-0 truncate font-medium">All</span>
+              </button>
+              {categories?.map((category) => (
+                <button
+                  key={category.id}
+                  type="button"
+                  title={category.name}
+                  onClick={() => onCategorySelect(category.id)}
+                  className={`flex max-w-[10rem] flex-shrink-0 items-center gap-2 px-2.5 py-2.5 text-left text-[10px] font-bold uppercase tracking-wide rounded-none border-2 cursor-pointer transition-colors duration-150 sm:text-xs ${
+                    selectedCategoryId === category.id ? BTN_ON : BTN_OFF
+                  }`}
+                >
+                  <span className="flex-shrink-0">
+                    {renderCategoryIcon(category.name, 'h-4 w-4 sm:h-5 sm:w-5')}
+                  </span>
+                  <span className="min-w-0 truncate font-medium">{category.name}</span>
+                </button>
+              ))}
+            </nav>
+          )}
         </div>
       </div>
     </div>

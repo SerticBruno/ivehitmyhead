@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { LogOut, Shield } from 'lucide-react';
 import { useAuth } from '@/lib/contexts/AuthContext';
+import { SiteLogoMark } from './SiteLogoMark';
 
 interface HeaderProps {
   showSearch?: boolean;
@@ -114,7 +115,8 @@ const Header: React.FC<HeaderProps> = ({ showSearch = true }) => {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center space-x-4">
-              <Link href="/" className="flex items-center space-x-2 cursor-pointer" onClick={closeMobileMenu}>
+              <Link href="/" className="flex items-center gap-2 cursor-pointer" onClick={closeMobileMenu}>
+                <SiteLogoMark className="h-8 w-8 sm:h-9 sm:w-9" priority />
                 <span className="text-xl font-black uppercase tracking-tight">IVEHITMYHEAD</span>
               </Link>
             </div>
