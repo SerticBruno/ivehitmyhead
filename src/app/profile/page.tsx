@@ -31,7 +31,7 @@ export default async function ProfilePage() {
     redirect('/login?next=%2Fprofile');
   }
 
-  const [{ data: profileData }, { data: generatedData }] = await Promise.all([
+  const [{ data: profileData }, { data: generatedData }, { data: sharedRows }] = await Promise.all([
     supabaseAdmin
       .from('profiles')
       .select('username, display_name, avatar_url')
@@ -43,6 +43,12 @@ export default async function ProfilePage() {
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .limit(100),
+    supabaseAdmin
+      .from('meme_shares')
+      .select('meme_id')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(200),
   ]);
 
   const generatedMemes = toGeneratedMemeArray(generatedData);
@@ -50,6 +56,7 @@ export default async function ProfilePage() {
   const cookieStore = await cookies();
   const likedSessionId = cookieStore.get('meme-session-id')?.value;
   let likedMemes: Meme[] = [];
+  let sharedMemes: Meme[] = [];
 
   if (likedSessionId) {
     const { data: likedRows } = await supabaseAdmin
@@ -75,6 +82,24 @@ export default async function ProfilePage() {
 
       likedMemes = toMemeArray(likedMemeRows);
     }
+  }
+
+  const sharedIds = (sharedRows ?? []).map((row) => row.meme_id).filter(Boolean);
+  if (sharedIds.length > 0) {
+    const { data: sharedMemeRows } = await supabaseAdmin
+      .from('memes')
+      .select(`
+        *,
+        author:profiles(username, display_name, avatar_url),
+        category:categories(id, name)
+      `)
+      .in('id', sharedIds)
+      .not('slug', 'is', 'null');
+
+    const memesById = new Map(toMemeArray(sharedMemeRows).map((meme) => [meme.id, meme]));
+    sharedMemes = sharedIds
+      .map((id) => memesById.get(id))
+      .filter((meme): meme is Meme => Boolean(meme));
   }
 
   const profile = (profileData as ProfileRow | null) ?? {
@@ -116,7 +141,11 @@ export default async function ProfilePage() {
           </div>
         </section>
 
-        <ProfileTabs likedMemes={likedMemes} generatedMemes={generatedMemes} />
+        <ProfileTabs
+          likedMemes={likedMemes}
+          sharedMemes={sharedMemes}
+          generatedMemes={generatedMemes}
+        />
       </main>
     </div>
   );

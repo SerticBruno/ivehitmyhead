@@ -9,7 +9,23 @@ type ProfileTabId = 'liked' | 'shared' | 'generated';
 
 interface ProfileTabsProps {
   likedMemes: Meme[];
+  sharedMemes: Meme[];
   generatedMemes: GeneratedMeme[];
+}
+
+interface GalleryItem {
+  id: string;
+  title: string;
+  imageUrl: string;
+  subtitle: string;
+  href: string;
+  external?: boolean;
+}
+
+interface GallerySectionProps {
+  items: GalleryItem[];
+  emptyTitle: string;
+  emptyDescription: string;
 }
 
 const TAB_CONFIG: Array<{ id: ProfileTabId; label: string }> = [
@@ -18,8 +34,91 @@ const TAB_CONFIG: Array<{ id: ProfileTabId; label: string }> = [
   { id: 'generated', label: 'Generated' },
 ];
 
-export function ProfileTabs({ likedMemes, generatedMemes }: ProfileTabsProps) {
+function GallerySection({ items, emptyTitle, emptyDescription }: GallerySectionProps) {
+  if (items.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <h3 className="text-xl font-black uppercase tracking-wide mb-2">{emptyTitle}</h3>
+        <p className="text-gray-600 dark:text-gray-400 max-w-xl mx-auto">{emptyDescription}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      {items.map((item) => (
+        <article
+          key={item.id}
+          className="flex h-full flex-col border-2 border-zinc-700 dark:border-zinc-400 bg-[#f7f4ee] dark:bg-gray-950 shadow-[6px_6px_0px_rgba(0,0,0,0.82)] dark:shadow-[6px_6px_0px_rgba(156,163,175,0.35)] overflow-hidden"
+        >
+          {item.external ? (
+            <a
+              href={item.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex min-h-[12rem] max-h-[min(85vh,900px)] w-full flex-1 items-center justify-center border-b-2 border-zinc-700 bg-white py-3 dark:border-zinc-400 dark:bg-gray-900"
+              aria-label={`Open meme: ${item.title}`}
+            >
+              <Image
+                src={item.imageUrl}
+                alt={item.title}
+                width={1200}
+                height={1600}
+                className="h-auto max-h-full w-full object-contain"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              />
+            </a>
+          ) : (
+            <Link
+              href={item.href}
+              className="flex min-h-[12rem] max-h-[min(85vh,900px)] w-full flex-1 items-center justify-center border-b-2 border-zinc-700 bg-white py-3 dark:border-zinc-400 dark:bg-gray-900"
+              aria-label={`Open meme: ${item.title}`}
+            >
+              <Image
+                src={item.imageUrl}
+                alt={item.title}
+                width={1200}
+                height={1600}
+                className="h-auto max-h-full w-full object-contain"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              />
+            </Link>
+          )}
+          <div className="p-3 bg-white dark:bg-gray-900">
+            <h3 className="text-sm font-black uppercase tracking-wide break-words">{item.title}</h3>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{item.subtitle}</p>
+          </div>
+        </article>
+      ))}
+    </div>
+  );
+}
+
+export function ProfileTabs({ likedMemes, sharedMemes, generatedMemes }: ProfileTabsProps) {
   const [activeTab, setActiveTab] = useState<ProfileTabId>('liked');
+  const likedItems: GalleryItem[] = likedMemes.map((meme) => ({
+    id: meme.id,
+    title: meme.title,
+    imageUrl: meme.image_url,
+    subtitle: meme.category?.name ?? 'Uncategorized',
+    href: `/meme/${meme.slug}`,
+  }));
+
+  const generatedItems: GalleryItem[] = generatedMemes.map((meme) => ({
+    id: meme.id,
+    title: meme.title,
+    imageUrl: meme.image_url,
+    subtitle: meme.template_name ?? 'Custom template',
+    href: meme.image_url,
+    external: true,
+  }));
+  const sharedItems: GalleryItem[] = sharedMemes.map((meme) => ({
+    id: meme.id,
+    title: meme.title,
+    imageUrl: meme.image_url,
+    subtitle: meme.category?.name ?? 'Uncategorized',
+    href: `/meme/${meme.slug}`,
+  }));
 
   return (
     <section className="border-2 border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-900 shadow-[8px_8px_0px_rgba(0,0,0,0.9)] dark:shadow-[8px_8px_0px_rgba(156,163,175,0.42)] [&_a]:cursor-pointer">
@@ -47,105 +146,27 @@ export function ProfileTabs({ likedMemes, generatedMemes }: ProfileTabsProps) {
 
       <div className="p-4 sm:p-6">
         {activeTab === 'liked' && (
-          <>
-            {likedMemes.length === 0 ? (
-              <div className="text-center py-12">
-                <h3 className="text-xl font-black uppercase tracking-wide mb-2">No liked memes yet</h3>
-                <p className="text-gray-600 dark:text-gray-400 max-w-xl mx-auto">
-                  You haven&apos;t liked any memes yet. Start exploring and tap that heart.
-                </p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {likedMemes.map((meme) => (
-                  <article
-                    key={meme.id}
-                    className="flex h-full flex-col border-2 border-zinc-700 dark:border-zinc-400 bg-[#f7f4ee] dark:bg-gray-950 shadow-[6px_6px_0px_rgba(0,0,0,0.82)] dark:shadow-[6px_6px_0px_rgba(156,163,175,0.35)] overflow-hidden"
-                  >
-                    <Link
-                      href={`/meme/${meme.slug}`}
-                      className="flex min-h-[12rem] max-h-[min(85vh,900px)] w-full flex-1 items-center justify-center border-b-2 border-zinc-700 bg-white py-3 dark:border-zinc-400 dark:bg-gray-900"
-                      aria-label={`Open meme: ${meme.title}`}
-                    >
-                      <Image
-                        src={meme.image_url}
-                        alt={meme.title}
-                        width={1200}
-                        height={1600}
-                        className="h-auto max-h-full w-full object-contain"
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                      />
-                    </Link>
-                    <div className="p-3 bg-white dark:bg-gray-900">
-                      <h3 className="text-sm font-black uppercase tracking-wide break-words">
-                        {meme.title}
-                      </h3>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        {meme.category?.name ?? 'Uncategorized'}
-                      </p>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            )}
-          </>
+          <GallerySection
+            items={likedItems}
+            emptyTitle="No liked memes yet"
+            emptyDescription="You haven&apos;t liked any memes yet. Start exploring and tap that heart."
+          />
         )}
 
         {activeTab === 'shared' && (
-          <div className="text-center py-12">
-            <h3 className="text-xl font-black uppercase tracking-wide mb-2">Shared memes coming soon</h3>
-            <p className="text-gray-600 dark:text-gray-400 max-w-xl mx-auto">
-              We currently track total shares per meme, but not your personal share history yet.
-            </p>
-          </div>
+          <GallerySection
+            items={sharedItems}
+            emptyTitle="No shared memes yet"
+            emptyDescription="Share memes from the feed and they will appear here."
+          />
         )}
 
         {activeTab === 'generated' && (
-          <>
-            {generatedMemes.length === 0 ? (
-              <div className="text-center py-12">
-                <h3 className="text-xl font-black uppercase tracking-wide mb-2">No generated memes yet</h3>
-                <p className="text-gray-600 dark:text-gray-400 max-w-xl mx-auto">
-                  Save from the meme generator and your creations will appear here.
-                </p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {generatedMemes.map((meme) => (
-                  <article
-                    key={meme.id}
-                    className="flex flex-col border-2 border-zinc-700 dark:border-zinc-400 bg-[#f7f4ee] dark:bg-gray-950 shadow-[6px_6px_0px_rgba(0,0,0,0.82)] dark:shadow-[6px_6px_0px_rgba(156,163,175,0.35)] overflow-hidden"
-                  >
-                    <a
-                      href={meme.image_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex min-h-[12rem] max-h-[min(85vh,900px)] w-full shrink-0 items-center justify-center border-b-2 border-zinc-700 bg-white dark:border-zinc-400 dark:bg-gray-900"
-                      aria-label={`View full-size: ${meme.title}`}
-                    >
-                      {/* Variable aspect ratios: show full meme without cropping */}
-                      <Image
-                        src={meme.image_url}
-                        alt={meme.title}
-                        width={1200}
-                        height={1600}
-                        className="h-auto max-h-[min(85vh,900px)] w-full object-contain"
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                      />
-                    </a>
-                    <div className="p-3 bg-white dark:bg-gray-900">
-                      <h3 className="text-sm font-black uppercase tracking-wide break-words">
-                        {meme.title}
-                      </h3>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        {meme.template_name ?? 'Custom template'}
-                      </p>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            )}
-          </>
+          <GallerySection
+            items={generatedItems}
+            emptyTitle="No generated memes yet"
+            emptyDescription="Save from the meme generator and your creations will appear here."
+          />
         )}
       </div>
     </section>

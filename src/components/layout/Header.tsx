@@ -68,6 +68,7 @@ const Header: React.FC<HeaderProps> = ({ showSearch = true }) => {
   const pathname = usePathname();
   const { user, isAdmin, signOut } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
   const loginHref =
     pathname &&
@@ -91,6 +92,10 @@ const Header: React.FC<HeaderProps> = ({ showSearch = true }) => {
       document.body.style.overflow = prev;
     };
   }, [isMobileMenuOpen]);
+
+  useEffect(() => {
+    setIsProfileMenuOpen(false);
+  }, [pathname]);
 
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -128,9 +133,13 @@ const Header: React.FC<HeaderProps> = ({ showSearch = true }) => {
       <div className="relative">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Link href="/" className="flex items-center space-x-2 cursor-pointer" onClick={closeMobileMenu}>
-                <span className="text-xl font-black uppercase tracking-tight">IVEHITMYHEAD</span>
+            <div className="flex items-center self-center space-x-4">
+              <Link
+                href="/"
+                className="inline-flex h-9 items-center cursor-pointer leading-none"
+                onClick={closeMobileMenu}
+              >
+                <span className="text-xl font-black uppercase tracking-tight leading-none">IVEHITMYHEAD</span>
               </Link>
             </div>
 
@@ -183,47 +192,53 @@ const Header: React.FC<HeaderProps> = ({ showSearch = true }) => {
                 </Link>
               )}
 
-              {user && (
-                <Link href="/profile" className="cursor-pointer">
-                  <Button
-                    variant={pathname === '/profile' ? 'primary' : 'ghost'}
-                    size="sm"
-                    className="flex items-center gap-1.5 rounded-none border-2 border-transparent uppercase tracking-wide font-bold"
-                  >
-                    <User className="h-4 w-4" />
-                    <span>Profile</span>
-                  </Button>
-                </Link>
-              )}
-
               {user && !isAdmin && (
-                <>
-                  {avatarUrl ? (
-                    <Image
-                      src={avatarUrl}
-                      alt=""
-                      width={32}
-                      height={32}
-                      className="h-8 w-8 border-2 border-zinc-700 dark:border-zinc-400 object-cover shrink-0"
-                    />
-                  ) : (
-                    <span
-                      className="inline-flex h-8 w-8 items-center justify-center border-2 border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 shrink-0"
-                      aria-hidden
-                    >
-                      <User className="h-4 w-4" />
-                    </span>
-                  )}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleLogout}
-                    className="flex items-center gap-1.5 rounded-none border-2 border-transparent uppercase tracking-wide font-bold"
+                <div
+                  className="relative flex items-center self-center"
+                  onMouseEnter={() => setIsProfileMenuOpen(true)}
+                  onMouseLeave={() => setIsProfileMenuOpen(false)}
+                >
+                  <Link
+                    href="/profile"
+                    onFocus={() => setIsProfileMenuOpen(true)}
+                    className={`cursor-pointer inline-flex h-9 w-9 items-center justify-center border-2 transition-colors ${
+                      pathname === '/profile'
+                        ? 'border-black dark:border-white bg-black text-white dark:bg-white dark:text-black'
+                        : 'border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300'
+                    }`}
+                    aria-label="Profile"
                   >
-                    <LogOut className="h-4 w-4" />
-                    <span>Sign out</span>
-                  </Button>
-                </>
+                    {avatarUrl ? (
+                      <Image
+                        src={avatarUrl}
+                        alt=""
+                        width={32}
+                        height={32}
+                        className="h-full w-full object-cover shrink-0"
+                      />
+                    ) : (
+                      <User className="h-4 w-4" aria-hidden />
+                    )}
+                  </Link>
+                  <div
+                    className={`absolute right-0 top-full pt-2 transition-all duration-200 ease-out ${
+                      isProfileMenuOpen
+                        ? 'opacity-100 translate-y-0 pointer-events-auto'
+                        : 'opacity-0 translate-y-1 pointer-events-none'
+                    }`}
+                  >
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleLogout}
+                      onBlur={() => setIsProfileMenuOpen(false)}
+                      className="flex items-center gap-1.5 rounded-none border-2 border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-900 uppercase tracking-wide font-bold whitespace-nowrap"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      <span>Sign out</span>
+                    </Button>
+                  </div>
+                </div>
               )}
 
               {user && isAdmin && (
@@ -339,45 +354,34 @@ const Header: React.FC<HeaderProps> = ({ showSearch = true }) => {
                   </Link>
                 )}
 
-                {user && (
-                  <Link
-                    href="/profile"
-                    className={`block px-3 py-2 text-base font-bold uppercase tracking-wide rounded-none border-2 transition-colors duration-150 flex items-center gap-2 ${
-                      pathname === '/profile'
-                        ? 'bg-black text-white border-black dark:bg-white dark:text-black dark:border-white'
-                        : 'text-gray-800 border-zinc-700 hover:bg-white dark:text-gray-200 dark:border-zinc-400 dark:hover:bg-gray-900'
-                    }`}
-                    onClick={closeMobileMenu}
-                  >
-                    <User className="h-4 w-4" />
-                    <span>Profile</span>
-                  </Link>
-                )}
-
                 {user && !isAdmin && (
-                  <div className="flex flex-col gap-2 px-1 py-2 border-2 border-zinc-700 dark:border-zinc-400 bg-white/50 dark:bg-gray-900/50">
-                    <div className="flex items-center gap-3 px-2">
+                  <div className="flex items-center justify-between gap-3 px-3 py-2 border-2 border-zinc-700 dark:border-zinc-400 bg-white/50 dark:bg-gray-900/50">
+                    <Link
+                      href="/profile"
+                      onClick={closeMobileMenu}
+                      aria-label="Profile"
+                      className={`inline-flex h-10 w-10 shrink-0 items-center justify-center border-2 transition-colors ${
+                        pathname === '/profile'
+                          ? 'border-black bg-black text-white dark:border-white dark:bg-white dark:text-black'
+                          : 'border-zinc-700 bg-white dark:border-zinc-400 dark:bg-gray-900 text-gray-700 dark:text-gray-300'
+                      }`}
+                    >
                       {avatarUrl ? (
                         <Image
                           src={avatarUrl}
                           alt=""
                           width={40}
                           height={40}
-                          className="h-10 w-10 border-2 border-zinc-700 dark:border-zinc-400 object-cover shrink-0"
+                          className="h-full w-full object-cover"
                         />
                       ) : (
-                        <span className="inline-flex h-10 w-10 items-center justify-center border-2 border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-900">
-                          <User className="h-5 w-5" aria-hidden />
-                        </span>
+                        <User className="h-5 w-5" aria-hidden />
                       )}
-                      <span className="text-sm font-bold text-gray-800 dark:text-gray-200 truncate">
-                        {user.email ?? 'Signed in'}
-                      </span>
-                    </div>
+                    </Link>
                     <button
                       type="button"
                       onClick={handleLogout}
-                      className="w-full text-left px-3 py-2 text-base font-bold uppercase tracking-wide text-gray-800 border-2 border-zinc-700 hover:bg-white dark:text-gray-200 dark:border-zinc-400 dark:hover:bg-gray-900 rounded-none transition-colors duration-150 flex items-center gap-2"
+                      className="flex min-h-10 flex-1 items-center justify-center gap-2 border-2 border-zinc-700 px-3 py-2 text-base font-bold uppercase tracking-wide text-gray-800 hover:bg-white dark:border-zinc-400 dark:text-gray-200 dark:hover:bg-gray-900 rounded-none transition-colors duration-150"
                     >
                       <LogOut className="h-4 w-4" />
                       <span>Sign out</span>
@@ -387,6 +391,30 @@ const Header: React.FC<HeaderProps> = ({ showSearch = true }) => {
 
                 {user && isAdmin && (
                   <>
+                    <div className="px-3 py-1">
+                      <Link
+                        href="/profile"
+                        onClick={closeMobileMenu}
+                        aria-label="Profile"
+                        className={`inline-flex h-10 w-10 items-center justify-center border-2 ${
+                          pathname === '/profile'
+                            ? 'border-black bg-black text-white dark:border-white dark:bg-white dark:text-black'
+                            : 'border-zinc-700 bg-white dark:border-zinc-400 dark:bg-gray-900 text-gray-700 dark:text-gray-300'
+                        }`}
+                      >
+                        {avatarUrl ? (
+                          <Image
+                            src={avatarUrl}
+                            alt=""
+                            width={40}
+                            height={40}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <User className="h-5 w-5" aria-hidden />
+                        )}
+                      </Link>
+                    </div>
                     <Link
                       href="/admin"
                       className={`block px-3 py-2 text-base font-bold uppercase tracking-wide rounded-none border-2 transition-colors duration-150 flex items-center gap-2 ${
