@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
@@ -63,12 +63,16 @@ function MobileMenuIcon({ open }: { open: boolean }) {
   );
 }
 
+/** Desktop profile dropdown: grace period before closing on mouse leave (bridge gap avatar ↔ menu). */
+const PROFILE_MENU_CLOSE_DELAY_MS = 180;
+
 const Header: React.FC<HeaderProps> = ({ showSearch = true }) => {
   const router = useRouter();
   const pathname = usePathname();
   const { user, isAdmin, signOut } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const profileMenuCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const loginHref =
     pathname &&
@@ -93,9 +97,34 @@ const Header: React.FC<HeaderProps> = ({ showSearch = true }) => {
     };
   }, [isMobileMenuOpen]);
 
+  const clearProfileMenuCloseTimer = () => {
+    if (profileMenuCloseTimerRef.current !== null) {
+      clearTimeout(profileMenuCloseTimerRef.current);
+      profileMenuCloseTimerRef.current = null;
+    }
+  };
+
+  const openProfileMenu = () => {
+    clearProfileMenuCloseTimer();
+    setIsProfileMenuOpen(true);
+  };
+
+  const scheduleCloseProfileMenu = () => {
+    clearProfileMenuCloseTimer();
+    profileMenuCloseTimerRef.current = setTimeout(() => {
+      profileMenuCloseTimerRef.current = null;
+      setIsProfileMenuOpen(false);
+    }, PROFILE_MENU_CLOSE_DELAY_MS);
+  };
+
   useEffect(() => {
+    clearProfileMenuCloseTimer();
     setIsProfileMenuOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    return () => clearProfileMenuCloseTimer();
+  }, []);
 
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -195,12 +224,12 @@ const Header: React.FC<HeaderProps> = ({ showSearch = true }) => {
               {user && !isAdmin && (
                 <div
                   className="relative flex items-center self-center"
-                  onMouseEnter={() => setIsProfileMenuOpen(true)}
-                  onMouseLeave={() => setIsProfileMenuOpen(false)}
+                  onMouseEnter={openProfileMenu}
+                  onMouseLeave={scheduleCloseProfileMenu}
                 >
                   <Link
                     href="/profile"
-                    onFocus={() => setIsProfileMenuOpen(true)}
+                    onFocus={openProfileMenu}
                     className={`cursor-pointer inline-flex h-9 w-9 items-center justify-center border-2 transition-colors ${
                       pathname === '/profile'
                         ? 'border-black dark:border-white bg-black text-white dark:bg-white dark:text-black'
@@ -221,22 +250,46 @@ const Header: React.FC<HeaderProps> = ({ showSearch = true }) => {
                     )}
                   </Link>
                   <div
-                    className={`absolute right-0 top-full pt-2 transition-all duration-200 ease-out ${
+                    className={`absolute right-0 top-full z-10 pt-2 pb-4 transition-all duration-200 ease-out ${
                       isProfileMenuOpen
                         ? 'opacity-100 translate-y-0 pointer-events-auto'
                         : 'opacity-0 translate-y-1 pointer-events-none'
                     }`}
                   >
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleLogout}
-                      onBlur={() => setIsProfileMenuOpen(false)}
-                      className="flex items-center gap-1.5 rounded-none border-2 border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-900 uppercase tracking-wide font-bold whitespace-nowrap"
-                    >
-                      <LogOut className="h-4 w-4" />
-                      <span>Sign out</span>
-                    </Button>
+                    <div className="flex min-w-[10.5rem] flex-col gap-1.5">
+                      <Link
+                        href="/profile"
+                        onClick={() => {
+                          clearProfileMenuCloseTimer();
+                          setIsProfileMenuOpen(false);
+                        }}
+                        className={`flex items-center justify-center gap-1.5 rounded-none border-2 px-3 py-2 text-sm uppercase tracking-wide font-bold whitespace-nowrap transition-colors ${
+                          pathname === '/profile'
+                            ? 'border-black bg-black text-white dark:border-white dark:bg-white dark:text-black'
+                            : 'border-zinc-700 bg-white text-gray-800 hover:bg-gray-50 dark:border-zinc-400 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800'
+                        }`}
+                      >
+                        Profile
+                      </Link>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          clearProfileMenuCloseTimer();
+                          handleLogout();
+                        }}
+                        onBlur={(e) => {
+                          const to = e.relatedTarget;
+                          if (to instanceof Node && e.currentTarget.parentElement?.contains(to)) return;
+                          clearProfileMenuCloseTimer();
+                          setIsProfileMenuOpen(false);
+                        }}
+                        className="flex items-center justify-center gap-1.5 rounded-none border-2 border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-900 uppercase tracking-wide font-bold whitespace-nowrap"
+                      >
+                        <LogOut className="h-4 w-4" />
+                        <span>Sign out</span>
+                      </Button>
+                    </div>
                   </div>
                 </div>
               )}

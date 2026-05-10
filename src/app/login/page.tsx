@@ -9,6 +9,21 @@ import { Input } from '@/components/ui/Input';
 import { ICONS } from '@/lib/utils/categoryIcons';
 import { cn } from '@/lib/utils';
 
+/** Clyde mark (Discord’s standard wide logo); renders clearly at icon sizes vs. tiny 24×24 paths. */
+function DiscordMark({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 127.14 96.36"
+      fill="currentColor"
+      aria-hidden
+      focusable={false}
+    >
+      <path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22h0C129.24,52.84,122.09,29.11,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.73,73.25,60,73.25,53s5-12.74,11.44-12.74S96.23,46,96.12,53,91.08,65.63,84.69,65.63Z" />
+    </svg>
+  );
+}
+
 /** Google “G” mark for branded sign-in (colors per Google brand guidelines). */
 function GoogleGMark({ className }: { className?: string }) {
   return (
@@ -44,12 +59,13 @@ function LoginPageInner() {
   const next = safeNextParam(searchParams.get('next'));
   const oauthError = searchParams.get('error') === 'oauth';
 
-  const { signIn, signInWithGoogle, user, loading: authLoading } = useAuth();
+  const { signIn, signInWithGoogle, signInWithDiscord, user, loading: authLoading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [emailSubmitting, setEmailSubmitting] = useState(false);
   const [googleSubmitting, setGoogleSubmitting] = useState(false);
+  const [discordSubmitting, setDiscordSubmitting] = useState(false);
 
   useEffect(() => {
     if (!authLoading && user) {
@@ -88,7 +104,22 @@ function LoginPageInner() {
     }
   };
 
-  const busy = emailSubmitting || googleSubmitting;
+  const handleDiscord = async () => {
+    setError(null);
+    setDiscordSubmitting(true);
+    try {
+      const { error: err } = await signInWithDiscord(next);
+      if (err) {
+        setError(err.message || 'Could not start Discord sign-in');
+      }
+    } catch {
+      setError('An unexpected error occurred. Please try again.');
+    } finally {
+      setDiscordSubmitting(false);
+    }
+  };
+
+  const busy = emailSubmitting || googleSubmitting || discordSubmitting;
 
   if (authLoading) {
     return (
@@ -119,7 +150,9 @@ function LoginPageInner() {
               <ICONS.AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" aria-hidden />
               <p className="text-sm text-red-900 dark:text-red-100">
                 {error ??
-                  (oauthError ? 'Google sign-in didn’t finish. Please try Sign in with Google again.' : '')}
+                  (oauthError
+                    ? 'Sign-in didn’t finish. Try Google or Discord again, or sign in with email.'
+                    : '')}
               </p>
             </div>
           )}
@@ -186,6 +219,22 @@ function LoginPageInner() {
           >
             <GoogleGMark className="h-5 w-5 shrink-0" />
             <span>{googleSubmitting ? 'Redirecting…' : 'Sign in with Google'}</span>
+          </button>
+
+          <button
+            type="button"
+            disabled={busy}
+            onClick={handleDiscord}
+            aria-label={discordSubmitting ? 'Opening Discord sign-in' : 'Continue with Discord'}
+            className={cn(
+              'flex h-11 w-full cursor-pointer items-center justify-center gap-3 rounded-md',
+              'border border-[#4752c4] bg-[#5865f2] px-4 text-sm font-semibold text-white shadow-[0_1px_2px_rgba(0,0,0,0.12)]',
+              'transition-colors hover:bg-[#4752c4] hover:shadow-[0_1px_4px_rgba(0,0,0,0.18)]',
+              'disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50'
+            )}
+          >
+            <DiscordMark className="h-5 w-5 shrink-0" />
+            <span>{discordSubmitting ? 'Redirecting…' : 'Continue with Discord'}</span>
           </button>
         </div>
 
