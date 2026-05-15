@@ -103,6 +103,19 @@ function LoginPageInner() {
   const [showForgot, setShowForgot] = useState(false);
   const [resetSubmitting, setResetSubmitting] = useState(false);
   const [signupNeedsEmailConfirmation, setSignupNeedsEmailConfirmation] = useState(false);
+  const [showSigninPassword, setShowSigninPassword] = useState(false);
+  const [showSignupPassword, setShowSignupPassword] = useState(false);
+  const [showSignupConfirmPassword, setShowSignupConfirmPassword] = useState(false);
+
+  const clearFormFields = () => {
+    setEmail('');
+    setPassword('');
+    setConfirmPassword('');
+    setSignupUsername('');
+    setShowSigninPassword(false);
+    setShowSignupPassword(false);
+    setShowSignupConfirmPassword(false);
+  };
 
   useEffect(() => {
     if (searchParams.get('tab') === 'signup') {
@@ -267,7 +280,7 @@ function LoginPageInner() {
       <div className="w-full max-w-md">
         <h1 className="sr-only">{panelMode === 'signin' ? 'Sign in' : 'Create account'}</h1>
 
-        <div className="border-2 border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-900 p-6 sm:p-8 shadow-[8px_8px_0px_rgba(0,0,0,0.9)] dark:shadow-[8px_8px_0px_rgba(156,163,175,0.42)] space-y-5 [&_input]:cursor-pointer [&_label]:cursor-pointer">
+        <div className="border-2 border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-900 p-6 sm:p-8 shadow-[8px_8px_0px_rgba(0,0,0,0.9)] dark:shadow-[8px_8px_0px_rgba(156,163,175,0.42)] space-y-5 [&_label]:cursor-pointer">
           <div
             className="flex rounded-none border-2 border-zinc-300 dark:border-zinc-600 p-0 overflow-hidden"
             role="tablist"
@@ -283,6 +296,7 @@ function LoginPageInner() {
                 setInfo(null);
                 setSignupNeedsEmailConfirmation(false);
                 setShowForgot(false);
+                clearFormFields();
               }}
               className={cn(
                 'flex-1 cursor-pointer py-3 text-xs sm:text-sm font-bold uppercase tracking-wide transition-colors',
@@ -303,6 +317,7 @@ function LoginPageInner() {
                 setInfo(null);
                 setSignupNeedsEmailConfirmation(false);
                 setShowForgot(false);
+                clearFormFields();
               }}
               className={cn(
                 'flex-1 cursor-pointer py-3 text-xs sm:text-sm font-bold uppercase tracking-wide transition-colors',
@@ -411,17 +426,33 @@ function LoginPageInner() {
                       Forgot password?
                     </button>
                   </div>
-                  <Input
-                    id="login-password"
-                    name="password"
-                    type="password"
-                    autoComplete="current-password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="rounded-none border-2 border-zinc-300 dark:border-zinc-600 focus:border-zinc-700 dark:focus:border-zinc-400"
-                  />
+                  <div className="relative">
+                    <Input
+                      id="login-password"
+                      name="password"
+                      type={showSigninPassword ? 'text' : 'password'}
+                      autoComplete="current-password"
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="rounded-none border-2 border-zinc-300 dark:border-zinc-600 focus:border-zinc-700 dark:focus:border-zinc-400 pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowSigninPassword((v) => !v)}
+                      aria-label={showSigninPassword ? 'Hide password' : 'Show password'}
+                      aria-pressed={showSigninPassword}
+                      className="absolute inset-y-0 right-0 flex items-center px-3 cursor-pointer text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                      tabIndex={0}
+                    >
+                      {showSigninPassword ? (
+                        <ICONS.EyeOff className="w-5 h-5" aria-hidden />
+                      ) : (
+                        <ICONS.Eye className="w-5 h-5" aria-hidden />
+                      )}
+                    </button>
+                  </div>
                 </div>
                 <Button
                   type="submit"
@@ -450,7 +481,7 @@ function LoginPageInner() {
                 label="Username"
                 value={signupUsername}
                 onChange={(e) => setSignupUsername(e.target.value)}
-                placeholder="cool_memer"
+                placeholder="Username"
                 className="rounded-none border-2 border-zinc-300 dark:border-zinc-600 focus:border-zinc-700 dark:focus:border-zinc-400"
               />
               <p className="text-xs text-gray-500 dark:text-gray-400 -mt-2">
@@ -468,30 +499,60 @@ function LoginPageInner() {
                 placeholder="you@example.com"
                 className="rounded-none border-2 border-zinc-300 dark:border-zinc-600 focus:border-zinc-700 dark:focus:border-zinc-400"
               />
-              <Input
-                id="signup-password"
-                name="password"
-                type="password"
-                autoComplete="new-password"
-                required
-                label="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="rounded-none border-2 border-zinc-300 dark:border-zinc-600 focus:border-zinc-700 dark:focus:border-zinc-400"
-              />
-              <Input
-                id="signup-password-confirm"
-                name="password-confirm"
-                type="password"
-                autoComplete="new-password"
-                required
-                label="Confirm password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="••••••••"
-                className="rounded-none border-2 border-zinc-300 dark:border-zinc-600 focus:border-zinc-700 dark:focus:border-zinc-400"
-              />
+              <div className="relative">
+                <Input
+                  id="signup-password"
+                  name="password"
+                  type={showSignupPassword ? 'text' : 'password'}
+                  autoComplete="new-password"
+                  required
+                  label="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="rounded-none border-2 border-zinc-300 dark:border-zinc-600 focus:border-zinc-700 dark:focus:border-zinc-400 pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowSignupPassword((v) => !v)}
+                  aria-label={showSignupPassword ? 'Hide password' : 'Show password'}
+                  aria-pressed={showSignupPassword}
+                  className="absolute right-0 bottom-0 flex items-center px-3 h-10 cursor-pointer text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                >
+                  {showSignupPassword ? (
+                    <ICONS.EyeOff className="w-5 h-5" aria-hidden />
+                  ) : (
+                    <ICONS.Eye className="w-5 h-5" aria-hidden />
+                  )}
+                </button>
+              </div>
+              <div className="relative">
+                <Input
+                  id="signup-password-confirm"
+                  name="password-confirm"
+                  type={showSignupConfirmPassword ? 'text' : 'password'}
+                  autoComplete="new-password"
+                  required
+                  label="Confirm password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="rounded-none border-2 border-zinc-300 dark:border-zinc-600 focus:border-zinc-700 dark:focus:border-zinc-400 pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowSignupConfirmPassword((v) => !v)}
+                  aria-label={showSignupConfirmPassword ? 'Hide password' : 'Show password'}
+                  aria-pressed={showSignupConfirmPassword}
+                  className="absolute right-0 bottom-0 flex items-center px-3 h-10 cursor-pointer text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                >
+                  {showSignupConfirmPassword ? (
+                    <ICONS.EyeOff className="w-5 h-5" aria-hidden />
+                  ) : (
+                    <ICONS.Eye className="w-5 h-5" aria-hidden />
+                  )}
+                </button>
+              </div>
               <Button
                 type="submit"
                 disabled={busy}
@@ -505,7 +566,7 @@ function LoginPageInner() {
             </form>
           )}
 
-          {!showForgot && panelMode !== 'signup' ? (
+          {!showForgot && !(panelMode === 'signup' && signupNeedsEmailConfirmation) ? (
             <>
               <div className="relative flex items-center gap-3 py-1">
                 <span className="h-px flex-1 bg-zinc-300 dark:bg-zinc-600" aria-hidden />

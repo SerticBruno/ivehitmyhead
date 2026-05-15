@@ -130,7 +130,7 @@ const Footer: React.FC = () => {
             >
               <h3 className="font-black uppercase tracking-wide mb-2">Newsletter</h3>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 leading-relaxed">
-                Occasional updates. Lower your expectations preemptively.
+                Memes and site news - only when we have something worth sharing.
               </p>
               <SiteNewsletterSignup variant="bare" stackButton />
             </div>

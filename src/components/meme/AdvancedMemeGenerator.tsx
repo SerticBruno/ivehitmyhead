@@ -129,7 +129,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
   const [isSavingToGallery, setIsSavingToGallery] = useState(false);
   const [saveGalleryMessage, setSaveGalleryMessage] = useState<string | null>(null);
   const galleryPendingFlushBusyRef = useRef(false);
-  const pendingGalleryFlushTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingGalleryFlushTimerRef = useRef<number | null>(null);
 
   const revokeCustomPhotoIfAny = useCallback(() => {
     if (customPhotoObjectUrlRef.current) {
@@ -992,7 +992,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
     };
   }, []);
 
-  /** After OAuth / reload, auth hydrates asynchronously — defer flush until session + IndexedDB pending are ready. */
+  /** After OAuth / reload, auth hydrates asynchronously - defer flush until session + IndexedDB pending are ready. */
   useEffect(() => {
     if (authLoading || !user?.id || typeof indexedDB === 'undefined') return;
     scheduleFlushPendingGallery(120);

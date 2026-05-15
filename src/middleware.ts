@@ -29,7 +29,7 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  // Refreshes session if expired — required for Server Components / RSC
+  // Refreshes session if expired - required for Server Components / RSC
   await supabase.auth.getUser();
 
   return supabaseResponse;

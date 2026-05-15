@@ -5,10 +5,10 @@ export const SITE_NEWSLETTER_COPY: Pick<
   NewsletterFormProps,
   'title' | 'description' | 'placeholder' | 'buttonText' | 'successFootnote'
 > = {
-  title: 'Meme spam, but legal',
+  title: 'Fresh chaos, in your inbox',
   description:
-    'Hand us your email and we might occasionally send something. Lower your expectations preemptively.',
+    'New memes, generator updates, and whatever we shipped last - sent when there is actually something to show off.',
   placeholder: 'your@email.here',
-  buttonText: 'Sure, why not',
-  successFootnote: 'If you change your mind, you can ignore us. We are used to it.',
+  buttonText: 'Send it',
+  successFootnote: "You're subscribed. Your inbox officially has a meme problem now.",
 };
