@@ -2,6 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import { Instagram, Facebook } from 'lucide-react';
 import { SiteNewsletterSignup } from '@/components/newsletter';
+import { SiteLogoMark } from './SiteLogoMark';
 import { ICONS } from '@/lib/utils/categoryIcons';
 import { getPublicFacebookUrl, getPublicInstagramUrl } from '@/lib/socialUrls';
 
@@ -17,9 +18,10 @@ const Footer: React.FC = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 border-2 border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-900 p-6 shadow-[8px_8px_0px_rgba(0,0,0,0.85)] dark:shadow-[8px_8px_0px_rgba(156,163,175,0.42)]">
           <div className="col-span-1 md:col-span-2">
-            <div className="flex items-center space-x-2 mb-4">
+            <Link href="/" className="inline-flex items-center gap-2 mb-4 w-fit cursor-pointer">
+              <SiteLogoMark className="h-8 w-8 sm:h-9 sm:w-9" />
               <span className="text-xl font-black uppercase tracking-tight">IVEHITMYHEAD</span>
-            </div>
+            </Link>
             <div className="mb-3">
               <span className="inline-block -rotate-2 border-2 border-zinc-700 dark:border-zinc-300 bg-yellow-200 px-3 py-1 text-[11px] font-black uppercase tracking-[0.2em] text-zinc-900 shadow-[3px_3px_0px_rgba(0,0,0,0.85)] dark:bg-yellow-300">
                 do it for the meme

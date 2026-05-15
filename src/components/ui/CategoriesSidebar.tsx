@@ -28,9 +28,7 @@ const FiltersAndSortingInner: React.FC<FiltersAndSortingProps> = ({
   selectedTimePeriod = 'all',
   memeGridRef
 }) => {
-  const [showBlurOverlay, setShowBlurOverlay] = React.useState(true);
   const [userInitiated, setUserInitiated] = React.useState(false);
-  const categoriesScrollRef = React.useRef<HTMLDivElement | null>(null);
   
   // Get the memes state context to update filters directly
   const { setFilters } = useMemesUIState();
@@ -47,44 +45,6 @@ const FiltersAndSortingInner: React.FC<FiltersAndSortingProps> = ({
     () => visibleMemeFilterCategories(rawCategories),
     [rawCategories]
   );
-
-  const updateBlurOverlay = React.useCallback(() => {
-    const target = categoriesScrollRef.current;
-    if (!target) {
-      setShowBlurOverlay(false);
-      return;
-    }
-
-    const canScroll = target.scrollHeight > target.clientHeight + 1;
-    if (!canScroll) {
-      setShowBlurOverlay(false);
-      return;
-    }
-
-    const isAtBottom = target.scrollHeight - target.scrollTop <= target.clientHeight + 1;
-    setShowBlurOverlay(!isAtBottom);
-  }, []);
-
-  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    const target = e.target as HTMLDivElement;
-    const canScroll = target.scrollHeight > target.clientHeight + 1;
-    if (!canScroll) {
-      setShowBlurOverlay(false);
-      return;
-    }
-
-    const isAtBottom = target.scrollHeight - target.scrollTop <= target.clientHeight + 1;
-    setShowBlurOverlay(!isAtBottom);
-  };
-
-  React.useEffect(() => {
-    updateBlurOverlay();
-  }, [categories, updateBlurOverlay]);
-
-  React.useEffect(() => {
-    window.addEventListener('resize', updateBlurOverlay);
-    return () => window.removeEventListener('resize', updateBlurOverlay);
-  }, [updateBlurOverlay]);
 
   const scrollToTop = () => {
     // Only scroll if this is triggered by a user action
@@ -127,7 +87,7 @@ const FiltersAndSortingInner: React.FC<FiltersAndSortingProps> = ({
 
   if (loading) {
     return (
-      <div className={`sticky top-20 max-h-[calc(100vh-6rem)] bg-white dark:bg-gray-900 shadow-[8px_8px_0px_rgba(0,0,0,0.85)] dark:shadow-[8px_8px_0px_rgba(156,163,175,0.42)] border-2 border-zinc-700 dark:border-zinc-400 flex flex-col ${className}`}>
+      <div className={`sticky top-20 bg-white dark:bg-gray-900 shadow-[8px_8px_0px_rgba(0,0,0,0.85)] dark:shadow-[8px_8px_0px_rgba(156,163,175,0.42)] border-2 border-zinc-700 dark:border-zinc-400 flex flex-col ${className}`}>
         {/* Header */}
         <div className="p-4 border-b-2 border-zinc-700 dark:border-zinc-400 bg-[#f7f4ee] dark:bg-gray-950">
           <h3 className="text-lg font-black uppercase tracking-wide text-gray-900 dark:text-white">Narrow the scroll</h3>
@@ -154,11 +114,14 @@ const FiltersAndSortingInner: React.FC<FiltersAndSortingProps> = ({
         </div>
 
         {/* Categories */}
-        <div className="p-4 flex-1 flex flex-col min-h-0">
+        <div className="p-4 flex flex-col min-h-0">
           <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Categories</h4>
-          <div className="space-y-2">
+          <div className="flex flex-nowrap gap-2 overflow-x-auto overscroll-x-contain pb-1 -mx-1 px-1 touch-pan-x [scrollbar-width:thin]">
             {[...Array(8)].map((_, i) => (
-              <div key={i} className="h-12 bg-gray-200 dark:bg-gray-700 rounded-none animate-pulse"></div>
+              <div
+                key={i}
+                className="h-12 flex-shrink-0 w-[6.5rem] bg-gray-200 dark:bg-gray-700 rounded-none animate-pulse"
+              />
             ))}
           </div>
         </div>
@@ -177,7 +140,7 @@ const FiltersAndSortingInner: React.FC<FiltersAndSortingProps> = ({
   }
 
   return (
-    <div className={`sticky top-20 max-h-[calc(100vh-6rem)] bg-white dark:bg-gray-900 shadow-[8px_8px_0px_rgba(0,0,0,0.85)] dark:shadow-[8px_8px_0px_rgba(156,163,175,0.42)] border-2 border-zinc-700 dark:border-zinc-400 flex flex-col ${className}`}>
+    <div className={`sticky top-20 bg-white dark:bg-gray-900 shadow-[8px_8px_0px_rgba(0,0,0,0.85)] dark:shadow-[8px_8px_0px_rgba(156,163,175,0.42)] border-2 border-zinc-700 dark:border-zinc-400 flex flex-col ${className}`}>
       {/* Header */}
       <div className="p-4 border-b-2 border-zinc-700 dark:border-zinc-400 bg-[#f7f4ee] dark:bg-gray-950">
         <h3 className="text-lg font-black uppercase tracking-wide text-gray-900 dark:text-white">Narrow the scroll</h3>
@@ -261,86 +224,45 @@ const FiltersAndSortingInner: React.FC<FiltersAndSortingProps> = ({
       </div>
 
       {/* Categories */}
-      <div className="p-4 flex-1 flex flex-col min-h-0">
+      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
         <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Categories</h4>
-        <div
-          ref={categoriesScrollRef}
-          className="flex-1 overflow-y-auto pr-4 relative categories-scroll-container"
-          onScroll={handleScroll}
-        >
-          <nav className="space-y-2">
-            {/* All Categories Option */}
-            <button
-              onClick={() => handleCategorySelect('')}
-              className={`w-full flex items-center px-3 py-3 text-sm font-semibold uppercase tracking-wide rounded-none border-2 cursor-pointer ${
-                !selectedCategory 
-                  ? "bg-black text-white border-black dark:bg-white dark:text-black dark:border-white"
-                  : "bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-[#f7f4ee] dark:hover:bg-gray-800 border-zinc-700 dark:border-zinc-400"
-              }`}
-            >
-              <span className="mr-3 flex-shrink-0">
-                <ICONS.Star className="w-5 h-5" />
-              </span>
-              <div className="flex-1 text-left">
-                <div className="font-medium">All Categories</div>
-              </div>
-            </button>
-
-            {/* Category Options */}
-            {categories?.map((category) => {
-              const isSelected = selectedCategory === category.id;
-              return (
-                <button
-                  key={category.id}
-                  onClick={() => handleCategorySelect(category.id)}
-                  className={`w-full flex items-center px-3 py-3 text-sm font-semibold uppercase tracking-wide rounded-none border-2 cursor-pointer ${
-                    isSelected 
-                      ? "bg-black text-white border-black dark:bg-white dark:text-black dark:border-white"
-                      : "bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-[#f7f4ee] dark:hover:bg-gray-800 border-zinc-700 dark:border-zinc-400"
-                  }`}
-                >
-                  <span className="mr-3 flex-shrink-0">
-                    {renderCategoryIcon(category.name, 'w-5 h-5')}
-                  </span>
-                  <div className="flex-1 text-left">
-                    <div className="font-medium">{category.name}</div>
-                  </div>
-                </button>
-              );
-            })}
-          </nav>
+        <div className="flex flex-nowrap gap-2 overflow-x-auto overscroll-x-contain pb-1 -mx-1 px-1 touch-pan-x [scrollbar-width:thin]">
+          <button
+            type="button"
+            title="All categories"
+            onClick={() => handleCategorySelect('')}
+            className={`flex max-w-[10rem] flex-shrink-0 items-center gap-2 px-2.5 py-2.5 text-left text-[10px] font-bold uppercase tracking-wide rounded-none border-2 cursor-pointer transition-colors sm:text-xs ${
+              !selectedCategory
+                ? 'bg-black text-white border-black dark:bg-white dark:text-black dark:border-white'
+                : 'bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-[#f7f4ee] dark:hover:bg-gray-800 border-zinc-700 dark:border-zinc-400'
+            }`}
+          >
+            <span className="flex-shrink-0">
+              <ICONS.Star className="h-4 w-4 sm:h-5 sm:w-5" />
+            </span>
+            <span className="min-w-0 truncate">All</span>
+          </button>
+          {categories?.map((category) => {
+            const isSelected = selectedCategory === category.id;
+            return (
+              <button
+                key={category.id}
+                type="button"
+                title={category.name}
+                onClick={() => handleCategorySelect(category.id)}
+                className={`flex max-w-[10rem] flex-shrink-0 items-center gap-2 px-2.5 py-2.5 text-left text-[10px] font-bold uppercase tracking-wide rounded-none border-2 cursor-pointer transition-colors sm:text-xs ${
+                  isSelected
+                    ? 'bg-black text-white border-black dark:bg-white dark:text-black dark:border-white'
+                    : 'bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-[#f7f4ee] dark:hover:bg-gray-800 border-zinc-700 dark:border-zinc-400'
+                }`}
+              >
+                <span className="flex-shrink-0">{renderCategoryIcon(category.name, 'h-4 w-4 sm:h-5 sm:w-5')}</span>
+                <span className="min-w-0 truncate">{category.name}</span>
+              </button>
+            );
+          })}
         </div>
-        
-        {/* Bottom blur overlay - positioned at the very bottom of the categories section */}
-        <div
-          className={`absolute bottom-0 left-4 right-4 h-8 bg-gradient-to-t from-white via-white/80 to-transparent dark:from-gray-800 dark:via-gray-800/80 pointer-events-none transition-opacity duration-300 ease-out ${
-            showBlurOverlay ? 'opacity-100' : 'opacity-0'
-          }`}
-        />
       </div>
-
-      {/* Custom Scrollbar Styles */}
-      <style jsx>{`
-        .overflow-y-auto::-webkit-scrollbar {
-          width: 6px;
-        }
-        .overflow-y-auto::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        .overflow-y-auto::-webkit-scrollbar-thumb {
-          background: #d1d5db;
-          border-radius: 3px;
-        }
-        .overflow-y-auto::-webkit-scrollbar-thumb:hover {
-          background: #9ca3af;
-        }
-        .dark .overflow-y-auto::-webkit-scrollbar-thumb {
-          background: #4b5563;
-        }
-        .dark .overflow-y-auto::-webkit-scrollbar-thumb:hover {
-          background: #6b7280;
-        }
-      `}</style>
     </div>
   );
 };
