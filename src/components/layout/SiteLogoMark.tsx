@@ -2,7 +2,7 @@ import React from 'react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 
-const LOGO_PATH = '/favicon.ico';
+const LOGO_PATH = '/ihmhlogo/border-collie.png';
 
 /** Compact brand mark for navbar / footer — pairs with the IVEHITMYHEAD wordmark. */
 export function SiteLogoMark({
@@ -19,10 +19,7 @@ export function SiteLogoMark({
       alt=""
       width={32}
       height={32}
-      className={cn(
-        'shrink-0 object-contain brightness-0 invert',
-        className,
-      )}
+      className={cn('shrink-0 object-contain', className)}
       aria-hidden
       priority={priority}
       unoptimized
