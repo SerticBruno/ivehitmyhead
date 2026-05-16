@@ -1,18 +1,12 @@
 'use client';
 
 import React, { memo, useState, useCallback } from 'react';
-import { Category } from '@/lib/types/meme';
 import { cn } from '@/lib/utils';
-import { ICONS, renderCategoryIcon } from '@/lib/utils/categoryIcons';
 
 export interface MemesMobileFilterBarsProps {
   showFilterSkeleton: boolean;
-  categories: Category[];
-  categoriesLoading: boolean;
-  selectedCategoryId: string;
   selectedFilter: string;
   selectedTimePeriod: string;
-  onCategorySelect: (categoryId: string) => void;
   onFilterChange: (filter: string) => void;
   onTimePeriodChange: (period: string) => void;
 }
@@ -40,22 +34,17 @@ const SORT_FILTERS = [
   { value: 'newest', label: 'Newest' },
 ] as const;
 
-type TabId = 'time' | 'sort' | 'categories';
+type TabId = 'time' | 'sort';
 
 const TABS: { id: TabId; label: string }[] = [
   { id: 'time', label: 'Time' },
   { id: 'sort', label: 'Sort' },
-  { id: 'categories', label: 'Categories' },
 ];
 
 function MemesMobileFilterBarsInner({
   showFilterSkeleton,
-  categories,
-  categoriesLoading,
-  selectedCategoryId,
   selectedFilter,
   selectedTimePeriod,
-  onCategorySelect,
   onFilterChange,
   onTimePeriodChange,
 }: MemesMobileFilterBarsProps) {
@@ -171,60 +160,6 @@ function MemesMobileFilterBarsInner({
                 </button>
               ))}
             </div>
-          )}
-        </div>
-
-        <div
-          role="tabpanel"
-          id="memes-filter-tabpanel-categories"
-          aria-labelledby="memes-filter-tab-categories"
-          hidden={activeTab !== 'categories'}
-          className="p-4"
-        >
-          {categoriesLoading ? (
-            <div className="flex w-full flex-nowrap gap-2 overflow-hidden">
-              {[...Array(8)].map((_, i) => (
-                <div
-                  key={i}
-                  className="h-12 min-w-0 flex-shrink-0 basis-[6.5rem] bg-gray-200 dark:bg-gray-700 rounded-none animate-pulse"
-                />
-              ))}
-            </div>
-          ) : (
-            <nav
-              aria-label="Categories"
-              className="flex flex-nowrap gap-2 overflow-x-auto overscroll-x-contain pb-1 -mx-1 px-1 touch-pan-x [scrollbar-width:thin]"
-            >
-              <button
-                type="button"
-                title="All categories"
-                onClick={() => onCategorySelect('')}
-                className={`flex max-w-[10rem] flex-shrink-0 items-center gap-2 px-2.5 py-2.5 text-left text-[10px] font-bold uppercase tracking-wide rounded-none border-2 cursor-pointer transition-colors duration-150 sm:text-xs ${
-                  !selectedCategoryId ? BTN_ON : BTN_OFF
-                }`}
-              >
-                <span className="flex-shrink-0">
-                  <ICONS.Star className="h-4 w-4 sm:h-5 sm:w-5" />
-                </span>
-                <span className="min-w-0 truncate font-medium">All</span>
-              </button>
-              {categories?.map((category) => (
-                <button
-                  key={category.id}
-                  type="button"
-                  title={category.name}
-                  onClick={() => onCategorySelect(category.id)}
-                  className={`flex max-w-[10rem] flex-shrink-0 items-center gap-2 px-2.5 py-2.5 text-left text-[10px] font-bold uppercase tracking-wide rounded-none border-2 cursor-pointer transition-colors duration-150 sm:text-xs ${
-                    selectedCategoryId === category.id ? BTN_ON : BTN_OFF
-                  }`}
-                >
-                  <span className="flex-shrink-0">
-                    {renderCategoryIcon(category.name, 'h-4 w-4 sm:h-5 sm:w-5')}
-                  </span>
-                  <span className="min-w-0 truncate font-medium">{category.name}</span>
-                </button>
-              ))}
-            </nav>
           )}
         </div>
       </div>

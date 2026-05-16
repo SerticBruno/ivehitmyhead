@@ -157,7 +157,7 @@ export const MemeGrid: React.FC<MemeGridProps> = ({
       {!hasMore && memes.length > 0 && (
         <div className="text-center py-8">
           <div className="text-gray-500 dark:text-gray-400 text-sm">
-            You&apos;ve reached the end! No more memes in this category.
+            You&apos;ve reached the end! No more memes to load.
           </div>
         </div>
       )}

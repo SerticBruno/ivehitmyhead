@@ -5,7 +5,7 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button';
 import { cn, formatDateDDMMYYYY, formatRelativeTime, formatTime } from '@/lib/utils';
 import { MemeCardProps } from '@/lib/types/meme';
-import { ICONS, renderCategoryIcon } from '@/lib/utils/categoryIcons';
+import { ICONS } from '@/lib/utils/categoryIcons';
 import { imagePreloader } from '@/lib/utils/imagePreloader';
 import { useMemesUIState } from '@/lib/contexts';
 
@@ -180,7 +180,7 @@ const MemeCard: React.FC<MemeCardProps> = ({
           </div>
         </CardContent>
         
-        <CardFooter className="flex items-center justify-between gap-3 pt-4">
+        <CardFooter className="flex items-center pt-4">
           <div className="flex min-w-0 items-center space-x-4">
             <Button
               variant="ghost"
@@ -227,12 +227,6 @@ const MemeCard: React.FC<MemeCardProps> = ({
               <span>{meme.views}</span>
             </div>
           </div>
-          {meme.category && (
-            <span className="inline-flex shrink-0 items-center text-xs text-gray-500 dark:text-gray-400 select-none cursor-default">
-              {renderCategoryIcon(meme.category.name, 'w-4 h-4')}
-              <span className="ml-1">{meme.category.name}</span>
-            </span>
-          )}
         </CardFooter>
       </Card>
     </Link>
