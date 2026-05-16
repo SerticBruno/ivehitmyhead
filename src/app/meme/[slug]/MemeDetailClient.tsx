@@ -9,7 +9,13 @@ import { Meme } from '@/lib/types/meme';
 import { useMemeInteractions } from '@/lib/hooks/useMemeInteractions';
 import { useMemesListState } from '@/lib/contexts';
 import { ICONS, renderCategoryIcon } from '@/lib/utils/categoryIcons';
-import { recordShare, shareMemeWithFallback } from '@/lib/utils/shareUtils';
+import { copyImageToClipboard, recordShare, shareMemeWithFallback } from '@/lib/utils/shareUtils';
+
+const MEME_DETAIL_OUTLINE_BTN =
+  'rounded-none border-2 border-zinc-700 dark:border-zinc-400 uppercase tracking-wide font-bold inline-flex items-center justify-center gap-2';
+
+const MEME_DETAIL_RANDOM_BTN =
+  'rounded-none border-2 border-blue-700 bg-blue-600 text-white uppercase tracking-wide font-black shadow-[3px_3px_0px_rgba(29,78,216,0.7)] hover:bg-blue-500 hover:border-blue-600 disabled:opacity-50 disabled:shadow-none';
 
 const MEME_DETAIL_CARD =
   'bg-white dark:bg-gray-900 rounded-none border-2 border-zinc-700 dark:border-zinc-400 shadow-[8px_8px_0px_rgba(0,0,0,0.88)] dark:shadow-[8px_8px_0px_rgba(156,163,175,0.42)] overflow-hidden';
@@ -33,6 +39,7 @@ export function MemeDetailClient({ slug }: MemeDetailClientProps) {
   const [isCheckingLikeStatus, setIsCheckingLikeStatus] = useState(true);
   const [isLiking, setIsLiking] = useState(false);
   const [isLoadingRandom, setIsLoadingRandom] = useState(false);
+  const [isCopyingImage, setIsCopyingImage] = useState(false);
 
   const { likeMeme, recordView } = useMemeInteractions();
   const { updateMemeLikeCount, updateMemeShareCount, updateMemeLikedState } = useMemesListState();
@@ -175,6 +182,19 @@ export function MemeDetailClient({ slug }: MemeDetailClientProps) {
     }
   };
 
+  const handleCopyImage = async () => {
+    if (!meme?.image_url || isCopyingImage) return;
+
+    try {
+      setIsCopyingImage(true);
+      await copyImageToClipboard(meme.image_url);
+    } catch (err) {
+      console.error('Failed to copy meme image:', err);
+    } finally {
+      setIsCopyingImage(false);
+    }
+  };
+
   const handleRandom = useCallback(async () => {
     if (isLoadingRandom) return;
 
@@ -270,18 +290,19 @@ export function MemeDetailClient({ slug }: MemeDetailClientProps) {
 
               <div className={`${MEME_DETAIL_IMAGE_FRAME} bg-gray-200/90 dark:bg-gray-800`} />
 
-              <div className="p-6 pt-4">
-                <div className="flex items-center gap-3 overflow-x-auto whitespace-nowrap">
-                  <div className="flex items-center gap-4 shrink-0">
+              <div className="p-6 pt-4 space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+                  <div className="flex flex-wrap items-center gap-4">
                     <div className="h-8 w-16 bg-gray-200 dark:bg-gray-700" />
                     <div className="h-8 w-16 bg-gray-200 dark:bg-gray-700" />
                     <div className="h-8 w-16 bg-gray-200 dark:bg-gray-700" />
                   </div>
-                  <div className="flex items-center justify-center gap-2 flex-1 min-w-max">
-                    <div className="h-8 w-28 bg-gray-200 dark:bg-gray-700 border-2 border-zinc-700 dark:border-zinc-400 shrink-0" />
-                    <div className="h-10 w-28 bg-gray-200 dark:bg-gray-700 border-2 border-zinc-700 dark:border-zinc-400 shrink-0" />
-                  </div>
-                  <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 shrink-0" />
+                  <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700" />
+                </div>
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                  <div className="h-8 w-28 bg-gray-200 dark:bg-gray-700 border-2 border-zinc-700 dark:border-zinc-400" />
+                  <div className="h-8 w-28 bg-gray-200 dark:bg-gray-700 border-2 border-zinc-700 dark:border-zinc-400" />
+                  <div className="h-8 w-28 bg-gray-200 dark:bg-gray-700 border-2 border-zinc-700 dark:border-zinc-400" />
                 </div>
               </div>
             </div>
@@ -368,8 +389,9 @@ export function MemeDetailClient({ slug }: MemeDetailClientProps) {
                 </div>
               )}
 
-              <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-300 overflow-x-auto whitespace-nowrap">
-                <div className="flex items-center gap-4 shrink-0">
+              <div className="space-y-3 text-sm text-gray-600 dark:text-gray-300">
+                <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+                  <div className="flex flex-wrap items-center gap-4">
                   <button
                     type="button"
                     onClick={handleLike}
@@ -399,49 +421,59 @@ export function MemeDetailClient({ slug }: MemeDetailClientProps) {
                     <ICONS.Eye className="w-4 h-4 shrink-0" />
                     <span>{meme.views.toLocaleString()}</span>
                   </div>
+                  </div>
+                  <span className="inline-flex items-center text-xs text-gray-500 dark:text-gray-400 select-none cursor-default pointer-events-none">
+                    {meme.category ? (
+                      <>
+                        {renderCategoryIcon(meme.category.name, 'w-4 h-4 shrink-0')}
+                        <span className="ml-1">{meme.category.name}</span>
+                      </>
+                    ) : (
+                      <>
+                        <ICONS.FolderOpen className="w-4 h-4 shrink-0" aria-hidden />
+                        <span className="ml-1">Uncategorized</span>
+                      </>
+                    )}
+                  </span>
                 </div>
-                <div className="flex items-center justify-center gap-2 flex-1 min-w-max">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                   <Button
                     size="sm"
                     variant="outline"
                     onClick={handleCopyLink}
-                    className="rounded-none border-2 border-zinc-700 dark:border-zinc-400 uppercase tracking-wide font-bold shrink-0 inline-flex items-center justify-center gap-2"
+                    className={MEME_DETAIL_OUTLINE_BTN}
                   >
                     <ICONS.Copy className="w-4 h-4 shrink-0" />
                     Copy link
                   </Button>
-                  <button
-                    type="button"
-                    onClick={handleRandom}
-                    aria-disabled={isLoadingRandom}
-                    className={cn(
-                      'inline-flex items-center justify-center gap-2 rounded-none border-2 border-blue-700 bg-blue-600 text-white px-4 py-2 uppercase tracking-wide font-black shadow-[3px_3px_0px_rgba(29,78,216,0.7)] transition-colors cursor-pointer shrink-0',
-                      isLoadingRandom
-                        ? 'opacity-50 shadow-none'
-                        : 'hover:bg-blue-500 hover:border-blue-600'
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleCopyImage}
+                    disabled={isCopyingImage}
+                    className={MEME_DETAIL_OUTLINE_BTN}
+                  >
+                    {isCopyingImage ? (
+                      <span className="inline-flex h-4 w-4 shrink-0 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <ICONS.Image className="w-4 h-4 shrink-0" />
                     )}
+                    Copy image
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={handleRandom}
+                    disabled={isLoadingRandom}
+                    className={MEME_DETAIL_RANDOM_BTN}
                   >
                     {isLoadingRandom ? (
                       <span className="inline-flex h-4 w-4 shrink-0 border-2 border-current border-t-transparent rounded-full animate-spin" />
                     ) : (
                       <ICONS.Dice5 className="w-4 h-4 shrink-0" />
                     )}
-                    <span>Random</span>
-                  </button>
+                    Random
+                  </Button>
                 </div>
-                <span className="inline-flex shrink-0 items-center text-xs text-gray-500 dark:text-gray-400 select-none cursor-default pointer-events-none">
-                  {meme.category ? (
-                    <>
-                      {renderCategoryIcon(meme.category.name, 'w-4 h-4 shrink-0')}
-                      <span className="ml-1 truncate">{meme.category.name}</span>
-                    </>
-                  ) : (
-                    <>
-                      <ICONS.FolderOpen className="w-4 h-4 shrink-0" aria-hidden />
-                      <span className="ml-1 truncate">Uncategorized</span>
-                    </>
-                  )}
-                </span>
               </div>
 
             </footer>
