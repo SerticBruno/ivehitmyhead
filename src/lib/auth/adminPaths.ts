@@ -1,7 +1,7 @@
 /** Paths that require an admin account (prefix match). */
 export function isAdminOnlyPath(path: string): boolean {
   const normalized = path.split('?')[0]?.split('#')[0] ?? path;
-  return normalized === '/admin' || normalized.startsWith('/admin/');
+  return normalized === '/budasevo' || normalized.startsWith('/budasevo/');
 }
 
 /** Post-login destination: non-admins cannot be sent to admin routes. */

@@ -271,19 +271,19 @@ const Header: React.FC<HeaderProps> = ({ showSearch = true }) => {
                       </Link>
                       {isAdmin && (
                         <Link
-                          href="/admin"
+                          href="/budasevo"
                           onClick={() => {
                             clearProfileMenuCloseTimer();
                             setIsProfileMenuOpen(false);
                           }}
                           className={`flex h-10 w-full items-center justify-center gap-1.5 rounded-none border-2 px-3 text-sm leading-none uppercase tracking-wide font-bold whitespace-nowrap transition-colors ${
-                            pathname?.startsWith('/admin')
+                            pathname?.startsWith('/budasevo')
                               ? 'border-black bg-black text-white dark:border-white dark:bg-white dark:text-black'
                               : 'border-zinc-700 bg-white text-gray-800 hover:bg-gray-50 dark:border-zinc-400 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800'
                           }`}
                         >
                           <Shield className="h-4 w-4" aria-hidden />
-                          Admin
+                          BUDAŠEVO
                         </Link>
                       )}
                       <Button
@@ -425,16 +425,16 @@ const Header: React.FC<HeaderProps> = ({ showSearch = true }) => {
                     <div className="flex min-w-0 flex-1 flex-col gap-1.5">
                       {isAdmin && (
                         <Link
-                          href="/admin"
+                          href="/budasevo"
                           onClick={closeMobileMenu}
                           className={`flex min-h-10 items-center justify-center gap-2 border-2 px-3 py-2 text-base font-bold uppercase tracking-wide rounded-none transition-colors duration-150 ${
-                            pathname?.startsWith('/admin')
+                            pathname?.startsWith('/budasevo')
                               ? 'bg-black text-white border-black dark:bg-white dark:text-black dark:border-white'
                               : 'text-gray-800 border-zinc-700 hover:bg-white dark:text-gray-200 dark:border-zinc-400 dark:hover:bg-gray-900'
                           }`}
                         >
                           <Shield className="h-4 w-4 shrink-0" aria-hidden />
-                          <span>Admin</span>
+                          <span>BUDAŠEVO</span>
                         </Link>
                       )}
                       <button

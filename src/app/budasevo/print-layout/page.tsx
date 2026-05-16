@@ -15,7 +15,7 @@ export default function AdminPrintLayoutPage() {
   useEffect(() => {
     if (loading) return;
     if (!user) {
-      router.push('/login?next=%2Fadmin%2Fprint-layout');
+      router.push('/login?next=%2Fbudasevo%2Fprint-layout');
       return;
     }
     if (!isAdmin) {
@@ -48,7 +48,7 @@ export default function AdminPrintLayoutPage() {
                 Place images in 40x60mm and 50x70mm guides, then export a print-ready A4 PNG.
               </p>
             </div>
-            <Link href="/admin">
+            <Link href="/budasevo">
               <Button
                 variant="outline"
                 className="rounded-none border-2 border-zinc-700 dark:border-zinc-400 uppercase tracking-wide font-bold"

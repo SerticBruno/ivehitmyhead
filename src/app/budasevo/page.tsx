@@ -112,7 +112,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (authLoading) return;
     if (!user) {
-      router.push('/login?next=%2Fadmin');
+      router.push('/login?next=%2Fbudasevo');
       return;
     }
     if (!isAdmin) {
@@ -444,7 +444,7 @@ export default function AdminDashboard() {
             </div>
             <div className="flex flex-col sm:flex-row gap-3 shrink-0">
               <Link
-                href="/admin/print-layout"
+                href="/budasevo/print-layout"
                 className={cn(
                   'inline-flex h-10 items-center justify-center px-4 py-2 text-sm font-medium transition-colors',
                   'rounded-none border-2 border-zinc-700 dark:border-zinc-400 uppercase tracking-wide font-bold',
