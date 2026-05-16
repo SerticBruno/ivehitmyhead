@@ -110,8 +110,13 @@ export default function AdminDashboard() {
   }, [memesPage, memeSearch]);
 
   useEffect(() => {
-    if (!authLoading && (!user || !isAdmin)) {
+    if (authLoading) return;
+    if (!user) {
       router.push('/login?next=%2Fadmin');
+      return;
+    }
+    if (!isAdmin) {
+      router.replace('/');
     }
   }, [user, isAdmin, authLoading, router]);
 

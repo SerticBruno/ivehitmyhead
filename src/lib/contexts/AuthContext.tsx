@@ -9,7 +9,10 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signIn: (
+    email: string,
+    password: string
+  ) => Promise<{ error: Error | null; isAdmin: boolean }>;
   signUp: (
     email: string,
     password: string,
@@ -39,11 +42,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    let cancelled = false;
+
+    const applySession = async (session: Session | null) => {
       setSession(session);
       setUser(session?.user ?? null);
-      checkAdminStatus(session?.user ?? null);
-      setLoading(false);
+      await checkAdminStatus(session?.user ?? null);
+      if (!cancelled) {
+        setLoading(false);
+      }
+    };
+
+    void supabase.auth.getSession().then(({ data: { session } }) => {
+      void applySession(session);
     });
 
     const {
@@ -55,26 +66,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           window.location.assign(UPDATE_PASSWORD_PATH);
         }
       }
-      setSession(session);
-      setUser(session?.user ?? null);
-      checkAdminStatus(session?.user ?? null);
-      setLoading(false);
+      setLoading(true);
+      void applySession(session);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
   }, []);
 
-  const checkAdminStatus = async (user: User | null) => {
+  const checkAdminStatus = async (user: User | null): Promise<boolean> => {
     if (!user) {
       setIsAdmin(false);
-      return;
+      return false;
     }
 
     const isAdminFromMetadata = user.user_metadata?.role === 'admin';
 
     if (isAdminFromMetadata) {
       setIsAdmin(true);
-      return;
+      return true;
     }
 
     try {
@@ -88,21 +100,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const errorCode = profileError.code?.toString();
         if (errorCode === '42703' || profileError.message?.includes('does not exist')) {
           setIsAdmin(isAdminFromMetadata);
-          return;
+          return isAdminFromMetadata;
         }
       }
 
       if (!profileError && profile) {
-        setIsAdmin(profile.is_admin === true);
-      } else {
-        setIsAdmin(isAdminFromMetadata);
+        const admin = profile.is_admin === true;
+        setIsAdmin(admin);
+        return admin;
       }
+
+      setIsAdmin(isAdminFromMetadata);
+      return isAdminFromMetadata;
     } catch {
       setIsAdmin(isAdminFromMetadata);
+      return isAdminFromMetadata;
     }
   };
 
-  const signIn = async (email: string, password: string): Promise<{ error: Error | null }> => {
+  const signIn = async (
+    email: string,
+    password: string
+  ): Promise<{ error: Error | null; isAdmin: boolean }> => {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -110,16 +129,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (error) {
-        return { error };
+        return { error, isAdmin: false };
       }
 
-      if (data.user) {
-        await checkAdminStatus(data.user);
-      }
-
-      return { error: null };
+      const admin = data.user ? await checkAdminStatus(data.user) : false;
+      return { error: null, isAdmin: admin };
     } catch (error) {
-      return { error: error as Error };
+      return { error: error as Error, isAdmin: false };
     }
   };
 

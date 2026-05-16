@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Suspense, useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/contexts/AuthContext';
@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { ICONS } from '@/lib/utils/categoryIcons';
 import { cn } from '@/lib/utils';
+import { resolvePostLoginPath } from '@/lib/auth/adminPaths';
 import { UPDATE_PASSWORD_PATH } from '@/lib/auth/paths';
 
 const USERNAME_RE = /^[a-z0-9_]{3,20}$/;
@@ -73,8 +74,14 @@ function LoginPageInner() {
     signInWithGoogle,
     signInWithDiscord,
     user,
+    isAdmin,
     loading: authLoading,
   } = useAuth();
+
+  const destination = useMemo(
+    () => resolvePostLoginPath(next, isAdmin),
+    [next, isAdmin]
+  );
 
   const [panelMode, setPanelMode] = useState<'signin' | 'signup'>('signin');
   const [email, setEmail] = useState('');
@@ -111,9 +118,9 @@ function LoginPageInner() {
 
   useEffect(() => {
     if (!authLoading && user) {
-      router.replace(next);
+      router.replace(destination);
     }
-  }, [user, authLoading, router, next]);
+  }, [user, authLoading, router, destination]);
 
   const handleEmailSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -121,13 +128,13 @@ function LoginPageInner() {
     setInfo(null);
     setEmailSubmitting(true);
     try {
-      const { error: err } = await signIn(email, password);
+      const { error: err, isAdmin: signedInAsAdmin } = await signIn(email, password);
       if (err) {
         setError(err.message || 'Invalid email or password');
         setEmailSubmitting(false);
         return;
       }
-      router.replace(next);
+      router.replace(resolvePostLoginPath(next, signedInAsAdmin));
     } catch {
       setError('An unexpected error occurred. Please try again.');
       setEmailSubmitting(false);
@@ -178,7 +185,7 @@ function LoginPageInner() {
         setEmailSubmitting(false);
         return;
       }
-      router.replace(next);
+      router.replace(destination);
     } catch {
       setError('An unexpected error occurred. Please try again.');
       setEmailSubmitting(false);
@@ -218,7 +225,7 @@ function LoginPageInner() {
     setInfo(null);
     setGoogleSubmitting(true);
     try {
-      const { error: err } = await signInWithGoogle(next);
+      const { error: err } = await signInWithGoogle(destination);
       if (err) {
         setError(err.message || 'Could not start Google sign-in');
       }
@@ -234,7 +241,7 @@ function LoginPageInner() {
     setInfo(null);
     setDiscordSubmitting(true);
     try {
-      const { error: err } = await signInWithDiscord(next);
+      const { error: err } = await signInWithDiscord(destination);
       if (err) {
         setError(err.message || 'Could not start Discord sign-in');
       }

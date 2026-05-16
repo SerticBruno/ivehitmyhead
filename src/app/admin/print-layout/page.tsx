@@ -13,8 +13,13 @@ export default function AdminPrintLayoutPage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && (!user || !isAdmin)) {
+    if (loading) return;
+    if (!user) {
       router.push('/login?next=%2Fadmin%2Fprint-layout');
+      return;
+    }
+    if (!isAdmin) {
+      router.replace('/');
     }
   }, [loading, user, isAdmin, router]);
 
