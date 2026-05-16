@@ -1,6 +1,7 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase/client';
 import { markBudasevoSignOutInProgress } from '@/lib/auth/budasevoSignOut';
@@ -37,6 +38,9 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const pendingBudasevoSignOutRef = useRef(false);
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
@@ -111,6 +115,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       subscription.unsubscribe();
     };
   }, []);
+
+  const performSignOut = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+    setSession(null);
+    setIsAdmin(false);
+  };
+
+  useEffect(() => {
+    if (!pendingBudasevoSignOutRef.current || !pathname) return;
+    if (pathname.startsWith('/budasevo')) return;
+
+    pendingBudasevoSignOutRef.current = false;
+    void performSignOut();
+  }, [pathname]);
 
   const checkAdminStatus = async (user: User | null): Promise<boolean> => {
     if (!user) {
@@ -279,22 +298,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signInWithDiscord = (next = '/') => signInWithOAuthProvider('discord', next);
 
   const signOut = async () => {
-    const leaveBudasevoForHome =
+    const onBudasevo =
       typeof window !== 'undefined' &&
       window.location.pathname.startsWith('/budasevo');
 
-    if (leaveBudasevoForHome) {
+    if (onBudasevo) {
       markBudasevoSignOutInProgress();
+      pendingBudasevoSignOutRef.current = true;
+      router.replace('/');
+      return;
     }
 
-    await supabase.auth.signOut();
-    setUser(null);
-    setSession(null);
-    setIsAdmin(false);
-
-    if (leaveBudasevoForHome) {
-      window.location.replace('/');
-    }
+    await performSignOut();
   };
 
   return (

@@ -82,9 +82,12 @@ const Header: React.FC<HeaderProps> = ({ showSearch = true }) => {
       ? `/login?next=${encodeURIComponent(pathname)}`
       : '/login';
 
+  // Session can update before login redirect finishes — keep "Sign in" until we leave /login.
+  const showSignedInNav = Boolean(user && pathname !== '/login');
+
   const avatarUrl =
-    user &&
-    typeof user.user_metadata?.avatar_url === 'string' &&
+    showSignedInNav &&
+    typeof user?.user_metadata?.avatar_url === 'string' &&
     user.user_metadata.avatar_url
       ? user.user_metadata.avatar_url
       : null;
@@ -147,9 +150,6 @@ const Header: React.FC<HeaderProps> = ({ showSearch = true }) => {
   const handleLogout = async () => {
     await signOut();
     closeMobileMenu();
-    if (!pathname?.startsWith('/budasevo')) {
-      router.replace('/');
-    }
   };
 
   const navigationItems = [
@@ -209,7 +209,7 @@ const Header: React.FC<HeaderProps> = ({ showSearch = true }) => {
                 );
               })}
 
-              {!user && (
+              {!showSignedInNav && (
                 <Link href={loginHref} className="cursor-pointer">
                   <Button
                     variant="ghost"
@@ -221,7 +221,7 @@ const Header: React.FC<HeaderProps> = ({ showSearch = true }) => {
                 </Link>
               )}
 
-              {user && (
+              {showSignedInNav && (
                 <div
                   className="relative flex items-center self-center"
                   onMouseEnter={openProfileMenu}
@@ -390,7 +390,7 @@ const Header: React.FC<HeaderProps> = ({ showSearch = true }) => {
                   );
                 })}
 
-                {!user && (
+                {!showSignedInNav && (
                   <Link
                     href={loginHref}
                     className="block px-3 py-2 text-base font-bold uppercase tracking-wide rounded-none border-2 transition-colors duration-150 text-gray-800 border-zinc-700 hover:bg-white dark:text-gray-200 dark:border-zinc-400 dark:hover:bg-gray-900"
@@ -400,7 +400,7 @@ const Header: React.FC<HeaderProps> = ({ showSearch = true }) => {
                   </Link>
                 )}
 
-                {user && (
+                {showSignedInNav && (
                   <div className="flex items-center gap-3 px-3 py-2 border-2 border-zinc-700 dark:border-zinc-400 bg-white/50 dark:bg-gray-900/50">
                     <Link
                       href="/profile"
