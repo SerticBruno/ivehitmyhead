@@ -59,20 +59,6 @@ function normalizeUsername(raw: string) {
   return raw.trim().toLowerCase();
 }
 
-function RedirectShell() {
-  return (
-    <div className="bg-[#f7f4ee] dark:bg-gray-950 flex flex-col items-center justify-center px-4 py-20 gap-6">
-      <div className="w-full max-w-md border-2 border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-900 p-10 shadow-[8px_8px_0px_rgba(0,0,0,0.9)] dark:shadow-[8px_8px_0px_rgba(156,163,175,0.42)] animate-pulse">
-        <div className="h-8 bg-zinc-200 dark:bg-zinc-700 w-3/4 mx-auto mb-4" />
-        <div className="h-12 bg-zinc-100 dark:bg-zinc-800" />
-      </div>
-      <p className="text-sm font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400">
-        Redirecting…
-      </p>
-    </div>
-  );
-}
-
 function LoginPageInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -138,12 +124,12 @@ function LoginPageInner() {
       const { error: err } = await signIn(email, password);
       if (err) {
         setError(err.message || 'Invalid email or password');
+        setEmailSubmitting(false);
         return;
       }
       router.replace(next);
     } catch {
       setError('An unexpected error occurred. Please try again.');
-    } finally {
       setEmailSubmitting(false);
     }
   };
@@ -183,17 +169,18 @@ function LoginPageInner() {
       });
       if (err) {
         setError(err.message || 'Could not create account.');
+        setEmailSubmitting(false);
         return;
       }
       if (!session) {
         setSignupNeedsEmailConfirmation(true);
         setInfo('Check your email to confirm your account. After confirming, you can sign in.');
+        setEmailSubmitting(false);
         return;
       }
       router.replace(next);
     } catch {
       setError('An unexpected error occurred. Please try again.');
-    } finally {
       setEmailSubmitting(false);
     }
   };
@@ -269,10 +256,6 @@ function LoginPageInner() {
         </div>
       </div>
     );
-  }
-
-  if (user) {
-    return <RedirectShell />;
   }
 
   return (
