@@ -1,23 +1,27 @@
 'use client';
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { isBudasevoSignOutInProgress } from '@/lib/auth/budasevoSignOut';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { MemeUpload } from '@/components/ui/MemeUpload';
 import { Category, Meme } from '@/lib/types/meme';
+import type { AdminUserSummary } from '@/lib/types/adminUser';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { cn } from '@/lib/utils';
 import { ICONS, renderCategoryIcon } from '@/lib/utils/categoryIcons';
 
 const MEMES_ADMIN_PAGE_SIZE = 50;
+const USERS_ADMIN_PAGE_SIZE = 50;
 
-type AdminTabId = 'categories' | 'memes' | 'upload';
+type AdminTabId = 'categories' | 'memes' | 'upload' | 'users';
 
 const ADMIN_TABS: { id: AdminTabId; label: string }[] = [
   { id: 'upload', label: 'Upload' },
   { id: 'memes', label: 'Memes' },
+  { id: 'users', label: 'Users' },
   { id: 'categories', label: 'Categories' },
 ];
 
@@ -46,6 +50,19 @@ export default function AdminDashboard() {
   const [categoryManageError, setCategoryManageError] = useState<string | null>(null);
   const [categoryManageMessage, setCategoryManageMessage] = useState<string | null>(null);
   const [activeAdminTab, setActiveAdminTab] = useState<AdminTabId>('upload');
+  const [adminUsers, setAdminUsers] = useState<AdminUserSummary[]>([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [usersError, setUsersError] = useState<string | null>(null);
+  const [usersPage, setUsersPage] = useState(1);
+  const [usersHasMore, setUsersHasMore] = useState(false);
+  const [usersTotal, setUsersTotal] = useState(0);
+  const [userSearchDraft, setUserSearchDraft] = useState('');
+  const [userSearch, setUserSearch] = useState('');
+  const [usersListNonce, setUsersListNonce] = useState(0);
+  const dashboardReadyRef = useRef(false);
+  const categoriesLoadedRef = useRef(false);
+  const sessionRef = useRef(session);
+  sessionRef.current = session;
 
   const loadCategories = useCallback(async (mode: 'initial' | 'refresh' = 'initial') => {
     const isInitial = mode === 'initial';
@@ -109,27 +126,94 @@ export default function AdminDashboard() {
     }
   }, [memesPage, memeSearch]);
 
-  useEffect(() => {
-    if (authLoading) return;
-    if (!user) {
-      router.push('/login?next=%2Fbudasevo');
+  const loadUsersList = useCallback(async () => {
+    const accessToken = sessionRef.current?.access_token;
+    if (!accessToken) {
+      setUsersError('Your admin session is missing. Please log in again.');
       return;
     }
-    if (!isAdmin) {
-      router.replace('/');
+
+    try {
+      setUsersLoading(true);
+      setUsersError(null);
+      const params = new URLSearchParams({
+        page: String(usersPage),
+        limit: String(USERS_ADMIN_PAGE_SIZE),
+      });
+      const q = userSearch.trim();
+      if (q) {
+        params.set('search', q);
+      }
+      const response = await fetch(`/api/admin/users?${params.toString()}`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      if (!response.ok) {
+        const body = (await response.json().catch(() => ({}))) as { error?: string };
+        throw new Error(body.error || 'Failed to fetch users');
+      }
+      const data = (await response.json()) as {
+        users?: AdminUserSummary[];
+        pagination?: { has_more?: boolean; total?: number };
+      };
+      setAdminUsers((data.users || []) as AdminUserSummary[]);
+      setUsersHasMore(Boolean(data.pagination?.has_more));
+      setUsersTotal(data.pagination?.total ?? 0);
+    } catch (err) {
+      console.error('Error fetching users:', err);
+      setUsersError(err instanceof Error ? err.message : 'Failed to load users');
+    } finally {
+      setUsersLoading(false);
     }
+  }, [usersPage, userSearch]);
+
+  useEffect(() => {
+    if (authLoading) return;
+
+    let cancelled = false;
+
+    const enforceAccess = () => {
+      if (cancelled) return;
+      if (isBudasevoSignOutInProgress()) return;
+      if (!user) {
+        router.push('/login?next=%2Fbudasevo');
+        return;
+      }
+      if (!isAdmin) {
+        router.replace('/');
+      }
+    };
+
+    if (user) {
+      enforceAccess();
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    const timeoutId = window.setTimeout(enforceAccess, 400);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeoutId);
+    };
   }, [user, isAdmin, authLoading, router]);
 
   useEffect(() => {
-    if (isAdmin) {
-      void loadCategories('initial');
-    }
+    if (!isAdmin || categoriesLoadedRef.current) return;
+    categoriesLoadedRef.current = true;
+    void loadCategories('initial');
   }, [isAdmin, loadCategories]);
 
   useEffect(() => {
     if (!isAdmin || activeAdminTab !== 'memes') return;
     void loadMemeList();
   }, [isAdmin, activeAdminTab, memesPage, memeSearch, memesListNonce, loadMemeList]);
+
+  useEffect(() => {
+    if (!isAdmin || activeAdminTab !== 'users') return;
+    void loadUsersList();
+  }, [isAdmin, activeAdminTab, usersPage, userSearch, usersListNonce, loadUsersList]);
 
   const onAdminTabKeyDown = useCallback(
     (e: React.KeyboardEvent, tabId: AdminTabId) => {
@@ -159,9 +243,28 @@ export default function AdminDashboard() {
     setMemesPage(1);
   }, []);
 
+  const refreshUsersList = useCallback(() => {
+    setUsersListNonce((n) => n + 1);
+  }, []);
+
+  const applyUserSearch = useCallback(() => {
+    setUserSearch(userSearchDraft.trim());
+    setUsersPage(1);
+  }, [userSearchDraft]);
+
+  const clearUserSearch = useCallback(() => {
+    setUserSearchDraft('');
+    setUserSearch('');
+    setUsersPage(1);
+  }, []);
+
+  const formatAdminDate = (iso: string | null) => {
+    if (!iso) return '—';
+    return new Date(iso).toLocaleString();
+  };
+
   const handleLogout = async () => {
     await signOut();
-    router.push('/login');
   };
 
   const handleUploadSuccess = () => {
@@ -369,7 +472,15 @@ export default function AdminDashboard() {
     }
   };
 
-  if (authLoading || loading) {
+  if (!dashboardReadyRef.current && user && isAdmin) {
+    dashboardReadyRef.current = true;
+  }
+
+  const showInitialShell =
+    !dashboardReadyRef.current &&
+    (authLoading || (loading && categories.length === 0 && !error));
+
+  if (showInitialShell) {
     return (
       <div className="bg-[#f7f4ee] dark:bg-gray-950 min-h-screen">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -817,6 +928,213 @@ export default function AdminDashboard() {
                 variant="outline"
                 onClick={() => setMemesPage((p) => p + 1)}
                 disabled={memesLoading || !memesHasMore}
+                className="rounded-none border-2 border-zinc-700 dark:border-zinc-400 uppercase tracking-wide font-bold"
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        </section>
+
+        <section
+          role="tabpanel"
+          id="admin-tabpanel-users"
+          aria-labelledby="admin-tab-users"
+          hidden={activeAdminTab !== 'users'}
+          className="p-6 sm:p-8"
+        >
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
+            <div>
+              <h2 className="text-2xl font-black uppercase tracking-tight">Users</h2>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                Accounts on the site — when they joined, shares, comments, and other activity tied to their profile.
+                Likes are stored per browser session, so the likes column only reflects older account-linked data.
+              </p>
+              {usersTotal > 0 ? (
+                <p className="mt-2 text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-500">
+                  {usersTotal} registered user{usersTotal === 1 ? '' : 's'}
+                </p>
+              ) : null}
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => refreshUsersList()}
+              disabled={usersLoading}
+              className="rounded-none border-2 border-zinc-700 dark:border-zinc-400 uppercase tracking-wide font-bold"
+            >
+              <ICONS.RefreshCw className={`w-4 h-4 mr-2 ${usersLoading ? 'animate-spin' : ''}`} aria-hidden />
+              Refresh
+            </Button>
+          </div>
+
+          <form
+            className="mb-4 flex flex-col sm:flex-row gap-2 sm:items-center"
+            onSubmit={(e) => {
+              e.preventDefault();
+              applyUserSearch();
+            }}
+          >
+            <Input
+              type="search"
+              value={userSearchDraft}
+              onChange={(e) => setUserSearchDraft(e.target.value)}
+              placeholder="Search username, name, or email…"
+              aria-label="Search users"
+              className="max-w-md rounded-none border-2 border-zinc-300 dark:border-zinc-600 focus:border-zinc-700 dark:focus:border-zinc-400"
+            />
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="submit"
+                variant="outline"
+                disabled={usersLoading}
+                className="rounded-none border-2 border-zinc-700 dark:border-zinc-400 uppercase tracking-wide font-bold"
+              >
+                Search
+              </Button>
+              {userSearch ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => clearUserSearch()}
+                  disabled={usersLoading}
+                  className="rounded-none border-2 border-zinc-700 dark:border-zinc-400 uppercase tracking-wide font-bold"
+                >
+                  Clear
+                </Button>
+              ) : null}
+            </div>
+          </form>
+
+          {usersError && (
+            <div className="mb-4 border-2 border-red-700 dark:border-red-500 bg-red-50 dark:bg-red-950/40 px-4 py-3 text-sm text-red-900 dark:text-red-100">
+              {usersError}
+            </div>
+          )}
+
+          <div className="overflow-x-auto border-2 border-zinc-700 dark:border-zinc-400">
+            <table className="w-full text-sm">
+              <thead className="bg-[#f7f4ee] dark:bg-gray-950 border-b-2 border-zinc-700 dark:border-zinc-400">
+                <tr>
+                  <th className="text-left px-3 py-2 font-bold uppercase tracking-wide">User</th>
+                  <th className="text-left px-3 py-2 font-bold uppercase tracking-wide hidden lg:table-cell">
+                    Email
+                  </th>
+                  <th className="text-left px-3 py-2 font-bold uppercase tracking-wide">Joined</th>
+                  <th className="text-left px-3 py-2 font-bold uppercase tracking-wide hidden xl:table-cell">
+                    Last sign-in
+                  </th>
+                  <th className="text-right px-3 py-2 font-bold uppercase tracking-wide">Shares</th>
+                  <th className="text-right px-3 py-2 font-bold uppercase tracking-wide hidden md:table-cell">
+                    Views
+                  </th>
+                  <th className="text-right px-3 py-2 font-bold uppercase tracking-wide hidden md:table-cell">
+                    Likes
+                  </th>
+                  <th className="text-right px-3 py-2 font-bold uppercase tracking-wide hidden sm:table-cell">
+                    Comments
+                  </th>
+                  <th className="text-right px-3 py-2 font-bold uppercase tracking-wide hidden sm:table-cell">
+                    Generated
+                  </th>
+                  <th className="text-center px-3 py-2 font-bold uppercase tracking-wide">Role</th>
+                </tr>
+              </thead>
+              <tbody>
+                {usersLoading && adminUsers.length === 0 ? (
+                  <tr>
+                    <td colSpan={10} className="px-3 py-6 text-center text-gray-500 dark:text-gray-400">
+                      Loading users…
+                    </td>
+                  </tr>
+                ) : adminUsers.length === 0 ? (
+                  <tr>
+                    <td colSpan={10} className="px-3 py-6 text-center text-gray-500 dark:text-gray-400">
+                      No users found.
+                    </td>
+                  </tr>
+                ) : (
+                  adminUsers.map((adminUser) => (
+                    <tr key={adminUser.id} className="border-t border-zinc-300 dark:border-zinc-700">
+                      <td className="px-3 py-2">
+                        <div className="min-w-[140px]">
+                          <p className="font-medium truncate">
+                            {adminUser.display_name || adminUser.username}
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 font-mono truncate">
+                            @{adminUser.username}
+                          </p>
+                        </div>
+                      </td>
+                      <td className="px-3 py-2 max-w-[220px] truncate font-mono text-xs hidden lg:table-cell">
+                        {adminUser.email || '—'}
+                      </td>
+                      <td className="px-3 py-2 text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                        {formatAdminDate(adminUser.joined_at)}
+                      </td>
+                      <td className="px-3 py-2 text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap hidden xl:table-cell">
+                        {formatAdminDate(adminUser.last_sign_in_at)}
+                      </td>
+                      <td className="px-3 py-2 text-right font-mono tabular-nums">{adminUser.shares_count}</td>
+                      <td className="px-3 py-2 text-right font-mono tabular-nums hidden md:table-cell">
+                        {adminUser.views_count}
+                      </td>
+                      <td className="px-3 py-2 text-right font-mono tabular-nums hidden md:table-cell">
+                        {adminUser.likes_count}
+                      </td>
+                      <td className="px-3 py-2 text-right font-mono tabular-nums hidden sm:table-cell">
+                        {adminUser.comments_count}
+                      </td>
+                      <td className="px-3 py-2 text-right font-mono tabular-nums hidden sm:table-cell">
+                        {adminUser.generated_memes_count}
+                      </td>
+                      <td className="px-3 py-2 text-center">
+                        {adminUser.is_admin ? (
+                          <span className="inline-block px-2 py-0.5 text-xs font-bold uppercase tracking-wide border-2 border-blue-700 dark:border-blue-400 text-blue-800 dark:text-blue-200 bg-blue-50 dark:bg-blue-950/40">
+                            Admin
+                          </span>
+                        ) : (
+                          <span className="text-xs text-gray-500 dark:text-gray-400">Member</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-sm text-gray-600 dark:text-gray-400">
+            <p>
+              Page <span className="font-mono font-semibold text-gray-900 dark:text-gray-100">{usersPage}</span>
+              {userSearch ? (
+                <>
+                  {' '}
+                  · filter &quot;{userSearch}&quot;
+                </>
+              ) : null}
+              {adminUsers.length > 0 ? (
+                <>
+                  {' '}
+                  · {adminUsers.length} user{adminUsers.length === 1 ? '' : 's'} on this page
+                </>
+              ) : null}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setUsersPage((p) => Math.max(1, p - 1))}
+                disabled={usersLoading || usersPage <= 1}
+                className="rounded-none border-2 border-zinc-700 dark:border-zinc-400 uppercase tracking-wide font-bold"
+              >
+                Previous
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setUsersPage((p) => p + 1)}
+                disabled={usersLoading || !usersHasMore}
                 className="rounded-none border-2 border-zinc-700 dark:border-zinc-400 uppercase tracking-wide font-bold"
               >
                 Next

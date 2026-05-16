@@ -147,7 +147,9 @@ const Header: React.FC<HeaderProps> = ({ showSearch = true }) => {
   const handleLogout = async () => {
     await signOut();
     closeMobileMenu();
-    router.push('/');
+    if (!pathname?.startsWith('/budasevo')) {
+      router.replace('/');
+    }
   };
 
   const navigationItems = [

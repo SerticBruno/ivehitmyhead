@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase/client';
+import { markBudasevoSignOutInProgress } from '@/lib/auth/budasevoSignOut';
 import { UPDATE_PASSWORD_PATH, updatePasswordRedirectUrl } from '@/lib/auth/paths';
 
 interface AuthContextType {
@@ -43,18 +44,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let cancelled = false;
+    const authReadyRef = { current: false };
 
-    const applySession = async (session: Session | null) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      await checkAdminStatus(session?.user ?? null);
+    const finishInitialLoad = () => {
       if (!cancelled) {
         setLoading(false);
+        authReadyRef.current = true;
       }
     };
 
+    const syncSession = async (session: Session | null) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      await checkAdminStatus(session?.user ?? null);
+    };
+
     void supabase.auth.getSession().then(({ data: { session } }) => {
-      void applySession(session);
+      if (!cancelled) {
+        setLoading(true);
+      }
+      void syncSession(session).then(finishInitialLoad);
     });
 
     const {
@@ -65,9 +74,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (path !== UPDATE_PASSWORD_PATH) {
           window.location.assign(UPDATE_PASSWORD_PATH);
         }
+        return;
       }
-      setLoading(true);
-      void applySession(session);
+
+      if (event === 'SIGNED_OUT') {
+        setSession(null);
+        setUser(null);
+        setIsAdmin(false);
+        finishInitialLoad();
+        return;
+      }
+
+      // Background sync (tab focus / token refresh / multi-tab) — never flash loading UI.
+      if (
+        event === 'TOKEN_REFRESHED' ||
+        event === 'INITIAL_SESSION' ||
+        event === 'USER_UPDATED'
+      ) {
+        void syncSession(session);
+        return;
+      }
+
+      if (event === 'SIGNED_IN') {
+        void syncSession(session);
+        if (!authReadyRef.current && !cancelled) {
+          finishInitialLoad();
+        }
+        return;
+      }
+
+      void syncSession(session);
     });
 
     return () => {
@@ -243,10 +279,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signInWithDiscord = (next = '/') => signInWithOAuthProvider('discord', next);
 
   const signOut = async () => {
+    const leaveBudasevoForHome =
+      typeof window !== 'undefined' &&
+      window.location.pathname.startsWith('/budasevo');
+
+    if (leaveBudasevoForHome) {
+      markBudasevoSignOutInProgress();
+    }
+
     await supabase.auth.signOut();
     setUser(null);
     setSession(null);
     setIsAdmin(false);
+
+    if (leaveBudasevoForHome) {
+      window.location.replace('/');
+    }
   };
 
   return (

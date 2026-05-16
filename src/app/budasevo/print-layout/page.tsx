@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import PrintLayoutEditor from '@/components/print-layout/PrintLayoutEditor';
+import { isBudasevoSignOutInProgress } from '@/lib/auth/budasevoSignOut';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { ICONS } from '@/lib/utils/categoryIcons';
 
@@ -15,6 +16,7 @@ export default function AdminPrintLayoutPage() {
   useEffect(() => {
     if (loading) return;
     if (!user) {
+      if (isBudasevoSignOutInProgress()) return;
       router.push('/login?next=%2Fbudasevo%2Fprint-layout');
       return;
     }
