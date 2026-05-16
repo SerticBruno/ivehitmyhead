@@ -14,7 +14,7 @@ export default function AdminPrintLayoutPage() {
 
   useEffect(() => {
     if (!loading && (!user || !isAdmin)) {
-      router.push('/admin/login');
+      router.push('/login?next=%2Fadmin%2Fprint-layout');
     }
   }, [loading, user, isAdmin, router]);
 

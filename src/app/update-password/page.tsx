@@ -1,28 +1,107 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/contexts/AuthContext';
+import { UPDATE_PASSWORD_PATH } from '@/lib/auth/paths';
+import { supabase } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
+import { PasswordInput } from '@/components/ui/PasswordInput';
 import { ICONS } from '@/lib/utils/categoryIcons';
 import { cn } from '@/lib/utils';
 
-export default function UpdatePasswordPage() {
+function UpdatePasswordLoading() {
+  return (
+    <div className="bg-[#f7f4ee] dark:bg-gray-950 flex items-center justify-center px-4 py-12 min-h-[50vh]">
+      <div className="w-full max-w-md border-2 border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-900 p-10 shadow-[8px_8px_0px_rgba(0,0,0,0.9)] dark:shadow-[8px_8px_0px_rgba(156,163,175,0.42)] animate-pulse">
+        <div className="h-8 bg-zinc-200 dark:bg-zinc-700 w-3/4 mx-auto mb-4" />
+        <div className="h-12 bg-zinc-100 dark:bg-zinc-800" />
+      </div>
+    </div>
+  );
+}
+
+function UpdatePasswordForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, loading: authLoading, updatePassword } = useAuth();
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [sessionChecked, setSessionChecked] = useState(false);
+  const [isRecoveryFlow, setIsRecoveryFlow] = useState(false);
 
   useEffect(() => {
-    if (authLoading) return;
-    if (!user) {
-      router.replace('/login?next=%2Fupdate-password');
+    let cancelled = false;
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setIsRecoveryFlow(true);
+        setSessionChecked(true);
+      } else if (session?.user) {
+        setSessionChecked(true);
+      }
+    });
+
+    async function establishSession() {
+      const code = searchParams.get('code');
+      const tokenHash = searchParams.get('token_hash');
+      const otpType = searchParams.get('type');
+
+      if (code) {
+        const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+        if (cancelled) return;
+        if (exchangeError) {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session?.user) {
+            router.replace(`/login?next=${encodeURIComponent(UPDATE_PASSWORD_PATH)}`);
+            return;
+          }
+        } else {
+          setIsRecoveryFlow(true);
+        }
+        router.replace(UPDATE_PASSWORD_PATH);
+        setSessionChecked(true);
+        return;
+      }
+
+      if (tokenHash && otpType === 'recovery') {
+        const { error: verifyError } = await supabase.auth.verifyOtp({
+          type: 'recovery',
+          token_hash: tokenHash,
+        });
+        if (cancelled) return;
+        if (verifyError) {
+          router.replace(`/login?next=${encodeURIComponent(UPDATE_PASSWORD_PATH)}`);
+          return;
+        }
+        setIsRecoveryFlow(true);
+        router.replace(UPDATE_PASSWORD_PATH);
+        setSessionChecked(true);
+        return;
+      }
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (cancelled) return;
+      if (session?.user) {
+        setSessionChecked(true);
+        return;
+      }
+
+      router.replace(`/login?next=${encodeURIComponent(UPDATE_PASSWORD_PATH)}`);
     }
-  }, [user, authLoading, router]);
+
+    void establishSession();
+
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
+  }, [router, searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,15 +128,11 @@ export default function UpdatePasswordPage() {
     }
   };
 
-  if (authLoading || !user) {
-    return (
-      <div className="bg-[#f7f4ee] dark:bg-gray-950 flex items-center justify-center px-4 py-12 min-h-[50vh]">
-        <div className="w-full max-w-md border-2 border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-900 p-10 shadow-[8px_8px_0px_rgba(0,0,0,0.9)] dark:shadow-[8px_8px_0px_rgba(156,163,175,0.42)] animate-pulse">
-          <div className="h-8 bg-zinc-200 dark:bg-zinc-700 w-3/4 mx-auto mb-4" />
-          <div className="h-12 bg-zinc-100 dark:bg-zinc-800" />
-        </div>
-      </div>
-    );
+  const waitingForSession = authLoading || !sessionChecked;
+  const canShowForm = sessionChecked && user;
+
+  if (waitingForSession || !canShowForm) {
+    return <UpdatePasswordLoading />;
   }
 
   return (
@@ -71,6 +146,11 @@ export default function UpdatePasswordPage() {
           <h2 className="text-2xl font-black uppercase tracking-tight text-gray-900 dark:text-white">
             Choose a new password
           </h2>
+          {isRecoveryFlow ? (
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              You opened a password reset link. Enter a new password below.
+            </p>
+          ) : null}
           {error && (
             <div
               className="border-2 border-red-700 dark:border-red-500 bg-red-50 dark:bg-red-950/40 px-4 py-3 flex gap-3"
@@ -81,10 +161,9 @@ export default function UpdatePasswordPage() {
             </div>
           )}
           <form className="space-y-4" onSubmit={handleSubmit} noValidate>
-            <Input
+            <PasswordInput
               id="new-password"
               name="password"
-              type="password"
               autoComplete="new-password"
               required
               label="New password"
@@ -93,10 +172,9 @@ export default function UpdatePasswordPage() {
               placeholder="••••••••"
               className="rounded-none border-2 border-zinc-300 dark:border-zinc-600 focus:border-zinc-700 dark:focus:border-zinc-400"
             />
-            <Input
+            <PasswordInput
               id="confirm-password"
               name="confirm-password"
-              type="password"
               autoComplete="new-password"
               required
               label="Confirm password"
@@ -128,5 +206,13 @@ export default function UpdatePasswordPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function UpdatePasswordPage() {
+  return (
+    <Suspense fallback={<UpdatePasswordLoading />}>
+      <UpdatePasswordForm />
+    </Suspense>
   );
 }

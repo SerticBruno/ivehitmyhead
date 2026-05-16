@@ -1,6 +1,15 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  async redirects() {
+    return [
+      {
+        source: '/admin/login',
+        destination: '/login?next=%2Fadmin',
+        permanent: false,
+      },
+    ];
+  },
   images: {
     remotePatterns: [
       {

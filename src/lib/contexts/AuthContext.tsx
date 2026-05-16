@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase/client';
+import { UPDATE_PASSWORD_PATH, updatePasswordRedirectUrl } from '@/lib/auth/paths';
 
 interface AuthContextType {
   user: User | null;
@@ -19,6 +20,10 @@ interface AuthContextType {
     options: { redirectPath: string }
   ) => Promise<{ error: Error | null }>;
   updatePassword: (newPassword: string) => Promise<{ error: Error | null }>;
+  changePassword: (
+    currentPassword: string,
+    newPassword: string
+  ) => Promise<{ error: Error | null }>;
   signInWithGoogle: (next?: string) => Promise<{ error: Error | null }>;
   signInWithDiscord: (next?: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
@@ -43,7 +48,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY' && typeof window !== 'undefined') {
+        const path = window.location.pathname;
+        if (path !== UPDATE_PASSWORD_PATH) {
+          window.location.assign(UPDATE_PASSWORD_PATH);
+        }
+      }
       setSession(session);
       setUser(session?.user ?? null);
       checkAdminStatus(session?.user ?? null);
@@ -149,7 +160,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     options: { redirectPath: string }
   ): Promise<{ error: Error | null }> => {
     try {
-      const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(options.redirectPath)}`;
+      const redirectTo =
+        options.redirectPath === UPDATE_PASSWORD_PATH
+          ? updatePasswordRedirectUrl(window.location.origin)
+          : `${window.location.origin}/auth/callback?next=${encodeURIComponent(options.redirectPath)}`;
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo,
       });
@@ -161,6 +175,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const updatePassword = async (newPassword: string): Promise<{ error: Error | null }> => {
     try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      return { error: error ?? null };
+    } catch (error) {
+      return { error: error as Error };
+    }
+  };
+
+  const changePassword = async (
+    currentPassword: string,
+    newPassword: string
+  ): Promise<{ error: Error | null }> => {
+    try {
+      const email = user?.email;
+      if (!email) {
+        return { error: new Error('No email on this account.') };
+      }
+
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password: currentPassword,
+      });
+      if (signInError) {
+        return { error: new Error('Current password is incorrect.') };
+      }
+
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       return { error: error ?? null };
     } catch (error) {
@@ -204,6 +243,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signUp,
         resetPasswordForEmail,
         updatePassword,
+        changePassword,
         signInWithGoogle,
         signInWithDiscord,
         signOut,

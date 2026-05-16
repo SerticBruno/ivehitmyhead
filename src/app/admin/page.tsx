@@ -102,7 +102,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     if (!authLoading && (!user || !isAdmin)) {
-      router.push('/admin/login');
+      router.push('/login?next=%2Fadmin');
     }
   }, [user, isAdmin, authLoading, router]);
 
@@ -134,7 +134,7 @@ export default function AdminDashboard() {
 
   const handleLogout = async () => {
     await signOut();
-    router.push('/admin/login');
+    router.push('/login');
   };
 
   const handleUploadSuccess = () => {

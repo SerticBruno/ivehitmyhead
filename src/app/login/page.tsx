@@ -9,8 +9,8 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { ICONS } from '@/lib/utils/categoryIcons';
 import { cn } from '@/lib/utils';
+import { UPDATE_PASSWORD_PATH } from '@/lib/auth/paths';
 
-const UPDATE_PASSWORD_PATH = '/update-password';
 const USERNAME_RE = /^[a-z0-9_]{3,20}$/;
 
 function DiscordMark({ className }: { className?: string }) {

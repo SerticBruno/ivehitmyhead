@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createRouteHandlerSupabase } from '@/lib/supabase/server';
 import type { EmailOtpType } from '@supabase/supabase-js';
+import { UPDATE_PASSWORD_PATH } from '@/lib/auth/paths';
 
 function safeNextPath(next: string | null, origin: string): string {
   if (!next || !next.startsWith('/') || next.startsWith('//')) {
@@ -47,31 +48,47 @@ export async function GET(request: NextRequest) {
   const code = searchParams.get('code');
   const token_hash = searchParams.get('token_hash');
   const otpTypeRaw = searchParams.get('type');
-  const next = safeNextPath(searchParams.get('next'), origin);
+  const isRecovery = otpTypeRaw === 'recovery';
+  const next = isRecovery
+    ? UPDATE_PASSWORD_PATH
+    : safeNextPath(searchParams.get('next'), origin);
   const redirectUrl = `${origin}${next}`;
   const response = NextResponse.redirect(redirectUrl);
+  const loginErrorUrl = `${origin}/login?error=auth&next=${encodeURIComponent(next)}`;
 
   const supabase = createRouteHandlerSupabase(request, response);
 
   if (code) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (error) {
-      return NextResponse.redirect(`${origin}/login?error=auth`);
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user && next === UPDATE_PASSWORD_PATH) {
+        return response;
+      }
+      return NextResponse.redirect(loginErrorUrl);
     }
   } else if (token_hash && otpTypeRaw) {
     const otpType = parseOtpType(otpTypeRaw);
     if (!otpType) {
-      return NextResponse.redirect(`${origin}/login?error=auth`);
+      return NextResponse.redirect(loginErrorUrl);
     }
     const { error } = await supabase.auth.verifyOtp({
       type: otpType,
       token_hash,
     });
     if (error) {
-      return NextResponse.redirect(`${origin}/login?error=auth`);
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user && next === UPDATE_PASSWORD_PATH) {
+        return response;
+      }
+      return NextResponse.redirect(loginErrorUrl);
     }
   } else {
-    return NextResponse.redirect(`${origin}/login?error=auth`);
+    return NextResponse.redirect(loginErrorUrl);
   }
 
   const {
