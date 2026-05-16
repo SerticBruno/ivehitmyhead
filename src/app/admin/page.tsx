@@ -13,6 +13,14 @@ import { ICONS, renderCategoryIcon } from '@/lib/utils/categoryIcons';
 
 const MEMES_ADMIN_PAGE_SIZE = 50;
 
+type AdminTabId = 'categories' | 'memes' | 'upload';
+
+const ADMIN_TABS: { id: AdminTabId; label: string }[] = [
+  { id: 'upload', label: 'Upload' },
+  { id: 'memes', label: 'Memes' },
+  { id: 'categories', label: 'Categories' },
+];
+
 export default function AdminDashboard() {
   const { user, session, isAdmin, loading: authLoading, signOut } = useAuth();
   const router = useRouter();
@@ -37,6 +45,7 @@ export default function AdminDashboard() {
   const [deletingCategoryId, setDeletingCategoryId] = useState<string | null>(null);
   const [categoryManageError, setCategoryManageError] = useState<string | null>(null);
   const [categoryManageMessage, setCategoryManageMessage] = useState<string | null>(null);
+  const [activeAdminTab, setActiveAdminTab] = useState<AdminTabId>('upload');
 
   const loadCategories = useCallback(async (mode: 'initial' | 'refresh' = 'initial') => {
     const isInitial = mode === 'initial';
@@ -113,9 +122,22 @@ export default function AdminDashboard() {
   }, [isAdmin, loadCategories]);
 
   useEffect(() => {
-    if (!isAdmin) return;
+    if (!isAdmin || activeAdminTab !== 'memes') return;
     void loadMemeList();
-  }, [isAdmin, memesPage, memeSearch, memesListNonce, loadMemeList]);
+  }, [isAdmin, activeAdminTab, memesPage, memeSearch, memesListNonce, loadMemeList]);
+
+  const onAdminTabKeyDown = useCallback(
+    (e: React.KeyboardEvent, tabId: AdminTabId) => {
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+      e.preventDefault();
+      const i = ADMIN_TABS.findIndex((t) => t.id === tabId);
+      const delta = e.key === 'ArrowRight' ? 1 : -1;
+      const next = ADMIN_TABS[(i + delta + ADMIN_TABS.length) % ADMIN_TABS.length];
+      setActiveAdminTab(next.id);
+      document.getElementById(`admin-tab-${next.id}`)?.focus();
+    },
+    []
+  );
 
   const refreshMemeList = useCallback(() => {
     setMemesListNonce((n) => n + 1);
@@ -350,17 +372,6 @@ export default function AdminDashboard() {
             <div className="h-10 bg-zinc-200 dark:bg-zinc-700 max-w-md mb-4" />
             <div className="h-5 bg-zinc-200 dark:bg-zinc-700 max-w-lg" />
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div
-                key={i}
-                className="border-2 border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-900 p-6 h-24 animate-pulse"
-              >
-                <div className="h-4 bg-zinc-200 dark:bg-zinc-700 w-24 mb-2" />
-                <div className="h-8 bg-zinc-200 dark:bg-zinc-700 w-16" />
-              </div>
-            ))}
-          </div>
           <div className="border-2 border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-900 p-8 min-h-[320px] animate-pulse shadow-[6px_6px_0px_rgba(0,0,0,0.85)] dark:shadow-[6px_6px_0px_rgba(156,163,175,0.35)]">
             <div className="h-8 bg-zinc-200 dark:bg-zinc-700 max-w-xs mb-6" />
             <div className="h-40 bg-zinc-100 dark:bg-zinc-800" />
@@ -460,34 +471,45 @@ export default function AdminDashboard() {
           </div>
         </header>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
-          <div className="border-2 border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-900 p-6 shadow-[4px_4px_0px_rgba(0,0,0,0.85)] dark:shadow-[4px_4px_0px_rgba(156,163,175,0.35)]">
-            <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-xs font-bold uppercase tracking-widest mb-2">
-              <ICONS.FolderOpen className="w-4 h-4" aria-hidden />
-              Categories
-            </div>
-            <p className="text-3xl font-black tabular-nums">{categories.length}</p>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Available for tagging</p>
+        <div className="border-2 border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-900 shadow-[6px_6px_0px_rgba(0,0,0,0.85)] dark:shadow-[6px_6px_0px_rgba(156,163,175,0.35)]">
+          <div
+            role="tablist"
+            aria-label="Admin sections"
+            className="flex border-b-2 border-zinc-700 dark:border-zinc-400 bg-[#f7f4ee] dark:bg-gray-950"
+          >
+            {ADMIN_TABS.map((tab) => {
+              const selected = activeAdminTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  role="tab"
+                  id={`admin-tab-${tab.id}`}
+                  aria-selected={selected}
+                  aria-controls={`admin-tabpanel-${tab.id}`}
+                  tabIndex={selected ? 0 : -1}
+                  onClick={() => setActiveAdminTab(tab.id)}
+                  onKeyDown={(e) => onAdminTabKeyDown(e, tab.id)}
+                  className={cn(
+                    'flex-1 min-w-0 cursor-pointer px-2 sm:px-4 py-3 text-center text-xs sm:text-sm font-black uppercase tracking-wide border-r-2 border-zinc-700 dark:border-zinc-400 last:border-r-0 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-zinc-500',
+                    selected
+                      ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white'
+                      : 'text-gray-600 dark:text-gray-400 [@media(hover:hover)]:hover:bg-white/80 dark:[@media(hover:hover)]:hover:bg-gray-900/50'
+                  )}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
           </div>
-          <div className="border-2 border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-900 p-6 shadow-[4px_4px_0px_rgba(0,0,0,0.85)] dark:shadow-[4px_4px_0px_rgba(156,163,175,0.35)]">
-            <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-xs font-bold uppercase tracking-widest mb-2">
-              <ICONS.Image className="w-4 h-4" aria-hidden />
-              Upload flow
-            </div>
-            <p className="text-3xl font-black">One</p>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Form below, no surprises</p>
-          </div>
-          <div className="border-2 border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-900 p-6 shadow-[4px_4px_0px_rgba(0,0,0,0.85)] dark:shadow-[4px_4px_0px_rgba(156,163,175,0.35)] sm:col-span-1">
-            <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-xs font-bold uppercase tracking-widest mb-2">
-              <ICONS.Star className="w-4 h-4" aria-hidden />
-              Quality bar
-            </div>
-            <p className="text-3xl font-black">Low</p>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">By design. Stay on brand.</p>
-          </div>
-        </div>
 
-        <section className="border-2 border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-900 p-6 sm:p-8 shadow-[6px_6px_0px_rgba(0,0,0,0.85)] dark:shadow-[6px_6px_0px_rgba(156,163,175,0.35)] mb-10">
+          <section
+            role="tabpanel"
+            id="admin-tabpanel-categories"
+            aria-labelledby="admin-tab-categories"
+            hidden={activeAdminTab !== 'categories'}
+            className="p-6 sm:p-8"
+          >
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
             <div>
               <h2 className="text-2xl font-black uppercase tracking-tight">
@@ -604,47 +626,15 @@ export default function AdminDashboard() {
               </tbody>
             </table>
           </div>
-
-          <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-sm text-gray-600 dark:text-gray-400">
-            <p>
-              Page <span className="font-mono font-semibold text-gray-900 dark:text-gray-100">{memesPage}</span>
-              {memeSearch ? (
-                <>
-                  {' '}
-                  · filter &quot;{memeSearch}&quot;
-                </>
-              ) : null}
-              {memes.length > 0 ? (
-                <>
-                  {' '}
-                  · {memes.length} meme{memes.length === 1 ? '' : 's'} on this page
-                </>
-              ) : null}
-            </p>
-            <div className="flex flex-wrap gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setMemesPage((p) => Math.max(1, p - 1))}
-                disabled={memesLoading || memesPage <= 1}
-                className="rounded-none border-2 border-zinc-700 dark:border-zinc-400 uppercase tracking-wide font-bold"
-              >
-                Previous
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setMemesPage((p) => p + 1)}
-                disabled={memesLoading || !memesHasMore}
-                className="rounded-none border-2 border-zinc-700 dark:border-zinc-400 uppercase tracking-wide font-bold"
-              >
-                Next
-              </Button>
-            </div>
-          </div>
         </section>
 
-        <section className="border-2 border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-900 p-6 sm:p-8 shadow-[6px_6px_0px_rgba(0,0,0,0.85)] dark:shadow-[6px_6px_0px_rgba(156,163,175,0.35)] mb-10">
+        <section
+          role="tabpanel"
+          id="admin-tabpanel-memes"
+          aria-labelledby="admin-tab-memes"
+          hidden={activeAdminTab !== 'memes'}
+          className="p-6 sm:p-8"
+        >
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
             <div>
               <h2 className="text-2xl font-black uppercase tracking-tight">
@@ -830,7 +820,13 @@ export default function AdminDashboard() {
           </div>
         </section>
 
-        <section className="border-2 border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-900 p-6 sm:p-8 shadow-[6px_6px_0px_rgba(0,0,0,0.85)] dark:shadow-[6px_6px_0px_rgba(156,163,175,0.35)]">
+        <section
+          role="tabpanel"
+          id="admin-tabpanel-upload"
+          aria-labelledby="admin-tab-upload"
+          hidden={activeAdminTab !== 'upload'}
+          className="p-6 sm:p-8"
+        >
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
             <div>
               <h2 className="text-2xl font-black uppercase tracking-tight">Upload a meme</h2>
@@ -859,6 +855,7 @@ export default function AdminDashboard() {
             className="max-w-2xl shadow-none"
           />
         </section>
+        </div>
       </div>
     </div>
   );
