@@ -1175,7 +1175,7 @@ export default function AdminDashboard() {
             categories={categories}
             onUploadSuccess={handleUploadSuccess}
             sharpCorners
-            className="max-w-2xl shadow-none"
+            className="w-full shadow-none"
           />
         </section>
         </div>
