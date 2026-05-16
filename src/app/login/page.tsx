@@ -468,7 +468,7 @@ function LoginPageInner() {
             </>
           ) : signupNeedsEmailConfirmation ? (
             <p className="text-sm text-gray-700 dark:text-gray-300">
-              You’re almost done. Open the confirmation email, then come back here to sign in.
+              You’re almost done. Open the confirmation email to continue with sign in.
             </p>
           ) : (
             <form className="space-y-4" onSubmit={handleSignup} noValidate>
