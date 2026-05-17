@@ -23,10 +23,12 @@ const MEME_DETAIL_RANDOM_BTN =
   'rounded-none border-2 border-blue-700 bg-blue-600 text-white uppercase tracking-wide font-black shadow-[3px_3px_0px_rgba(29,78,216,0.7)] hover:bg-blue-500 hover:border-blue-600 disabled:opacity-50 disabled:shadow-none';
 
 const MEME_DETAIL_ACTIONS_ROW =
-  'grid grid-cols-3 gap-2 md:flex md:flex-nowrap md:items-center md:gap-2 md:shrink-0';
+  'grid grid-cols-2 gap-2 md:flex md:flex-nowrap md:items-center md:gap-2 md:shrink-0';
 
 const MEME_DETAIL_ACTION_BTN =
-  'w-full min-w-0 px-1.5 text-xs gap-1 h-auto py-2 sm:h-8 sm:w-auto sm:px-3 sm:text-sm sm:gap-2 sm:py-0';
+  'w-full min-w-0 px-1.5 text-xs gap-1 h-auto py-2 sm:h-8 md:w-auto sm:px-3 sm:text-sm sm:gap-2 sm:py-0';
+
+const MEME_DETAIL_RANDOM_ACTION_BTN = 'col-span-2 md:col-span-1';
 
 const MEME_DETAIL_CARD =
   'bg-white dark:bg-gray-900 rounded-none border-2 border-zinc-700 dark:border-zinc-400 shadow-[8px_8px_0px_rgba(0,0,0,0.88)] dark:shadow-[8px_8px_0px_rgba(156,163,175,0.42)] overflow-hidden';
@@ -384,9 +386,14 @@ export function MemeDetailClient({ slug, initialMeme = null }: MemeDetailClientP
                     <div className="h-8 w-16 bg-gray-200 dark:bg-gray-700" />
                 </div>
                 <div className={MEME_DETAIL_ACTIONS_ROW}>
-                  <div className="h-8 w-full bg-gray-200 dark:bg-gray-700 border-2 border-zinc-700 dark:border-zinc-400 sm:w-28" />
-                  <div className="h-8 w-full bg-gray-200 dark:bg-gray-700 border-2 border-zinc-700 dark:border-zinc-400 sm:w-28" />
-                  <div className="h-8 w-full bg-gray-200 dark:bg-gray-700 border-2 border-zinc-700 dark:border-zinc-400 sm:w-28" />
+                  <div className="h-8 w-full bg-gray-200 dark:bg-gray-700 border-2 border-zinc-700 dark:border-zinc-400 md:w-28" />
+                  <div className="h-8 w-full bg-gray-200 dark:bg-gray-700 border-2 border-zinc-700 dark:border-zinc-400 md:w-28" />
+                  <div
+                    className={cn(
+                      'h-8 w-full bg-gray-200 dark:bg-gray-700 border-2 border-zinc-700 dark:border-zinc-400 md:w-28',
+                      MEME_DETAIL_RANDOM_ACTION_BTN,
+                    )}
+                  />
                 </div>
               </div>
             </div>
@@ -547,7 +554,11 @@ export function MemeDetailClient({ slug, initialMeme = null }: MemeDetailClientP
                     size="sm"
                     onClick={handleRandom}
                     disabled={isLoadingRandom}
-                    className={cn(MEME_DETAIL_RANDOM_BTN, MEME_DETAIL_ACTION_BTN)}
+                    className={cn(
+                      MEME_DETAIL_RANDOM_BTN,
+                      MEME_DETAIL_ACTION_BTN,
+                      MEME_DETAIL_RANDOM_ACTION_BTN,
+                    )}
                   >
                     {isLoadingRandom ? (
                       <span className="inline-flex h-4 w-4 shrink-0 border-2 border-current border-t-transparent rounded-full animate-spin" />
