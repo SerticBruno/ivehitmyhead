@@ -24,6 +24,7 @@ import {
   getPendingGalleryMeme,
   setPendingGalleryMeme,
 } from '@/lib/persistence/pendingGalleryMeme';
+import { copyPngBlobToClipboard } from '@/lib/utils/shareUtils';
 
 const PREVIEW_SCROLL_GAP_BELOW_HEADER_PX = 24;
 const DESKTOP_MAX_GENERATOR_HEIGHT_PX = 860;
@@ -131,10 +132,15 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
   const [isSavingToGallery, setIsSavingToGallery] = useState(false);
   const [savedToGallery, setSavedToGallery] = useState(false);
   const [saveGalleryError, setSaveGalleryError] = useState<string | null>(null);
+  const [copiedToClipboard, setCopiedToClipboard] = useState(false);
+  const [isCopyingToClipboard, setIsCopyingToClipboard] = useState(false);
+  const [copyClipboardError, setCopyClipboardError] = useState<string | null>(null);
 
   useEffect(() => {
     setSavedToGallery(false);
     setSaveGalleryError(null);
+    setCopiedToClipboard(false);
+    setCopyClipboardError(null);
   }, [selectedTemplate?.id]);
 
   const galleryPendingFlushBusyRef = useRef(false);
@@ -873,6 +879,26 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
     URL.revokeObjectURL(url);
   }, [getExportBlob, selectedTemplate?.name]);
 
+  const copyMemeToClipboard = useCallback(async () => {
+    setCopiedToClipboard(false);
+    setCopyClipboardError(null);
+    setIsCopyingToClipboard(true);
+
+    try {
+      const blob = await getExportBlob();
+      if (!blob) {
+        setCopyClipboardError('Could not export image. Please try again.');
+        return;
+      }
+      await copyPngBlobToClipboard(blob);
+      setCopiedToClipboard(true);
+    } catch {
+      setCopyClipboardError('Copy failed. Your browser may not support copying images.');
+    } finally {
+      setIsCopyingToClipboard(false);
+    }
+  }, [getExportBlob]);
+
   const postGeneratedMeme = useCallback(
     async (blob: Blob, title: string, templateDisplayName: string | null) => {
       const safeName =
@@ -1387,6 +1413,10 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
               onAddText={addText}
               onDeleteSelected={deleteSelected}
               onDownload={downloadMeme}
+              onCopyToClipboard={copyMemeToClipboard}
+              isCopyingToClipboard={isCopyingToClipboard}
+              copiedToClipboard={copiedToClipboard}
+              copyClipboardError={copyClipboardError}
               onSaveToGallery={saveToGallery}
               isSavingToGallery={isSavingToGallery}
               savedToGallery={savedToGallery}

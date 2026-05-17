@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { BookmarkPlus, Download, Plus, Trash2 } from 'lucide-react';
+import { BookmarkPlus, ClipboardCopy, Download, Plus, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 /** Shared layout for every control — avoids fighting the shared Button size/variant styles. */
@@ -56,6 +56,10 @@ export interface MemeCanvasToolbarProps {
   onAddText: () => void;
   onDeleteSelected: () => void;
   onDownload: () => void;
+  onCopyToClipboard: () => void;
+  isCopyingToClipboard: boolean;
+  copiedToClipboard: boolean;
+  copyClipboardError: string | null;
   onSaveToGallery: () => void;
   isSavingToGallery: boolean;
   savedToGallery: boolean;
@@ -72,11 +76,28 @@ export function MemeCanvasToolbar({
   onAddText,
   onDeleteSelected,
   onDownload,
+  onCopyToClipboard,
+  isCopyingToClipboard,
+  copiedToClipboard,
+  copyClipboardError,
   onSaveToGallery,
   isSavingToGallery,
   savedToGallery,
   saveGalleryError,
 }: MemeCanvasToolbarProps) {
+  const copyLabel = isCopyingToClipboard
+    ? 'Copying…'
+    : copiedToClipboard
+      ? 'Copied'
+      : 'Copy image';
+  const copyTitle =
+    copyClipboardError ??
+    (isCopyingToClipboard
+      ? 'Copying…'
+      : copiedToClipboard
+        ? 'Image copied to clipboard'
+        : 'Copy image to clipboard');
+
   const galleryShortLabel = isSavingToGallery
     ? 'Saving'
     : savedToGallery
@@ -96,7 +117,7 @@ export function MemeCanvasToolbar({
     <div
       role="toolbar"
       aria-label="Canvas tools"
-      className="mt-1.5 grid shrink-0 grid-cols-2 gap-2 sm:grid-cols-3 md:mt-2 2xl:grid-cols-6"
+      className="mt-1.5 grid shrink-0 grid-cols-2 gap-2 sm:grid-cols-3 md:mt-2"
     >
       <ToolbarButton
         variant="toggle"
@@ -137,7 +158,7 @@ export function MemeCanvasToolbar({
         <span className="truncate">Delete</span>
       </ToolbarButton>
       <ToolbarButton
-        variant="primary"
+        variant="outline"
         disabled={disabled}
         onClick={onDownload}
       >
@@ -155,6 +176,22 @@ export function MemeCanvasToolbar({
         <span className="truncate 2xl:hidden">{galleryShortLabel}</span>
         <span className="hidden truncate 2xl:inline">{galleryLongLabel}</span>
       </ToolbarButton>
+      <ToolbarButton
+        variant="primary"
+        disabled={disabled || isCopyingToClipboard}
+        onClick={onCopyToClipboard}
+        title={copyTitle}
+        aria-label={copyLabel}
+        className="col-span-2 sm:col-span-1 sm:col-start-3"
+      >
+        <ClipboardCopy className="h-4 w-4 shrink-0" aria-hidden />
+        <span className="truncate">{copyLabel}</span>
+      </ToolbarButton>
     </div>
   );
 }
+
+
+
+
+

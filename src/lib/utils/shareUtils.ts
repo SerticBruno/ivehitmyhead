@@ -225,19 +225,25 @@ async function imageUrlToPngBlob(imageUrl: string): Promise<Blob> {
 }
 
 /**
- * Copy a meme image to the system clipboard (paste as image in supporting apps).
- * Clipboard writes use PNG — browsers reject JPEG/WebP for image clipboard data.
+ * Copy a PNG blob to the system clipboard (paste as image in supporting apps).
  */
-export async function copyImageToClipboard(imageUrl: string): Promise<void> {
+export async function copyPngBlobToClipboard(blob: Blob): Promise<void> {
   if (typeof window === 'undefined' || !navigator.clipboard?.write) {
     throw new Error('Clipboard image copy is not supported');
   }
 
-  const pngBlob = await imageUrlToPngBlob(imageUrl);
-
   await navigator.clipboard.write([
     new ClipboardItem({
-      'image/png': pngBlob,
+      'image/png': blob,
     }),
   ]);
+}
+
+/**
+ * Copy a meme image to the system clipboard (paste as image in supporting apps).
+ * Clipboard writes use PNG — browsers reject JPEG/WebP for image clipboard data.
+ */
+export async function copyImageToClipboard(imageUrl: string): Promise<void> {
+  const pngBlob = await imageUrlToPngBlob(imageUrl);
+  await copyPngBlobToClipboard(pngBlob);
 }
