@@ -229,28 +229,38 @@ const Header: React.FC<HeaderProps> = ({ showSearch = true }) => {
                   onMouseEnter={openProfileMenu}
                   onMouseLeave={scheduleCloseProfileMenu}
                 >
-                  <Link
-                    href="/profile"
-                    onFocus={openProfileMenu}
-                    className={`cursor-pointer inline-flex h-9 w-9 items-center justify-center border-2 transition-colors ${
-                      pathname === '/profile'
-                        ? 'border-black dark:border-white bg-black text-white dark:bg-white dark:text-black'
-                        : 'border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300'
-                    }`}
-                    aria-label="Profile"
-                  >
-                    {avatarUrl ? (
-                      <Image
-                        src={avatarUrl}
-                        alt=""
-                        width={32}
-                        height={32}
-                        className="h-full w-full object-cover shrink-0"
-                      />
-                    ) : (
-                      <User className="h-4 w-4" aria-hidden />
-                    )}
-                  </Link>
+                  <div className="inline-flex cursor-pointer items-center gap-1">
+                    <Link
+                      href="/profile"
+                      onFocus={openProfileMenu}
+                      className={`cursor-pointer inline-flex h-9 w-9 items-center justify-center border-2 transition-colors ${
+                        pathname === '/profile'
+                          ? 'border-black dark:border-white bg-black text-white dark:bg-white dark:text-black'
+                          : 'border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300'
+                      }`}
+                      aria-label="Profile"
+                      aria-expanded={isProfileMenuOpen}
+                      aria-haspopup="true"
+                    >
+                      {avatarUrl ? (
+                        <Image
+                          src={avatarUrl}
+                          alt=""
+                          width={32}
+                          height={32}
+                          className="h-full w-full object-cover shrink-0"
+                        />
+                      ) : (
+                        <User className="h-4 w-4" aria-hidden />
+                      )}
+                    </Link>
+                    <ChevronDown
+                      className={`h-4 w-4 shrink-0 cursor-pointer text-gray-600 transition-transform duration-200 ease-out motion-reduce:transition-none dark:text-gray-400 ${
+                        isProfileMenuOpen ? 'rotate-180' : 'rotate-0'
+                      }`}
+                      aria-hidden
+                    />
+                  </div>
                   <div
                     className={`absolute right-0 top-full z-10 pt-2 pb-4 transition-all duration-200 ease-out ${
                       isProfileMenuOpen
