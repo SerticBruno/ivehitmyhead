@@ -271,7 +271,7 @@ export function MemesFeedPanel({ memeGridRef, sidebar }: MemesFeedPanelProps) {
           ? ' from the last week'
           : ' from the last month'
         : '';
-    const description = `${filter} memes from every bucket${timePhrase}. Quantity over dignity.`;
+    const description = `${filter} memes ${timePhrase}`;
 
     return { description };
   }, [filter, time_period]);
