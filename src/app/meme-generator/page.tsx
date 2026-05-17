@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 import { ContactSection } from '@/components/contact/ContactSection';
 import { AdvancedMemeGenerator } from '@/components/meme/AdvancedMemeGenerator';
 
@@ -16,11 +18,22 @@ export default function AdvancedMemeGeneratorPage() {
           description={
             <>
               Want something added to the generator that you would find helpful? Suggest an idea and I might
-              implement it in a future update. I try to read all suggestions and make the tool more useful for
+              implement it in a future update. I try to read all suggestions and make the meme generator more useful for
               everyone.
             </>
           }
         />
+
+        <p className="mt-10 text-center text-gray-700 dark:text-gray-300 max-w-2xl mx-auto leading-relaxed">
+          If you&apos;d like to learn more about the project, check out the{' '}
+          <Link
+            href="/about"
+            className="font-semibold text-blue-700 dark:text-blue-300 underline hover:text-blue-900 dark:hover:text-blue-200"
+          >
+            about page
+          </Link>
+          .
+        </p>
       </section>
     </main>
   );
