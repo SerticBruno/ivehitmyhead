@@ -9,7 +9,7 @@ import { Meme } from '@/lib/types/meme';
 import { useMemeInteractions } from '@/lib/hooks/useMemeInteractions';
 import { useMemesListState } from '@/lib/contexts';
 import { resolveMemeSeed, setMemeDetailCache } from '@/lib/memes/memeDetailCache';
-import { ICONS, renderCategoryIcon } from '@/lib/utils/categoryIcons';
+import { ICONS } from '@/lib/utils/categoryIcons';
 import { copyImageToClipboard, recordShare, shareMemeWithFallback } from '@/lib/utils/shareUtils';
 
 const MEME_DETAIL_OUTLINE_BTN =
@@ -344,13 +344,10 @@ export function MemeDetailClient({ slug, initialMeme = null }: MemeDetailClientP
               <div className={`${MEME_DETAIL_IMAGE_FRAME} bg-gray-200/90 dark:bg-gray-800`} />
 
               <div className="p-6 pt-4 space-y-3">
-                <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-                  <div className="flex flex-wrap items-center gap-4">
+                <div className="flex flex-wrap items-center gap-4">
                     <div className="h-8 w-16 bg-gray-200 dark:bg-gray-700" />
                     <div className="h-8 w-16 bg-gray-200 dark:bg-gray-700" />
                     <div className="h-8 w-16 bg-gray-200 dark:bg-gray-700" />
-                  </div>
-                  <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700" />
                 </div>
                 <div className={MEME_DETAIL_ACTIONS_ROW}>
                   <div className="h-8 w-full bg-gray-200 dark:bg-gray-700 border-2 border-zinc-700 dark:border-zinc-400 sm:w-28" />
@@ -443,8 +440,7 @@ export function MemeDetailClient({ slug, initialMeme = null }: MemeDetailClientP
               )}
 
               <div className="space-y-3 text-sm text-gray-600 dark:text-gray-300">
-                <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-                  <div className="flex flex-wrap items-center gap-4">
+                <div className="flex flex-wrap items-center gap-4">
                   <button
                     type="button"
                     onClick={handleLike}
@@ -474,20 +470,6 @@ export function MemeDetailClient({ slug, initialMeme = null }: MemeDetailClientP
                     <ICONS.Eye className="w-4 h-4 shrink-0" />
                     <span>{meme.views.toLocaleString()}</span>
                   </div>
-                  </div>
-                  <span className="inline-flex items-center text-xs text-gray-500 dark:text-gray-400 select-none cursor-default pointer-events-none">
-                    {meme.category ? (
-                      <>
-                        {renderCategoryIcon(meme.category.name, 'w-4 h-4 shrink-0')}
-                        <span className="ml-1">{meme.category.name}</span>
-                      </>
-                    ) : (
-                      <>
-                        <ICONS.FolderOpen className="w-4 h-4 shrink-0" aria-hidden />
-                        <span className="ml-1">Uncategorized</span>
-                      </>
-                    )}
-                  </span>
                 </div>
                 <div className={MEME_DETAIL_ACTIONS_ROW}>
                   <Button
