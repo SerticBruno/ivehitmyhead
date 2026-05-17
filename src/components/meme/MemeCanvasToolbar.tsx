@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { BookmarkPlus, ClipboardCopy, Download, Plus, Trash2 } from 'lucide-react';
+import { StableWidthLabel } from '@/components/ui/StableWidthLabel';
 import { cn } from '@/lib/utils';
 
 /** Shared layout for every control — avoids fighting the shared Button size/variant styles. */
@@ -14,11 +15,14 @@ const BTN_OUTLINE =
 const BTN_PRIMARY =
   'border-blue-700 bg-blue-600 text-white dark:border-blue-400 dark:bg-blue-500 [@media(hover:hover)]:hover:bg-blue-700 dark:[@media(hover:hover)]:hover:bg-blue-600';
 
+const BTN_SUCCESS =
+  'border-green-700 bg-green-600 text-white dark:border-green-400 dark:bg-green-600 [@media(hover:hover)]:hover:bg-green-600 dark:[@media(hover:hover)]:hover:bg-green-600';
+
 const TOGGLE_ON =
   'border-black bg-black text-white dark:border-white dark:bg-white dark:text-black';
 
 interface ToolbarButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'outline' | 'primary' | 'toggle';
+  variant?: 'outline' | 'primary' | 'success' | 'toggle';
   pressed?: boolean;
 }
 
@@ -35,6 +39,7 @@ function ToolbarButton({
       className={cn(
         TOOLBAR_BTN_BASE,
         variant === 'primary' && BTN_PRIMARY,
+        variant === 'success' && BTN_SUCCESS,
         variant === 'toggle' && (pressed ? TOGGLE_ON : BTN_OUTLINE),
         variant === 'outline' && BTN_OUTLINE,
         className,
@@ -177,7 +182,7 @@ export function MemeCanvasToolbar({
         <span className="hidden truncate 2xl:inline">{galleryLongLabel}</span>
       </ToolbarButton>
       <ToolbarButton
-        variant="primary"
+        variant={copiedToClipboard ? 'success' : 'primary'}
         disabled={disabled || isCopyingToClipboard}
         onClick={onCopyToClipboard}
         title={copyTitle}
@@ -185,7 +190,9 @@ export function MemeCanvasToolbar({
         className="col-span-2 sm:col-span-1 sm:col-start-3"
       >
         <ClipboardCopy className="h-4 w-4 shrink-0" aria-hidden />
-        <span className="truncate">{copyLabel}</span>
+        <StableWidthLabel reserve="Copy image" className="min-w-0 truncate">
+          {copyLabel}
+        </StableWidthLabel>
       </ToolbarButton>
     </div>
   );

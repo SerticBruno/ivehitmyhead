@@ -4,16 +4,20 @@ import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Button } from '@/components/ui/Button';
+import { StableWidthLabel } from '@/components/ui/StableWidthLabel';
 import { cn, formatDateDDMMYYYY, formatFullDateTime, formatRelativeTime, formatTime } from '@/lib/utils';
 import { Meme } from '@/lib/types/meme';
 import { useMemeInteractions } from '@/lib/hooks/useMemeInteractions';
 import { useMemesListState } from '@/lib/contexts';
 import { resolveMemeSeed, setMemeDetailCache } from '@/lib/memes/memeDetailCache';
 import { ICONS } from '@/lib/utils/categoryIcons';
-import { copyImageToClipboard, recordShare, shareMemeWithFallback } from '@/lib/utils/shareUtils';
+import { copyMemeImageToClipboard, recordShare, shareMemeWithFallback } from '@/lib/utils/shareUtils';
 
 const MEME_DETAIL_OUTLINE_BTN =
   'rounded-none border-2 border-zinc-700 dark:border-zinc-400 uppercase tracking-wide font-bold inline-flex items-center justify-center gap-2';
+
+const MEME_DETAIL_COPY_SUCCESS_BTN =
+  'rounded-none border-2 border-green-700 bg-green-600 text-white dark:border-green-400 dark:bg-green-600 uppercase tracking-wide font-bold inline-flex items-center justify-center gap-2 transition-colors';
 
 const MEME_DETAIL_RANDOM_BTN =
   'rounded-none border-2 border-blue-700 bg-blue-600 text-white uppercase tracking-wide font-black shadow-[3px_3px_0px_rgba(29,78,216,0.7)] hover:bg-blue-500 hover:border-blue-600 disabled:opacity-50 disabled:shadow-none';
@@ -66,6 +70,9 @@ export function MemeDetailClient({ slug, initialMeme = null }: MemeDetailClientP
   const [isLiking, setIsLiking] = useState(false);
   const [isLoadingRandom, setIsLoadingRandom] = useState(false);
   const [isCopyingImage, setIsCopyingImage] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
+  const [copiedImage, setCopiedImage] = useState(false);
+  const [copyImageError, setCopyImageError] = useState(false);
 
   const { likeMeme, recordView } = useMemeInteractions();
   const hasRecordedView = useRef(false);
@@ -76,6 +83,24 @@ export function MemeDetailClient({ slug, initialMeme = null }: MemeDetailClientP
       setShareUrl(`${window.location.origin}/meme/${slug}`);
     }
   }, [slug]);
+
+  useEffect(() => {
+    setCopiedLink(false);
+    setCopiedImage(false);
+    setCopyImageError(false);
+  }, [slug]);
+
+  useEffect(() => {
+    if (!copiedLink) return;
+    const timer = window.setTimeout(() => setCopiedLink(false), 2000);
+    return () => window.clearTimeout(timer);
+  }, [copiedLink]);
+
+  useEffect(() => {
+    if (!copiedImage) return;
+    const timer = window.setTimeout(() => setCopiedImage(false), 2000);
+    return () => window.clearTimeout(timer);
+  }, [copiedImage]);
 
   useEffect(() => {
     if (!seedMeme) {
@@ -224,6 +249,7 @@ export function MemeDetailClient({ slug, initialMeme = null }: MemeDetailClientP
 
     try {
       await navigator.clipboard.writeText(url);
+      setCopiedLink(true);
       const newShareCount = sharesCount + 1;
       setSharesCount(newShareCount);
       updateMemeShareCount(slug, newShareCount);
@@ -238,9 +264,14 @@ export function MemeDetailClient({ slug, initialMeme = null }: MemeDetailClientP
 
     try {
       setIsCopyingImage(true);
-      await copyImageToClipboard(meme.image_url);
+      setCopyImageError(false);
+      setCopiedImage(false);
+      await copyMemeImageToClipboard(slug);
+      setCopiedImage(true);
     } catch (err) {
       console.error('Failed to copy meme image:', err);
+      setCopyImageError(true);
+      window.setTimeout(() => setCopyImageError(false), 2000);
     } finally {
       setIsCopyingImage(false);
     }
@@ -476,24 +507,38 @@ export function MemeDetailClient({ slug, initialMeme = null }: MemeDetailClientP
                     size="sm"
                     variant="outline"
                     onClick={handleCopyLink}
-                    className={cn(MEME_DETAIL_OUTLINE_BTN, MEME_DETAIL_ACTION_BTN)}
+                    className={cn(
+                      copiedLink ? MEME_DETAIL_COPY_SUCCESS_BTN : MEME_DETAIL_OUTLINE_BTN,
+                      MEME_DETAIL_ACTION_BTN,
+                    )}
                   >
                     <ICONS.Copy className="w-4 h-4 shrink-0" />
-                    Copy link
+                    <StableWidthLabel reserve="Copy link">
+                      {copiedLink ? 'Copied' : 'Copy link'}
+                    </StableWidthLabel>
                   </Button>
                   <Button
                     size="sm"
                     variant="outline"
                     onClick={handleCopyImage}
                     disabled={isCopyingImage}
-                    className={cn(MEME_DETAIL_OUTLINE_BTN, MEME_DETAIL_ACTION_BTN)}
+                    className={cn(
+                      copiedImage
+                        ? MEME_DETAIL_COPY_SUCCESS_BTN
+                        : copyImageError
+                          ? 'rounded-none border-2 border-red-700 bg-red-600 text-white uppercase tracking-wide font-bold inline-flex items-center justify-center gap-2'
+                          : MEME_DETAIL_OUTLINE_BTN,
+                      MEME_DETAIL_ACTION_BTN,
+                    )}
                   >
                     {isCopyingImage ? (
                       <span className="inline-flex h-4 w-4 shrink-0 border-2 border-current border-t-transparent rounded-full animate-spin" />
                     ) : (
                       <ICONS.Image className="w-4 h-4 shrink-0" />
                     )}
-                    Copy image
+                    <StableWidthLabel reserve="Copy image">
+                      {copiedImage ? 'Copied' : copyImageError ? 'Failed' : 'Copy image'}
+                    </StableWidthLabel>
                   </Button>
                   <Button
                     size="sm"

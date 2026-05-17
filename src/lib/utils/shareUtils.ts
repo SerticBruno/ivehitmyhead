@@ -232,9 +232,15 @@ export async function copyPngBlobToClipboard(blob: Blob): Promise<void> {
     throw new Error('Clipboard image copy is not supported');
   }
 
+  const pngBlob =
+    blob.type === 'image/png'
+      ? blob
+      : new Blob([await blob.arrayBuffer()], { type: 'image/png' });
+
+  // Promise values improve Safari compatibility for ClipboardItem.
   await navigator.clipboard.write([
     new ClipboardItem({
-      'image/png': blob,
+      'image/png': Promise.resolve(pngBlob),
     }),
   ]);
 }
@@ -246,4 +252,15 @@ export async function copyPngBlobToClipboard(blob: Blob): Promise<void> {
 export async function copyImageToClipboard(imageUrl: string): Promise<void> {
   const pngBlob = await imageUrlToPngBlob(imageUrl);
   await copyPngBlobToClipboard(pngBlob);
+}
+
+/**
+ * Copy a published meme's image via the same-origin API proxy (avoids CORS on CDN URLs).
+ */
+export async function copyMemeImageToClipboard(slug: string): Promise<void> {
+  if (typeof window === 'undefined') {
+    throw new Error('Clipboard image copy requires a browser');
+  }
+  const proxyUrl = `${window.location.origin}/api/memes/${encodeURIComponent(slug)}/image`;
+  await copyImageToClipboard(proxyUrl);
 }

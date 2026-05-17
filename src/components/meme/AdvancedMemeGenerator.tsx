@@ -143,6 +143,12 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
     setCopyClipboardError(null);
   }, [selectedTemplate?.id]);
 
+  useEffect(() => {
+    if (!copiedToClipboard) return;
+    const timer = window.setTimeout(() => setCopiedToClipboard(false), 2000);
+    return () => window.clearTimeout(timer);
+  }, [copiedToClipboard]);
+
   const galleryPendingFlushBusyRef = useRef(false);
   const pendingGalleryFlushTimerRef = useRef<number | null>(null);
 
