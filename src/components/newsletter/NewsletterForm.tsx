@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { cn } from '@/lib/utils';
+import { NewsletterSocialLinks } from './NewsletterSocialLinks';
 
 export type NewsletterFormVariant = 'card' | 'inline' | 'bare';
 
@@ -18,6 +19,8 @@ export interface NewsletterFormProps {
   placeholder?: string;
   buttonText?: string;
   successFootnote?: string;
+  /** Show Instagram / Facebook links below the form. Off in the footer (social is in the brand column). */
+  showSocialLinks?: boolean;
 }
 
 const fieldClass =
@@ -33,6 +36,7 @@ export function NewsletterForm({
   placeholder = 'your@email.here',
   buttonText = 'Send it',
   successFootnote = "You're subscribed. Your inbox officially has a meme problem now.",
+  showSocialLinks = true,
 }: NewsletterFormProps) {
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
@@ -123,11 +127,23 @@ export function NewsletterForm({
   );
 
   if (variant === 'bare') {
+    if (!showSocialLinks) {
+      return (
+        <form onSubmit={handleSubmit} className={cn('w-full', className)}>
+          {emailRow}
+          {feedback('start')}
+        </form>
+      );
+    }
+
     return (
-      <form onSubmit={handleSubmit} className={cn('w-full', className)}>
-        {emailRow}
-        {feedback('start')}
-      </form>
+      <div className={cn('w-full', className)}>
+        <form onSubmit={handleSubmit}>
+          {emailRow}
+          {feedback('start')}
+        </form>
+        <NewsletterSocialLinks align="start" className="mt-3" />
+      </div>
     );
   }
 
@@ -148,6 +164,7 @@ export function NewsletterForm({
           </div>
           {feedback('start')}
         </form>
+        {showSocialLinks ? <NewsletterSocialLinks align="start" /> : null}
       </div>
     );
   }
@@ -170,6 +187,7 @@ export function NewsletterForm({
         {emailRow}
         {feedback('center')}
       </form>
+      {showSocialLinks ? <NewsletterSocialLinks /> : null}
     </div>
   );
 }

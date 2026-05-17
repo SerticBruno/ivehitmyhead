@@ -134,7 +134,7 @@ const Footer: React.FC = () => {
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 leading-relaxed">
                 Memes and site news - only when we have something worth sharing.
               </p>
-              <SiteNewsletterSignup variant="bare" stackButton />
+              <SiteNewsletterSignup variant="bare" stackButton showSocialLinks={false} />
             </div>
           </div>
         </div>

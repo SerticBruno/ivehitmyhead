@@ -266,7 +266,7 @@ function LoginPageInner() {
   }
 
   return (
-    <div className="bg-[#f7f4ee] dark:bg-gray-950 py-20 px-4 sm:px-6 flex flex-col items-center justify-start">
+    <div className="bg-[#f7f4ee] dark:bg-gray-950 py-8 px-4 sm:px-6 flex flex-col items-center justify-start">
       <div className="w-full max-w-md">
         <h1 className="sr-only">{panelMode === 'signin' ? 'Sign in' : 'Create account'}</h1>
 
@@ -400,13 +400,13 @@ function LoginPageInner() {
                   <div className="flex justify-between gap-2">
                     <label
                       htmlFor="login-password"
-                      className="cursor-pointer text-xs font-semibold uppercase tracking-wide text-gray-700 dark:text-gray-300"
+                      className="cursor-pointer text-xs font-semibold tracking-wide text-gray-700 dark:text-gray-300"
                     >
                       Password
                     </label>
                     <button
                       type="button"
-                      className="cursor-pointer text-xs font-semibold uppercase tracking-wide text-blue-700 dark:text-blue-300 underline"
+                      className="cursor-pointer text-xs font-semibold tracking-wide text-blue-700 dark:text-blue-300 underline"
                       onClick={() => {
                         setShowForgot(true);
                         setError(null);
