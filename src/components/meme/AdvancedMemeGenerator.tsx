@@ -129,7 +129,14 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
   const [addBottomCaptionArea, setAddBottomCaptionArea] = useState(false);
   const addBottomCaptionAreaRef = useRef(false);
   const [isSavingToGallery, setIsSavingToGallery] = useState(false);
-  const [saveGalleryMessage, setSaveGalleryMessage] = useState<string | null>(null);
+  const [savedToGallery, setSavedToGallery] = useState(false);
+  const [saveGalleryError, setSaveGalleryError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setSavedToGallery(false);
+    setSaveGalleryError(null);
+  }, [selectedTemplate?.id]);
+
   const galleryPendingFlushBusyRef = useRef(false);
   const pendingGalleryFlushTimerRef = useRef<number | null>(null);
 
@@ -890,7 +897,8 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
         );
       }
 
-      setSaveGalleryMessage('Saved to your gallery.');
+      setSavedToGallery(true);
+      setSaveGalleryError(null);
     },
     []
   );
@@ -898,11 +906,12 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
   const saveToGallery = useCallback(async () => {
     if (!selectedTemplate) return;
 
-    setSaveGalleryMessage(null);
+    setSavedToGallery(false);
+    setSaveGalleryError(null);
 
     const blob = await getExportBlob();
     if (!blob) {
-      setSaveGalleryMessage('Could not export image. Please try again.');
+      setSaveGalleryError('Could not export image. Please try again.');
       return;
     }
 
@@ -918,7 +927,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
         });
         router.push(`/login?next=${encodeURIComponent('/meme-generator')}`);
       } catch {
-        setSaveGalleryMessage(
+        setSaveGalleryError(
           'Could not store your meme for sign-in. Try again or save with Download.'
         );
       }
@@ -931,7 +940,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Could not save meme. Please try again.';
-      setSaveGalleryMessage(message);
+      setSaveGalleryError(message);
     } finally {
       setIsSavingToGallery(false);
     }
@@ -954,13 +963,14 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
     const blob = raw instanceof Blob ? raw : null;
     if (!blob || blob.size < 48) {
       await clearPendingGalleryMeme().catch(() => undefined);
-      setSaveGalleryMessage('Could not restore your meme after sign-in. Try Save to Gallery again.');
+      setSaveGalleryError('Could not restore your meme after sign-in. Try Save to Gallery again.');
       return;
     }
 
     galleryPendingFlushBusyRef.current = true;
     setIsSavingToGallery(true);
-    setSaveGalleryMessage(null);
+    setSavedToGallery(false);
+    setSaveGalleryError(null);
 
     try {
       await supabase.auth.getSession();
@@ -976,7 +986,7 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
         error instanceof Error
           ? error.message
           : 'Could not save meme. Tap Save to Gallery to retry.';
-      setSaveGalleryMessage(message);
+      setSaveGalleryError(message);
     } finally {
       galleryPendingFlushBusyRef.current = false;
       setIsSavingToGallery(false);
@@ -1379,12 +1389,9 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
               onDownload={downloadMeme}
               onSaveToGallery={saveToGallery}
               isSavingToGallery={isSavingToGallery}
+              savedToGallery={savedToGallery}
+              saveGalleryError={saveGalleryError}
             />
-            {saveGalleryMessage && (
-              <p className="mt-3 text-xs md:text-sm font-semibold text-gray-700 dark:text-gray-300">
-                {saveGalleryMessage}
-              </p>
-            )}
           </div>
         </div>
 

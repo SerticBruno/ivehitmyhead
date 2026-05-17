@@ -58,6 +58,8 @@ export interface MemeCanvasToolbarProps {
   onDownload: () => void;
   onSaveToGallery: () => void;
   isSavingToGallery: boolean;
+  savedToGallery: boolean;
+  saveGalleryError: string | null;
 }
 
 export function MemeCanvasToolbar({
@@ -72,7 +74,22 @@ export function MemeCanvasToolbar({
   onDownload,
   onSaveToGallery,
   isSavingToGallery,
+  savedToGallery,
+  saveGalleryError,
 }: MemeCanvasToolbarProps) {
+  const galleryShortLabel = isSavingToGallery
+    ? 'Saving'
+    : savedToGallery
+      ? 'Saved'
+      : 'Gallery';
+  const galleryLongLabel = isSavingToGallery
+    ? 'Saving…'
+    : savedToGallery
+      ? 'Saved'
+      : 'Save to gallery';
+  const galleryTitle =
+    saveGalleryError ??
+    (isSavingToGallery ? 'Saving…' : savedToGallery ? 'Saved to gallery' : 'Save to gallery');
   const disabled = !hasTemplate;
 
   return (
@@ -131,15 +148,12 @@ export function MemeCanvasToolbar({
         variant="outline"
         disabled={disabled || isSavingToGallery}
         onClick={onSaveToGallery}
-        title={isSavingToGallery ? 'Saving…' : 'Save to gallery'}
+        title={galleryTitle}
+        aria-label={galleryLongLabel}
       >
         <BookmarkPlus className="h-4 w-4 shrink-0" aria-hidden />
-        <span className="truncate 2xl:hidden">
-          {isSavingToGallery ? 'Saving' : 'Gallery'}
-        </span>
-        <span className="hidden truncate 2xl:inline">
-          {isSavingToGallery ? 'Saving…' : 'Save to gallery'}
-        </span>
+        <span className="truncate 2xl:hidden">{galleryShortLabel}</span>
+        <span className="hidden truncate 2xl:inline">{galleryLongLabel}</span>
       </ToolbarButton>
     </div>
   );
