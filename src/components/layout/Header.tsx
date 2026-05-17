@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { LogOut, Shield, User } from 'lucide-react';
+import { ChevronDown, LogOut, Shield, User } from 'lucide-react';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { SiteLogoMark } from './SiteLogoMark';
 
@@ -72,6 +72,7 @@ const Header: React.FC<HeaderProps> = ({ showSearch = true }) => {
   const pathname = usePathname();
   const { user, isAdmin, signOut } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMobileAccountOpen, setIsMobileAccountOpen] = useState(true);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const profileMenuCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -94,6 +95,7 @@ const Header: React.FC<HeaderProps> = ({ showSearch = true }) => {
 
   useEffect(() => {
     if (!isMobileMenuOpen) return;
+    setIsMobileAccountOpen(true);
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     return () => {
@@ -401,52 +403,88 @@ const Header: React.FC<HeaderProps> = ({ showSearch = true }) => {
                 )}
 
                 {showSignedInNav && (
-                  <div className="flex items-center gap-3 px-3 py-2 border-2 border-zinc-700 dark:border-zinc-400 bg-white/50 dark:bg-gray-900/50">
-                    <Link
-                      href="/profile"
-                      onClick={closeMobileMenu}
-                      aria-label="Profile"
-                      className={`inline-flex h-10 w-10 shrink-0 items-center justify-center border-2 transition-colors ${
-                        pathname === '/profile'
-                          ? 'border-black bg-black text-white dark:border-white dark:bg-white dark:text-black'
-                          : 'border-zinc-700 bg-white dark:border-zinc-400 dark:bg-gray-900 text-gray-700 dark:text-gray-300'
-                      }`}
+                  <div className="border-2 border-zinc-700 dark:border-zinc-400 bg-white/50 dark:bg-gray-900/50">
+                    <button
+                      type="button"
+                      onClick={() => setIsMobileAccountOpen((open) => !open)}
+                      className="flex w-full items-center gap-3 px-3 py-2 text-left transition-colors duration-150 hover:bg-white dark:hover:bg-gray-900"
+                      aria-expanded={isMobileAccountOpen}
+                      aria-controls="mobile-account-submenu"
                     >
-                      {avatarUrl ? (
-                        <Image
-                          src={avatarUrl}
-                          alt=""
-                          width={40}
-                          height={40}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <User className="h-5 w-5" aria-hidden />
-                      )}
-                    </Link>
-                    <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-                      {isAdmin && (
-                        <Link
-                          href="/budasevo"
-                          onClick={closeMobileMenu}
-                          className={`flex min-h-10 items-center justify-center gap-2 border-2 px-3 py-2 text-base font-bold uppercase tracking-wide rounded-none transition-colors duration-150 ${
-                            pathname?.startsWith('/budasevo')
-                              ? 'bg-black text-white border-black dark:bg-white dark:text-black dark:border-white'
-                              : 'text-gray-800 border-zinc-700 hover:bg-white dark:text-gray-200 dark:border-zinc-400 dark:hover:bg-gray-900'
-                          }`}
-                        >
-                          <Shield className="h-4 w-4 shrink-0" aria-hidden />
-                          <span>BUDAŠEVO</span>
-                        </Link>
-                      )}
-                      <button
-                        type="button"
-                        onClick={handleLogout}
-                        className="flex min-h-10 w-full items-center justify-center gap-2 border-2 border-zinc-700 px-3 py-2 text-base font-bold uppercase tracking-wide text-gray-800 hover:bg-white dark:border-zinc-400 dark:text-gray-200 dark:hover:bg-gray-900 rounded-none transition-colors duration-150"
+                      <span
+                        className={`inline-flex h-10 w-10 shrink-0 items-center justify-center border-2 ${
+                          pathname === '/profile'
+                            ? 'border-black bg-black text-white dark:border-white dark:bg-white dark:text-black'
+                            : 'border-zinc-700 bg-white dark:border-zinc-400 dark:bg-gray-900 text-gray-700 dark:text-gray-300'
+                        }`}
+                        aria-hidden
                       >
-                        <LogOut className="h-4 w-4 shrink-0" aria-hidden />
-                        <span>Sign out</span>
-                      </button>
+                        {avatarUrl ? (
+                          <Image
+                            src={avatarUrl}
+                            alt=""
+                            width={40}
+                            height={40}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <User className="h-5 w-5" />
+                        )}
+                      </span>
+                      <span className="min-w-0 flex-1 text-base font-bold uppercase tracking-wide text-gray-800 dark:text-gray-200">
+                        Account
+                      </span>
+                      <ChevronDown
+                        className={`h-5 w-5 shrink-0 text-gray-600 transition-transform duration-200 ease-out motion-reduce:transition-none dark:text-gray-400 ${
+                          isMobileAccountOpen ? 'rotate-180' : 'rotate-0'
+                        }`}
+                        aria-hidden
+                      />
+                    </button>
+                    <div
+                      id="mobile-account-submenu"
+                      className="grid border-t-2 border-zinc-700 dark:border-zinc-400 transition-[grid-template-rows] duration-200 ease-out motion-reduce:transition-none"
+                      style={{ gridTemplateRows: isMobileAccountOpen ? '1fr' : '0fr' }}
+                      aria-hidden={!isMobileAccountOpen}
+                    >
+                      <div className="min-h-0 overflow-hidden">
+                        <div className="flex flex-col gap-1.5 p-2 pt-1.5">
+                          <Link
+                            href="/profile"
+                            onClick={closeMobileMenu}
+                            className={`flex min-h-10 items-center justify-center gap-2 border-2 px-3 py-2 text-base font-bold uppercase tracking-wide rounded-none transition-colors duration-150 ${
+                              pathname === '/profile'
+                                ? 'bg-black text-white border-black dark:bg-white dark:text-black dark:border-white'
+                                : 'text-gray-800 border-zinc-700 hover:bg-white dark:text-gray-200 dark:border-zinc-400 dark:hover:bg-gray-900'
+                            }`}
+                          >
+                            <User className="h-4 w-4 shrink-0" aria-hidden />
+                            <span>Profile</span>
+                          </Link>
+                          {isAdmin && (
+                            <Link
+                              href="/budasevo"
+                              onClick={closeMobileMenu}
+                              className={`flex min-h-10 items-center justify-center gap-2 border-2 px-3 py-2 text-base font-bold uppercase tracking-wide rounded-none transition-colors duration-150 ${
+                                pathname?.startsWith('/budasevo')
+                                  ? 'bg-black text-white border-black dark:bg-white dark:text-black dark:border-white'
+                                  : 'text-gray-800 border-zinc-700 hover:bg-white dark:text-gray-200 dark:border-zinc-400 dark:hover:bg-gray-900'
+                              }`}
+                            >
+                              <Shield className="h-4 w-4 shrink-0" aria-hidden />
+                              <span>BUDAŠEVO</span>
+                            </Link>
+                          )}
+                          <button
+                            type="button"
+                            onClick={handleLogout}
+                            className="flex min-h-10 w-full items-center justify-center gap-2 border-2 border-zinc-700 px-3 py-2 text-base font-bold uppercase tracking-wide text-gray-800 hover:bg-white dark:border-zinc-400 dark:text-gray-200 dark:hover:bg-gray-900 rounded-none transition-colors duration-150"
+                          >
+                            <LogOut className="h-4 w-4 shrink-0" aria-hidden />
+                            <span>Sign out</span>
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}

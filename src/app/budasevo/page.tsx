@@ -591,7 +591,7 @@ export default function AdminDashboard() {
           <div
             role="tablist"
             aria-label="Admin sections"
-            className="flex border-b-2 border-zinc-700 dark:border-zinc-400 bg-[#f7f4ee] dark:bg-gray-950"
+            className="grid grid-cols-2 sm:flex border-b-2 border-zinc-700 dark:border-zinc-400 bg-[#f7f4ee] dark:bg-gray-950"
           >
             {ADMIN_TABS.map((tab) => {
               const selected = activeAdminTab === tab.id;
@@ -607,7 +607,7 @@ export default function AdminDashboard() {
                   onClick={() => setActiveAdminTab(tab.id)}
                   onKeyDown={(e) => onAdminTabKeyDown(e, tab.id)}
                   className={cn(
-                    'flex-1 min-w-0 cursor-pointer px-2 sm:px-4 py-3 text-center text-xs sm:text-sm font-black uppercase tracking-wide border-r-2 border-zinc-700 dark:border-zinc-400 last:border-r-0 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-zinc-500',
+                    'min-w-0 sm:flex-1 cursor-pointer px-2 sm:px-4 py-3 text-center text-xs sm:text-sm font-black uppercase tracking-wide border-r-2 border-b-2 sm:border-b-0 border-zinc-700 dark:border-zinc-400 max-sm:[&:nth-child(2n)]:border-r-0 max-sm:[&:nth-child(n+3)]:border-b-0 last:border-r-0 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-zinc-500',
                     selected
                       ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white'
                       : 'text-gray-600 dark:text-gray-400 [@media(hover:hover)]:hover:bg-white/80 dark:[@media(hover:hover)]:hover:bg-gray-900/50'
