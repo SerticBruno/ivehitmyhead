@@ -19,7 +19,7 @@ const MEME_DETAIL_RANDOM_BTN =
   'rounded-none border-2 border-blue-700 bg-blue-600 text-white uppercase tracking-wide font-black shadow-[3px_3px_0px_rgba(29,78,216,0.7)] hover:bg-blue-500 hover:border-blue-600 disabled:opacity-50 disabled:shadow-none';
 
 const MEME_DETAIL_ACTIONS_ROW =
-  'grid grid-cols-3 gap-2 sm:flex sm:flex-wrap sm:items-center sm:gap-3';
+  'grid grid-cols-3 gap-2 md:flex md:flex-nowrap md:items-center md:gap-2 md:shrink-0';
 
 const MEME_DETAIL_ACTION_BTN =
   'w-full min-w-0 px-1.5 text-xs gap-1 h-auto py-2 sm:h-8 sm:w-auto sm:px-3 sm:text-sm sm:gap-2 sm:py-0';
@@ -439,7 +439,7 @@ export function MemeDetailClient({ slug, initialMeme = null }: MemeDetailClientP
                 </div>
               )}
 
-              <div className="space-y-3 text-sm text-gray-600 dark:text-gray-300">
+              <div className="flex flex-col gap-3 text-sm text-gray-600 dark:text-gray-300 md:flex-row md:items-center md:justify-between md:gap-4">
                 <div className="flex flex-wrap items-center gap-4">
                   <button
                     type="button"
