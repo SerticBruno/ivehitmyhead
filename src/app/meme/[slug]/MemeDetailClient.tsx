@@ -5,7 +5,14 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Button } from '@/components/ui/Button';
 import { StableWidthLabel } from '@/components/ui/StableWidthLabel';
-import { cn, formatDateDDMMYYYY, formatFullDateTime, formatRelativeTime, formatTime } from '@/lib/utils';
+import {
+  cn,
+  formatCompactCount,
+  formatDateDDMMYYYY,
+  formatFullDateTime,
+  formatRelativeTime,
+  formatTime,
+} from '@/lib/utils';
 import { Meme } from '@/lib/types/meme';
 import { useMemeInteractions } from '@/lib/hooks/useMemeInteractions';
 import { useMemesListState } from '@/lib/contexts';
@@ -380,7 +387,7 @@ export function MemeDetailClient({ slug, initialMeme = null }: MemeDetailClientP
               <div className={`${MEME_DETAIL_IMAGE_FRAME} bg-gray-200/90 dark:bg-gray-800`} />
 
               <div className="p-6 pt-4 space-y-3">
-                <div className="flex flex-wrap items-center gap-4">
+                <div className="flex w-full items-center justify-around">
                     <div className="h-8 w-16 bg-gray-200 dark:bg-gray-700" />
                     <div className="h-8 w-16 bg-gray-200 dark:bg-gray-700" />
                     <div className="h-8 w-16 bg-gray-200 dark:bg-gray-700" />
@@ -480,16 +487,18 @@ export function MemeDetailClient({ slug, initialMeme = null }: MemeDetailClientP
                 </div>
               )}
 
-              <div className="flex flex-col gap-3 text-sm text-gray-600 dark:text-gray-300 md:flex-row md:items-center md:justify-between md:gap-4">
-                <div className="flex flex-wrap items-center gap-4">
+              <div className="flex min-w-0 w-full items-center justify-around gap-0 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300">
                   <button
                     type="button"
                     onClick={handleLike}
                     aria-disabled={isCheckingLikeStatus || isLiking}
+                    title={`${likesCount.toLocaleString()} likes`}
                     className={cn(
-                      'flex items-center gap-1 rounded-none border-2 border-transparent uppercase tracking-wide font-semibold transition-colors cursor-pointer',
-                      isLiked && 'text-red-500',
-                      !isLiked && 'hover:text-red-500',
+                      'flex shrink-0 items-center gap-1 px-1.5 py-0.5 cursor-pointer transition-colors',
+                      isLiked
+                        ? 'text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30'
+                        : 'hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-800',
+                      (isCheckingLikeStatus || isLiking) && 'opacity-50 cursor-not-allowed',
                     )}
                   >
                     {isCheckingLikeStatus || isLiking ? (
@@ -497,22 +506,27 @@ export function MemeDetailClient({ slug, initialMeme = null }: MemeDetailClientP
                     ) : (
                       <ICONS.Heart className={cn('w-4 h-4 shrink-0', isLiked && 'fill-current')} />
                     )}
-                    <span>{likesCount.toLocaleString()}</span>
+                    <span>{formatCompactCount(likesCount)}</span>
                   </button>
                   <button
                     type="button"
                     onClick={handleShare}
-                    className="flex items-center gap-1 rounded-none border-2 border-transparent uppercase tracking-wide font-semibold transition-colors cursor-pointer"
+                    title={`${sharesCount.toLocaleString()} shares`}
+                    className="flex shrink-0 items-center gap-1 px-1.5 py-0.5 cursor-pointer transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
                   >
                     <ICONS.Share2 className="w-4 h-4 shrink-0" />
-                    <span>{sharesCount.toLocaleString()}</span>
+                    <span>{formatCompactCount(sharesCount)}</span>
                   </button>
-                  <div className="flex items-center gap-1 text-gray-500">
-                    <ICONS.Eye className="w-4 h-4 shrink-0" />
-                    <span>{meme.views.toLocaleString()}</span>
-                  </div>
+                <div
+                  className="flex shrink-0 items-center gap-1 px-1.5 py-0.5 text-gray-500"
+                  title={`${meme.views.toLocaleString()} views`}
+                >
+                  <ICONS.Eye className="w-4 h-4 shrink-0" />
+                  <span>{formatCompactCount(meme.views)}</span>
                 </div>
-                <div className={MEME_DETAIL_ACTIONS_ROW}>
+              </div>
+
+              <div className={MEME_DETAIL_ACTIONS_ROW}>
                   <Button
                     size="sm"
                     variant="outline"
@@ -567,7 +581,6 @@ export function MemeDetailClient({ slug, initialMeme = null }: MemeDetailClientP
                     )}
                     Random
                   </Button>
-                </div>
               </div>
 
             </footer>

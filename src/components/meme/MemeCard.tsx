@@ -187,8 +187,8 @@ const MemeCard: React.FC<MemeCardProps> = ({
           </div>
         </CardContent>
         
-        <CardFooter className="flex items-center pt-4">
-          <div className="flex min-w-0 items-center space-x-4">
+        <CardFooter className="flex w-full items-center pt-4">
+          <div className="flex min-w-0 w-full items-center justify-around sm:justify-start gap-0 sm:gap-4">
             <Button
               variant="ghost"
               size="sm"

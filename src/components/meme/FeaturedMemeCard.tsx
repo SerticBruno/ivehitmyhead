@@ -115,7 +115,7 @@ const FeaturedMemeCard: React.FC<FeaturedMemeCardProps> = ({
         </CardContent>
         
         <div className="px-4 pb-4 pt-3 flex-shrink-0">
-          <div className="flex min-w-0 items-center gap-2 sm:gap-3 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300">
+          <div className="flex min-w-0 w-full items-center justify-around gap-0 sm:gap-3 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300">
             <button
               onClick={handleLike}
               title={`${meme.likes_count.toLocaleString()} likes`}
