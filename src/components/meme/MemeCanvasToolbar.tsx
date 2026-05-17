@@ -4,9 +4,6 @@ import React from 'react';
 import { BookmarkPlus, Download, Plus, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-const TOOLBAR_SHELL =
-  'mt-2 rounded-none border-2 border-zinc-700 bg-[#f7f4ee] p-2.5 dark:border-zinc-400 dark:bg-gray-950 md:p-3';
-
 /** Shared layout for every control — avoids fighting the shared Button size/variant styles. */
 const TOOLBAR_BTN_BASE =
   'inline-flex h-10 min-h-10 w-full min-w-0 cursor-pointer items-center justify-center gap-1.5 rounded-none border-2 px-2.5 text-xs font-semibold leading-tight transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 sm:gap-2 sm:px-3 md:text-sm';
@@ -82,11 +79,7 @@ export function MemeCanvasToolbar({
     <div
       role="toolbar"
       aria-label="Canvas tools"
-      className={cn(
-        TOOLBAR_SHELL,
-        /* 2×3 on phone/tablet/laptop; single row only when canvas column is wide enough */
-        'grid grid-cols-2 gap-2 sm:grid-cols-3 2xl:grid-cols-6',
-      )}
+      className="mt-1.5 grid shrink-0 grid-cols-2 gap-2 sm:grid-cols-3 md:mt-2 2xl:grid-cols-6"
     >
       <ToolbarButton
         variant="toggle"
