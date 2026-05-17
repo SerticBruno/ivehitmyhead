@@ -5,12 +5,10 @@ import { useSearchParams } from 'next/navigation';
 import { MemeGrid } from '@/components/meme';
 import { MemesMobileFilterBars } from '@/components/ui/MemesMobileFilterBars';
 import { useMemes } from '@/lib/hooks/useMemes';
-import { useCategories } from '@/lib/hooks/useCategories';
 import { useMemeInteractions } from '@/lib/hooks/useMemeInteractions';
 import { useMemesUIState, useMemesListState } from '@/lib/contexts';
 import { ICONS } from '@/lib/utils/categoryIcons';
 import { shareMemeWithFallback } from '@/lib/utils/shareUtils';
-import { visibleMemeFilterCategories } from '@/lib/utils/memeCategoryFilter';
 
 interface MemesFeedPanelProps {
   memeGridRef: React.RefObject<HTMLDivElement | null>;
@@ -37,12 +35,9 @@ export function MemesFeedPanel({ memeGridRef, sidebar }: MemesFeedPanelProps) {
 
     const filterParam = searchParams.get('filter');
     const timeParam = searchParams.get('time_period');
-    const categoryParam = searchParams.get('category_id');
-
     const patch: Partial<{
       filter: 'newest' | 'trending' | 'hottest';
       time_period: 'all' | 'week' | 'month';
-      category_id: string;
     }> = {};
 
     if (filterParam === 'newest' || filterParam === 'trending' || filterParam === 'hottest') {
@@ -50,9 +45,6 @@ export function MemesFeedPanel({ memeGridRef, sidebar }: MemesFeedPanelProps) {
     }
     if (timeParam === 'all' || timeParam === 'week' || timeParam === 'month') {
       patch.time_period = timeParam;
-    }
-    if (categoryParam !== null && categoryParam !== '') {
-      patch.category_id = categoryParam;
     }
 
     if (Object.keys(patch).length > 0) {
@@ -140,12 +132,6 @@ export function MemesFeedPanel({ memeGridRef, sidebar }: MemesFeedPanelProps) {
     }
   }, [getViewedMemes]);
 
-  const { categories: rawCategories, loading: categoriesLoading } = useCategories({ limit: 50 });
-  const categories = useMemo(
-    () => visibleMemeFilterCategories(rawCategories),
-    [rawCategories]
-  );
-
   useEffect(() => {
     const handleScroll = () => {
       if (typeof window !== 'undefined') {
@@ -167,7 +153,7 @@ export function MemesFeedPanel({ memeGridRef, sidebar }: MemesFeedPanelProps) {
       processedMemesRef.current.clear();
       hasRestoredScrollRef.current = false;
     }
-  }, [filters.filter, filters.category_id, filters.time_period]);
+  }, [filters.filter, filters.time_period]);
 
   const getSortParams = useMemo(() => {
     switch (filters.filter) {
@@ -202,12 +188,7 @@ export function MemesFeedPanel({ memeGridRef, sidebar }: MemesFeedPanelProps) {
     }
   }, [setFilters]);
 
-  const handleCategorySelect = useCallback((categoryId: string) => {
-    setFilters({ category_id: categoryId });
-  }, [setFilters]);
-
   const { memes, loading: memesLoading, error: memesError, hasMore, loadMore } = useMemes({
-    category_id: filters.category_id || undefined,
     limit: 7,
     time_period: filters.time_period,
     ...getSortParams
@@ -271,7 +252,7 @@ export function MemesFeedPanel({ memeGridRef, sidebar }: MemesFeedPanelProps) {
 
   const displayMemes = useMemo(() => memes, [memes]);
 
-  const { category_id, filter, time_period } = filters;
+  const { filter, time_period } = filters;
 
   const emptyMemesGridDescription = useMemo(() => {
     const timeSuffix =
@@ -280,26 +261,20 @@ export function MemesFeedPanel({ memeGridRef, sidebar }: MemesFeedPanelProps) {
           ? ' in the last week'
           : ' in the last month'
         : '';
-    if (category_id) {
-      return `No ${filter} memes found in this category${timeSuffix} yet.`;
-    }
     return `No ${filter} memes found${timeSuffix} yet. Be the first to add to the pile.`;
-  }, [category_id, filter, time_period]);
+  }, [filter, time_period]);
 
   const heroContent = useMemo(() => {
-    const categoryText = category_id ? 'Category Memes' : 'All Memes';
     const timePhrase =
       time_period !== 'all'
         ? time_period === 'week'
           ? ' from the last week'
           : ' from the last month'
         : '';
-    const description = category_id
-      ? `${filter} memes in this category${timePhrase}. You picked the lane.`
-      : `${filter} memes from every bucket${timePhrase}. Quantity over dignity.`;
+    const description = `${filter} memes from every bucket${timePhrase}. Quantity over dignity.`;
 
-    return { categoryText, description };
-  }, [category_id, filter, time_period]);
+    return { description };
+  }, [filter, time_period]);
 
   const handleLike = useCallback(async (slug: string) => {
     if (processingMemesRef.current.has(slug)) {
@@ -369,7 +344,7 @@ export function MemesFeedPanel({ memeGridRef, sidebar }: MemesFeedPanelProps) {
     <>
       <section className="text-center mb-12 border-2 border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-900 p-8 shadow-[8px_8px_0px_rgba(0,0,0,0.9)] dark:shadow-[8px_8px_0px_rgba(156,163,175,0.42)]">
         <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tight mb-4">
-          {heroContent.categoryText}
+          All Memes
         </h1>
         <p className="text-xl text-gray-700 dark:text-gray-300 mb-8 max-w-2xl mx-auto min-h-[3.5rem]">
           {heroContent.description}
@@ -381,12 +356,8 @@ export function MemesFeedPanel({ memeGridRef, sidebar }: MemesFeedPanelProps) {
         <section className="flex-1 min-h-0 min-w-0">
           <MemesMobileFilterBars
             showFilterSkeleton={memesLoading && !isInitialized}
-            categories={categories ?? []}
-            categoriesLoading={categoriesLoading}
-            selectedCategoryId={filters.category_id}
             selectedFilter={filters.filter}
             selectedTimePeriod={filters.time_period}
-            onCategorySelect={handleCategorySelect}
             onFilterChange={handleFilterChange}
             onTimePeriodChange={handleTimePeriodChange}
           />

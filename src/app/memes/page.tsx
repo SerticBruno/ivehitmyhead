@@ -9,10 +9,6 @@ export default function MemesPage() {
   const memeGridRef = useRef<HTMLDivElement>(null);
   const { filters, setFilters } = useMemesUIState();
 
-  const handleCategorySelect = useCallback((categoryId: string) => {
-    setFilters({ category_id: categoryId });
-  }, [setFilters]);
-
   const handleFilterChange = useCallback((filter: string) => {
     if (filter === 'newest' || filter === 'trending' || filter === 'hottest') {
       setFilters({ filter });
@@ -28,8 +24,6 @@ export default function MemesPage() {
   const sidebar = (
     <aside className="hidden lg:block lg:w-80 flex-shrink-0">
       <FiltersAndSorting
-        selectedCategory={filters.category_id}
-        onCategorySelect={handleCategorySelect}
         selectedFilter={filters.filter}
         onFilterChange={handleFilterChange}
         selectedTimePeriod={filters.time_period}

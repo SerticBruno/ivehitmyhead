@@ -57,12 +57,11 @@ export default function AboutPage() {
                 organized, I guess. I&apos;m not sure when it got out of hand.
               </p>
               <p>
-                Most of what you see here comes from internet chaos, friend group drops, and the occasional
-                &quot;you need to see this&quot; message at 1 AM. I just clean it up, tag it, and pretend there&apos;s a system.
+                Most of what you see here comes from internet chaos, friend group drops and random 2 AM messages.
               </p>
               <p>
                 I built meme generator as the tool I would like to be using myself and I&apos;m still implementing
-                features that I find helpful, or that friends ask for. (no one asked for anything)
+                features that I find helpful or that friends ask for. (no one has asked for anything)
               </p>
               <p>
                 Built with Next.js, React, and an unhealthy amount of trial-and-error. QA team includes 2 dogs, 1 cat,

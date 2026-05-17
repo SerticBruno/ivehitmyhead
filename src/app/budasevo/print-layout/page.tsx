@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import PrintLayoutEditor from '@/components/print-layout/PrintLayoutEditor';
+import { isBudasevoSignOutInProgress } from '@/lib/auth/budasevoSignOut';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { ICONS } from '@/lib/utils/categoryIcons';
 
@@ -13,8 +14,14 @@ export default function AdminPrintLayoutPage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && (!user || !isAdmin)) {
-      router.push('/admin/login');
+    if (loading) return;
+    if (!user) {
+      if (isBudasevoSignOutInProgress()) return;
+      router.push('/login?next=%2Fbudasevo%2Fprint-layout');
+      return;
+    }
+    if (!isAdmin) {
+      router.replace('/');
     }
   }, [loading, user, isAdmin, router]);
 
@@ -43,7 +50,7 @@ export default function AdminPrintLayoutPage() {
                 Place images in 40x60mm and 50x70mm guides, then export a print-ready A4 PNG.
               </p>
             </div>
-            <Link href="/admin">
+            <Link href="/budasevo">
               <Button
                 variant="outline"
                 className="rounded-none border-2 border-zinc-700 dark:border-zinc-400 uppercase tracking-wide font-bold"

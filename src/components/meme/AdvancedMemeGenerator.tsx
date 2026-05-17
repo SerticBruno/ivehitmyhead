@@ -1,12 +1,15 @@
 'use client';
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { flushSync } from 'react-dom';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import MemeCanvasController from '@/lib/meme-canvas/MemeCanvasController';
 import TextElement from '@/lib/meme-canvas/TextElement';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Download, Plus, Trash2, Type, ChevronDown, Upload } from 'lucide-react';
+import { Trash2, Type, ChevronDown, Upload } from 'lucide-react';
+import { MemeCanvasToolbar } from '@/components/meme/MemeCanvasToolbar';
 import {
   MEME_TEMPLATES,
   CUSTOM_PHOTO_TEMPLATE_ID,
@@ -14,6 +17,13 @@ import {
 } from '@/lib/data/templates';
 import type { MemeTemplate } from '@/lib/types/meme';
 import { useNavigationWarning } from '@/lib/contexts/NavigationWarningContext';
+import { useAuth } from '@/lib/contexts/AuthContext';
+import { supabase } from '@/lib/supabase/client';
+import {
+  clearPendingGalleryMeme,
+  getPendingGalleryMeme,
+  setPendingGalleryMeme,
+} from '@/lib/persistence/pendingGalleryMeme';
 
 const PREVIEW_SCROLL_GAP_BELOW_HEADER_PX = 24;
 const DESKTOP_MAX_GENERATOR_HEIGHT_PX = 860;
@@ -102,6 +112,8 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
   const [initialTemplateState, setInitialTemplateState] = useState<string>('');
   const [isLoadingTemplate, setIsLoadingTemplate] = useState(false);
   const { setDirty: setNavigationDirty } = useNavigationWarning();
+  const { user, loading: authLoading } = useAuth();
+  const router = useRouter();
   const [containerHeight, setContainerHeight] = useState(
     `min(calc(100dvh - 2rem), ${DESKTOP_MAX_GENERATOR_HEIGHT_PX}px)`
   );
@@ -116,6 +128,10 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
   const addTopCaptionAreaRef = useRef(false);
   const [addBottomCaptionArea, setAddBottomCaptionArea] = useState(false);
   const addBottomCaptionAreaRef = useRef(false);
+  const [isSavingToGallery, setIsSavingToGallery] = useState(false);
+  const [saveGalleryMessage, setSaveGalleryMessage] = useState<string | null>(null);
+  const galleryPendingFlushBusyRef = useRef(false);
+  const pendingGalleryFlushTimerRef = useRef<number | null>(null);
 
   const revokeCustomPhotoIfAny = useCallback(() => {
     if (customPhotoObjectUrlRef.current) {
@@ -174,7 +190,9 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
         root?.contains(target) &&
         (target instanceof HTMLTextAreaElement ||
           target instanceof HTMLInputElement ||
-          target instanceof HTMLSelectElement)
+          target instanceof HTMLSelectElement ||
+          (target instanceof Element &&
+            target.closest('[data-meme-text-field]')))
       ) {
         return;
       }
@@ -200,17 +218,20 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
     return () =>
       document.removeEventListener('pointerdown', onPointerDownCapture, true);
   }, [stopEditing]);
-  const focusAndSelectTextAreaAtIndex = useCallback((index: number) => {
-    requestAnimationFrame(() => {
+  const focusAndSelectTextAreaAtIndex = useCallback(
+    (index: number, opts?: { scrollIntoView?: boolean }) => {
       const ta = textAreaRefs.current[index];
       if (!ta) return;
-      ta.focus();
+      ta.focus({ preventScroll: true });
       ta.select();
-      // Prevent internal scrollbars; grow to fit content.
       ta.style.height = 'auto';
       ta.style.height = `${ta.scrollHeight}px`;
-    });
-  }, []);
+      if (opts?.scrollIntoView) {
+        ta.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      }
+    },
+    []
+  );
 
   // Calculate container height based on viewport and screen size
   useEffect(() => {
@@ -292,8 +313,12 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
           const index = elements.indexOf(selected);
           if (index !== -1) {
             editingElementRef.current = selected;
-            setEditingTextIndex(index);
-            focusAndSelectTextAreaAtIndex(index);
+            flushSync(() => setEditingTextIndex(index));
+            const scrollFieldIntoView =
+              typeof window !== 'undefined' && window.innerWidth < 1024;
+            focusAndSelectTextAreaAtIndex(index, {
+              scrollIntoView: scrollFieldIntoView,
+            });
           }
         }
       }
@@ -806,15 +831,196 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
     }
   }, []);
 
+  const getExportBlob = useCallback(async () => {
+    const controller = controllerRef.current;
+    if (!controller) return null;
+
+    const includeWatermark = selectedTemplate?.id === CUSTOM_PHOTO_TEMPLATE_ID;
+
+    return new Promise<Blob | null>((resolve) => {
+      controller.exporting = true;
+      controller.requestFrame(() => {
+        if (includeWatermark) {
+          controller.renderer.drawWatermark();
+        }
+        controller.canvas.toBlob((blob) => {
+          controller.exporting = false;
+          controller.requestFrame();
+          resolve(blob);
+        }, 'image/png');
+      });
+    });
+  }, [selectedTemplate?.id]);
+
   // Download meme (custom uploads include site watermark in file)
-  const downloadMeme = useCallback(() => {
-    if (!controllerRef.current) return;
+  const downloadMeme = useCallback(async () => {
+    const blob = await getExportBlob();
+    if (!blob) return;
 
     const name = selectedTemplate?.name || 'meme';
-    const includeWatermark =
-      selectedTemplate?.id === CUSTOM_PHOTO_TEMPLATE_ID;
-    controllerRef.current.export(name, 'png', includeWatermark);
-  }, [selectedTemplate]);
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${name}.png`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [getExportBlob, selectedTemplate?.name]);
+
+  const postGeneratedMeme = useCallback(
+    async (blob: Blob, title: string, templateDisplayName: string | null) => {
+      const safeName =
+        `${title.replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').slice(0, 60)}` ||
+        'generated-meme';
+      const file = new File([blob], `${safeName}.png`, { type: 'image/png' });
+      const formData = new FormData();
+      formData.append('image', file);
+      formData.append('title', title || 'Generated meme');
+      if (templateDisplayName) formData.append('template_name', templateDisplayName);
+
+      const response = await fetch('/api/memes/generated', {
+        method: 'POST',
+        body: formData,
+        credentials: 'same-origin',
+      });
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null);
+        throw new Error(
+          typeof payload?.error === 'string' ? payload.error : 'Failed to save meme'
+        );
+      }
+
+      setSaveGalleryMessage('Saved to your gallery.');
+    },
+    []
+  );
+
+  const saveToGallery = useCallback(async () => {
+    if (!selectedTemplate) return;
+
+    setSaveGalleryMessage(null);
+
+    const blob = await getExportBlob();
+    if (!blob) {
+      setSaveGalleryMessage('Could not export image. Please try again.');
+      return;
+    }
+
+    const title = selectedTemplate.name || 'Generated meme';
+    const templateName = selectedTemplate.name || 'Custom';
+
+    if (!user) {
+      try {
+        await setPendingGalleryMeme({
+          blob,
+          title,
+          templateName,
+        });
+        router.push(`/login?next=${encodeURIComponent('/meme-generator')}`);
+      } catch {
+        setSaveGalleryMessage(
+          'Could not store your meme for sign-in. Try again or save with Download.'
+        );
+      }
+      return;
+    }
+
+    setIsSavingToGallery(true);
+    try {
+      await postGeneratedMeme(blob, title, templateName);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Could not save meme. Please try again.';
+      setSaveGalleryMessage(message);
+    } finally {
+      setIsSavingToGallery(false);
+    }
+  }, [getExportBlob, postGeneratedMeme, router, selectedTemplate, user]);
+
+  const tryFlushPendingGallery = useCallback(async () => {
+    if (typeof indexedDB === 'undefined') return;
+    if (galleryPendingFlushBusyRef.current || authLoading || !user?.id) return;
+
+    let pending: Awaited<ReturnType<typeof getPendingGalleryMeme>>;
+    try {
+      pending = await getPendingGalleryMeme();
+    } catch {
+      return;
+    }
+
+    if (!pending) return;
+
+    const raw = pending.blob;
+    const blob = raw instanceof Blob ? raw : null;
+    if (!blob || blob.size < 48) {
+      await clearPendingGalleryMeme().catch(() => undefined);
+      setSaveGalleryMessage('Could not restore your meme after sign-in. Try Save to Gallery again.');
+      return;
+    }
+
+    galleryPendingFlushBusyRef.current = true;
+    setIsSavingToGallery(true);
+    setSaveGalleryMessage(null);
+
+    try {
+      await supabase.auth.getSession();
+
+      await postGeneratedMeme(
+        blob,
+        pending.title || 'Generated meme',
+        pending.templateName
+      );
+      await clearPendingGalleryMeme();
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Could not save meme. Tap Save to Gallery to retry.';
+      setSaveGalleryMessage(message);
+    } finally {
+      galleryPendingFlushBusyRef.current = false;
+      setIsSavingToGallery(false);
+    }
+  }, [authLoading, postGeneratedMeme, user?.id]);
+
+  const scheduleFlushPendingGallery = useCallback((delayMs: number) => {
+    if (typeof window === 'undefined') return;
+    if (pendingGalleryFlushTimerRef.current !== null) {
+      clearTimeout(pendingGalleryFlushTimerRef.current);
+    }
+    pendingGalleryFlushTimerRef.current = window.setTimeout(() => {
+      pendingGalleryFlushTimerRef.current = null;
+      void tryFlushPendingGallery();
+    }, delayMs);
+  }, [tryFlushPendingGallery]);
+
+  useEffect(() => {
+    return () => {
+      if (pendingGalleryFlushTimerRef.current !== null) {
+        clearTimeout(pendingGalleryFlushTimerRef.current);
+        pendingGalleryFlushTimerRef.current = null;
+      }
+    };
+  }, []);
+
+  /** After OAuth / reload, auth hydrates asynchronously - defer flush until session + IndexedDB pending are ready. */
+  useEffect(() => {
+    if (authLoading || !user?.id || typeof indexedDB === 'undefined') return;
+    scheduleFlushPendingGallery(120);
+    return undefined;
+  }, [authLoading, scheduleFlushPendingGallery, user?.id]);
+
+  /** Supabase client may populate session shortly after INITIAL_SESSION / SIGNED_IN (common right after redirect from Google). */
+  useEffect(() => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION')) {
+        scheduleFlushPendingGallery(200);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [scheduleFlushPendingGallery]);
 
   // Keep canvas preview watermark in sync with template (custom photo only)
   useEffect(() => {
@@ -1161,87 +1367,24 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
               )}
             </div>
 
-            {/* Canvas controls - single row (scroll on narrow widths) to keep preview taller */}
-            <div className="mt-1.5 md:mt-2 flex min-w-0 flex-shrink-0 items-center gap-1.5 md:gap-2">
-              <div className="flex min-w-0 flex-1 flex-nowrap items-center gap-1.5 overflow-x-auto pb-0.5 [scrollbar-gutter:stable] md:gap-2 md:pb-0">
-                <label
-                  htmlFor="meme-top-caption-strip"
-                  title="White caption bar on top (~30% of image height)"
-                  className={`flex shrink-0 cursor-pointer select-none items-center gap-1.5 whitespace-nowrap border-2 border-zinc-700 bg-white px-2 py-1 text-xs dark:border-zinc-400 dark:bg-gray-900 md:gap-2 md:px-2.5 md:py-1.5 md:text-sm ${
-                    !selectedTemplate
-                      ? 'cursor-not-allowed opacity-50'
-                      : ''
-                  }`}
-                >
-                  <input
-                    id="meme-top-caption-strip"
-                    type="checkbox"
-                    checked={addTopCaptionArea}
-                    disabled={!selectedTemplate}
-                    onChange={(e) => handleTopCaptionAreaChange(e.target.checked)}
-                    className="h-4 w-4 shrink-0 rounded-none border-2 border-zinc-700 accent-blue-600 dark:border-zinc-400"
-                  />
-                  <span className="font-medium text-gray-800 dark:text-gray-200">
-                    Top bar
-                  </span>
-                </label>
-                <label
-                  htmlFor="meme-bottom-caption-strip"
-                  title="White caption bar on bottom (~30% of image height)"
-                  className={`flex shrink-0 cursor-pointer select-none items-center gap-1.5 whitespace-nowrap border-2 border-zinc-700 bg-white px-2 py-1 text-xs dark:border-zinc-400 dark:bg-gray-900 md:gap-2 md:px-2.5 md:py-1.5 md:text-sm ${
-                    !selectedTemplate
-                      ? 'cursor-not-allowed opacity-50'
-                      : ''
-                  }`}
-                >
-                  <input
-                    id="meme-bottom-caption-strip"
-                    type="checkbox"
-                    checked={addBottomCaptionArea}
-                    disabled={!selectedTemplate}
-                    onChange={(e) =>
-                      handleBottomCaptionAreaChange(e.target.checked)
-                    }
-                    className="h-4 w-4 shrink-0 rounded-none border-2 border-zinc-700 accent-blue-600 dark:border-zinc-400"
-                  />
-                  <span className="font-medium text-gray-800 dark:text-gray-200">
-                    Bottom bar
-                  </span>
-                </label>
-                <Button
-                  onClick={addText}
-                  variant="outline"
-                  size="sm"
-                  disabled={!selectedTemplate}
-                  className="shrink-0 text-xs md:text-sm"
-                >
-                  <Plus className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
-                  <span className="hidden sm:inline">Add Text</span>
-                  <span className="sm:hidden">Add</span>
-                </Button>
-                <Button
-                  onClick={deleteSelected}
-                  variant="outline"
-                  size="sm"
-                  disabled={!selectedElement}
-                  className="shrink-0 text-xs md:text-sm"
-                >
-                  <Trash2 className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
-                  <span className="hidden sm:inline">Delete</span>
-                </Button>
-              </div>
-              <Button
-                onClick={downloadMeme}
-                variant="primary"
-                size="sm"
-                disabled={!selectedTemplate}
-                className="shrink-0 text-xs md:text-sm"
-              >
-                <Download className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
-                <span className="hidden sm:inline">Download</span>
-                <span className="sm:hidden">Save</span>
-              </Button>
-            </div>
+            <MemeCanvasToolbar
+              hasTemplate={Boolean(selectedTemplate)}
+              addTopCaptionArea={addTopCaptionArea}
+              addBottomCaptionArea={addBottomCaptionArea}
+              onTopCaptionAreaChange={handleTopCaptionAreaChange}
+              onBottomCaptionAreaChange={handleBottomCaptionAreaChange}
+              canDelete={Boolean(selectedElement)}
+              onAddText={addText}
+              onDeleteSelected={deleteSelected}
+              onDownload={downloadMeme}
+              onSaveToGallery={saveToGallery}
+              isSavingToGallery={isSavingToGallery}
+            />
+            {saveGalleryMessage && (
+              <p className="mt-3 text-xs md:text-sm font-semibold text-gray-700 dark:text-gray-300">
+                {saveGalleryMessage}
+              </p>
+            )}
           </div>
         </div>
 
@@ -1539,30 +1682,14 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                   const beginEditing = () => {
                     editingElementRef.current = element;
                     selectElement({ keepEditing: true });
-                    setEditingTextIndex(index);
-                    requestAnimationFrame(() => {
-                      const ta = textAreaRefs.current[index];
-                      if (ta) {
-                        ta.focus();
-                        ta.select();
-                        resizeTextArea(ta);
-                      } else {
-                        requestAnimationFrame(() => {
-                          const t2 = textAreaRefs.current[index];
-                          if (t2) {
-                            t2.focus();
-                            t2.select();
-                            resizeTextArea(t2);
-                          }
-                        });
-                      }
-                    });
+                    flushSync(() => setEditingTextIndex(index));
+                    focusAndSelectTextAreaAtIndex(index);
                   };
 
                   const handleTextFieldPointerDown = (e: React.PointerEvent) => {
                     e.stopPropagation();
                     if (e.pointerType === 'mouse' && e.button !== 0) return;
-                    beginEditing();
+                    if (!isEditing) beginEditing();
                   };
 
                   return (
@@ -1613,58 +1740,53 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                           </div>
                         </div>
                         
-                        {/* Inline Text Input - border lives on wrapper so preview ↔ textarea swap cannot shift layout */}
+                        {/* Inline Text Input - textarea stays mounted so focus() runs in the user gesture (mobile keyboard). */}
                         <div
+                          data-meme-text-field
                           className="w-full min-h-[2.25rem] box-border rounded-none border-2 border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-900 px-2 py-1.5 text-xs transition-colors md:px-3 md:py-2 md:text-sm hover:bg-[#f7f4ee] dark:hover:bg-gray-800 focus-within:bg-[#f7f4ee] dark:focus-within:bg-gray-800"
+                          onPointerDown={handleTextFieldPointerDown}
                         >
-                          {isEditing ? (
-                            <textarea
-                              ref={(node) => {
-                                textAreaRefs.current[index] = node;
-                                resizeTextArea(node);
-                              }}
-                              value={currentTextInput}
-                              onChange={(e) => {
-                                updateText(e.target.value);
-                                resizeTextArea(e.currentTarget);
-                              }}
-                              onFocus={() => selectElement({ keepEditing: true })}
-                              onBlur={stopEditing}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                              }}
-                              onPointerDown={(e) => {
-                                e.stopPropagation();
-                              }}
-                              tabIndex={0}
-                              className="m-0 block w-full min-h-[1.25rem] resize-none border-0 bg-transparent p-0 text-gray-900 placeholder:text-gray-400 outline-none ring-0 focus:outline-none focus:ring-0 dark:text-white dark:placeholder:text-gray-500"
-                              style={{ overflow: 'hidden' }}
-                              rows={1}
-                              placeholder={`Enter text for field ${index + 1}...`}
-                            />
-                          ) : (
-                            <div
-                              role="button"
-                              tabIndex={0}
-                              onPointerDown={handleTextFieldPointerDown}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter' || e.key === ' ') {
-                                  e.preventDefault();
-                                  beginEditing();
-                                }
-                              }}
-                              className="w-full cursor-text select-none break-words whitespace-pre-wrap text-gray-900 outline-none touch-manipulation dark:text-white"
-                              title="Click to edit text"
-                            >
-                              {currentTextInput.trim().length > 0 ? (
-                                currentTextInput
-                              ) : (
-                                <span className="text-gray-400">
-                                  {`Enter text for field ${index + 1}...`}
-                                </span>
-                              )}
-                            </div>
-                          )}
+                          <textarea
+                            ref={(node) => {
+                              textAreaRefs.current[index] = node;
+                              resizeTextArea(node);
+                            }}
+                            value={currentTextInput}
+                            readOnly={!isEditing}
+                            onChange={(e) => {
+                              updateText(e.target.value);
+                              resizeTextArea(e.currentTarget);
+                            }}
+                            onFocus={() => {
+                              if (!isEditing) beginEditing();
+                              else selectElement({ keepEditing: true });
+                            }}
+                            onBlur={stopEditing}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                            }}
+                            onPointerDown={(e) => {
+                              e.stopPropagation();
+                              if (!isEditing) beginEditing();
+                            }}
+                            onKeyDown={(e) => {
+                              if (
+                                !isEditing &&
+                                (e.key === 'Enter' || e.key === ' ')
+                              ) {
+                                e.preventDefault();
+                                beginEditing();
+                              }
+                            }}
+                            tabIndex={0}
+                            className={`m-0 block w-full min-h-[1.25rem] resize-none border-0 bg-transparent p-0 text-gray-900 placeholder:text-gray-400 outline-none ring-0 focus:outline-none focus:ring-0 dark:text-white dark:placeholder:text-gray-500 touch-manipulation break-words whitespace-pre-wrap ${
+                              isEditing ? 'cursor-text' : 'cursor-text select-none'
+                            }`}
+                            style={{ overflow: 'hidden' }}
+                            rows={1}
+                            placeholder={`Enter text for field ${index + 1}...`}
+                            title="Click to edit text"
+                          />
                         </div>
                       </div>
 

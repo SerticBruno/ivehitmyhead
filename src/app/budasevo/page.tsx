@@ -1,17 +1,29 @@
 'use client';
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { isBudasevoSignOutInProgress } from '@/lib/auth/budasevoSignOut';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { MemeUpload } from '@/components/ui/MemeUpload';
 import { Category, Meme } from '@/lib/types/meme';
+import type { AdminUserSummary } from '@/lib/types/adminUser';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { cn } from '@/lib/utils';
 import { ICONS, renderCategoryIcon } from '@/lib/utils/categoryIcons';
 
 const MEMES_ADMIN_PAGE_SIZE = 50;
+const USERS_ADMIN_PAGE_SIZE = 50;
+
+type AdminTabId = 'categories' | 'memes' | 'upload' | 'users';
+
+const ADMIN_TABS: { id: AdminTabId; label: string }[] = [
+  { id: 'upload', label: 'Upload' },
+  { id: 'memes', label: 'Memes' },
+  { id: 'users', label: 'Users' },
+  { id: 'categories', label: 'Categories' },
+];
 
 export default function AdminDashboard() {
   const { user, session, isAdmin, loading: authLoading, signOut } = useAuth();
@@ -37,6 +49,20 @@ export default function AdminDashboard() {
   const [deletingCategoryId, setDeletingCategoryId] = useState<string | null>(null);
   const [categoryManageError, setCategoryManageError] = useState<string | null>(null);
   const [categoryManageMessage, setCategoryManageMessage] = useState<string | null>(null);
+  const [activeAdminTab, setActiveAdminTab] = useState<AdminTabId>('upload');
+  const [adminUsers, setAdminUsers] = useState<AdminUserSummary[]>([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [usersError, setUsersError] = useState<string | null>(null);
+  const [usersPage, setUsersPage] = useState(1);
+  const [usersHasMore, setUsersHasMore] = useState(false);
+  const [usersTotal, setUsersTotal] = useState(0);
+  const [userSearchDraft, setUserSearchDraft] = useState('');
+  const [userSearch, setUserSearch] = useState('');
+  const [usersListNonce, setUsersListNonce] = useState(0);
+  const dashboardReadyRef = useRef(false);
+  const categoriesLoadedRef = useRef(false);
+  const sessionRef = useRef(session);
+  sessionRef.current = session;
 
   const loadCategories = useCallback(async (mode: 'initial' | 'refresh' = 'initial') => {
     const isInitial = mode === 'initial';
@@ -100,22 +126,107 @@ export default function AdminDashboard() {
     }
   }, [memesPage, memeSearch]);
 
-  useEffect(() => {
-    if (!authLoading && (!user || !isAdmin)) {
-      router.push('/admin/login');
+  const loadUsersList = useCallback(async () => {
+    const accessToken = sessionRef.current?.access_token;
+    if (!accessToken) {
+      setUsersError('Your admin session is missing. Please log in again.');
+      return;
     }
+
+    try {
+      setUsersLoading(true);
+      setUsersError(null);
+      const params = new URLSearchParams({
+        page: String(usersPage),
+        limit: String(USERS_ADMIN_PAGE_SIZE),
+      });
+      const q = userSearch.trim();
+      if (q) {
+        params.set('search', q);
+      }
+      const response = await fetch(`/api/admin/users?${params.toString()}`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      if (!response.ok) {
+        const body = (await response.json().catch(() => ({}))) as { error?: string };
+        throw new Error(body.error || 'Failed to fetch users');
+      }
+      const data = (await response.json()) as {
+        users?: AdminUserSummary[];
+        pagination?: { has_more?: boolean; total?: number };
+      };
+      setAdminUsers((data.users || []) as AdminUserSummary[]);
+      setUsersHasMore(Boolean(data.pagination?.has_more));
+      setUsersTotal(data.pagination?.total ?? 0);
+    } catch (err) {
+      console.error('Error fetching users:', err);
+      setUsersError(err instanceof Error ? err.message : 'Failed to load users');
+    } finally {
+      setUsersLoading(false);
+    }
+  }, [usersPage, userSearch]);
+
+  useEffect(() => {
+    if (authLoading) return;
+
+    let cancelled = false;
+
+    const enforceAccess = () => {
+      if (cancelled) return;
+      if (isBudasevoSignOutInProgress()) return;
+      if (!user) {
+        router.push('/login?next=%2Fbudasevo');
+        return;
+      }
+      if (!isAdmin) {
+        router.replace('/');
+      }
+    };
+
+    if (user) {
+      enforceAccess();
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    const timeoutId = window.setTimeout(enforceAccess, 400);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeoutId);
+    };
   }, [user, isAdmin, authLoading, router]);
 
   useEffect(() => {
-    if (isAdmin) {
-      void loadCategories('initial');
-    }
+    if (!isAdmin || categoriesLoadedRef.current) return;
+    categoriesLoadedRef.current = true;
+    void loadCategories('initial');
   }, [isAdmin, loadCategories]);
 
   useEffect(() => {
-    if (!isAdmin) return;
+    if (!isAdmin || activeAdminTab !== 'memes') return;
     void loadMemeList();
-  }, [isAdmin, memesPage, memeSearch, memesListNonce, loadMemeList]);
+  }, [isAdmin, activeAdminTab, memesPage, memeSearch, memesListNonce, loadMemeList]);
+
+  useEffect(() => {
+    if (!isAdmin || activeAdminTab !== 'users') return;
+    void loadUsersList();
+  }, [isAdmin, activeAdminTab, usersPage, userSearch, usersListNonce, loadUsersList]);
+
+  const onAdminTabKeyDown = useCallback(
+    (e: React.KeyboardEvent, tabId: AdminTabId) => {
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+      e.preventDefault();
+      const i = ADMIN_TABS.findIndex((t) => t.id === tabId);
+      const delta = e.key === 'ArrowRight' ? 1 : -1;
+      const next = ADMIN_TABS[(i + delta + ADMIN_TABS.length) % ADMIN_TABS.length];
+      setActiveAdminTab(next.id);
+      document.getElementById(`admin-tab-${next.id}`)?.focus();
+    },
+    []
+  );
 
   const refreshMemeList = useCallback(() => {
     setMemesListNonce((n) => n + 1);
@@ -132,9 +243,28 @@ export default function AdminDashboard() {
     setMemesPage(1);
   }, []);
 
+  const refreshUsersList = useCallback(() => {
+    setUsersListNonce((n) => n + 1);
+  }, []);
+
+  const applyUserSearch = useCallback(() => {
+    setUserSearch(userSearchDraft.trim());
+    setUsersPage(1);
+  }, [userSearchDraft]);
+
+  const clearUserSearch = useCallback(() => {
+    setUserSearchDraft('');
+    setUserSearch('');
+    setUsersPage(1);
+  }, []);
+
+  const formatAdminDate = (iso: string | null) => {
+    if (!iso) return '—';
+    return new Date(iso).toLocaleString();
+  };
+
   const handleLogout = async () => {
     await signOut();
-    router.push('/admin/login');
   };
 
   const handleUploadSuccess = () => {
@@ -342,24 +472,21 @@ export default function AdminDashboard() {
     }
   };
 
-  if (authLoading || loading) {
+  if (!dashboardReadyRef.current && user && isAdmin) {
+    dashboardReadyRef.current = true;
+  }
+
+  const showInitialShell =
+    !dashboardReadyRef.current &&
+    (authLoading || (loading && categories.length === 0 && !error));
+
+  if (showInitialShell) {
     return (
       <div className="bg-[#f7f4ee] dark:bg-gray-950 min-h-screen">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="mb-8 border-2 border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-900 p-8 shadow-[8px_8px_0px_rgba(0,0,0,0.9)] dark:shadow-[8px_8px_0px_rgba(156,163,175,0.42)] animate-pulse">
             <div className="h-10 bg-zinc-200 dark:bg-zinc-700 max-w-md mb-4" />
             <div className="h-5 bg-zinc-200 dark:bg-zinc-700 max-w-lg" />
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div
-                key={i}
-                className="border-2 border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-900 p-6 h-24 animate-pulse"
-              >
-                <div className="h-4 bg-zinc-200 dark:bg-zinc-700 w-24 mb-2" />
-                <div className="h-8 bg-zinc-200 dark:bg-zinc-700 w-16" />
-              </div>
-            ))}
           </div>
           <div className="border-2 border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-900 p-8 min-h-[320px] animate-pulse shadow-[6px_6px_0px_rgba(0,0,0,0.85)] dark:shadow-[6px_6px_0px_rgba(156,163,175,0.35)]">
             <div className="h-8 bg-zinc-200 dark:bg-zinc-700 max-w-xs mb-6" />
@@ -428,7 +555,7 @@ export default function AdminDashboard() {
             </div>
             <div className="flex flex-col sm:flex-row gap-3 shrink-0">
               <Link
-                href="/admin/print-layout"
+                href="/budasevo/print-layout"
                 className={cn(
                   'inline-flex h-10 items-center justify-center px-4 py-2 text-sm font-medium transition-colors',
                   'rounded-none border-2 border-zinc-700 dark:border-zinc-400 uppercase tracking-wide font-bold',
@@ -460,34 +587,45 @@ export default function AdminDashboard() {
           </div>
         </header>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
-          <div className="border-2 border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-900 p-6 shadow-[4px_4px_0px_rgba(0,0,0,0.85)] dark:shadow-[4px_4px_0px_rgba(156,163,175,0.35)]">
-            <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-xs font-bold uppercase tracking-widest mb-2">
-              <ICONS.FolderOpen className="w-4 h-4" aria-hidden />
-              Categories
-            </div>
-            <p className="text-3xl font-black tabular-nums">{categories.length}</p>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Available for tagging</p>
+        <div className="border-2 border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-900 shadow-[6px_6px_0px_rgba(0,0,0,0.85)] dark:shadow-[6px_6px_0px_rgba(156,163,175,0.35)]">
+          <div
+            role="tablist"
+            aria-label="Admin sections"
+            className="grid grid-cols-2 sm:flex border-b-2 border-zinc-700 dark:border-zinc-400 bg-[#f7f4ee] dark:bg-gray-950"
+          >
+            {ADMIN_TABS.map((tab) => {
+              const selected = activeAdminTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  role="tab"
+                  id={`admin-tab-${tab.id}`}
+                  aria-selected={selected}
+                  aria-controls={`admin-tabpanel-${tab.id}`}
+                  tabIndex={selected ? 0 : -1}
+                  onClick={() => setActiveAdminTab(tab.id)}
+                  onKeyDown={(e) => onAdminTabKeyDown(e, tab.id)}
+                  className={cn(
+                    'min-w-0 sm:flex-1 cursor-pointer px-2 sm:px-4 py-3 text-center text-xs sm:text-sm font-black uppercase tracking-wide border-r-2 border-b-2 sm:border-b-0 border-zinc-700 dark:border-zinc-400 max-sm:[&:nth-child(2n)]:border-r-0 max-sm:[&:nth-child(n+3)]:border-b-0 last:border-r-0 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-zinc-500',
+                    selected
+                      ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white'
+                      : 'text-gray-600 dark:text-gray-400 [@media(hover:hover)]:hover:bg-white/80 dark:[@media(hover:hover)]:hover:bg-gray-900/50'
+                  )}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
           </div>
-          <div className="border-2 border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-900 p-6 shadow-[4px_4px_0px_rgba(0,0,0,0.85)] dark:shadow-[4px_4px_0px_rgba(156,163,175,0.35)]">
-            <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-xs font-bold uppercase tracking-widest mb-2">
-              <ICONS.Image className="w-4 h-4" aria-hidden />
-              Upload flow
-            </div>
-            <p className="text-3xl font-black">One</p>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Form below, no surprises</p>
-          </div>
-          <div className="border-2 border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-900 p-6 shadow-[4px_4px_0px_rgba(0,0,0,0.85)] dark:shadow-[4px_4px_0px_rgba(156,163,175,0.35)] sm:col-span-1">
-            <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-xs font-bold uppercase tracking-widest mb-2">
-              <ICONS.Star className="w-4 h-4" aria-hidden />
-              Quality bar
-            </div>
-            <p className="text-3xl font-black">Low</p>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">By design. Stay on brand.</p>
-          </div>
-        </div>
 
-        <section className="border-2 border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-900 p-6 sm:p-8 shadow-[6px_6px_0px_rgba(0,0,0,0.85)] dark:shadow-[6px_6px_0px_rgba(156,163,175,0.35)] mb-10">
+          <section
+            role="tabpanel"
+            id="admin-tabpanel-categories"
+            aria-labelledby="admin-tab-categories"
+            hidden={activeAdminTab !== 'categories'}
+            className="p-6 sm:p-8"
+          >
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
             <div>
               <h2 className="text-2xl font-black uppercase tracking-tight">
@@ -604,47 +742,15 @@ export default function AdminDashboard() {
               </tbody>
             </table>
           </div>
-
-          <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-sm text-gray-600 dark:text-gray-400">
-            <p>
-              Page <span className="font-mono font-semibold text-gray-900 dark:text-gray-100">{memesPage}</span>
-              {memeSearch ? (
-                <>
-                  {' '}
-                  · filter &quot;{memeSearch}&quot;
-                </>
-              ) : null}
-              {memes.length > 0 ? (
-                <>
-                  {' '}
-                  · {memes.length} meme{memes.length === 1 ? '' : 's'} on this page
-                </>
-              ) : null}
-            </p>
-            <div className="flex flex-wrap gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setMemesPage((p) => Math.max(1, p - 1))}
-                disabled={memesLoading || memesPage <= 1}
-                className="rounded-none border-2 border-zinc-700 dark:border-zinc-400 uppercase tracking-wide font-bold"
-              >
-                Previous
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setMemesPage((p) => p + 1)}
-                disabled={memesLoading || !memesHasMore}
-                className="rounded-none border-2 border-zinc-700 dark:border-zinc-400 uppercase tracking-wide font-bold"
-              >
-                Next
-              </Button>
-            </div>
-          </div>
         </section>
 
-        <section className="border-2 border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-900 p-6 sm:p-8 shadow-[6px_6px_0px_rgba(0,0,0,0.85)] dark:shadow-[6px_6px_0px_rgba(156,163,175,0.35)] mb-10">
+        <section
+          role="tabpanel"
+          id="admin-tabpanel-memes"
+          aria-labelledby="admin-tab-memes"
+          hidden={activeAdminTab !== 'memes'}
+          className="p-6 sm:p-8"
+        >
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
             <div>
               <h2 className="text-2xl font-black uppercase tracking-tight">
@@ -830,7 +936,220 @@ export default function AdminDashboard() {
           </div>
         </section>
 
-        <section className="border-2 border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-900 p-6 sm:p-8 shadow-[6px_6px_0px_rgba(0,0,0,0.85)] dark:shadow-[6px_6px_0px_rgba(156,163,175,0.35)]">
+        <section
+          role="tabpanel"
+          id="admin-tabpanel-users"
+          aria-labelledby="admin-tab-users"
+          hidden={activeAdminTab !== 'users'}
+          className="p-6 sm:p-8"
+        >
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
+            <div>
+              <h2 className="text-2xl font-black uppercase tracking-tight">Users</h2>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                Accounts on the site — when they joined, shares, comments, and other activity tied to their profile.
+                Likes are stored per browser session, so the likes column only reflects older account-linked data.
+              </p>
+              {usersTotal > 0 ? (
+                <p className="mt-2 text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-500">
+                  {usersTotal} registered user{usersTotal === 1 ? '' : 's'}
+                </p>
+              ) : null}
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => refreshUsersList()}
+              disabled={usersLoading}
+              className="rounded-none border-2 border-zinc-700 dark:border-zinc-400 uppercase tracking-wide font-bold"
+            >
+              <ICONS.RefreshCw className={`w-4 h-4 mr-2 ${usersLoading ? 'animate-spin' : ''}`} aria-hidden />
+              Refresh
+            </Button>
+          </div>
+
+          <form
+            className="mb-4 flex flex-col sm:flex-row gap-2 sm:items-center"
+            onSubmit={(e) => {
+              e.preventDefault();
+              applyUserSearch();
+            }}
+          >
+            <Input
+              type="search"
+              value={userSearchDraft}
+              onChange={(e) => setUserSearchDraft(e.target.value)}
+              placeholder="Search username, name, or email…"
+              aria-label="Search users"
+              className="max-w-md rounded-none border-2 border-zinc-300 dark:border-zinc-600 focus:border-zinc-700 dark:focus:border-zinc-400"
+            />
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="submit"
+                variant="outline"
+                disabled={usersLoading}
+                className="rounded-none border-2 border-zinc-700 dark:border-zinc-400 uppercase tracking-wide font-bold"
+              >
+                Search
+              </Button>
+              {userSearch ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => clearUserSearch()}
+                  disabled={usersLoading}
+                  className="rounded-none border-2 border-zinc-700 dark:border-zinc-400 uppercase tracking-wide font-bold"
+                >
+                  Clear
+                </Button>
+              ) : null}
+            </div>
+          </form>
+
+          {usersError && (
+            <div className="mb-4 border-2 border-red-700 dark:border-red-500 bg-red-50 dark:bg-red-950/40 px-4 py-3 text-sm text-red-900 dark:text-red-100">
+              {usersError}
+            </div>
+          )}
+
+          <div className="overflow-x-auto border-2 border-zinc-700 dark:border-zinc-400">
+            <table className="w-full text-sm">
+              <thead className="bg-[#f7f4ee] dark:bg-gray-950 border-b-2 border-zinc-700 dark:border-zinc-400">
+                <tr>
+                  <th className="text-left px-3 py-2 font-bold uppercase tracking-wide">User</th>
+                  <th className="text-left px-3 py-2 font-bold uppercase tracking-wide hidden lg:table-cell">
+                    Email
+                  </th>
+                  <th className="text-left px-3 py-2 font-bold uppercase tracking-wide">Joined</th>
+                  <th className="text-left px-3 py-2 font-bold uppercase tracking-wide hidden xl:table-cell">
+                    Last sign-in
+                  </th>
+                  <th className="text-right px-3 py-2 font-bold uppercase tracking-wide">Shares</th>
+                  <th className="text-right px-3 py-2 font-bold uppercase tracking-wide hidden md:table-cell">
+                    Views
+                  </th>
+                  <th className="text-right px-3 py-2 font-bold uppercase tracking-wide hidden md:table-cell">
+                    Likes
+                  </th>
+                  <th className="text-right px-3 py-2 font-bold uppercase tracking-wide hidden sm:table-cell">
+                    Comments
+                  </th>
+                  <th className="text-right px-3 py-2 font-bold uppercase tracking-wide hidden sm:table-cell">
+                    Generated
+                  </th>
+                  <th className="text-center px-3 py-2 font-bold uppercase tracking-wide">Role</th>
+                </tr>
+              </thead>
+              <tbody>
+                {usersLoading && adminUsers.length === 0 ? (
+                  <tr>
+                    <td colSpan={10} className="px-3 py-6 text-center text-gray-500 dark:text-gray-400">
+                      Loading users…
+                    </td>
+                  </tr>
+                ) : adminUsers.length === 0 ? (
+                  <tr>
+                    <td colSpan={10} className="px-3 py-6 text-center text-gray-500 dark:text-gray-400">
+                      No users found.
+                    </td>
+                  </tr>
+                ) : (
+                  adminUsers.map((adminUser) => (
+                    <tr key={adminUser.id} className="border-t border-zinc-300 dark:border-zinc-700">
+                      <td className="px-3 py-2">
+                        <div className="min-w-[140px]">
+                          <p className="font-medium truncate">
+                            {adminUser.display_name || adminUser.username}
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 font-mono truncate">
+                            @{adminUser.username}
+                          </p>
+                        </div>
+                      </td>
+                      <td className="px-3 py-2 max-w-[220px] truncate font-mono text-xs hidden lg:table-cell">
+                        {adminUser.email || '—'}
+                      </td>
+                      <td className="px-3 py-2 text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                        {formatAdminDate(adminUser.joined_at)}
+                      </td>
+                      <td className="px-3 py-2 text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap hidden xl:table-cell">
+                        {formatAdminDate(adminUser.last_sign_in_at)}
+                      </td>
+                      <td className="px-3 py-2 text-right font-mono tabular-nums">{adminUser.shares_count}</td>
+                      <td className="px-3 py-2 text-right font-mono tabular-nums hidden md:table-cell">
+                        {adminUser.views_count}
+                      </td>
+                      <td className="px-3 py-2 text-right font-mono tabular-nums hidden md:table-cell">
+                        {adminUser.likes_count}
+                      </td>
+                      <td className="px-3 py-2 text-right font-mono tabular-nums hidden sm:table-cell">
+                        {adminUser.comments_count}
+                      </td>
+                      <td className="px-3 py-2 text-right font-mono tabular-nums hidden sm:table-cell">
+                        {adminUser.generated_memes_count}
+                      </td>
+                      <td className="px-3 py-2 text-center">
+                        {adminUser.is_admin ? (
+                          <span className="inline-block px-2 py-0.5 text-xs font-bold uppercase tracking-wide border-2 border-blue-700 dark:border-blue-400 text-blue-800 dark:text-blue-200 bg-blue-50 dark:bg-blue-950/40">
+                            Admin
+                          </span>
+                        ) : (
+                          <span className="text-xs text-gray-500 dark:text-gray-400">Member</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-sm text-gray-600 dark:text-gray-400">
+            <p>
+              Page <span className="font-mono font-semibold text-gray-900 dark:text-gray-100">{usersPage}</span>
+              {userSearch ? (
+                <>
+                  {' '}
+                  · filter &quot;{userSearch}&quot;
+                </>
+              ) : null}
+              {adminUsers.length > 0 ? (
+                <>
+                  {' '}
+                  · {adminUsers.length} user{adminUsers.length === 1 ? '' : 's'} on this page
+                </>
+              ) : null}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setUsersPage((p) => Math.max(1, p - 1))}
+                disabled={usersLoading || usersPage <= 1}
+                className="rounded-none border-2 border-zinc-700 dark:border-zinc-400 uppercase tracking-wide font-bold"
+              >
+                Previous
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setUsersPage((p) => p + 1)}
+                disabled={usersLoading || !usersHasMore}
+                className="rounded-none border-2 border-zinc-700 dark:border-zinc-400 uppercase tracking-wide font-bold"
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        </section>
+
+        <section
+          role="tabpanel"
+          id="admin-tabpanel-upload"
+          aria-labelledby="admin-tab-upload"
+          hidden={activeAdminTab !== 'upload'}
+          className="p-6 sm:p-8"
+        >
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
             <div>
               <h2 className="text-2xl font-black uppercase tracking-tight">Upload a meme</h2>
@@ -856,9 +1175,10 @@ export default function AdminDashboard() {
             categories={categories}
             onUploadSuccess={handleUploadSuccess}
             sharpCorners
-            className="max-w-2xl shadow-none"
+            className="w-full shadow-none"
           />
         </section>
+        </div>
       </div>
     </div>
   );

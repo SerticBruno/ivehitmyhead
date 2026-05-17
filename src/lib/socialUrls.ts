@@ -3,11 +3,19 @@
  * Instagram, Facebook, Patreon, Ko-fi.
  */
 export const SITE_INSTAGRAM_URL = 'https://www.instagram.com/ivehitmyhead/';
+export const SITE_INSTAGRAM_HANDLE = 'ivehitmyhead';
 export const SITE_FACEBOOK_URL =
   'https://www.facebook.com/profile.php?id=100067374120979';
+export const SITE_FACEBOOK_LABEL = 'IVEHITMYHEAD';
 
 export function getPublicInstagramUrl(): string {
   return process.env.NEXT_PUBLIC_INSTAGRAM_URL?.trim() || SITE_INSTAGRAM_URL;
+}
+
+export function getPublicInstagramHandle(): string {
+  const fromEnv = process.env.NEXT_PUBLIC_INSTAGRAM_HANDLE?.trim();
+  if (fromEnv) return fromEnv.replace(/^@/, '');
+  return SITE_INSTAGRAM_HANDLE;
 }
 
 export function getPublicFacebookUrl(): string {

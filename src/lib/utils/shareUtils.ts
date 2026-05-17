@@ -153,3 +153,91 @@ export const shareMemeWithFallback = async (
   
   return await shareMeme(shareData, undefined, onShareSuccess);
 };
+
+function loadImageWithCors(url: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error('Failed to load image'));
+    img.src = url;
+  });
+}
+
+async function drawToPngBlob(
+  draw: (ctx: CanvasRenderingContext2D, width: number, height: number) => void,
+  width: number,
+  height: number,
+): Promise<Blob> {
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) {
+    throw new Error('Canvas not supported');
+  }
+  draw(ctx, width, height);
+
+  return new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => (blob ? resolve(blob) : reject(new Error('Failed to create image blob'))),
+      'image/png',
+    );
+  });
+}
+
+async function blobToPngBlob(blob: Blob): Promise<Blob> {
+  if (blob.type === 'image/png') {
+    return blob;
+  }
+
+  const bitmap = await createImageBitmap(blob);
+  try {
+    return await drawToPngBlob(
+      (ctx) => ctx.drawImage(bitmap, 0, 0),
+      bitmap.width,
+      bitmap.height,
+    );
+  } finally {
+    bitmap.close();
+  }
+}
+
+async function imageUrlToPngBlob(imageUrl: string): Promise<Blob> {
+  try {
+    const response = await fetch(imageUrl, { mode: 'cors' });
+    if (response.ok) {
+      const blob = await response.blob();
+      if (blob.type.startsWith('image/')) {
+        return blobToPngBlob(blob);
+      }
+    }
+  } catch {
+    // Fall through to canvas when fetch is blocked by CORS.
+  }
+
+  const img = await loadImageWithCors(imageUrl);
+  return drawToPngBlob(
+    (ctx) => ctx.drawImage(img, 0, 0),
+    img.naturalWidth,
+    img.naturalHeight,
+  );
+}
+
+/**
+ * Copy a meme image to the system clipboard (paste as image in supporting apps).
+ * Clipboard writes use PNG — browsers reject JPEG/WebP for image clipboard data.
+ */
+export async function copyImageToClipboard(imageUrl: string): Promise<void> {
+  if (typeof window === 'undefined' || !navigator.clipboard?.write) {
+    throw new Error('Clipboard image copy is not supported');
+  }
+
+  const pngBlob = await imageUrlToPngBlob(imageUrl);
+
+  await navigator.clipboard.write([
+    new ClipboardItem({
+      'image/png': pngBlob,
+    }),
+  ]);
+}

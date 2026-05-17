@@ -17,6 +17,7 @@ export const MemeGrid: React.FC<MemeGridProps> = ({
   hasMore = false,
   layout = 'vertical',
   emptyStateDescription,
+  hideLikeCount = false,
 }) => {
   const memeImageAreaStyle = {
     height: 'calc(100vh - 300px)',
@@ -120,6 +121,7 @@ export const MemeGrid: React.FC<MemeGridProps> = ({
             onShare={onShare}
             onComment={onComment}
             className={layout === 'grid' ? 'lg:col-span-1' : ''}
+            hideLikeCount={hideLikeCount}
           />
         ))}
       </div>
@@ -155,7 +157,7 @@ export const MemeGrid: React.FC<MemeGridProps> = ({
       {!hasMore && memes.length > 0 && (
         <div className="text-center py-8">
           <div className="text-gray-500 dark:text-gray-400 text-sm">
-            You&apos;ve reached the end! No more memes in this category.
+            You&apos;ve reached the end! No more memes to load.
           </div>
         </div>
       )}

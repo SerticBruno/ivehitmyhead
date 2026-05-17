@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { setMemeDetailCache } from '@/lib/memes/memeDetailCache';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { cn, formatDateDDMMYYYY, formatRelativeTime, formatTime } from '@/lib/utils';
 import { MemeCardProps } from '@/lib/types/meme';
-import { ICONS, renderCategoryIcon } from '@/lib/utils/categoryIcons';
+import { ICONS } from '@/lib/utils/categoryIcons';
 import { imagePreloader } from '@/lib/utils/imagePreloader';
 import { useMemesUIState } from '@/lib/contexts';
 
@@ -14,10 +16,13 @@ const MemeCard: React.FC<MemeCardProps> = ({
   onLike, 
   onShare,
   className,
-  isLiked
+  isLiked,
+  hideLikeCount = false,
 }) => {
+  const router = useRouter();
   const RETURN_TO_MEMES_SCROLL_KEY = 'restoreMemesScrollFromDetail';
   const { setScrollPosition } = useMemesUIState();
+  const memeHref = `/meme/${meme.slug}`;
   // Use the meme's is_liked field if available, otherwise fall back to the prop
   const isActuallyLiked = meme.is_liked !== undefined ? meme.is_liked : (isLiked || false);
   const [imageLoading, setImageLoading] = useState(true);
@@ -84,9 +89,12 @@ const MemeCard: React.FC<MemeCardProps> = ({
 
   return (
     <Link
-      href={`/meme/${meme.slug}`}
+      href={memeHref}
       className="block"
+      prefetch
+      onMouseEnter={() => router.prefetch(memeHref)}
       onClick={() => {
+        setMemeDetailCache(meme);
         if (typeof window !== 'undefined') {
           setScrollPosition(window.scrollY);
           sessionStorage.setItem(RETURN_TO_MEMES_SCROLL_KEY, '1');
@@ -179,7 +187,7 @@ const MemeCard: React.FC<MemeCardProps> = ({
           </div>
         </CardContent>
         
-        <CardFooter className="flex items-center justify-between gap-3 pt-4">
+        <CardFooter className="flex items-center pt-4">
           <div className="flex min-w-0 items-center space-x-4">
             <Button
               variant="ghost"
@@ -208,7 +216,7 @@ const MemeCard: React.FC<MemeCardProps> = ({
                   <ICONS.Heart className="w-4 h-4" />
                 )}
               </span>
-              <span>{meme.likes_count}</span>
+              {!hideLikeCount && <span>{meme.likes_count}</span>}
             </Button>
             
             <Button
@@ -226,12 +234,6 @@ const MemeCard: React.FC<MemeCardProps> = ({
               <span>{meme.views}</span>
             </div>
           </div>
-          {meme.category && (
-            <span className="inline-flex shrink-0 items-center text-xs text-gray-500 dark:text-gray-400 select-none cursor-default">
-              {renderCategoryIcon(meme.category.name, 'w-4 h-4')}
-              <span className="ml-1">{meme.category.name}</span>
-            </span>
-          )}
         </CardFooter>
       </Card>
     </Link>

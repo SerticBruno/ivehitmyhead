@@ -315,15 +315,16 @@ export default function Home() {
             </Button>
           </div>
         </section>
-
-        <section
-          className="mb-12 border-2 border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-900 p-6 shadow-[6px_6px_0px_rgba(0,0,0,0.85)] dark:shadow-[6px_6px_0px_rgba(156,163,175,0.42)]"
-          aria-label="Newsletter signup"
-        >
-          <SiteNewsletterSignup variant="inline" />
-        </section>
-
       </main>
+
+      <section
+        className="w-full bg-[#f7f4ee] dark:bg-gray-950 pt-6 pb-12 sm:pt-0 sm:pb-20"
+        aria-label="Newsletter signup"
+      >
+        <div className="mx-auto w-full max-w-2xl px-4 sm:px-6 lg:px-8">
+          <SiteNewsletterSignup variant="card" />
+        </div>
+      </section>
     </div>
   );
 }

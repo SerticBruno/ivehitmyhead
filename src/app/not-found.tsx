@@ -22,7 +22,7 @@ export default function NotFound() {
             Page not found
           </h1>
           <p className="mt-4 text-pretty leading-relaxed text-gray-600 dark:text-gray-300">
-            That URL is not in the archive—no memes, no dignity, no page. Try home or the feed and lower your
+            That URL is not in the archive - no memes, no dignity, no page. Try home or the feed and lower your
             expectations there instead.
           </p>
           <div className="mt-8 flex w-full flex-col gap-3 sm:flex-row sm:justify-center">

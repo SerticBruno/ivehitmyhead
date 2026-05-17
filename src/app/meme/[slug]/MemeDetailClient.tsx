@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Button } from '@/components/ui/Button';
@@ -8,8 +8,21 @@ import { cn, formatDateDDMMYYYY, formatFullDateTime, formatRelativeTime, formatT
 import { Meme } from '@/lib/types/meme';
 import { useMemeInteractions } from '@/lib/hooks/useMemeInteractions';
 import { useMemesListState } from '@/lib/contexts';
+import { resolveMemeSeed, setMemeDetailCache } from '@/lib/memes/memeDetailCache';
 import { ICONS, renderCategoryIcon } from '@/lib/utils/categoryIcons';
-import { recordShare, shareMemeWithFallback } from '@/lib/utils/shareUtils';
+import { copyImageToClipboard, recordShare, shareMemeWithFallback } from '@/lib/utils/shareUtils';
+
+const MEME_DETAIL_OUTLINE_BTN =
+  'rounded-none border-2 border-zinc-700 dark:border-zinc-400 uppercase tracking-wide font-bold inline-flex items-center justify-center gap-2';
+
+const MEME_DETAIL_RANDOM_BTN =
+  'rounded-none border-2 border-blue-700 bg-blue-600 text-white uppercase tracking-wide font-black shadow-[3px_3px_0px_rgba(29,78,216,0.7)] hover:bg-blue-500 hover:border-blue-600 disabled:opacity-50 disabled:shadow-none';
+
+const MEME_DETAIL_ACTIONS_ROW =
+  'grid grid-cols-3 gap-2 sm:flex sm:flex-wrap sm:items-center sm:gap-3';
+
+const MEME_DETAIL_ACTION_BTN =
+  'w-full min-w-0 px-1.5 text-xs gap-1 h-auto py-2 sm:h-8 sm:w-auto sm:px-3 sm:text-sm sm:gap-2 sm:py-0';
 
 const MEME_DETAIL_CARD =
   'bg-white dark:bg-gray-900 rounded-none border-2 border-zinc-700 dark:border-zinc-400 shadow-[8px_8px_0px_rgba(0,0,0,0.88)] dark:shadow-[8px_8px_0px_rgba(156,163,175,0.42)] overflow-hidden';
@@ -19,23 +32,42 @@ const MEME_DETAIL_IMAGE_FRAME =
 
 export interface MemeDetailClientProps {
   slug: string;
+  initialMeme?: Meme | null;
 }
 
-export function MemeDetailClient({ slug }: MemeDetailClientProps) {
-  const router = useRouter();
+function applyMemeCounts(
+  meme: Meme,
+  setLikesCount: (n: number) => void,
+  setSharesCount: (n: number) => void,
+) {
+  setLikesCount(meme.likes_count || 0);
+  setSharesCount(meme.shares_count || 0);
+}
 
-  const [meme, setMeme] = useState<Meme | null>(null);
-  const [loading, setLoading] = useState(true);
+export function MemeDetailClient({ slug, initialMeme = null }: MemeDetailClientProps) {
+  const router = useRouter();
+  const { memes: listMemes, updateMemeLikeCount, updateMemeShareCount, updateMemeLikedState } =
+    useMemesListState();
+
+  const seedMeme = useMemo(
+    () => resolveMemeSeed(slug, { initialMeme, listMemes }),
+    [slug, initialMeme, listMemes],
+  );
+
+  const [meme, setMeme] = useState<Meme | null>(seedMeme);
+  const [loading, setLoading] = useState(!seedMeme);
   const [error, setError] = useState<string | null>(null);
-  const [isLiked, setIsLiked] = useState(false);
-  const [likesCount, setLikesCount] = useState(0);
-  const [sharesCount, setSharesCount] = useState(0);
-  const [isCheckingLikeStatus, setIsCheckingLikeStatus] = useState(true);
+  const [isLiked, setIsLiked] = useState(seedMeme?.is_liked ?? false);
+  const [likesCount, setLikesCount] = useState(seedMeme?.likes_count ?? 0);
+  const [sharesCount, setSharesCount] = useState(seedMeme?.shares_count ?? 0);
+  const [isCheckingLikeStatus, setIsCheckingLikeStatus] = useState(
+    seedMeme?.is_liked === undefined,
+  );
   const [isLiking, setIsLiking] = useState(false);
   const [isLoadingRandom, setIsLoadingRandom] = useState(false);
+  const [isCopyingImage, setIsCopyingImage] = useState(false);
 
   const { likeMeme, recordView } = useMemeInteractions();
-  const { updateMemeLikeCount, updateMemeShareCount, updateMemeLikedState } = useMemesListState();
   const hasRecordedView = useRef(false);
   const [shareUrl, setShareUrl] = useState('');
 
@@ -45,66 +77,92 @@ export function MemeDetailClient({ slug }: MemeDetailClientProps) {
     }
   }, [slug]);
 
-  const checkLikeStatus = useCallback(async () => {
-    try {
-      const response = await fetch('/api/memes/liked');
-      if (response.ok) {
-        const data = await response.json();
-        const likedMemes = data.likedMemes || [];
-        const isCurrentlyLiked = likedMemes.includes(slug);
-        setIsLiked(isCurrentlyLiked);
-      } else {
-        setIsLiked(false);
-      }
-    } catch {
-      setIsLiked(false);
-    } finally {
+  useEffect(() => {
+    if (!seedMeme) {
+      return;
+    }
+    setMeme(seedMeme);
+    applyMemeCounts(seedMeme, setLikesCount, setSharesCount);
+    if (seedMeme.is_liked !== undefined) {
+      setIsLiked(seedMeme.is_liked);
       setIsCheckingLikeStatus(false);
     }
-  }, [slug]);
+    setLoading(false);
+    setError(null);
+  }, [seedMeme]);
 
   useEffect(() => {
-    const fetchMeme = async () => {
-      try {
+    if (!slug) {
+      return;
+    }
+
+    let cancelled = false;
+    hasRecordedView.current = false;
+
+    const revalidate = async () => {
+      const hadDisplayedMeme = Boolean(seedMeme);
+      if (!hadDisplayedMeme) {
         setLoading(true);
         setError(null);
+      }
 
-        const response = await fetch(`/api/memes/${slug}`);
+      try {
+        const [memeResponse, likedResponse] = await Promise.all([
+          fetch(`/api/memes/${slug}`),
+          fetch('/api/memes/liked'),
+        ]);
 
-        if (!response.ok) {
-          if (response.status === 404) {
-            setError('Meme not found');
-          } else {
-            throw new Error(`Failed to fetch meme: ${response.statusText}`);
+        if (cancelled) {
+          return;
+        }
+
+        if (!memeResponse.ok) {
+          if (!hadDisplayedMeme) {
+            if (memeResponse.status === 404) {
+              setError('Meme not found');
+            } else {
+              throw new Error(`Failed to fetch meme: ${memeResponse.statusText}`);
+            }
           }
           return;
         }
 
-        const data = await response.json();
-        setMeme(data.meme);
+        const data = await memeResponse.json();
+        const freshMeme = data.meme as Meme;
+        setMeme(freshMeme);
+        setMemeDetailCache(freshMeme);
+        applyMemeCounts(freshMeme, setLikesCount, setSharesCount);
 
-        setLikesCount(data.meme.likes_count || 0);
-        setSharesCount(data.meme.shares_count || 0);
-
-        await checkLikeStatus();
+        if (likedResponse.ok) {
+          const likedData = await likedResponse.json();
+          setIsLiked((likedData.likedMemes || []).includes(slug));
+        } else {
+          setIsLiked(false);
+        }
+        setIsCheckingLikeStatus(false);
 
         if (!hasRecordedView.current) {
           recordView(slug);
           hasRecordedView.current = true;
         }
       } catch (err) {
-        console.error('Error fetching meme:', err);
-        setError(err instanceof Error ? err.message : 'Failed to fetch meme');
+        if (!cancelled && !hadDisplayedMeme) {
+          console.error('Error fetching meme:', err);
+          setError(err instanceof Error ? err.message : 'Failed to fetch meme');
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     };
 
-    if (slug) {
-      fetchMeme();
-    }
-    hasRecordedView.current = false;
-  }, [slug, recordView, checkLikeStatus]);
+    void revalidate();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [slug, seedMeme, recordView]);
 
   const handleLike = async (e?: React.MouseEvent) => {
     if (e) {
@@ -175,6 +233,19 @@ export function MemeDetailClient({ slug }: MemeDetailClientProps) {
     }
   };
 
+  const handleCopyImage = async () => {
+    if (!meme?.image_url || isCopyingImage) return;
+
+    try {
+      setIsCopyingImage(true);
+      await copyImageToClipboard(meme.image_url);
+    } catch (err) {
+      console.error('Failed to copy meme image:', err);
+    } finally {
+      setIsCopyingImage(false);
+    }
+  };
+
   const handleRandom = useCallback(async () => {
     if (isLoadingRandom) return;
 
@@ -233,6 +304,8 @@ export function MemeDetailClient({ slug }: MemeDetailClientProps) {
         return;
       }
 
+      setMemeDetailCache(randomMeme);
+
       if (typeof window !== 'undefined') {
         const nextIds = [...currentExclusions];
         if (randomMeme.id) {
@@ -270,18 +343,19 @@ export function MemeDetailClient({ slug }: MemeDetailClientProps) {
 
               <div className={`${MEME_DETAIL_IMAGE_FRAME} bg-gray-200/90 dark:bg-gray-800`} />
 
-              <div className="p-6 pt-4">
-                <div className="flex items-center gap-3 overflow-x-auto whitespace-nowrap">
-                  <div className="flex items-center gap-4 shrink-0">
+              <div className="p-6 pt-4 space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+                  <div className="flex flex-wrap items-center gap-4">
                     <div className="h-8 w-16 bg-gray-200 dark:bg-gray-700" />
                     <div className="h-8 w-16 bg-gray-200 dark:bg-gray-700" />
                     <div className="h-8 w-16 bg-gray-200 dark:bg-gray-700" />
                   </div>
-                  <div className="flex items-center justify-center gap-2 flex-1 min-w-max">
-                    <div className="h-8 w-28 bg-gray-200 dark:bg-gray-700 border-2 border-zinc-700 dark:border-zinc-400 shrink-0" />
-                    <div className="h-10 w-28 bg-gray-200 dark:bg-gray-700 border-2 border-zinc-700 dark:border-zinc-400 shrink-0" />
-                  </div>
-                  <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 shrink-0" />
+                  <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700" />
+                </div>
+                <div className={MEME_DETAIL_ACTIONS_ROW}>
+                  <div className="h-8 w-full bg-gray-200 dark:bg-gray-700 border-2 border-zinc-700 dark:border-zinc-400 sm:w-28" />
+                  <div className="h-8 w-full bg-gray-200 dark:bg-gray-700 border-2 border-zinc-700 dark:border-zinc-400 sm:w-28" />
+                  <div className="h-8 w-full bg-gray-200 dark:bg-gray-700 border-2 border-zinc-700 dark:border-zinc-400 sm:w-28" />
                 </div>
               </div>
             </div>
@@ -368,8 +442,9 @@ export function MemeDetailClient({ slug }: MemeDetailClientProps) {
                 </div>
               )}
 
-              <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-300 overflow-x-auto whitespace-nowrap">
-                <div className="flex items-center gap-4 shrink-0">
+              <div className="space-y-3 text-sm text-gray-600 dark:text-gray-300">
+                <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+                  <div className="flex flex-wrap items-center gap-4">
                   <button
                     type="button"
                     onClick={handleLike}
@@ -399,49 +474,59 @@ export function MemeDetailClient({ slug }: MemeDetailClientProps) {
                     <ICONS.Eye className="w-4 h-4 shrink-0" />
                     <span>{meme.views.toLocaleString()}</span>
                   </div>
+                  </div>
+                  <span className="inline-flex items-center text-xs text-gray-500 dark:text-gray-400 select-none cursor-default pointer-events-none">
+                    {meme.category ? (
+                      <>
+                        {renderCategoryIcon(meme.category.name, 'w-4 h-4 shrink-0')}
+                        <span className="ml-1">{meme.category.name}</span>
+                      </>
+                    ) : (
+                      <>
+                        <ICONS.FolderOpen className="w-4 h-4 shrink-0" aria-hidden />
+                        <span className="ml-1">Uncategorized</span>
+                      </>
+                    )}
+                  </span>
                 </div>
-                <div className="flex items-center justify-center gap-2 flex-1 min-w-max">
+                <div className={MEME_DETAIL_ACTIONS_ROW}>
                   <Button
                     size="sm"
                     variant="outline"
                     onClick={handleCopyLink}
-                    className="rounded-none border-2 border-zinc-700 dark:border-zinc-400 uppercase tracking-wide font-bold shrink-0 inline-flex items-center justify-center gap-2"
+                    className={cn(MEME_DETAIL_OUTLINE_BTN, MEME_DETAIL_ACTION_BTN)}
                   >
                     <ICONS.Copy className="w-4 h-4 shrink-0" />
                     Copy link
                   </Button>
-                  <button
-                    type="button"
-                    onClick={handleRandom}
-                    aria-disabled={isLoadingRandom}
-                    className={cn(
-                      'inline-flex items-center justify-center gap-2 rounded-none border-2 border-blue-700 bg-blue-600 text-white px-4 py-2 uppercase tracking-wide font-black shadow-[3px_3px_0px_rgba(29,78,216,0.7)] transition-colors cursor-pointer shrink-0',
-                      isLoadingRandom
-                        ? 'opacity-50 shadow-none'
-                        : 'hover:bg-blue-500 hover:border-blue-600'
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleCopyImage}
+                    disabled={isCopyingImage}
+                    className={cn(MEME_DETAIL_OUTLINE_BTN, MEME_DETAIL_ACTION_BTN)}
+                  >
+                    {isCopyingImage ? (
+                      <span className="inline-flex h-4 w-4 shrink-0 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <ICONS.Image className="w-4 h-4 shrink-0" />
                     )}
+                    Copy image
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={handleRandom}
+                    disabled={isLoadingRandom}
+                    className={cn(MEME_DETAIL_RANDOM_BTN, MEME_DETAIL_ACTION_BTN)}
                   >
                     {isLoadingRandom ? (
                       <span className="inline-flex h-4 w-4 shrink-0 border-2 border-current border-t-transparent rounded-full animate-spin" />
                     ) : (
                       <ICONS.Dice5 className="w-4 h-4 shrink-0" />
                     )}
-                    <span>Random</span>
-                  </button>
+                    Random
+                  </Button>
                 </div>
-                <span className="inline-flex shrink-0 items-center text-xs text-gray-500 dark:text-gray-400 select-none cursor-default pointer-events-none">
-                  {meme.category ? (
-                    <>
-                      {renderCategoryIcon(meme.category.name, 'w-4 h-4 shrink-0')}
-                      <span className="ml-1 truncate">{meme.category.name}</span>
-                    </>
-                  ) : (
-                    <>
-                      <ICONS.FolderOpen className="w-4 h-4 shrink-0" aria-hidden />
-                      <span className="ml-1 truncate">Uncategorized</span>
-                    </>
-                  )}
-                </span>
               </div>
 
             </footer>

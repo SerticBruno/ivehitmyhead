@@ -1,6 +1,8 @@
 import React, { useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { setMemeDetailCache } from '@/lib/memes/memeDetailCache';
 import { Card, CardContent, CardHeader } from '@/components/ui/Card';
 import {
   cn,
@@ -29,7 +31,9 @@ const FeaturedMemeCard: React.FC<FeaturedMemeCardProps> = ({
   className,
   isLiked
 }) => {
+  const router = useRouter();
   const RETURN_TO_MEMES_SCROLL_KEY = 'restoreMemesScrollFromDetail';
+  const memeHref = `/meme/${meme.slug}`;
   const { recordView } = useMemeInteractions();
   const hasRecordedView = useRef(false);
 
@@ -55,9 +59,12 @@ const FeaturedMemeCard: React.FC<FeaturedMemeCardProps> = ({
 
   return (
     <Link
-      href={`/meme/${meme.slug}`}
+      href={memeHref}
       className="block h-full"
+      prefetch
+      onMouseEnter={() => router.prefetch(memeHref)}
       onClick={() => {
+        setMemeDetailCache(meme);
         if (typeof window !== 'undefined') {
           sessionStorage.setItem(RETURN_TO_MEMES_SCROLL_KEY, '1');
         }
