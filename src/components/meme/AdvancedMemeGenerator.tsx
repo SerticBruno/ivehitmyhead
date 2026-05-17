@@ -24,7 +24,7 @@ import {
   getPendingGalleryMeme,
   setPendingGalleryMeme,
 } from '@/lib/persistence/pendingGalleryMeme';
-import { copyPngBlobToClipboard } from '@/lib/utils/shareUtils';
+import { copyPngBlobToClipboard, sharePngBlob, canShareImageFiles } from '@/lib/utils/shareUtils';
 
 const PREVIEW_SCROLL_GAP_BELOW_HEADER_PX = 24;
 const DESKTOP_MAX_GENERATOR_HEIGHT_PX = 860;
@@ -891,19 +891,33 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
     setIsCopyingToClipboard(true);
 
     try {
-      const blob = await getExportBlob();
-      if (!blob) {
-        setCopyClipboardError('Could not export image. Please try again.');
+      const pngPromise = getExportBlob().then((blob) => {
+        if (!blob) {
+          throw new Error('Could not export image');
+        }
+        return blob;
+      });
+
+      try {
+        await copyPngBlobToClipboard(pngPromise);
+        setCopiedToClipboard(true);
+      } catch {
+        if (!canShareImageFiles()) {
+          throw new Error('Copy not supported');
+        }
+        const blob = await pngPromise;
+        await sharePngBlob(blob, { title: selectedTemplate?.name ?? 'Meme' });
+        setCopiedToClipboard(true);
+      }
+    } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') {
         return;
       }
-      await copyPngBlobToClipboard(blob);
-      setCopiedToClipboard(true);
-    } catch {
       setCopyClipboardError('Copy failed. Your browser may not support copying images.');
     } finally {
       setIsCopyingToClipboard(false);
     }
-  }, [getExportBlob]);
+  }, [getExportBlob, selectedTemplate?.name]);
 
   const postGeneratedMeme = useCallback(
     async (blob: Blob, title: string, templateDisplayName: string | null) => {

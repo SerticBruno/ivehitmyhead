@@ -266,9 +266,12 @@ export function MemeDetailClient({ slug, initialMeme = null }: MemeDetailClientP
       setIsCopyingImage(true);
       setCopyImageError(false);
       setCopiedImage(false);
-      await copyMemeImageToClipboard(slug);
+      await copyMemeImageToClipboard(slug, { title: meme.title });
       setCopiedImage(true);
     } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') {
+        return;
+      }
       console.error('Failed to copy meme image:', err);
       setCopyImageError(true);
       window.setTimeout(() => setCopyImageError(false), 2000);

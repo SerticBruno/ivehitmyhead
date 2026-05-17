@@ -224,43 +224,129 @@ async function imageUrlToPngBlob(imageUrl: string): Promise<Blob> {
   );
 }
 
+function toPngBlobPromise(source: Blob | Promise<Blob>): Promise<Blob> {
+  return Promise.resolve(source).then((blob) =>
+    blob.type === 'image/png' ? blob : blobToPngBlob(blob),
+  );
+}
+
+function createPngClipboardItem(pngSource: Blob | Promise<Blob>): ClipboardItem {
+  return new ClipboardItem({
+    'image/png': toPngBlobPromise(pngSource),
+  });
+}
+
+export function canShareImageFiles(): boolean {
+  if (typeof navigator === 'undefined' || !navigator.share) {
+    return false;
+  }
+  try {
+    const file = new File([new Uint8Array(0)], 'meme.png', { type: 'image/png' });
+    return navigator.canShare?.({ files: [file] }) ?? true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Open the system share sheet with a PNG image (Save to Photos, Messages, etc.).
+ * Works on iOS where clipboard image paste is unreliable.
+ */
+export async function sharePngBlob(blob: Blob, options?: { title?: string }): Promise<void> {
+  if (typeof navigator === 'undefined' || !navigator.share) {
+    throw new Error('Web Share is not supported');
+  }
+
+  const pngBlob = blob.type === 'image/png' ? blob : await blobToPngBlob(blob);
+  const file = new File([pngBlob], 'meme.png', { type: 'image/png' });
+  const payload: { files: File[]; title?: string } = { files: [file] };
+  if (options?.title) {
+    payload.title = options.title;
+  }
+
+  if (navigator.canShare && !navigator.canShare(payload)) {
+    throw new Error('Cannot share this image');
+  }
+
+  await navigator.share(payload);
+}
+
 /**
  * Copy a PNG blob to the system clipboard (paste as image in supporting apps).
+ * Pass a Promise so Safari/iOS can resolve the image during the user gesture.
  */
-export async function copyPngBlobToClipboard(blob: Blob): Promise<void> {
+export async function copyPngBlobToClipboard(blobOrPromise: Blob | Promise<Blob>): Promise<void> {
   if (typeof window === 'undefined' || !navigator.clipboard?.write) {
     throw new Error('Clipboard image copy is not supported');
   }
 
-  const pngBlob =
-    blob.type === 'image/png'
-      ? blob
-      : new Blob([await blob.arrayBuffer()], { type: 'image/png' });
+  await navigator.clipboard.write([createPngClipboardItem(blobOrPromise)]);
+}
 
-  // Promise values improve Safari compatibility for ClipboardItem.
-  await navigator.clipboard.write([
-    new ClipboardItem({
-      'image/png': Promise.resolve(pngBlob),
-    }),
-  ]);
+export type ImageCopyResult = 'clipboard' | 'share';
+
+async function copyPngWithShareFallback(
+  pngSource: Blob | Promise<Blob>,
+  options?: { title?: string },
+): Promise<ImageCopyResult> {
+  try {
+    await copyPngBlobToClipboard(pngSource);
+    return 'clipboard';
+  } catch (clipboardError) {
+    if (!canShareImageFiles()) {
+      throw clipboardError;
+    }
+    try {
+      const blob = await Promise.resolve(pngSource);
+      await sharePngBlob(blob, options);
+      return 'share';
+    } catch (shareError) {
+      if (shareError instanceof Error && shareError.name === 'AbortError') {
+        throw shareError;
+      }
+      throw clipboardError;
+    }
+  }
+}
+
+function imageUrlToPngBlobPromise(imageUrl: string): Promise<Blob> {
+  return fetch(imageUrl)
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error(`Failed to fetch image: ${response.status}`);
+      }
+      return response.blob();
+    })
+    .then((blob) => {
+      if (!blob.type.startsWith('image/')) {
+        throw new Error('Invalid image response');
+      }
+      return blobToPngBlob(blob);
+    })
+    .catch(() => imageUrlToPngBlob(imageUrl));
 }
 
 /**
  * Copy a meme image to the system clipboard (paste as image in supporting apps).
  * Clipboard writes use PNG — browsers reject JPEG/WebP for image clipboard data.
  */
-export async function copyImageToClipboard(imageUrl: string): Promise<void> {
-  const pngBlob = await imageUrlToPngBlob(imageUrl);
-  await copyPngBlobToClipboard(pngBlob);
+export async function copyImageToClipboard(
+  imageUrl: string,
+  options?: { title?: string },
+): Promise<ImageCopyResult> {
+  return copyPngWithShareFallback(imageUrlToPngBlobPromise(imageUrl), options);
 }
 
 /**
  * Copy a published meme's image via the same-origin API proxy (avoids CORS on CDN URLs).
  */
-export async function copyMemeImageToClipboard(slug: string): Promise<void> {
+export async function copyMemeImageToClipboard(
+  slug: string,
+  options?: { title?: string },
+): Promise<ImageCopyResult> {
   if (typeof window === 'undefined') {
     throw new Error('Clipboard image copy requires a browser');
   }
   const proxyUrl = `${window.location.origin}/api/memes/${encodeURIComponent(slug)}/image`;
-  await copyImageToClipboard(proxyUrl);
+  return copyImageToClipboard(proxyUrl, options);
 }
