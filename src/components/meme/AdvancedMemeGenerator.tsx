@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { flushSync } from 'react-dom';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import MemeCanvasController from '@/lib/meme-canvas/MemeCanvasController';
@@ -189,7 +190,9 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
         root?.contains(target) &&
         (target instanceof HTMLTextAreaElement ||
           target instanceof HTMLInputElement ||
-          target instanceof HTMLSelectElement)
+          target instanceof HTMLSelectElement ||
+          (target instanceof Element &&
+            target.closest('[data-meme-text-field]')))
       ) {
         return;
       }
@@ -215,17 +218,20 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
     return () =>
       document.removeEventListener('pointerdown', onPointerDownCapture, true);
   }, [stopEditing]);
-  const focusAndSelectTextAreaAtIndex = useCallback((index: number) => {
-    requestAnimationFrame(() => {
+  const focusAndSelectTextAreaAtIndex = useCallback(
+    (index: number, opts?: { scrollIntoView?: boolean }) => {
       const ta = textAreaRefs.current[index];
       if (!ta) return;
-      ta.focus();
+      ta.focus({ preventScroll: true });
       ta.select();
-      // Prevent internal scrollbars; grow to fit content.
       ta.style.height = 'auto';
       ta.style.height = `${ta.scrollHeight}px`;
-    });
-  }, []);
+      if (opts?.scrollIntoView) {
+        ta.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      }
+    },
+    []
+  );
 
   // Calculate container height based on viewport and screen size
   useEffect(() => {
@@ -307,8 +313,12 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
           const index = elements.indexOf(selected);
           if (index !== -1) {
             editingElementRef.current = selected;
-            setEditingTextIndex(index);
-            focusAndSelectTextAreaAtIndex(index);
+            flushSync(() => setEditingTextIndex(index));
+            const scrollFieldIntoView =
+              typeof window !== 'undefined' && window.innerWidth < 1024;
+            focusAndSelectTextAreaAtIndex(index, {
+              scrollIntoView: scrollFieldIntoView,
+            });
           }
         }
       }
@@ -1672,30 +1682,14 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                   const beginEditing = () => {
                     editingElementRef.current = element;
                     selectElement({ keepEditing: true });
-                    setEditingTextIndex(index);
-                    requestAnimationFrame(() => {
-                      const ta = textAreaRefs.current[index];
-                      if (ta) {
-                        ta.focus();
-                        ta.select();
-                        resizeTextArea(ta);
-                      } else {
-                        requestAnimationFrame(() => {
-                          const t2 = textAreaRefs.current[index];
-                          if (t2) {
-                            t2.focus();
-                            t2.select();
-                            resizeTextArea(t2);
-                          }
-                        });
-                      }
-                    });
+                    flushSync(() => setEditingTextIndex(index));
+                    focusAndSelectTextAreaAtIndex(index);
                   };
 
                   const handleTextFieldPointerDown = (e: React.PointerEvent) => {
                     e.stopPropagation();
                     if (e.pointerType === 'mouse' && e.button !== 0) return;
-                    beginEditing();
+                    if (!isEditing) beginEditing();
                   };
 
                   return (
@@ -1746,58 +1740,53 @@ export const AdvancedMemeGenerator: React.FC<AdvancedMemeGeneratorProps> = ({
                           </div>
                         </div>
                         
-                        {/* Inline Text Input - border lives on wrapper so preview ↔ textarea swap cannot shift layout */}
+                        {/* Inline Text Input - textarea stays mounted so focus() runs in the user gesture (mobile keyboard). */}
                         <div
+                          data-meme-text-field
                           className="w-full min-h-[2.25rem] box-border rounded-none border-2 border-zinc-700 dark:border-zinc-400 bg-white dark:bg-gray-900 px-2 py-1.5 text-xs transition-colors md:px-3 md:py-2 md:text-sm hover:bg-[#f7f4ee] dark:hover:bg-gray-800 focus-within:bg-[#f7f4ee] dark:focus-within:bg-gray-800"
+                          onPointerDown={handleTextFieldPointerDown}
                         >
-                          {isEditing ? (
-                            <textarea
-                              ref={(node) => {
-                                textAreaRefs.current[index] = node;
-                                resizeTextArea(node);
-                              }}
-                              value={currentTextInput}
-                              onChange={(e) => {
-                                updateText(e.target.value);
-                                resizeTextArea(e.currentTarget);
-                              }}
-                              onFocus={() => selectElement({ keepEditing: true })}
-                              onBlur={stopEditing}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                              }}
-                              onPointerDown={(e) => {
-                                e.stopPropagation();
-                              }}
-                              tabIndex={0}
-                              className="m-0 block w-full min-h-[1.25rem] resize-none border-0 bg-transparent p-0 text-gray-900 placeholder:text-gray-400 outline-none ring-0 focus:outline-none focus:ring-0 dark:text-white dark:placeholder:text-gray-500"
-                              style={{ overflow: 'hidden' }}
-                              rows={1}
-                              placeholder={`Enter text for field ${index + 1}...`}
-                            />
-                          ) : (
-                            <div
-                              role="button"
-                              tabIndex={0}
-                              onPointerDown={handleTextFieldPointerDown}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter' || e.key === ' ') {
-                                  e.preventDefault();
-                                  beginEditing();
-                                }
-                              }}
-                              className="w-full cursor-text select-none break-words whitespace-pre-wrap text-gray-900 outline-none touch-manipulation dark:text-white"
-                              title="Click to edit text"
-                            >
-                              {currentTextInput.trim().length > 0 ? (
-                                currentTextInput
-                              ) : (
-                                <span className="text-gray-400">
-                                  {`Enter text for field ${index + 1}...`}
-                                </span>
-                              )}
-                            </div>
-                          )}
+                          <textarea
+                            ref={(node) => {
+                              textAreaRefs.current[index] = node;
+                              resizeTextArea(node);
+                            }}
+                            value={currentTextInput}
+                            readOnly={!isEditing}
+                            onChange={(e) => {
+                              updateText(e.target.value);
+                              resizeTextArea(e.currentTarget);
+                            }}
+                            onFocus={() => {
+                              if (!isEditing) beginEditing();
+                              else selectElement({ keepEditing: true });
+                            }}
+                            onBlur={stopEditing}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                            }}
+                            onPointerDown={(e) => {
+                              e.stopPropagation();
+                              if (!isEditing) beginEditing();
+                            }}
+                            onKeyDown={(e) => {
+                              if (
+                                !isEditing &&
+                                (e.key === 'Enter' || e.key === ' ')
+                              ) {
+                                e.preventDefault();
+                                beginEditing();
+                              }
+                            }}
+                            tabIndex={0}
+                            className={`m-0 block w-full min-h-[1.25rem] resize-none border-0 bg-transparent p-0 text-gray-900 placeholder:text-gray-400 outline-none ring-0 focus:outline-none focus:ring-0 dark:text-white dark:placeholder:text-gray-500 touch-manipulation break-words whitespace-pre-wrap ${
+                              isEditing ? 'cursor-text' : 'cursor-text select-none'
+                            }`}
+                            style={{ overflow: 'hidden' }}
+                            rows={1}
+                            placeholder={`Enter text for field ${index + 1}...`}
+                            title="Click to edit text"
+                          />
                         </div>
                       </div>
 
