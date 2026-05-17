@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Button } from '@/components/ui/Button';
@@ -8,6 +8,7 @@ import { cn, formatDateDDMMYYYY, formatFullDateTime, formatRelativeTime, formatT
 import { Meme } from '@/lib/types/meme';
 import { useMemeInteractions } from '@/lib/hooks/useMemeInteractions';
 import { useMemesListState } from '@/lib/contexts';
+import { resolveMemeSeed, setMemeDetailCache } from '@/lib/memes/memeDetailCache';
 import { ICONS, renderCategoryIcon } from '@/lib/utils/categoryIcons';
 import { copyImageToClipboard, recordShare, shareMemeWithFallback } from '@/lib/utils/shareUtils';
 
@@ -31,24 +32,42 @@ const MEME_DETAIL_IMAGE_FRAME =
 
 export interface MemeDetailClientProps {
   slug: string;
+  initialMeme?: Meme | null;
 }
 
-export function MemeDetailClient({ slug }: MemeDetailClientProps) {
-  const router = useRouter();
+function applyMemeCounts(
+  meme: Meme,
+  setLikesCount: (n: number) => void,
+  setSharesCount: (n: number) => void,
+) {
+  setLikesCount(meme.likes_count || 0);
+  setSharesCount(meme.shares_count || 0);
+}
 
-  const [meme, setMeme] = useState<Meme | null>(null);
-  const [loading, setLoading] = useState(true);
+export function MemeDetailClient({ slug, initialMeme = null }: MemeDetailClientProps) {
+  const router = useRouter();
+  const { memes: listMemes, updateMemeLikeCount, updateMemeShareCount, updateMemeLikedState } =
+    useMemesListState();
+
+  const seedMeme = useMemo(
+    () => resolveMemeSeed(slug, { initialMeme, listMemes }),
+    [slug, initialMeme, listMemes],
+  );
+
+  const [meme, setMeme] = useState<Meme | null>(seedMeme);
+  const [loading, setLoading] = useState(!seedMeme);
   const [error, setError] = useState<string | null>(null);
-  const [isLiked, setIsLiked] = useState(false);
-  const [likesCount, setLikesCount] = useState(0);
-  const [sharesCount, setSharesCount] = useState(0);
-  const [isCheckingLikeStatus, setIsCheckingLikeStatus] = useState(true);
+  const [isLiked, setIsLiked] = useState(seedMeme?.is_liked ?? false);
+  const [likesCount, setLikesCount] = useState(seedMeme?.likes_count ?? 0);
+  const [sharesCount, setSharesCount] = useState(seedMeme?.shares_count ?? 0);
+  const [isCheckingLikeStatus, setIsCheckingLikeStatus] = useState(
+    seedMeme?.is_liked === undefined,
+  );
   const [isLiking, setIsLiking] = useState(false);
   const [isLoadingRandom, setIsLoadingRandom] = useState(false);
   const [isCopyingImage, setIsCopyingImage] = useState(false);
 
   const { likeMeme, recordView } = useMemeInteractions();
-  const { updateMemeLikeCount, updateMemeShareCount, updateMemeLikedState } = useMemesListState();
   const hasRecordedView = useRef(false);
   const [shareUrl, setShareUrl] = useState('');
 
@@ -58,66 +77,92 @@ export function MemeDetailClient({ slug }: MemeDetailClientProps) {
     }
   }, [slug]);
 
-  const checkLikeStatus = useCallback(async () => {
-    try {
-      const response = await fetch('/api/memes/liked');
-      if (response.ok) {
-        const data = await response.json();
-        const likedMemes = data.likedMemes || [];
-        const isCurrentlyLiked = likedMemes.includes(slug);
-        setIsLiked(isCurrentlyLiked);
-      } else {
-        setIsLiked(false);
-      }
-    } catch {
-      setIsLiked(false);
-    } finally {
+  useEffect(() => {
+    if (!seedMeme) {
+      return;
+    }
+    setMeme(seedMeme);
+    applyMemeCounts(seedMeme, setLikesCount, setSharesCount);
+    if (seedMeme.is_liked !== undefined) {
+      setIsLiked(seedMeme.is_liked);
       setIsCheckingLikeStatus(false);
     }
-  }, [slug]);
+    setLoading(false);
+    setError(null);
+  }, [seedMeme]);
 
   useEffect(() => {
-    const fetchMeme = async () => {
-      try {
+    if (!slug) {
+      return;
+    }
+
+    let cancelled = false;
+    hasRecordedView.current = false;
+
+    const revalidate = async () => {
+      const hadDisplayedMeme = Boolean(seedMeme);
+      if (!hadDisplayedMeme) {
         setLoading(true);
         setError(null);
+      }
 
-        const response = await fetch(`/api/memes/${slug}`);
+      try {
+        const [memeResponse, likedResponse] = await Promise.all([
+          fetch(`/api/memes/${slug}`),
+          fetch('/api/memes/liked'),
+        ]);
 
-        if (!response.ok) {
-          if (response.status === 404) {
-            setError('Meme not found');
-          } else {
-            throw new Error(`Failed to fetch meme: ${response.statusText}`);
+        if (cancelled) {
+          return;
+        }
+
+        if (!memeResponse.ok) {
+          if (!hadDisplayedMeme) {
+            if (memeResponse.status === 404) {
+              setError('Meme not found');
+            } else {
+              throw new Error(`Failed to fetch meme: ${memeResponse.statusText}`);
+            }
           }
           return;
         }
 
-        const data = await response.json();
-        setMeme(data.meme);
+        const data = await memeResponse.json();
+        const freshMeme = data.meme as Meme;
+        setMeme(freshMeme);
+        setMemeDetailCache(freshMeme);
+        applyMemeCounts(freshMeme, setLikesCount, setSharesCount);
 
-        setLikesCount(data.meme.likes_count || 0);
-        setSharesCount(data.meme.shares_count || 0);
-
-        await checkLikeStatus();
+        if (likedResponse.ok) {
+          const likedData = await likedResponse.json();
+          setIsLiked((likedData.likedMemes || []).includes(slug));
+        } else {
+          setIsLiked(false);
+        }
+        setIsCheckingLikeStatus(false);
 
         if (!hasRecordedView.current) {
           recordView(slug);
           hasRecordedView.current = true;
         }
       } catch (err) {
-        console.error('Error fetching meme:', err);
-        setError(err instanceof Error ? err.message : 'Failed to fetch meme');
+        if (!cancelled && !hadDisplayedMeme) {
+          console.error('Error fetching meme:', err);
+          setError(err instanceof Error ? err.message : 'Failed to fetch meme');
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     };
 
-    if (slug) {
-      fetchMeme();
-    }
-    hasRecordedView.current = false;
-  }, [slug, recordView, checkLikeStatus]);
+    void revalidate();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [slug, seedMeme, recordView]);
 
   const handleLike = async (e?: React.MouseEvent) => {
     if (e) {
@@ -258,6 +303,8 @@ export function MemeDetailClient({ slug }: MemeDetailClientProps) {
       if (!randomMeme?.slug) {
         return;
       }
+
+      setMemeDetailCache(randomMeme);
 
       if (typeof window !== 'undefined') {
         const nextIds = [...currentExclusions];

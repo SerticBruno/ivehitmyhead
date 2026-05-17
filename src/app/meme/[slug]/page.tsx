@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { fetchMemeBySlug } from '@/lib/memes/fetchMemeBySlug';
+import { getMemeBySlug } from '@/lib/memes/getMemeBySlug';
 import { memeShareImageUrl } from '@/lib/og/memeOpenGraphImage';
 import { getSiteOrigin } from '@/lib/siteUrl';
 import { MemeDetailClient } from './MemeDetailClient';
@@ -10,7 +10,7 @@ type Props = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const result = await fetchMemeBySlug(slug);
+  const result = await getMemeBySlug(slug);
   const origin = getSiteOrigin();
   const pageUrl = `${origin}/meme/${slug}`;
 
@@ -70,5 +70,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function MemeDetailPage({ params }: Props) {
   const { slug } = await params;
-  return <MemeDetailClient slug={slug} />;
+  const result = await getMemeBySlug(slug);
+  return (
+    <MemeDetailClient
+      key={slug}
+      slug={slug}
+      initialMeme={result.ok ? result.meme : null}
+    />
+  );
 }

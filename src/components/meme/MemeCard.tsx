@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { setMemeDetailCache } from '@/lib/memes/memeDetailCache';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { cn, formatDateDDMMYYYY, formatRelativeTime, formatTime } from '@/lib/utils';
@@ -17,8 +19,10 @@ const MemeCard: React.FC<MemeCardProps> = ({
   isLiked,
   hideLikeCount = false,
 }) => {
+  const router = useRouter();
   const RETURN_TO_MEMES_SCROLL_KEY = 'restoreMemesScrollFromDetail';
   const { setScrollPosition } = useMemesUIState();
+  const memeHref = `/meme/${meme.slug}`;
   // Use the meme's is_liked field if available, otherwise fall back to the prop
   const isActuallyLiked = meme.is_liked !== undefined ? meme.is_liked : (isLiked || false);
   const [imageLoading, setImageLoading] = useState(true);
@@ -85,9 +89,12 @@ const MemeCard: React.FC<MemeCardProps> = ({
 
   return (
     <Link
-      href={`/meme/${meme.slug}`}
+      href={memeHref}
       className="block"
+      prefetch
+      onMouseEnter={() => router.prefetch(memeHref)}
       onClick={() => {
+        setMemeDetailCache(meme);
         if (typeof window !== 'undefined') {
           setScrollPosition(window.scrollY);
           sessionStorage.setItem(RETURN_TO_MEMES_SCROLL_KEY, '1');
